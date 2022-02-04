@@ -37,9 +37,9 @@ class ContactApi(BaseApi):
 
     @aiohttp_apispec.docs(tags=['contacts'],
                           summary='Retrieve a List of all available Contact reports',
-                          description='Returns a list of contact reports that are available for download.'
-                                      ' As soon as any agent beacons over a given contact, the report will'
-                                      ' be available for download.')
+                          description='Returns a list of contacts that at least one agent has beaconed to.'
+                                      ' As soon as any agent beacons over a given contact, the contact'
+                                      ' will be returned here.')
     async def get_available_contact_reports(self, request: web.Request):
         contacts = self._api_manager.get_available_contact_reports()
         return web.json_response(contacts)
