@@ -22,6 +22,7 @@ app.contact.ftp.user: caldera_user
 app.contact.tcp: 0.0.0.0:7010
 app.contact.udp: 0.0.0.0:7011
 app.contact.websocket: 0.0.0.0:7012
+objects.planners.default: atomic
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp/caldera
@@ -32,7 +33,6 @@ plugins:
 - compass
 - debrief
 - fieldmanual
-- gameboard
 - manx
 - response
 - sandcat
