@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 import base64
-from unittest.mock import MagicMock, AsyncMock
+from unittest.mock import MagicMock
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -64,6 +64,13 @@ def planner_stub(**kwargs):
             for k, v in kwargs.items():
                 setattr(self, k, v)
     return PlannerStub(**kwargs)
+
+
+def async_wrapper(return_value):
+    """Creates an async method that returns a constant value for mocking purposes."""
+    async def wrap(*args, **kwargs):
+        return return_value
+    return wrap
 
 
 @pytest.fixture
@@ -330,7 +337,7 @@ class TestPlanningService:
 
         assert len(gen) == 2
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
-    
+
     def test_trim_links(self, loop, setup_planning_test, planning_svc):
         ability, agent, operation, _ = setup_planning_test
 
@@ -344,9 +351,9 @@ class TestPlanningService:
             Fact(trait='a.b.e', value='3'),
         ]
 
-        operation.all_facts = AsyncMock(return_value=facts)
+        operation.all_facts = async_wrapper(facts)
         operation.planner = MagicMock()
-        planning_svc.load_module = AsyncMock(return_value=RequirementFake())
+        planning_svc.load_module = async_wrapper(RequirementFake())
         link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
 
         trimmed_links = loop.run_until_complete(planning_svc.trim_links(operation, [link], agent))
