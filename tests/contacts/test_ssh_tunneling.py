@@ -29,8 +29,8 @@ def ssh_contact_base_world():
 
 
 @pytest.fixture
-def ssh_contact(loop, app_svc, contact_svc, data_svc, file_svc, obfuscator):
-    services = app_svc(loop).get_services()
+def ssh_contact(app_svc, contact_svc, data_svc, file_svc, obfuscator):
+    services = app_svc.get_services()
     return SshTunnel(services)
 
 
@@ -45,11 +45,11 @@ class TestContactSsh:
                 print(resp.status)
                 print(await resp.text())
 
-    def test_tunnel(self, loop, ssh_contact):
-        loop.run_until_complete(ssh_contact.start())
-        conn = loop.run_until_complete(asyncssh.connect('127.0.0.1', port=8122, known_hosts=None, username='sandcat',
-                                                        password='s4ndc4t!', config=None))
+    async def test_tunnel(self, ssh_contact):
+        await ssh_contact.start()
+        conn = await asyncssh.connect('127.0.0.1', port=8122, known_hosts=None, username='sandcat',
+                                      password='s4ndc4t!', config=None)
         assert conn and conn.get_extra_info('username') == 'sandcat'
-        listener = loop.run_until_complete(conn.forward_local_port('', 61234, 'localhost', 8888))
+        listener = await conn.forward_local_port('', 61234, 'localhost', 8888)
         assert listener and listener.get_port() == 61234
         listener.close()
