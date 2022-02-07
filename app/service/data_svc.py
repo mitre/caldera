@@ -298,7 +298,7 @@ class DataService(DataServiceInterface, BaseService):
     async def _load_executor_parsers(parsers):
         ps = []
         for module in parsers:
-            ps.append(Parser.load(dict(module=module, relationships=parsers[module])))
+            ps.append(Parser.load(dict(module=module, parserconfigs=parsers[module])))
         return ps
 
     async def _load_sources(self, plugin):
