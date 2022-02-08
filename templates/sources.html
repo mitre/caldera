@@ -166,7 +166,7 @@
                             <template x-for="(fact, index) in filteredFacts" :key="index">
                                 <tr x-on:click="selectedFactIndex = index; showAddFactRow = false;"
                                     x-bind:class="selectedFactIndex === index ? 'selected' : ''">
-                                    <td class="index-column" x-text="index"></td>
+                                    <td x-text="index + 1"></td>
 
                                         <td x-bind:class="(fact.origin_type) ? 'is-size-6 origin-' + fact.origin_type : ''" x-text="fact.origin_type"></td>
 
@@ -321,7 +321,7 @@
                                 </template>
                                 <template x-for="(rule, index) in filteredRules">
                                     <tr x-on:click="selectedRuleIndex = index; showAddRuleRow = false;" x-bind:class="selectedRuleIndex === rule ? 'selected' : ''">
-                                        <td class="index-column" x-text="index"></td>
+                                        <td x-text="index + 1"></td>
 
                                         <td x-show="selectedRuleIndex === index">
                                             <input id="edit-rule-match" class="input is-small" x-model="rule.match" contenteditable>
@@ -481,7 +481,7 @@
 
                                 <template x-for="(rel, index) in filteredRelationships">
                                     <tr x-on:click="selectedRelationshipIndex = index; showAddRelationshipRow = false;" x-bind:class="selectedRelationshipIndex === index ? 'selected' : ''">
-                                        <td class="index-column" x-text="index"></td>
+                                        <td x-text="index + 1"></td>
 
                                         <td x-show="selectedRelationshipIndex !== index" x-text="rel.source?.trait"></td>
                                         <td x-show="selectedRelationshipIndex === index">
