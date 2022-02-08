@@ -169,25 +169,6 @@
                             </div>
                             <div class="field is-horizontal">
                                 <div class="field-label is-small">
-                                    <label class="label">
-                                        <span class="icon is-small"><em class="fas fa-search"></em></span>
-                                    </label>
-                                </div>
-                                <div class="field-body">
-                                    <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
-                                            <input class="input is-small" x-model="searchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false">
-                                                <template x-for="result of searchResults" :key="result.ability_id">
-                                                    <p @click="selectAbility(result)" x-text="result.name"></p>
-                                                </template>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="field is-horizontal">
-                                <div class="field-label is-small">
                                     <label class="label">Tactic</label>
                                 </div>
                                 <div class="field-body">
