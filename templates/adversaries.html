@@ -73,6 +73,7 @@
                     </div>
                 </div>
             </form>
+<<<<<<< HEAD:templates/adversaries.html
             <div>
                 <div class="is-flex m-0">
                     <button class="button is-small mr-2" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
@@ -102,6 +103,91 @@
                 <div class="tactic-breakdown pt-4 pb-4" @click="isTacticBreakdownActive = !isTacticBreakdownActive" title="Click to expand/collapse">
                     <template x-for="tactic in getTacticBreakdown" :key="tactic[0]">
                         <span class="tactic-item has-tooltip-bottom" :class="{ 'active': isTacticBreakdownActive }" x-bind:style="`width: ${tactic[1]}%; background-color: ${hashStringToColor(tactic[0])};`" x-text="`${tactic[0]}  ${tactic[1]}%`"></span>
+=======
+            <div class="control-buttons is-flex is-flex-direction-row">
+                <button class="button is-small" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Add Ability</span>
+                </button>
+                <button class="button is-small" @click="showAddAdversaryModal = true">
+                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span>Add Adversary</span>
+                </button>
+                <div class="vr"></div>
+                <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
+                <button class="button is-small" @click="showObjectiveModal = true">Change</button>
+                <div class="vr"></div>
+                <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
+                <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
+            </div>
+
+            <div class="tactic-breakdown pt-4 pb-4" @click="isHoveringTacticBreakdown = !isHoveringTacticBreakdown">
+                <template x-for="tactic in getTacticBreakdown" :key="tactic[0]">
+                    <span class="tactic-item has-tooltip-bottom" :class="{ 'active': isHoveringTacticBreakdown }" x-bind:style="`width: ${tactic[1]}%; background-color: ${hashStringToColor(tactic[0])};`" x-text="`${tactic[0]}  ${tactic[1]}%`"></span>
+                </template>
+            </div>
+
+            <table x-show="selectedProfileAbilities.length" class="table is-striped is-fullwidth">
+                <thead>
+                    <tr class="ability-row">
+                        <th></th>
+                        <th>Ordering</th>
+                        <th>Name</th>
+                        <th>Tactic</th>
+                        <th>Technique</th>
+                        <th>Executors</th>
+                        <th>Requires</th>
+                        <th>Unlocks</th>
+                        <th>Payload</th>
+                        <th>Cleanup</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="(ability, index) of selectedProfileAbilities">
+                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1, 'row-hover': ability.ability_id === abilityTableDragHoverId }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id">
+                            <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
+                            <td x-text="index + 1"></td>
+                            <td x-text="ability.name"></td>
+                            <td>
+                                <span class="icon-text">
+                                    <span class="icon" x-bind:style="`color: ${hashStringToColor(ability.tactic)}`">
+                                        <em class="fas fa-circle"></em>
+                                    </span>
+                                    <span x-text="ability.tactic"></span>
+                                </span>
+                            </td>
+                            <td x-text="ability.technique_name"></td>
+                            <td>
+                                <template x-for="platform of getExecutorDetail('platforms', ability)">
+                                    <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
+                                        <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
+                                    </span>
+                                </template>
+                            </td>
+                            <td class="has-text-centered" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
+                                <span class=" has-tooltip-arrow no-underline" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
+                                    <span class="icon is-small"><i class="fas fa-lock"></i></span>
+                                </span>
+                            </td>
+                            <td class="has-text-centered" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
+                                    <span class="icon is-small"><i class="fas fa-key"></i></span>
+                                </span>
+                            </td>
+                            <td class="has-text-centered">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
+                                    <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
+                                </span> 
+                            </td>
+                            <td class="has-text-centered">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
+                                    <span class="icon is-small"><i class="fas fa-trash"></i></span>
+                                </span>
+                            </td>
+                            <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAbility(index)"></button></td>
+                        </tr>
+>>>>>>> 8609be55 (Add tactic breakdown to adversary profiles):templates/profiles.html
                     </template>
                 </div>
 
@@ -847,7 +933,11 @@
             undefinedAbilities: [],
             onHoverUnlocks: [],
             onHoverLocks: [],
+<<<<<<< HEAD:templates/adversaries.html
             isTacticBreakdownActive: false,
+=======
+            isHoveringTacticBreakdown: false,
+>>>>>>> 8609be55 (Add tactic breakdown to adversary profiles):templates/profiles.html
 
             // Create a profile
             isEditingProfile: false,
@@ -1454,10 +1544,15 @@
 
             hashStringToColor(str) {
                 let hash = 5381;
+<<<<<<< HEAD:templates/adversaries.html
                 if(str) {
                     for (let i = 0; i < str.length; i++) {
                         hash = ((hash << 5) + hash) + str.charCodeAt(i);
                     }
+=======
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+>>>>>>> 8609be55 (Add tactic breakdown to adversary profiles):templates/profiles.html
                 }
 
                 let r = (hash & 0xFF0000) >> 16;
@@ -1541,6 +1636,28 @@
 
     .row-hover-below {
       border-bottom: 2px solid green;
+    }
+
+    .tactic-breakdown {
+        display: table;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+        transform-style: preserve-3d;
+    }
+
+    .tactic-item {
+        display: table-cell;
+        line-height: 8px;
+        text-indent: -9999px;
+        border-bottom: none !important;
+    }
+    .tactic-item.active {
+        line-height: 30px;
+        text-indent: 6px;
+        font-size: .7em;
     }
 
     .tactic-breakdown {
