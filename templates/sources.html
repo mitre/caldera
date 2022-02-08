@@ -33,7 +33,7 @@
         <!-- CONTENT -->
 
         <template x-if="!selectedSourceId">
-            <p class="is-flex is-justify-content-center">Select a fact source to get started</p>
+            <p class="is-flex is-justify-content-center is-italic">Select a fact source to get started</p>
         </template>
 
         <template x-if="selectedSourceId">
@@ -67,6 +67,12 @@
                             <button class="button is-small is-primary" @click="openModal = { isOpen: true, name: 'Add From Ability' }; filterAbilities()">
                                 <span class="icon"><em class="fas fa-plus"></em></span>
                                 <span>Add from Ability</span>
+                            </button>
+                        </div>
+                        <div class="level-item pr-2">
+                            <button class="button is-small is-primary" @click="openModal = { isOpen: true, name: 'Add From Adversary' }; getAdversaries();">
+                                <span class="icon"><em class="fas fa-plus"></em></span>
+                                <span>Add From Adversary</span>
                             </button>
                         </div>
                         <div class="level-item">
@@ -561,7 +567,7 @@
                 </footer>
             </div>
         </template>
-        <template x-if="openModal.name.includes('Ability')" x-data="{selectedFactFromAbility: null}">
+        <template x-if="openModal.name.includes('Ability')" x-data="{selectedAbility: null}">
             <div class="modal-card" style="z-index: 20">
                 <header class="modal-card-head">
                     <p class="modal-card-title">Add Fact from Ability </p>
@@ -624,7 +630,7 @@
                         <strong x-show="filteredAbilities.length">Select an ability</strong>
                     </div>
                     <template x-for="ability in filteredAbilities" :key="ability.ability_id">
-                        <div class="box is-hoverable mb-2 mr-2 p-3 has-background-black-ter" x-bind:class="{'selected': selectedFactFromAbility === ability}" @click="selectedFactFromAbility = ability">
+                        <div class="box selectable mb-2 mr-2 p-3 has-background-black-ter" x-bind:class="{'selected': selectedAbility === ability}" @click="selectedAbility = ability">
                             <p>
                                 <span class="has-text-weight-bold" x-text="ability.name"></span>
                                 <span x-text="`${ability.technique_id}`"></span>
@@ -655,11 +661,80 @@
                         </div>
                         <div class="level-right">
                             <div class="level-item">
-                                <button class="button is-primary is-small" @click="addFromAbility(selectedFactFromAbility.factTraits); openModal.isOpen = false">
+                                <button class="button is-primary is-small" @click="addFromAbility(selectedAbility.factTraits); openModal.isOpen = false">
                                     <span>Add Facts</span>
                                 </button>
                             <div>
                         </div>
+                    </nav>
+                </footer>
+            </div>
+        </template>
+        <template x-if="openModal.name.includes('Adversary')" x-data="{selectedAdversary: ''}">
+            <div class="modal-card" style="z-index: 20">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Add Fact from Adversary</p>
+                </header>
+                <section class="modal-card-body">
+                    <form>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small">
+                                <label class="label" for="sourcesAdversaryDropdown">Adversary</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <div class="select is-small is-fullwidth">
+                                            <select id="sourcesAdversaryDropdown" x-on:change="filteredAbilities = []; getAdversaryFacts(selectedAdversary)" x-model="selectedAdversary">
+                                            <option value="" default disabled selected>Select one...</option>
+                                            <template x-for="adversary of adversaries" :key="adversary.adversary_id">
+                                                <option x-bind:value="adversary.adversary_id" x-text="adversary.name" x-bind:title="adversary.description"></option>
+                                            </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <template x-if="selectedAdversary && filteredAbilities.length > 0">
+                        <span>
+                            <hr>
+                            <div class="is-flex is-justify-content-space-between mb-2">
+                                <strong x-show="filteredAbilities.length" x-text="'Adversary Abilities'"></strong>
+                            </div>
+                            <template x-for="ability in filteredAbilities" :key="ability.ability_id">
+                                <div class="box mb-2 mr-2 p-3 has-background-black-ter">
+                                    <p>
+                                        <span class="has-text-weight-bold" x-text="ability.name"></span>
+                                        <span x-text="`${ability.technique_id}`"></span>
+                                    </p>
+                                    <p x-show="ability.factTraits" class="is-italic is-size-7">
+                                        <span>Facts: </span>
+                                        <template x-for="fact in ability.factTraits">
+                                            <span class="has-background-warning has-text-black mr-2 px-1" x-text="`${fact}`"></span>
+                                        </template>
+                                    </p>
+                                    <p class="is-size-7" x-text="ability.description"></p>
+                                </div>
+                            </template>
+                        </span>
+                    </template>
+                </section>
+                <footer class="modal-card-foot">
+                    <nav class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button class="button is-small" @click="openModal.isOpen = false">Done</button>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-primary is-small" @click="addFromAdversary(); openModal.isOpen = false">
+                                    <span>Add All Facts</span>
+                                </button>
+                                <div>
+                                </div>
                     </nav>
                 </footer>
             </div>
@@ -701,6 +776,9 @@
                 tactic: '',
                 technique: null
             },
+            abilities: [],
+            adversaries: [],
+
             factIndexToDelete: -1,
             ruleIndexToDelete: -1,
             relationshipIndexToDelete: -1,
@@ -820,6 +898,32 @@
                         });
                     } else {
                         toast(`Fact ${val} not added as it already exists.`, true);
+                    }
+                });
+            },
+
+            getAdversaries() {
+                apiV2('GET', '/api/v2/adversaries').then((adversaries) => {
+                    this.adversaries = adversaries;
+                    return apiV2('GET', '/api/v2/abilities');
+                }).then((abilities) => {
+                    this.abilities = abilities;
+                }).catch((error) => {
+                    toast('Error getting adversaries', false);
+                    console.error(`Error getting adversaries: ${error}`);
+                });
+            },
+
+            getAdversaryFacts(selectedAdversaryID) {
+                const selectedAdversary = this.adversaries.find((adversary) => adversary.adversary_id === selectedAdversaryID);
+                this.filteredAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
+                this.getAbilityFacts();
+            },
+
+            addFromAdversary() {
+                this.filteredAbilities.forEach((a) => {
+                    if (a.factTraits) {
+                        this.addFromAbility(a.factTraits);
                     }
                 });
             },
@@ -967,7 +1071,7 @@
         --decisions-color: #4fdcfc;
     }
 
-    #sourcePage .box:hover, .box.selected {
+    #sourcePage .box.selectable:hover, .box.selected {
         cursor: hand;
         border: 2px solid white;
     }
