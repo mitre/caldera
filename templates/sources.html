@@ -97,7 +97,7 @@
                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                 <span>Add Fact</span>
                             </button>
-                            <div class="field mr-2" x-show="selectedSource.facts && selectedSource.facts.length >= 1 || showAddFactRow">
+                            <div class="field mr-2">
                                 <p class="control has-icons-left">
                                     <input class="input is-small"
                                            id="fact-search"
@@ -120,7 +120,7 @@
                                 <col width="20%">
                             </colgroup>
                             <thead>
-                            <tr class="table-header">
+                            <tr>
                                 <th></th>
                                 <th>Origin</th>
                                 <th>Fact Trait</th>
@@ -129,12 +129,12 @@
                                 <th></th>
                             </tr>
                             </thead>
-                            <tbody x-show="filteredFacts.length === 0">
+                            <tbody x-show="filteredFacts.length === 0 && !showAddFactRow">
                             <tr>
                                 <td class="is-italic text-align-center" colspan="6">No facts in this source.</td>
                             </tr>
                             </tbody>
-                            <tbody x-show="filteredFacts.length > 0" @click.outside="selectedFactIndex = -1; factIndexToDelete = -1; getSources();">
+                            <tbody x-show="filteredFacts.length > 0 || showAddFactRow" @click.outside="selectedFactIndex = -1; factIndexToDelete = -1; getSources();">
                             <tr x-data="{ newFact: EMPTY_FACT_OBJECT }" x-show="showAddFactRow">
                                 <td></td>
                                 <td></td>
@@ -154,7 +154,7 @@
                                     <button type="button"
                                             class="button is-small is-primary"
                                             x-on:click="addFact(newFact); newFact = EMPTY_FACT_OBJECT">
-                                        + Add Fact
+                                        Add
                                     </button>
                                     <button type="button"
                                             class="button is-small"
@@ -168,14 +168,17 @@
                                     x-bind:class="selectedFactIndex === index ? 'selected' : ''">
                                     <td x-text="index + 1"></td>
 
-                                        <td x-bind:class="(fact.origin_type) ? 'is-size-6 origin-' + fact.origin_type : ''" x-text="fact.origin_type"></td>
+                                    <td><span class="tag" x-bind:class="(fact.origin_type) ? 'origin-' + fact.origin_type : ''" x-text="fact.origin_type"></span></td>
 
-                                        <td x-show="selectedFactIndex !== index" x-text="fact.trait"></td>
+                                        <td x-show="selectedFactIndex !== index">
+                                            <span class="tag is-dark" x-text="fact.trait"></span>
+                                        </td>
                                         <td x-show="selectedFactIndex === index">
                                             <input id="edit-fact-trait" class="input is-small" x-model="fact.trait" contenteditable>
                                         </td>
 
-                                        <td x-show="selectedFactIndex !== index" x-text="fact.value"></td>
+                                        <td x-show="selectedFactIndex !== index" class="is-italic" x-text="fact.value"></span>
+                                        </td>
                                         <td x-show="selectedFactIndex === index">
                                             <input id="edit-fact-value" class="input is-small" x-model="fact.value" contenteditable>
                                         </td>
@@ -270,22 +273,20 @@
                                 <th></th>
                             </tr>
                             </thead>
-                            <tbody x-show="filteredRules.length === 0">
+                            <tbody x-show="filteredRules.length === 0 && !showAddRuleRow">
                             <tr>
                                 <td class="is-italic text-align-center" colspan="6">No rules in this source.</td>
                             </tr>
                             </tbody>
-                            <tbody x-show="filteredRules.length >0" @click.outside="selectedRuleIndex = -1; ruleIndexToDelete = -1; getSources();">
+                            <tbody x-show="filteredRules.length > 0 || showAddRuleRow" @click.outside="selectedRuleIndex = -1; ruleIndexToDelete = -1; getSources();">
                             <template x-if="showAddRuleRow">
                                 <tr x-data="{newRule: EMPTY_RULE_OBJECT}">
                                     <td></td>
                                     <td>
-                                        <input id="new-rule-match" class="input is-small" x-model="newRule.match"
-                                               contenteditable>
+                                        <input id="new-rule-match" class="input is-small" x-model="newRule.match" contenteditable>
                                     </td>
                                     <td>
-                                        <input id="new-rule-trait" class="input is-small" x-model="newRule.trait"
-                                               contenteditable>
+                                        <input id="new-rule-trait" class="input is-small" x-model="newRule.trait" contenteditable>
                                     </td>
                                     <td>
                                         <div class="toggleContainer is-flex is-justify-content-center"
@@ -309,7 +310,7 @@
                                             <button type="button"
                                                     class="button is-small is-primary"
                                                     x-on:click="addRule(newRule); newRule = EMPTY_RULE_OBJECT">
-                                                + Add Rule
+                                                Add
                                             </button>
                                             <button type="button"
                                                     class="button is-small"
@@ -326,16 +327,18 @@
                                         <td x-show="selectedRuleIndex === index">
                                             <input id="edit-rule-match" class="input is-small" x-model="rule.match" contenteditable>
                                         </td>
-                                        <td x-show="selectedRuleIndex !== index" x-text="rule.match"></td>
+                                        <td x-show="selectedRuleIndex !== index" class="is-italic" x-text="rule.match"></td>
 
                                         <td x-show="selectedRuleIndex === index">
                                             <input id="edit-rule-trait" class="input is-small" x-model="rule.trait" contenteditable>
                                         </td>
-                                        <td x-show="selectedRuleIndex !== index" x-text="rule.trait"></td>
+                                        <td x-show="selectedRuleIndex !== index">
+                                            <span class="tag is-dark" x-text="rule.trait"></span>
+                                        </td>
 
                                         <td x-show="selectedRuleIndex === index">
                                             <div class="toggleContainer is-flex is-justify-content-center">
-                                                <label class="has-text-danger" for="toggleRuleAction">DENY</label>
+                                                <label for="toggleRuleAction"><span class="tag is-danger">DENY</span></label>
                                                 <div class="toggleSwitch mx-2">
                                                     <input type="checkbox"
                                                         id="toggleRuleAction"
@@ -347,12 +350,13 @@
                                                         <span x-bind:class="rule.action === 'ALLOW' ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
                                                     </span>
                                                 </div>
-                                                <label class="has-text-success" for="toggleAction">ALLOW</label>
+                                                <label class="has-text-success" for="toggleAction"><span class="tag is-success">ALLOW</span></label>
                                             </div>
                                         </td>
-                                        <td x-show="selectedRuleIndex !== index" class="text-align-center"
-                                            x-bind:class="rule.action === 'ALLOW' ? 'has-text-success' : 'has-text-danger'"
-                                            x-text="rule.action">
+                                        <td x-show="selectedRuleIndex !== index" class="text-align-center">
+                                            <span class="tag"
+                                                  x-bind:class="rule.action === 'ALLOW' ? 'is-success' : 'is-danger'"
+                                                  x-text="rule.action"></span>
                                         </td>
 
                                     <td class="has-text-right"
@@ -445,12 +449,12 @@
                                 <th></th>
                             </tr>
                             </thead>
-                            <tbody x-show="filteredRelationships.length === 0">
+                            <tbody x-show="filteredRelationships.length === 0 && !showAddRelationshipRow">
                             <tr>
                                 <td class="is-italic text-align-center" colspan="6">No relationships in this source.</td>
                             </tr>
                             </tbody>
-                            <tbody x-show="filteredRelationships.length > 0" @click.outside="selectedRelationshipIndex = -1; relationshipIndexToDelete = -1; getSources();">
+                            <tbody x-show="filteredRelationships.length > 0 || showAddRelationshipRow" @click.outside="selectedRelationshipIndex = -1; relationshipIndexToDelete = -1; getSources();">
                             <tr x-show="showAddRelationshipRow">
                                 <td></td>
                                 <td>
@@ -469,7 +473,7 @@
                                     <button type="button"
                                             class="button is-small is-primary"
                                             x-on:click.stop="addRelationship(newRelationship)">
-                                        + Add Relationship
+                                        Add
                                     </button>
                                     <button type="button"
                                             class="button is-small"
@@ -478,8 +482,7 @@
                                     </button>
                                 </td>
                             </tr>
-
-                                <template x-for="(rel, index) in filteredRelationships">
+                            <template x-for="(rel, index) in filteredRelationships">
                                     <tr x-on:click="selectedRelationshipIndex = index; showAddRelationshipRow = false;" x-bind:class="selectedRelationshipIndex === index ? 'selected' : ''">
                                         <td x-text="index + 1"></td>
 
@@ -904,11 +907,12 @@
                             trait: val,
                             value: '',
                             score: 1
-                        });
+                        }, true);
                     } else {
-                        toast(`Fact ${val} not added as it already exists.`, true);
+                        toast(`Fact ${val} not added as it already exists.`, false);
                     }
                 });
+                toast('Added facts to source', true);
             },
 
             getAdversaries() {
@@ -951,11 +955,11 @@
                 });
             },
 
-            addFact(newFact) {
+            addFact(newFact, bulkAdd = false) {
                 const updatedSource = { ...this.selectedSource };
                 updatedSource.facts.push(newFact);
                 apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
-                    toast('Updated source', res);
+                    if (!bulkAdd) toast('Updated source', res);
                     this.showAddFactRow = false;
                     this.getSources();
                 }).catch((error) => {
@@ -1126,29 +1130,34 @@
         cursor: pointer;
     }
 
+    #sourcePage table td {
+        vertical-align: middle !important;
+        text-align: center;
+    }
+
     /*IMPORTED*/
-    #sourcePage td.origin-IMPORTED {
-        color: #848484;
+    #sourcePage span.origin-IMPORTED {
+        background-color: transparent;
     }
 
     /*SEEDED*/
-    #sourcePage td.origin-SEEDED {
-        color: #4a9;
+    #sourcePage span.origin-SEEDED {
+        background-color: #4a9;
     }
 
     /*LEARNED*/
-    #sourcePage td.origin-LEARNED {
-        color: #ffc500;
+    #sourcePage span.origin-LEARNED {
+        background-color: #ffc500;
     }
 
     /*USER*/
-    #sourcePage td.origin-USER {
-        color: #a05195;
+    #sourcePage span.origin-USER {
+        background-color: #a05195;
     }
 
     /*DOMAIN*/
-    #sourcePage td.origin-DOMAIN {
-        color: cornflowerblue;
+    #sourcePage span.origin-DOMAIN {
+        background-color: cornflowerblue;
     }
 
     #select-source {
