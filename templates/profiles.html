@@ -76,9 +76,9 @@
                 <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
             </div>
 
-            <div class="tactic-breakdown pt-4 pb-4" @click="isHoveringTacticBreakdown = !isHoveringTacticBreakdown">
+            <div class="tactic-breakdown pt-4 pb-4" @click="isTacticBreakdownActive = !isTacticBreakdownActive">
                 <template x-for="tactic in getTacticBreakdown" :key="tactic[0]">
-                    <span class="tactic-item has-tooltip-bottom" :class="{ 'active': isHoveringTacticBreakdown }" x-bind:style="`width: ${tactic[1]}%; background-color: ${hashStringToColor(tactic[0])};`" x-text="`${tactic[0]}  ${tactic[1]}%`"></span>
+                    <span class="tactic-item has-tooltip-bottom" :class="{ 'active': isTacticBreakdownActive }" x-bind:style="`width: ${tactic[1]}%; background-color: ${hashStringToColor(tactic[0])};`" x-text="`${tactic[0]}  ${tactic[1]}%`"></span>
                 </template>
             </div>
 
@@ -696,7 +696,7 @@
             needsParser: [],
             onHoverUnlocks: [],
             onHoverLocks: [],
-            isHoveringTacticBreakdown: false,
+            isTacticBreakdownActive: false,
 
             // Create a profile
             isEditingProfile: false,
