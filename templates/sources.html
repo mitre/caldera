@@ -31,7 +31,7 @@
         </form>
 
         <!-- CONTENT -->
-        
+
         <template x-if="!selectedSourceId">
             <p class="is-flex is-justify-content-center">Select a fact source to get started</p>
         </template>
@@ -62,7 +62,13 @@
                             <button class="button is-small" @click="isEditingSourceName = false">Cancel</button>
                         </div>
                     </div>
-                    <div class="level-right">  
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small is-primary" @click="openModal = { isOpen: true, name: 'Add From Ability' }; filterAbilities()">
+                                <span class="icon"><em class="fas fa-plus"></em></span>
+                                <span>Add from Ability</span>
+                            </button>
+                        </div>
                         <div class="level-item">
                             <button class="button is-small is-primary" @click="duplicateSource(selectedSource)">
                                 <span class="icon"><em class="fas fa-copy"></em></span>
@@ -70,7 +76,7 @@
                             </button>
                         </div>
                         <div class="level-item">
-                            <button class="button is-small is-danger is-outlined" @click="isConfirmSourceDeleteModalOpen = true">
+                            <button class="button is-small is-danger is-outlined" @click="openModal = { isOpen: true, name: 'Delete Source' }">
                                 <span class="icon"><em class="fas fa-trash"></em></span>
                                 <span>Delete Source</span>
                             </button>
@@ -152,22 +158,22 @@
                                         </button>
                                     </td>
                                 </tr>
-                                <template x-for="(fact, index) in filteredFacts" :key="fact.unique">
+                                <template x-for="(fact, index) in filteredFacts" :key="index">
                                     <tr x-on:click="selectedFactIndex = index; showAddFactRow = false;" x-bind:class="selectedFactIndex === index ? 'selected' : ''">
                                         <td class="index-column" x-text="index"></td>
 
                                         <td x-bind:class="(fact.origin_type) ? 'is-size-6 origin-' + fact.origin_type : ''" x-text="fact.origin_type"></td>
-                                        
+
                                         <td x-show="selectedFactIndex !== index" x-text="fact.trait"></td>
                                         <td x-show="selectedFactIndex === index">
                                             <input id="edit-fact-trait" class="input is-small" x-model="fact.trait" contenteditable>
                                         </td>
-                                        
+
                                         <td x-show="selectedFactIndex !== index" x-text="fact.value"></td>
                                         <td x-show="selectedFactIndex === index">
                                             <input id="edit-fact-value" class="input is-small" x-model="fact.value" contenteditable>
                                         </td>
-                                        
+
                                         <td x-text="fact.score"></td>
 
                                         <td class="has-text-right" x-show="selectedFactIndex !== index && factIndexToDelete !== index">
@@ -193,7 +199,7 @@
                                                 Cancel
                                             </button>
                                         </td>
-                                        
+
                                         <td class="has-text-right" x-show="factIndexToDelete === index">
                                             <div class="is-flex is-justify-content-end">
                                                 <p class="m-1 mr-3">Delete fact?</p>
@@ -362,7 +368,7 @@
                                                 Cancel
                                             </button>
                                         </td>
-                                        
+
                                         <td class="has-text-right" x-show="ruleIndexToDelete === index">
                                             <div class="is-flex is-justify-content-end">
                                                 <p class="m-1 mr-3">Delete rule?</p>
@@ -478,7 +484,7 @@
                                         <td x-show="selectedRelationshipIndex === index">
                                             <input id="edit-rel-trait" class="input is-small" x-model="rel.target.trait" contenteditable>
                                         </td>
-                                        
+
                                         <td class="has-text-right" x-show="selectedRelationshipIndex !== index && relationshipIndexToDelete !== index">
                                             <button class="button is-small" @click.stop="relationshipIndexToDelete = index">
                                                 <span class="icon">
@@ -502,7 +508,7 @@
                                                 Cancel
                                             </button>
                                         </td>
-                                        
+
                                         <td class="has-text-right" x-show="relationshipIndexToDelete === index">
                                             <div class="is-flex is-justify-content-end">
                                                 <p class="m-1 mr-3">Delete relationship?</p>
@@ -524,35 +530,140 @@
         </template>
     </div>
 
-    <div class="modal" x-bind:class="{ 'is-active': isConfirmSourceDeleteModalOpen }">
-        <div class="modal-background" @click="isConfirmSourceDeleteModalOpen = false"></div>
-        <div class="modal-card" style="z-index: 20">
-            <header class="modal-card-head">
-                <p class="modal-card-title">Delete Fact Source?</p>
-            </header>
-            <section class="modal-card-body">
-                <p>
-                    Are you sure you want to delete this fact source? This cannot be undone.
-                </p>
-            </section>
-            <footer class="modal-card-foot">
-                <nav class="level">
-                    <div class="level-left">
-                        <div class="level-item">
-                            <button class="button is-small" @click="isConfirmSourceDeleteModalOpen = false">Cancel</button>
+    <div class="modal" x-bind:class="{ 'is-active': openModal.isOpen }">
+        <div class="modal-background" @click="openModal.isOpen = false"></div>
+        <template x-if="openModal.name.includes('Delete')">
+            <div class="modal-card" style="z-index: 20">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Delete Fact Source?</p>
+                </header>
+                <section class="modal-card-body">
+                    <p>
+                        Are you sure you want to delete this fact source? This cannot be undone.
+                    </p>
+                </section>
+                <footer class="modal-card-foot">
+                    <nav class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button class="button is-small" @click="openModal.isOpen = false">Cancel</button>
+                            </div>
                         </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-danger is-small" @click="deleteSource(); openModal.isOpen = false;">
+                                    <span class="icon"><em class="fas fa-trash"></em></span>
+                                    <span class="has-text-weight-bold">Delete Source</span>
+                                </button>
+                                <div>
+                                </div>
+                    </nav>
+                </footer>
+            </div>
+        </template>
+        <template x-if="openModal.name.includes('Ability')" x-data="{selectedFactFromAbility: null}">
+            <div class="modal-card" style="z-index: 20">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Add Fact from Ability </p>
+                </header>
+                <section class="modal-card-body">
+                    <form>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small">
+                                <label class="label"><span class="icon is-small"><em class="fas fa-search"></em></span></label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <input class="input is-small" x-model="abilitySearch.query" placeholder="Search for an ability..." x-on:keyup="filterAbilities()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small">
+                                <label class="label">Tactic</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <div class="select is-small is-fullwidth">
+                                            <select id="link-tactic" x-model="abilitySearch.tactic" x-on:change="filterAbilities()">
+                                                <option default value="">All tactics</option>
+                                                <template x-for="tactic in tactics" :key="tactic">
+                                                    <option x-text="tactic"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small">
+                                <label class="label">Technique</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <div class="select is-small is-fullwidth">
+                                            <select id="link-technique" x-model="abilitySearch.technique" x-on:change="filterAbilities()">
+                                                <option default value="">All techniques</option>
+                                                <template x-for="technique in techniques" :key="technique">
+                                                    <option x-text="technique"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <hr>
+                    <div class="is-flex is-justify-content-space-between mb-2">
+                        <strong x-show="filteredAbilities.length">Select an ability</strong>
                     </div>
-                    <div class="level-right">
-                        <div class="level-item">
-                            <button class="button is-danger is-small" @click="deleteSource(); isConfirmSourceDeleteModalOpen = false;">
-                                <span class="icon"><em class="fas fa-trash"></em></span>
-                                <span class="has-text-weight-bold">Delete Source</span>
-                            </button>
-                        <div>
-                    </div>
-                </nav>
-            </footer>
-        </div>
+                    <template x-for="ability in filteredAbilities" :key="ability.ability_id">
+                        <div class="box is-hoverable mb-2 mr-2 p-3 has-background-black-ter" x-bind:class="{'selected': selectedFactFromAbility === ability}" @click="selectedFactFromAbility = ability">
+                            <p>
+                                <span class="has-text-weight-bold" x-text="ability.name"></span>
+                                <span x-text="`${ability.technique_id}`"></span>
+                            </p>
+                            <p x-show="ability.factTraits" class="is-italic is-size-7">
+                                <span>Facts: </span>
+                                <template x-for="fact in ability.factTraits">
+                                    <span class="has-background-warning has-text-black mr-2 px-1" x-text="`${fact}`"></span>
+                                </template>
+                            </p>
+                            <p class="is-size-7" x-text="ability.description"></p>
+                        </div>
+                    </template>
+                    <template x-if="filteredAbilities.length === 0">
+                        <p class="is-size-7 is-italic ml-4 text-align-center">No results, try
+                            <button class="no-style button-link is-italic has-text-white is-size-7 px-0" alt="click to reset search" @click="resetSearch()">
+                                resetting search
+                            </button>?
+                        </p>
+                    </template>
+                </section>
+                <footer class="modal-card-foot">
+                    <nav class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button class="button is-small" @click="openModal.isOpen = false">Done</button>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-primary is-small" @click="addFromAbility(selectedFactFromAbility.factTraits); openModal.isOpen = false">
+                                    <span>Add Facts</span>
+                                </button>
+                            <div>
+                        </div>
+                    </nav>
+                </footer>
+            </div>
+        </template>
     </div>
 
 </div>
@@ -578,7 +689,18 @@
 
             isEditingSourceName: false,
 
-            isConfirmSourceDeleteModalOpen: false,
+            openModal: {
+                isOpen: false,
+                name: ''
+            },
+            tactics: [],
+            techniques: [],
+            filteredAbilities: [],
+            abilitySearch: {
+                query: '',
+                tactic: '',
+                technique: null
+            },
             factIndexToDelete: -1,
             ruleIndexToDelete: -1,
             relationshipIndexToDelete: -1,
@@ -625,20 +747,20 @@
                 input = input.toLowerCase();
                 this.filteredRelationships = this.selectedSource.relationships.filter((r) => (r.source.trait.toLowerCase().includes(input) || r.target.trait.toLowerCase().includes(input)));
             },
-            
-            createSource(newSourceName) {
+
+            createSource() {
                 const newSource = {
                     name: 'New source',
                     facts: [],
                     rules: [],
                     relationships: []
                 };
-                apiV2('POST', '/api/v2/sources', newSource).then((newSource) => {
+                apiV2('POST', '/api/v2/sources', newSource).then((src) => {
                     toast('Added new fact source', true);
                     this.isEditingSourceName = true;
-                    this.sources.push(newSource);
-                    this.selectedSourceId = newSource.id;
-                    this.selectedSource = newSource;
+                    this.sources.push(src);
+                    this.selectedSourceId = src.id;
+                    this.selectedSource = src;
                     this.handleSelectSource();
                     this.$nextTick(() => {
                         document.getElementById('sourceName').focus();
@@ -649,12 +771,65 @@
                 });
             },
 
+            getFilters(abilities) {
+                abilities.forEach((a) => {
+                    this.tactics.push(a.tactic);
+                    this.techniques.push(`${a.technique_id} | ${a.technique_name}`);
+                });
+                this.tactics = [...new Set(this.tactics)].sort();
+                this.techniques = [...new Set(this.techniques)].sort();
+            },
+
+            filterAbilities() {
+                apiV2('GET', '/api/v2/abilities').then((abilities) => {
+                    this.getFilters(abilities);
+                    this.filteredAbilities = getFilteredAbilities(abilities, this.abilitySearch.query, this.abilitySearch.tactic, this.abilitySearch.technique);
+                    this.getAbilityFacts();
+                }).catch((error) => {
+                    toast('There was an error getting abilities', false);
+                    console.error(error);
+                });
+            },
+
+            getAbilityFacts() {
+                let abilitiesWithFacts = [];
+                this.filteredAbilities.forEach((a) => {
+                    let factTraits = [];
+                    if (a.executors) {
+                        a.executors.forEach((e) => {
+                            if (e.command) {
+                                const m = [...e.command.matchAll(/#{(.*?)}/gm)];
+                                if (m && m.length > 0) factTraits = factTraits.concat(m.map((variable) => variable[1])); // find all abilities where an executor has a command with a ${} fact variable
+                            }
+                        });
+                        if (factTraits.length > 0) abilitiesWithFacts.push({ ...a, factTraits: [...new Set(factTraits)] });
+                    }
+                });
+                this.filteredAbilities = abilitiesWithFacts;
+            },
+
+            addFromAbility(factTraits) { // add all facts found from abilities
+                const uniqueFacts = this.selectedSource.facts.map((f) => f.trait);
+                this.openModal.isOpen = false;
+                factTraits.forEach((val) => {
+                    if (!uniqueFacts.includes(val)) { // source should not have more than one of the same fact value
+                        this.addFact({
+                            trait: val,
+                            value: '',
+                            score: 1
+                        });
+                    } else {
+                        toast(`Fact ${val} not added as it already exists.`, true);
+                    }
+                });
+            },
+
             duplicateSource(source) {
                 const newSource = { ...source, name: `${source.name} (copy)`, id: '' };
-                apiV2('POST', '/api/v2/sources', newSource).then((newSource) => {
-                    this.sources.push(newSource);
-                    this.selectedSourceId = newSource.id;
-                    this.selectedSource = newSource;
+                apiV2('POST', '/api/v2/sources', newSource).then((src) => {
+                    this.sources.push(src);
+                    this.selectedSourceId = src.id;
+                    this.selectedSource = src;
                     this.handleSelectSource();
                     toast('Duplicated fact source', true);
                 }).catch((error) => {
@@ -774,6 +949,11 @@
                     console.error(error);
                 });
             },
+
+            resetSearch() {
+                this.abilitySearch = { query: '', tactic: '', technique: null };
+                this.filterAbilities();
+            }
         };
     }
 
@@ -787,11 +967,17 @@
         --decisions-color: #4fdcfc;
     }
 
-    #sourcePage .edit-field {
-        border-radius: 5px;
-        width: 55px;
-        height: 50px;
-        padding: 5px;
+    #sourcePage .box:hover, .box.selected {
+        cursor: hand;
+        border: 2px solid white;
+    }
+
+    #sourcePage .box span {
+        word-break: break-all;
+    }
+
+    #sourcePage .box p {
+        word-break: break-word;
     }
 
     #sourcePage .text-align-center {
@@ -804,38 +990,9 @@
         box-shadow: none;
     }
 
-    #sourcePage .sources-menu-container {
-        overflow-x: scroll;
-        padding-bottom: 20px;
-    }
-
-    #sourcePage .source-menu-links {
-        color: white;
-        cursor: pointer;
-        display: flex;
-        justify-content: flex-start;
-        align-items: center;
-        width: 7em;
-        padding: 15px;
-        height: fit-content;
-        flex-flow: column wrap;
-    }
-
-    #sourcePage .source-menu-links:hover {
-        background-color: var(--primary-color);
-        border-radius: 5px;
-    }
-
-    #sourcePage .source-menu-links.active i, .source-menu-links.active span {
-        /*font-size: 2.5em;*/
-        /*color: rgb(248, 193, 69);*/
-        color: var(--decisions-color);
-        font-weight: 600;
-    }
-
-    #sourcePage .source-menu-links i {
-        font-size: 2em;
-        padding-bottom: 5px;
+    #sourcePage button.no-style.button-link {
+        cursor: hand;
+        text-decoration: underline;
     }
 
     #sourcePage .collapsible-header button {
