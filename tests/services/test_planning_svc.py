@@ -333,6 +333,14 @@ class TestPlanningService:
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
 
     async def test_trim_links(self, setup_planning_test, planning_svc):
+        """
+        This test covers both remove_links_with_unset_variables and remove_links_missing_requirements. 
+        It uses a fact set that causes add_test_variants to create three links. One of which is the original 
+        that has not been populated with facts, this one gets pruned off by remove_links_with_unset_variables. 
+        Of the remaining two links that are populated, one is pruned off by a requirement that requires that 
+        the character 0 is in the link's command. The tests show that only one link is returned by trim_links 
+        and that the returned link is the one that is populated and adheres to the requirement.
+        """
         ability, agent, operation, _ = setup_planning_test
 
         link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability,
