@@ -44,3 +44,9 @@ class TestContactsApi:
     async def test_nonexistent_get_contact_report(self, api_v2_client, api_cookies, contact_report_data):
         resp = await api_v2_client.get('/api/v2/contacts/invalid_contact', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
+
+    async def test_get_available_contact_report(self, api_v2_client, api_cookies, contact_report_data):
+        resp = await api_v2_client.get('/api/v2/contacts', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        output = await resp.json()
+        assert output == ['HTTP', 'HTML']
