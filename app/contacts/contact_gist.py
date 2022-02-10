@@ -71,7 +71,7 @@ class Contact(BaseWorld):
         else:
             self.log.warn('No Github Gist personal API token provided. Gist C2 contact will not be started.')
 
-    async def _start_operation_loop(self):
+    def _start_operation_loop(self):
         loop = asyncio.get_event_loop()
         loop.create_task(self.gist_operation_loop())
 
