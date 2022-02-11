@@ -875,7 +875,7 @@
                     // Get all parser types from executors
                     ability.executors.forEach((executor) => {
                         executor.parsers.forEach((parser) => {
-                            enableTypes = enableTypes.concat(parser.relationships.map((rel) => rel.source));
+                            enableTypes = enableTypes.concat(parser.parserconfigs.map((rel) => rel.source));
                         });
                     });
 
