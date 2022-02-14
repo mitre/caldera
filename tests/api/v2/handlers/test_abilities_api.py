@@ -25,7 +25,8 @@ def new_ability_payload():
             'repeatable': False,
             'requirements': [],
             'singleton': False,
-            'plugin': ''
+            'plugin': '',
+            'delete_payload': True,
             }
 
 
