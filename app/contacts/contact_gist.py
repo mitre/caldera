@@ -13,7 +13,7 @@ from app.utility.base_world import BaseWorld
 
 def api_access(func):
     async def process(*args, **kwargs):
-        async with aiohttp.ClientSession(headers=dict(Authorization='token {}'.format(args[0].key)),
+        async with aiohttp.ClientSession(headers=dict(Authorization='token {}'.format(args[0].token)),
                                          connector=aiohttp.TCPConnector(verify_ssl=False)) as session:
             kwargs['session'] = session
             return await func(*args, **kwargs)
@@ -21,6 +21,9 @@ def api_access(func):
 
 
 class Contact(BaseWorld):
+    # Reference: https://github.blog/changelog/2021-03-31-authentication-token-format-updates-are-generally-available/
+    VALID_TOKEN_FORMATS = ['^[a-fA-F0-9]{40,255}$', '^ghp_[A-Za-z0-9_]{36,251}$']
+
     class GistUpload:
         def __init__(self, upload_id, filename, num_chunks):
             self.upload_id = upload_id
@@ -48,19 +51,29 @@ class Contact(BaseWorld):
         self.file_svc = services.get('file_svc')
         self.contact_svc = services.get('contact_svc')
         self.log = self.create_logger('contact_gist')
-        self.key = ''
+        self.token = ''
 
         # Stores uploaded file chunks. Maps paw to dict that maps upload ID to GistUpload object
         self.pending_uploads = defaultdict(lambda: dict())
 
     def retrieve_config(self):
-        return self.key
+        return self.token
 
     async def start(self):
-        if await self.valid_config():
-            self.key = self.get_config('app.contact.gist')
-            loop = asyncio.get_event_loop()
-            loop.create_task(self.gist_operation_loop())
+        token = self.get_config('app.contact.gist', '').strip()
+        if token:
+            if self.valid_config(token):
+                self.token = token
+                self.log.debug('Github Gist personal API token provided. Starting Gist C2 contact.')
+                self._start_operation_loop()
+            else:
+                self.log.error('Invalid Github Gist personal API token provided. Gist C2 contact will not be started.')
+        else:
+            self.log.warn('No Github Gist personal API token provided. Gist C2 contact will not be started.')
+
+    def _start_operation_loop(self):
+        loop = asyncio.get_event_loop()
+        loop.create_task(self.gist_operation_loop())
 
     async def gist_operation_loop(self):
         while True:
@@ -69,8 +82,8 @@ class Contact(BaseWorld):
             await self.handle_uploads(await self.get_uploads())
             await asyncio.sleep(15)
 
-    async def valid_config(self):
-        return re.compile(pattern='[a-zA-Z0-9]{40,40}').match(self.get_config('app.contact.gist'))
+    def valid_config(self, token):
+        return any(re.compile(pattern=token_regex).match(token) for token_regex in self.VALID_TOKEN_FORMATS)
 
     async def handle_beacons(self, beacons):
         """
@@ -84,7 +97,7 @@ class Contact(BaseWorld):
 
     async def get_results(self):
         """
-        Retrieve all GIST posted results for a this C2's api key
+        Retrieve all GIST posted results for a this C2's api token
         :return:
         """
         try:
@@ -97,7 +110,7 @@ class Contact(BaseWorld):
 
     async def get_beacons(self):
         """
-        Retrieve all GIST beacons for a particular api key
+        Retrieve all GIST beacons for a particular api token
         :return: the beacons
         """
         try:
@@ -131,7 +144,7 @@ class Contact(BaseWorld):
 
     async def get_uploads(self):
         """
-        Retrieve all GIST posted file uploads for this C2's api key
+        Retrieve all GIST posted file uploads for this C2's api token
         :return: list of (raw content, gist description, gist filename) tuples for upload GISTs
         """
         try:
