@@ -86,10 +86,11 @@ class FactApi(BaseObjectApi):
             if 'source' not in fact_data:
                 new_fact.source = WILDCARD_STRING
             new_fact.origin_type = OriginType.USER
+            await self._api_manager.verify_operation_state(new_fact)
             await knowledge_svc_handle.add_fact(new_fact)
             store = await knowledge_svc_handle.get_facts(criteria=dict(trait=new_fact.trait,
                                                                        value=new_fact.value,
-                                                                       source=WILDCARD_STRING,
+                                                                       source=new_fact.source,
                                                                        origin_type=OriginType.USER))
             resp = await self._api_manager.verify_fact_integrity(store)
             return web.json_response(dict(added=resp))

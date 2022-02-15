@@ -3,6 +3,9 @@ from aiohttp import web
 
 from app.service.auth_svc import AuthService, CONFIG_API_KEY_RED
 from app.service.file_svc import FileSvc
+from app.service.data_svc import DataService
+from app.service.event_svc import EventService
+from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 from app.api.v2.handlers.fact_api import FactApi
 from app.api.v2.responses import json_request_validation_middleware
@@ -40,6 +43,8 @@ def base_world():
 def knowledge_webapp(event_loop, app_svc, base_world, data_svc):
     app_svc.add_service('auth_svc', AuthService())
     app_svc.add_service('knowledge_svc', KnowledgeService())
+    app_svc.add_service('data_svc', DataService())
+    app_svc.add_service('event_svc', EventService())
     app_svc.add_service('file_svc', FileSvc())  # This needs to be done this way, or it we won't have a valid BaseWorld
     services = app_svc.get_services()
     app = web.Application(
@@ -173,6 +178,51 @@ async def test_add_fact(knowledge_webapp, aiohttp_client):
     cur = await tmp.json()
     current = cur['found']
     assert current == response
+
+
+async def test_add_fact_to_operation(knowledge_webapp, aiohttp_client, test_operation, setup_empty_operation):
+    client = await aiohttp_client(knowledge_webapp)
+
+    fact_data = {
+        'trait': 'demo',
+        'value': 'test',
+        'source': test_operation['id']
+    }
+    resp = await client.post('/facts', json=fact_data, headers=headers)
+    data = await resp.json()
+    response = data['added']
+    assert len(response) == 1
+    assert response[0]['trait'] == 'demo'
+    assert response[0]['value'] == 'test'
+    assert response[0]['source'] == test_operation['id']
+
+    tmp = await client.get('/facts', json=fact_data, headers=headers)
+    cur = await tmp.json()
+    current = cur['found']
+    assert current == response
+    data_svc = BaseService.get_service('data_svc')
+    file_svc = BaseService.get_service('file_svc')
+    matched_operations = await data_svc.locate('operations', {'id': test_operation['id']})
+    report = await matched_operations[0].report(file_svc, data_svc)
+    assert response[0] in report['facts']
+
+
+async def test_add_fact_to_finished_operation(knowledge_webapp, aiohttp_client, setup_finished_operation,
+                                              finished_operation_payload):
+    client = await aiohttp_client(knowledge_webapp)
+    op_id = finished_operation_payload['id']
+    matched_operations = await BaseService.get_service('data_svc').locate('operations', {'id': op_id})
+    assert await matched_operations[0].is_finished()
+
+    fact_data = {
+        'trait': 'demo',
+        'value': 'test',
+        'source': op_id
+    }
+    resp = await client.post('/facts', json=fact_data, headers=headers)
+    data = await resp.json()
+    assert 'error' in data
+    assert 'Cannot add fact to finished operation.' in data['error']
 
 
 async def test_add_relationship(knowledge_webapp, aiohttp_client):
