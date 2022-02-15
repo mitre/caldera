@@ -1,5 +1,5 @@
 <div x-data="alpineContacts()" x-init="initPage()">
-    <div>
+    <div x-ref="contactsHeader">
         <h2>Contacts</h2>
         <p>
             <b>Contacts are touch points for agents.</b> A contact is a connection point on the server for agents to communicate through. Agents can be
@@ -9,12 +9,6 @@
     </div>
     <hr>
     <div>
-        <div class="buttons">
-            <button class="button is-primary is-small" @click="initPage()">
-                <span class="icon"><i class="fas fa-sync"></i></span>
-                <span>Refresh</span>
-            </button>
-        </div>
         <table class="table is-striped">
             <tbody>
                 <template x-for="contact of contacts" :key="contact.name">
@@ -22,11 +16,15 @@
                         <th x-text="contact.name"></th>
                         <td x-text="contact.description"></td>
                         <td>
-                            <span x-show="hasNoReport.includes(contact.name)" class="is-size-7">No contacts to show</span>
-                            <button class="button is-small is-primary" @click="downloadContactReport(contact.name)" x-show="!hasNoReport.includes(contact.name)">
-                                <span class="icon"><i class="fas fa-file-download"></i></span>
-                                <span>Download Report</span>
-                            </button>
+                            <template x-if="!availableContacts.includes(contact.name.toUpperCase())">
+                                <button class="button is-small" disabled>No report available</button>
+                            </template>
+                            <template x-if="availableContacts.includes(contact.name.toUpperCase())">
+                                <button class="button is-small is-primary" @click="downloadContactReport(contact.name)">
+                                    <span class="icon"><i class="fas fa-file-download"></i></span>
+                                    <span>Download Report</span>
+                                </button>
+                            </template>
                         </td>
                     </tr>
                 </template>
@@ -39,24 +37,28 @@
     function alpineContacts() {
         return {
             contacts: JSON.parse('{{ contacts | tojson }}'),
-            hasNoReport: [],
+            availableContacts: [],
 
-            initPage() {
-                this.hasNoReport = [];
-                this.contacts.forEach(async (contact) => {
-                    try {
-                        await apiV2('GET', `/api/v2/contacts/${contact.name}`);
-                    } catch (error) {
-                        this.hasNoReport.push(contact.name);
-                    }
-                });
+            async initPage() {
+                do {
+                    this.getAvailableReports();
+                    await sleep(2000);
+                } while (this.$refs.contactsHeader)
+            },
+
+            getAvailableReports() {
+                apiV2('GET', '/api/v2/contacts').then((reports) => {
+                    this.availableContacts = reports
+                }).catch((error) => {
+                    toast('Error getting available contacts', false)
+                })
             },
 
             downloadContactReport(contactName) {
                 apiV2('GET', `/api/v2/contacts/${contactName}`).then((contact) => {
                     downloadJson(`${contactName}_contact_report`, contact);
                 }).catch((error) => {
-                    toast('Error loading page', false);
+                    toast('Error downloading contact report', false);
                     console.error(error);
                 });
             }

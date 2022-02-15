@@ -49,12 +49,12 @@ def replaced_ability_payload(test_ability):
 
 
 @pytest.fixture
-def test_ability(loop, api_v2_client, executor):
+def test_ability(event_loop, api_v2_client, executor):
     executor_linux = executor(name='sh', platform='linux')
     ability = Ability(ability_id='123', name='Test Ability', executors=[executor_linux],
                       technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery',
                       plugin='testplugin')
-    loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
     return ability
 
 

@@ -461,12 +461,6 @@ p[onclick] {
   text-align: left;
 }
 
-.section-profile input {
-  height: 18px;
-  width: 75%;
-  margin: 5px;
-}
-
 .section-profile input[type=checkbox] {
   width: auto;
   vertical-align: middle;

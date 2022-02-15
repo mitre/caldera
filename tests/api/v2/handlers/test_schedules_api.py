@@ -77,12 +77,12 @@ def expected_new_schedule_dump(new_schedule_payload):
 
 
 @pytest.fixture
-def test_schedule(test_operation, loop):
+def test_schedule(test_operation, event_loop):
     operation = OperationSchema().load(test_operation)
     schedule = ScheduleSchema().load(dict(id='123',
                                           schedule='03:00:00.000000',
                                           task=operation.schema.dump(operation)))
-    loop.run_until_complete(BaseService.get_service('data_svc').store(schedule))
+    event_loop.run_until_complete(BaseService.get_service('data_svc').store(schedule))
     return schedule
 
 
