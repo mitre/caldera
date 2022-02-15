@@ -76,7 +76,7 @@
                 <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
             </div>
 
-            <div class="tactic-breakdown pt-4 pb-4" @click="isTacticBreakdownActive = !isTacticBreakdownActive">
+            <div class="tactic-breakdown pt-4 pb-4" @click="isTacticBreakdownActive = !isTacticBreakdownActive" title="Click to expand/collapse">
                 <template x-for="tactic in getTacticBreakdown" :key="tactic[0]">
                     <span class="tactic-item has-tooltip-bottom" :class="{ 'active': isTacticBreakdownActive }" x-bind:style="`width: ${tactic[1]}%; background-color: ${hashStringToColor(tactic[0])};`" x-text="`${tactic[0]}  ${tactic[1]}%`"></span>
                 </template>
@@ -105,12 +105,7 @@
                             <td x-text="index + 1"></td>
                             <td x-text="ability.name"></td>
                             <td>
-                                <span class="icon-text">
-                                    <span class="icon" x-bind:style="`color: ${hashStringToColor(ability.tactic)}`">
-                                        <em class="fas fa-circle"></em>
-                                    </span>
-                                    <span x-text="ability.tactic"></span>
-                                </span>
+                                <span x-text="ability.tactic" x-bind:style="`border-bottom: 1px ridge ${hashStringToColor(ability.tactic)}`"></span>
                             </td>
                             <td x-text="ability.technique_name"></td>
                             <td>
