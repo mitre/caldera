@@ -67,7 +67,7 @@ class OperationApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Create a new CALDERA operation record',
                           description='Create a new CALDERA operation using the format provided in the '
-                                      '`OperationSchema`. Required nested schema fields are as follows: '
+                                      '`OperationSchema`. Required schema fields are as follows: "name", '
                                       '"adversary.adversary_id", "planner.planner_id", and "source.id"')
     @aiohttp_apispec.request_schema(OperationSchema)
     @aiohttp_apispec.response_schema(OperationSchema,
