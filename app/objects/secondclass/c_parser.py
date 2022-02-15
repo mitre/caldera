@@ -9,22 +9,15 @@ class ParserSchema(ma.Schema):
     module = ma.fields.String()
     parserconfigs = ma.fields.List(ma.fields.Nested(ParserConfigSchema()))
 
-    @ma.pre_load
-    def fix_relationships(self, parser, **_):
-        if 'relationships' in parser:
-            parser['parserconfigs'] = parser.pop('relationships')
-        return parser
-
     @ma.post_load()
     def build_parser(self, data, **_):
         return Parser(**data)
 
     @ma.post_dump()
     def prepare_parser(self, data, **_):
-        data['relationships'] = data.pop('parserconfigs')
-        for pc, index in enumerate(data['relationships']):
+        for pc, index in enumerate(data['parserconfigs']):
             if isinstance(pc, ParserConfig):
-                data['relationships'][index] = pc.display
+                data['parserconfigs'][index] = pc.display
         return data
 
 
