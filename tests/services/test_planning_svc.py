@@ -1,6 +1,7 @@
 import pytest
 import asyncio
 import base64
+from unittest.mock import MagicMock
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -8,6 +9,7 @@ from app.objects.c_source import Source
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_world import BaseWorld
 
 
@@ -49,6 +51,12 @@ class PlannerFake:
         self.next_bucket = None
 
 
+class RequirementFake:
+    """Fake requirement used to test trim links by missing requirements."""
+    async def enforce(self, link, operation):
+        return '0' in BaseWorld.decode_bytes(link.display['command'])
+
+
 def planner_stub(**kwargs):
     """Creates Planner stub with supplied properties."""
     class PlannerStub:
@@ -56,6 +64,13 @@ def planner_stub(**kwargs):
             for k, v in kwargs.items():
                 setattr(self, k, v)
     return PlannerStub(**kwargs)
+
+
+def async_wrapper(return_value):
+    """Creates an async method that returns a constant value for mocking purposes."""
+    async def wrap(*args, **kwargs):
+        return return_value
+    return wrap
 
 
 @pytest.fixture
@@ -316,6 +331,37 @@ class TestPlanningService:
 
         assert len(gen) == 2
         assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+
+    async def test_trim_links(self, setup_planning_test, planning_svc):
+        """
+        This test covers both remove_links_with_unset_variables and remove_links_missing_requirements.
+        It uses a fact set that causes add_test_variants to create three links. One of which is the original
+        that has not been populated with facts, this one gets pruned off by remove_links_with_unset_variables.
+        Of the remaining two links that are populated, one is pruned off by a requirement that requires that
+        the character 0 is in the link's command. The tests show that only one link is returned by trim_links
+        and that the returned link is the one that is populated and adheres to the requirement.
+        """
+        ability, agent, operation, _ = setup_planning_test
+
+        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability,
+                              executor=next(ability.executors), status=0))
+        facts = [
+            Fact(trait='1_2_3', value='0'),
+            Fact(trait='1_2_3', value='4'),
+            Fact(trait='a.b.c', value='1'),
+            Fact(trait='a.b.d', value='2'),
+            Fact(trait='a.b.e', value='3'),
+        ]
+
+        operation.all_facts = async_wrapper(facts)
+        operation.planner = MagicMock()
+        planning_svc.load_module = async_wrapper(RequirementFake())
+        link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
+
+        trimmed_links = await planning_svc.trim_links(operation, [link], agent)
+
+        assert len(trimmed_links) == 1
+        assert BaseWorld.decode_bytes(trimmed_links[0].display['command']) == target_string
 
     async def test_filter_bs(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
