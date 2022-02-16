@@ -178,7 +178,7 @@
                         </div>
                     </template>
                     <div class="timeline-table">
-                        <table class="table" @click.outside="selectedLink = null;">
+                        <table class="table">
                             <thead>
                             <tr class="table-header">
                                 <th class="decideColumn">Decide</th>
@@ -239,38 +239,12 @@
 
                                     <!--COMMAND COLUMN-->
                                     <td class="commandDetails">
-                                        <template x-if="!isLinkEditable">
-                                            <div class="is-flex is-justify-content-center is-flex-direction-column">
-                                                <button class="button is-small"
-                                                        x-on:click="getLink(link); openModal='showCommand'"
-                                                        title="view output">View Command
-                                                </button>
-                                            </div>
-                                        </template>
-                                        <template x-if="isLinkEditable">
-                                            <div class="is-flex is-align-items-flex-start is-justify-content-flex-start is-flex-direction-column">
-                                                <label x-show="false" for="edit-command">Edit command</label>
-                                                <textarea id="edit-command"
-                                                          class="code mb-2"
-                                                          contenteditable
-                                                          x-model="editableCommand"
-                                                          spellcheck="false"></textarea>
-
-                                                <!-- BUTTONS TO MANUALLY EXECUTE (APPROVE/DISCARD) COMMAND-->
-                                                <div class="is-flex is-justify-content-space-between">
-                                                    <button type="button"
-                                                            class="button is-small mr-3"
-                                                            x-on:click="updateLink(-2)">
-                                                        Discard
-                                                    </button>
-                                                    <button type="button"
-                                                            class="button is-primary is-small"
-                                                            x-on:click="updateLink(-3, editableCommand)">
-                                                        Approve
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </template>
+                                        <div class="is-flex is-justify-content-center is-flex-direction-column">
+                                            <button class="button is-small"
+                                                    x-on:click="getLink(link); openModal='showCommand'"
+                                                    title="view output">View Command
+                                            </button>
+                                        </div>
                                     </td>
 
                                     <!--OUTPUT/FACTS COLUMN-->
@@ -291,7 +265,7 @@
                                     <td class="csv-exclude">
                                         <button x-show="selectedLink === link && isOperationRunning && !(link.status in LINK_STATUSES)"
                                                 type="button" title="delete link"
-                                                class="button is-primary is-small ml-2"
+                                                class="button is-danger is-outlined is-small ml-2"
                                                 x-on:click="openModal = 'deleteLinkModal'"><em
                                                 class="pr-1 fas fa-trash"></em>Discard Link
                                         </button>
@@ -457,18 +431,46 @@
                             <p class="modal-card-title">Command</p>
                         </header>
                         <section class="modal-card-body">
-                            <div>
-                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
-                            </div>
+                            <template x-if="isLinkEditable">
+                                <div>
+                                    <label x-show="false" htmlFor="edit-command">Edit command</label>
+                                    <textarea id="edit-command"
+                                              class="textarea is-small code"
+                                              contentEditable
+                                              x-model="editableCommand"
+                                              spellCheck="false"></textarea>
+                                </div>
+                            </template>
+                            <template x-if="!isLinkEditable">
+                                <div>
+                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                </div>
+                            </template>
                         </section>
                         <footer class="modal-card-foot">
                             <nav class="level">
                                 <div class="level-left">
+                                    <template x-if="isLinkEditable">
+                                        <button type="button"
+                                                class="button is-danger is-outlined is-small"
+                                                x-on:click="updateLink(-2)">
+                                            Discard
+                                        </button>
+                                    </template>
                                 </div>
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button class="button is-small" @click="openModal = null">Close</button>
                                     </div>
+                                    <template x-if="isLinkEditable">
+                                        <div class="level-item">
+                                            <button type="button"
+                                                    class="button is-primary is-small"
+                                                    x-on:click="updateLink(-3, editableCommand)">
+                                                Approve
+                                            </button>
+                                        </div>
+                                    </template>
                                 </div>
                             </nav>
                         </footer>
