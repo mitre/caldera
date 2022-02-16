@@ -668,7 +668,7 @@
                         </div>
                         <div class="level-right">
                             <div class="level-item">
-                                <button class="button is-primary is-small" @click="addFromAbility(selectedAbility.factTraits); openModal.isOpen = false">
+                                <button x-bind:disabled="!selectedAbility" class="button is-primary is-small" @click="addFromAbility(selectedAbility.factTraits); openModal.isOpen = false">
                                     <span>Add Facts</span>
                                 </button>
                             <div>
@@ -704,26 +704,35 @@
                             </div>
                         </div>
                     </form>
-                    <template x-if="selectedAdversary && filteredAbilities.length > 0">
+                    <template x-if="selectedAdversary">
                         <span>
                             <hr>
                             <div class="is-flex is-justify-content-space-between mb-2">
-                                <strong x-show="filteredAbilities.length" x-text="'Adversary Abilities'"></strong>
+                                <strong x-show="selectedAdversary" x-text="'Adversary Abilities'"></strong>
                             </div>
-                            <template x-for="ability in filteredAbilities" :key="ability.ability_id">
+                            <template x-if="filteredAbilities.length < 1">
                                 <div class="box mb-2 mr-2 p-3 has-background-black-ter">
-                                    <p>
-                                        <span class="has-text-weight-bold" x-text="ability.name"></span>
-                                        <span x-text="`${ability.technique_id}`"></span>
-                                    </p>
-                                    <p x-show="ability.factTraits" class="is-italic is-size-7">
-                                        <span>Facts: </span>
-                                        <template x-for="fact in ability.factTraits">
-                                            <span class="has-background-warning has-text-black mr-2 px-1" x-text="`${fact}`"></span>
-                                        </template>
-                                    </p>
-                                    <p class="is-size-7" x-text="ability.description"></p>
+                                    <p class="text-align-center is-italic">This adversary has no facts available.</p>
                                 </div>
+                            </template>
+                            <template x-if="filteredAbilities.length > 0">
+                                <span>
+                                    <template x-for="(ability, index) in filteredAbilities" :key="index">
+                                        <div class="box mb-2 mr-2 p-3 has-background-black-ter">
+                                            <p>
+                                                <span class="has-text-weight-bold" x-text="ability.name"></span>
+                                                <span x-text="`${ability.technique_id}`"></span>
+                                            </p>
+                                            <p x-show="ability.factTraits" class="is-italic is-size-7">
+                                                <span>Facts: </span>
+                                                <template x-for="fact in ability.factTraits">
+                                                    <span class="has-background-warning has-text-black mr-2 px-1" x-text="`${fact}`"></span>
+                                                </template>
+                                            </p>
+                                            <p class="is-size-7" x-text="ability.description"></p>
+                                        </div>
+                                    </template>
+                                </span>
                             </template>
                         </span>
                     </template>
@@ -737,7 +746,7 @@
                         </div>
                         <div class="level-right">
                             <div class="level-item">
-                                <button class="button is-primary is-small" @click="addFromAdversary(); openModal.isOpen = false">
+                                <button x-bind:disabled="filteredAbilities.length < 1" class="button is-primary is-small" @click="addFromAdversary(); openModal.isOpen = false">
                                     <span>Add All Facts</span>
                                 </button>
                                 <div>
@@ -895,10 +904,11 @@
                         }
                     }
                 });
+                console.log('** abilitiesWithFacts', abilitiesWithFacts)
                 this.filteredAbilities = abilitiesWithFacts;
             },
 
-            addFromAbility(factTraits) { // add all facts found from abilities
+            addFromAbility(factTraits, fromAdversary = false) { // add all facts found from abilities
                 const uniqueFacts = this.selectedSource.facts.map((f) => f.trait);
                 this.openModal.isOpen = false;
                 factTraits.forEach((val) => {
@@ -912,7 +922,7 @@
                         toast(`Fact ${val} not added as it already exists.`, false);
                     }
                 });
-                toast('Added facts to source', true);
+                if (!fromAdversary) toast('Added facts to source', true);
             },
 
             getAdversaries() {
@@ -936,7 +946,7 @@
             addFromAdversary() {
                 this.filteredAbilities.forEach((a) => {
                     if (a.factTraits) {
-                        this.addFromAbility(a.factTraits);
+                        this.addFromAbility(a.factTraits, true);
                     }
                 });
             },
