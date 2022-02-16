@@ -117,8 +117,7 @@ class BasePlanningService(BaseService):
             for combo in combos:
                 try:
                     copy_test = copy.copy(decoded_test)
-                    variant, score, used = await self._build_single_test_variant(copy_test, combo,
-                                                                                    link.executor.name)
+                    variant, score, used = await self._build_single_test_variant(copy_test, combo, link.executor.name)
 
                     copy_link = pickle.loads(pickle.dumps(link))    # nosec
                     copy_link.command = self.encode_string(variant)
@@ -128,7 +127,7 @@ class BasePlanningService(BaseService):
                     link_variants.append(copy_link)
                 except Exception as ex:
                     logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
-        
+
         if trim_unset_variables:
             links = await self.remove_links_with_unset_variables(links)
 
@@ -163,11 +162,11 @@ class BasePlanningService(BaseService):
         links[:] = [s_link for s_link in links if not
                     BasePlanningService.re_variable.findall(b64decode(s_link.command).decode('utf-8'))]
         return links
-    
+
     async def _has_unset_variables(self, combo, variable_set):
         variables_present = [any(c.name in var for c in combo) for var in variable_set]
         return not all(variables_present)
-    
+
     async def _is_missing_requirements(self, link, combo, operation):
         copy_used = list(link.used)
         link.used.extend(combo)
@@ -276,7 +275,7 @@ class BasePlanningService(BaseService):
     async def _trim_by_limit(self, decoded_test, facts):
         limited_facts = []
         for limit in re.findall(self.re_limited, decoded_test):
-            limited = pickle.loads(pickle.dumps(facts)) # nosec
+            limited = pickle.loads(pickle.dumps(facts))     # nosec
             trait = re.search(self.re_trait, limit).group(0).split('#{')[-1]
 
             limit_definitions = re.search(self.re_index, limit).group(0)
