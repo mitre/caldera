@@ -173,8 +173,13 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('tactic') }" x-model="selectedAbility.tactic">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('tactic') }" x-model="selectedAbility.tactic" x-on:keyup="searchForAutoFill('tactic')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults" @click.outside="focusSearchResults = false; autoFillResults = []">
+                                                <template x-for="result of autoFillResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.tactic" @click="selectedAbility.tactic = result; autoFillResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrors.includes('tactic')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -186,8 +191,13 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_id') }" x-model="selectedAbility.technique_id">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_id') }" x-model="selectedAbility.technique_id" x-on:keyup="searchForAutoFill('technique_id')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults" @click.outside="focusSearchResults = false; autoFillResults = []">
+                                                <template x-for="result of autoFillResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.technique_id" @click="selectedAbility.technique_id = result; autoFillResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrors.includes('technique_id')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -199,8 +209,13 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_name') }" x-model="selectedAbility.technique_name">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_name') }" x-model="selectedAbility.technique_name" x-on:keyup="searchForAutoFill('technique_name')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults" @click.outside="focusSearchResults = false; autoFillResults = []">
+                                                <template x-for="result of autoFillResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.technique_name" @click="selectedAbility.technique_name = result; autoFillResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrors.includes('technique_name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -419,6 +434,9 @@
             searchTerm: '',
             selectedAbility: '',
             windowHref: '',
+            searchQuery: '',
+            searchResults: [],
+            autoFillResults: [],
 
             tactics: [],
             selectedTactic: '',
@@ -443,7 +461,7 @@
 
             initPage() {
                 apiV2('GET', 'api/v2/abilities').then(async (abilities) => {
-                    this.abilities = abilities
+                    this.abilities = abilities;
                     this.checkUrlParameters();
                     this.filterAbilities();
 
@@ -471,10 +489,10 @@
             },
 
             getFilterOptions() {
-                this.tactics = []
-                this.techniques = []
-                this.platforms = []
-                this.plugins = []
+                this.tactics = [];
+                this.techniques = [];
+                this.platforms = [];
+                this.plugins = [];
 
                 this.abilities.forEach((ability) => {
                     if (!this.tactics.includes(ability.tactic) && (!this.selectedTechnique || `${ability.technique_id} | ${ability.technique_name}` === this.selectedTechnique)) {
@@ -559,11 +577,33 @@
                 return execs;
             },
 
+            searchForAutoFill(field = 'tactic') {
+                const results = new Set();
+                if (!this.selectedAbility[field]) return;
+                this.abilities.forEach((ability) => {
+                    if (ability[field].toLowerCase().indexOf(this.selectedAbility[field].toLowerCase()) > -1) {
+                        results.add(ability[field]);
+                    }
+                });
+                this.autoFillResults = Array.from(results);
+            },
+
+            searchForAbility() {
+                this.searchResults = [];
+                if (!this.searchQuery) return;
+                this.abilities.forEach((ability) => {
+                    if (ability.name.toLowerCase().indexOf(this.searchQuery.toLowerCase()) > -1) {
+                        this.searchResults.push(ability);
+                    }
+                });
+            },
+
             selectAbility(ability) {
                 this.isCreatingAbility = false;
                 this.fieldErrors = [];
                 this.selectedAbility = ability;
                 this.showAbilityModal = true;
+                this.searchResults = [];
             },
 
             createAbility() {
