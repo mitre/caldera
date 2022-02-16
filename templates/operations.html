@@ -1068,7 +1068,7 @@
 
             docs: '{{ usage | tojson }}'.toString().replace(/["\[\]]/g, '').split('}'),
             usage: {},
-            agentGroups: '{{ groups | tojson }}'.toString().replace(/["\[\]]/g, '').split(','),
+            agentGroups: [],
             selectedOperationID: '',
             selectedOperation: null,
             selectedAgentIndex: 0,
@@ -1672,11 +1672,8 @@
             },
 
             updateAgentGroups(agents) {
-                if (agents) {
-                    agents.forEach((agent) => {
-                        if (!this.agentGroups.includes(agent.group)) this.agentGroups.push(agent.group);
-                    });
-                }
+                if (!agents) return;
+                this.agentGroups = [...new Set(agents.map((agent) => agent.group))];
             },
 
             isJitterValid() {
