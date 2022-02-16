@@ -216,9 +216,11 @@ class TestOperationsApi:
             assert op.name == test_operation['name']
             assert op.planner.name == test_operation['planner']['name']
 
-    async def test_update_finished_operation(self, api_v2_client, api_cookies, setup_finished_operation):
+    async def test_update_finished_operation(self, api_v2_client, api_cookies, setup_finished_operation,
+                                             finished_operation_payload):
         payload = dict(state='running', obfuscator='base64')
-        resp = await api_v2_client.patch('/api/v2/operations/000', cookies=api_cookies, json=payload)
+        op_id = finished_operation_payload['id']
+        resp = await api_v2_client.patch(f'/api/v2/operations/{op_id}', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
     async def test_get_links(self, api_v2_client, api_cookies, active_link):
