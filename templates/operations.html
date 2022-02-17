@@ -680,7 +680,7 @@
                                             x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                     <div class="modal-form-fields" id="stealth-jitter">
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter()"
+                                               :class="{ 'is-danger': !isJitterValid() }"
                                                x-model="jitterMin"
                                                id="stealth-jitterMin"
                                                type="number"
@@ -690,7 +690,7 @@
                                         <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                         <span>/</span>
                                         <input class="input"
-                                               x-on:change.debounce.500ms="validateJitter()"
+                                               :class="{ 'is-danger': !isJitterValid() }"
                                                x-model="jitterMax"
                                                id="stealth-jitterMax"
                                                type="number"
@@ -703,6 +703,9 @@
                                                 x-on:click="jitterMin = 2; jitterMax = 8;">
                                             Reset
                                         </button>
+                                        <p x-show="!isJitterValid()" class="pl-3 help has-text-danger">
+                                            Min and Max need to be >= 0, and Min must be <= Max
+                                        </p>
                                     </div>
                                 </div>
                                 <div>
@@ -1362,11 +1365,14 @@
 
             addOperation() {
                 if (!this.operationToStart.name) {
-                    toast('Error: Operation name field is empty.');
+                    toast('Error: Operation name field is empty.', false);
+                } else if (!this.isJitterValid()) {
+                    toast('Jitter values are invalid', false);
                 } else {
                     this.operationToStart.autonomous = Number(this.operationToStart.autonomous);
                     this.operationToStart.use_learning_parsers = parseInt(this.operationToStart.use_learning_parsers, 10) === 1;
                     this.operationToStart.auto_close = parseInt(this.operationToStart.auto_close, 10) === 1;
+                    this.operationToStart.jitter = `${parseInt(this.jitterMin, 10)}/${parseInt(this.jitterMax, 10)}`;
                     apiV2('POST', this.ENDPOINT, this.operationToStart).then((newOperation) => {
                         toast(`Started operation ${this.operationToStart.name}!`, true);
                         this.operations.push(newOperation);
@@ -1729,21 +1735,10 @@
                 this.agentGroups = [...new Set(agents.map((agent) => agent.group))];
             },
 
-            validateJitter() {
-                jitterMin = parseInt(this.jitterMin, 10);
-                jitterMax = parseInt(this.jitterMax, 10);
-
-                if (jitterMin < 0 || jitterMax < 0) {
-                    toast(`Error: Jitter ${!jitterMin ? 'MIN' : 'MAX'} must be valid.`);
-                    return false;
-                }
-                if (jitterMin >= jitterMax) {
-                    toast('Error: Jitter MIN must be less than the jitter MAX.');
-                    return false;
-                }
-
-                this.operationToStart.jitter = `${jitterMin}/${jitterMax}`;
-                return true;
+            isJitterValid() {
+                const jitterMin = parseInt(this.jitterMin, 10);
+                const jitterMax = parseInt(this.jitterMax, 10); 
+                return (jitterMin >= 0 && jitterMax >= 0 && jitterMin <= jitterMax) 
             },
 
             filterAbilities(abilities) {
