@@ -33,7 +33,7 @@
         <!-- CONTENT -->
 
         <template x-if="!selectedSourceId">
-            <p class="is-flex is-justify-content-center is-italic">Select a fact source to get started.</p>
+            <p class="is-flex is-justify-content-center is-italic mt-2">Select a fact source to get started.</p>
         </template>
 
         <template x-if="selectedSourceId">
@@ -638,10 +638,14 @@
                     </div>
                     <template x-for="ability in filteredAbilities" :key="ability.ability_id">
                         <div class="box selectable mb-2 mr-2 p-3 has-background-black-ter" x-bind:class="{'selected': selectedAbility === ability}" @click="selectedAbility = ability">
-                            <p>
+                            <p class="mb-0">
                                 <span class="has-text-weight-bold" x-text="ability.name"></span>
                                 <span x-text="`${ability.technique_id}`"></span>
                             </p>
+                            <div class="is-flex is-align-items-center">
+                                <label class="is-italic is-size-7" for="ability-fact-score">Score: </label>
+                                <input class="input has-background-grey-darker is-small m-2 w-50-px" id="ability-fact-score" x-model="ability.score" type="number" required pattern="[0-9]*" placeholder="1"/>
+                            </div>
                             <p x-show="ability.factTraits" class="is-italic is-size-7">
                                 <span>Facts: </span>
                                 <template x-for="fact in ability.factTraits">
@@ -668,7 +672,7 @@
                         </div>
                         <div class="level-right">
                             <div class="level-item">
-                                <button x-bind:disabled="!selectedAbility" class="button is-primary is-small" @click="addFromAbility(selectedAbility.factTraits); openModal.isOpen = false">
+                                <button x-bind:disabled="!selectedAbility" class="button is-primary is-small" @click="addFromAbility(selectedAbility.factTraits, selectedAbility.score); openModal.isOpen = false">
                                     <span>Add Facts</span>
                                 </button>
                             <div>
@@ -723,6 +727,10 @@
                                                 <span class="has-text-weight-bold" x-text="ability.name"></span>
                                                 <span x-text="`${ability.technique_id}`"></span>
                                             </p>
+                                            <div class="is-flex is-align-items-center">
+                                                <label class="is-italic is-size-7" for="adversary-fact-score">Score: </label>
+                                                <input class="input has-background-grey-darker is-small m-2 w-50-px" id="adversary-fact-score" x-model="ability.score" type="number" required pattern="[0-9]*" placeholder="1"/>
+                                            </div>
                                             <p x-show="ability.factTraits" class="is-italic is-size-7">
                                                 <span>Facts: </span>
                                                 <template x-for="fact in ability.factTraits">
@@ -899,6 +907,7 @@
                         if (factTraits.length > 0) {
                             abilitiesWithFacts.push({
                                 ...a,
+                                score: 1,
                                 factTraits: [...new Set(factTraits)]
                             });
                         }
@@ -908,7 +917,7 @@
                 this.filteredAbilities = abilitiesWithFacts;
             },
 
-            addFromAbility(factTraits, fromAdversary = false) { // add all facts found from abilities
+            addFromAbility(factTraits, score, fromAdversary = false) { // add all facts found from abilities
                 const uniqueFacts = this.selectedSource.facts.map((f) => f.trait);
                 this.openModal.isOpen = false;
                 factTraits.forEach((val) => {
@@ -916,7 +925,7 @@
                         this.addFact({
                             trait: val,
                             value: '',
-                            score: 1
+                            score: score
                         }, true);
                     } else {
                         toast(`Fact ${val} not added as it already exists.`, false);
@@ -946,7 +955,7 @@
             addFromAdversary() {
                 this.filteredAbilities.forEach((a) => {
                     if (a.factTraits) {
-                        this.addFromAbility(a.factTraits, true);
+                        this.addFromAbility(a.factTraits, a.score, true);
                     }
                 });
             },
@@ -1099,6 +1108,10 @@
 
     #sourcePage .box p {
         word-break: break-word;
+    }
+
+    #sourcePage .w-50-px {
+        width: 50px;
     }
 
     #sourcePage .text-align-center {
