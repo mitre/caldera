@@ -178,6 +178,31 @@
                         </div>
                     </template>
                     <div class="timeline-table">
+                        <div class="is-flex is-flex-direction-row is-justify-content-space-between">
+                            <div class="mb-3">
+                                <input x-model="searchText" placeholder="Search..." type="search" class="is-small">
+                            </div>
+                            <div>
+                                <span>Search Criteria:</span>
+                                <input type="radio" id="btncriteria1" x-model="searchCriteria" value="decide" checked>
+                                <label for="btncriteria1">Decide</label>
+
+                                <input type="radio" id="btncriteria2" x-model="searchCriteria" value="status">
+                                <label for="btncriteria2">Status</label>
+
+                                <input type="radio" id="btncriteria3" x-model="searchCriteria" value="link">
+                                <label for="btncriteria3">Link</label>
+
+                                <input type="radio" id="btncriteria4" x-model="searchCriteria" value="paw">
+                                <label for="btncriteria4">Paw</label>
+
+                                <input type="radio" id="btncriteria5" x-model="searchCriteria" value="host">
+                                <label for="btncriteria5">Host</label>
+
+                                <input type="radio" id="btncriteria6" x-model="searchCriteria" value="pid">
+                                <label for="btncriteria6">PID</label>
+                            </div>
+                        </div>
                         <table class="table" @click.outside="selectedLink = null;">
                             <thead>
                             <tr class="table-header">
@@ -206,7 +231,7 @@
                                 </tr>
                                 </tbody>
                             </template>
-                            <template x-for="(link, index) in selectedOperation.chain" :key="link.id">
+                            <template x-for="(link, index) in filterFromSelectedOperation" :key="link.id">
                                 <tbody>
                                 <tr x-bind:id="link.id"
                                     x-on:click="selectedLink = link">
@@ -1110,6 +1135,40 @@
             showOperationsMenuCaret: true,
             addNewRow: false,
             addedTechniquesIDs: new Set(),
+
+            searchText: '',
+            searchCriteria: 'decide',
+
+            get filterFromSelectedOperation() {
+                if (!this.selectedOperation) {
+                    return {}
+                }
+                if (this.searchText === '') {
+                  return this.selectedOperation.chain;
+                }
+                return this.selectedOperation.chain.filter((item) => {
+                    if (this.searchCriteria === 'link') {
+                        return item.ability.name
+                        .toLowerCase()
+                        .includes(this.searchText.toLowerCase());
+                    }
+                    else if (this.searchCriteria === 'decide') {
+                        var convertedValue = this.getReadableTime(item.decide);
+                        return convertedValue
+                                .toLowerCase()
+                                .includes(this.searchText.toLowerCase());
+                    }
+                    else if (this.searchCriteria === 'status') {
+                       var convertedValue = item.status in this.LINK_STATUSES ? this.LINK_STATUSES[item.status] : 'queued';
+                       return convertedValue
+                                .toLowerCase()
+                                .includes(this.searchText.toLowerCase());
+                    }
+                    return item[this.searchCriteria]
+                        .toLowerCase()
+                        .includes(this.searchText.toLowerCase());
+                });
+            },
 
             get EMPTY_MANUAL_COMMAND_OBJECT() {
                 return {
