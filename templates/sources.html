@@ -152,7 +152,7 @@
                                         </button>
                                     </td>
                                 </tr>
-                                <template x-for="(fact, index) in filteredFacts" :key="fact.unique">
+                                <template x-for="(fact, index) in filteredFacts" :key="index">
                                     <tr x-on:click="selectedFactIndex = index; showAddFactRow = false;" x-bind:class="selectedFactIndex === index ? 'selected' : ''">
                                         <td class="index-column" x-text="index"></td>
 
