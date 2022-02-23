@@ -67,7 +67,7 @@
                     <button class="button is-small mr-2"
                             @click="openModal = { isOpen: true, name: 'Add From Adversary' }; getAdversaries();">
                         <span class="icon"><em class="fas fa-user-plus"></em></span>
-                        <span>Add From Adversary</span>
+                        <span>Add from Adversary</span>
                     </button>
                     <button class="button is-small mr-2" @click="duplicateSource(selectedSource)">
                         <span class="icon"><em class="fas fa-copy"></em></span>
@@ -644,7 +644,7 @@
                             </p>
                             <div class="is-flex is-align-items-center">
                                 <label class="is-italic is-size-7" for="ability-fact-score">Score: </label>
-                                <input class="input has-background-grey-darker is-small m-2 w-50-px" id="ability-fact-score" x-model="ability.score" type="number" required pattern="[0-9]*" placeholder="1"/>
+                                <input class="input has-background-grey-darker is-small m-2 w-50-px" id="ability-fact-score" x-model="ability.score" type="number" required pattern="[0-9]*" min="0" placeholder="1"/>
                             </div>
                             <p x-show="ability.factTraits" class="is-italic is-size-7">
                                 <span>Facts: </span>
@@ -913,23 +913,17 @@
                         }
                     }
                 });
-                console.log('** abilitiesWithFacts', abilitiesWithFacts)
                 this.filteredAbilities = abilitiesWithFacts;
             },
 
             addFromAbility(factTraits, score, fromAdversary = false) { // add all facts found from abilities
-                const uniqueFacts = this.selectedSource.facts.map((f) => f.trait);
                 this.openModal.isOpen = false;
                 factTraits.forEach((val) => {
-                    if (!uniqueFacts.includes(val)) { // source should not have more than one of the same fact value
-                        this.addFact({
-                            trait: val,
-                            value: '',
-                            score: score
-                        }, true);
-                    } else {
-                        toast(`Fact ${val} not added as it already exists.`, false);
-                    }
+                    this.addFact({
+                        trait: val,
+                        value: '',
+                        score: score
+                    }, true);
                 });
                 if (!fromAdversary) toast('Added facts to source', true);
             },
