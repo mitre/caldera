@@ -19,7 +19,7 @@
                 <input id="profile-search" class="input is-small is-fullwidth" x-model="adversarySearchQuery" placeholder="Search for an adversary profile or tactic..." x-on:keyup="searchForAdversary()" @click="focusSearchResults = true">
                 <div class="search-results is-size-7" x-show="adversarySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
                     <template x-for="result of adversarySearchResults" :key="result.adversary_id">
-                        <p @click="selectAdversary(result.adversary_id)" x-text="`${result.name} | (${(result.tactics.join(', '))})`" x-bind:title="result.description"></p>
+                        <p @click="selectAdversary(result.adversary_id); focusSearchResults = false" x-text="`${result.name} | (${(result.tactics.join(', '))})`" x-bind:title="result.description"></p>
                     </template>
                 </div>
             </div>
@@ -1054,6 +1054,7 @@
             selectAdversary(id) {
                 this.selectedProfileId = id;
                 this.loadProfile();
+                this.adversarySearchResults = this.adversaries;
             },
 
             searchForAbility() {
