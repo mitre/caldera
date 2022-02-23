@@ -12,18 +12,15 @@
     <hr>
 
     <!-- ADVERSARY SELECTION -->
-
     <form>
         <div id="select-adversary" class="field has-addons">
-            <label class="label">Select a profile &nbsp;&nbsp;&nbsp;</label>
-            <div class="control is-expanded">
-                <div class="select is-small is-fullwidth">
-                    <select x-on:change="loadProfile()" x-model="selectedProfileId">
-                        <option value="" default disabled selected>Select one...</option>
-                        <template x-for="adversary of adversaries" :key="adversary.adversary_id">
-                            <option x-bind:value="adversary.adversary_id" x-text="adversary.name" x-bind:title="adversary.description"></option>
-                        </template>
-                    </select>
+            <label class="label" for="profile-search">Select a profile &nbsp;&nbsp;&nbsp;</label>
+            <div class="control is-expanded auto-complete" x-data="{focusSearchResults: false}">
+                <input id="profile-search" class="input is-small is-fullwidth" x-model="adversarySearchQuery" placeholder="Search for an adversary profile or tactic..." x-on:keyup="searchForAdversary()" @click="focusSearchResults = true">
+                <div class="search-results is-size-7" x-show="adversarySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                    <template x-for="result of adversarySearchResults" :key="result.adversary_id">
+                        <p @click="selectAdversary(result.adversary_id)" x-text="`${result.name} | (${(result.tactics.join(', '))})`" x-bind:title="result.description"></p>
+                    </template>
                 </div>
             </div>
             <div class="control">
@@ -723,9 +720,11 @@
             selectedTactic: '',
             selectedTechnique: '',
             selectedAbilityId: '',
+            adversarySearchQuery: '',
             abilitySearchQuery: '',
             searchResults: [],
             abilitySearchResults: [],
+            adversarySearchResults: [],
             selectedAbility: {},
             selectedPlatform: '',
             selectedExecutor: '',
@@ -742,6 +741,10 @@
                     return apiV2('GET', '/api/v2/abilities');
                 }).then((abilities) => {
                     this.abilities = abilities;
+                    this.adversaries.forEach((adversary) => {
+                        adversary.tactics = [...new Set(adversary.atomic_ordering.map((ability_id) => (this.abilities.find((ability) => ability.ability_id === ability_id).tactic)))];
+                    });
+                    this.adversarySearchResults = this.adversaries;
                     return apiV2('GET', '/api/v2/objectives');
                 }).then((objectives) => {
                     this.objectives = objectives;
@@ -1039,6 +1042,18 @@
                     }
                 });
                 this.searchResults = Array.from(results);
+            },
+
+            searchForAdversary() {
+                this.adversarySearchResults = this.adversaries.filter((adversary) => (
+                    (adversary.name.toLowerCase().indexOf(this.adversarySearchQuery.toLowerCase()) > -1) ||
+                    (adversary.tactics.find((tactic) => tactic.toLowerCase().indexOf(this.adversarySearchQuery.toLowerCase()) > -1))
+                ));
+            },
+
+            selectAdversary(id) {
+                this.selectedProfileId = id;
+                this.loadProfile();
             },
 
             searchForAbility() {
