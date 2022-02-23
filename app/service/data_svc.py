@@ -412,7 +412,7 @@ class DataService(DataServiceInterface, BaseService):
                         if cleanup_executor and cleanup_executor.cleanup:
                             payload_name = '#{payload:%s}' % payload if self.is_uuid4(payload) else payload
                             cleanup_command = executor.replace_cleanup(cleanup_executor.cleanup[0], payload_name)
-                            if cleanup_command not in executor.cleanup:
+                            if cleanup_command not in executor.cleanup and not ability.delete_payload:
                                 executor.cleanup.append(cleanup_command)
 
     async def _verify_default_objective_exists(self):
