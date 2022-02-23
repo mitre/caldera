@@ -25,6 +25,10 @@ from app.utility.base_service import BaseService
 NO_PREVIOUS_STATE = object()
 
 
+class InvalidOperationStateError(Exception):
+    pass
+
+
 class OperationOutputRequestSchema(ma.Schema):
     enable_agent_output = ma.fields.Boolean(default=False)
 
