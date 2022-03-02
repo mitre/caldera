@@ -15,6 +15,8 @@ from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
+from datetime import datetime
+
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 
@@ -66,6 +68,13 @@ class FileSvc(FileServiceInterface, BaseService):
 
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
+
+    async def create_exfil_operation_directory(self, dir_name):
+        now = datetime.now()
+        path = os.path.join((dir_name),now.strftime("%m%d%Y_%H%M"))
         if not os.path.exists(path):
             os.makedirs(path)
         return path
@@ -165,14 +174,20 @@ class FileSvc(FileServiceInterface, BaseService):
             startdir = self.get_config('exfil_dir')
         if not os.path.exists(startdir):
             return dict()
-
         exfil_files = dict()
-        exfil_folders = [f.path for f in os.scandir(startdir) if f.is_dir()]
-        for d in exfil_folders:
-            exfil_key = d.split(os.sep)[-1]
-            exfil_files[exfil_key] = {}
-            for file in [f.path for f in os.scandir(d) if f.is_file()]:
-                exfil_files[exfil_key][file.split(os.sep)[-1]] = file
+        exfil_list = [x for x in os.walk(startdir) if x[2]]
+        for d in exfil_list:
+            agent_path = d[0]
+            exfil_agent_key = d[0].split(os.sep)[-2]
+            exfil_subdir = d[0].split(os.sep)[-1]
+            if exfil_agent_key not in exfil_files:
+                exfil_files[exfil_agent_key] = dict()
+            for file in d[-1]:
+                if exfil_subdir not in exfil_files[exfil_agent_key]:
+                    exfil_files[exfil_agent_key][exfil_subdir] = dict()
+                if file not in exfil_files[exfil_agent_key][exfil_subdir]:
+                    exfil_files[exfil_agent_key][exfil_subdir][file] = dict()
+                    exfil_files[exfil_agent_key][exfil_subdir][file] = os.path.join(agent_path,file)
         return exfil_files
 
     @staticmethod
