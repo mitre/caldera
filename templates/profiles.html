@@ -742,7 +742,7 @@
                 }).then((abilities) => {
                     this.abilities = abilities;
                     this.adversaries.forEach((adversary) => {
-                        adversary.tactics = [...new Set(adversary.atomic_ordering.map((ability_id) => (this.abilities.find((ability) => ability.ability_id === ability_id).tactic)))];
+                        adversary.tactics = [...new Set(adversary.atomic_ordering.filter((ability_id) => (this.abilities.find((ability) => ability.ability_id === ability_id).tactic)))];
                     });
                     this.adversarySearchResults = this.adversaries;
                     return apiV2('GET', '/api/v2/objectives');
