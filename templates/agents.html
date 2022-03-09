@@ -689,7 +689,7 @@
                 });
                 fields = [...new Set(fields)];
                 fields.forEach((field) => {
-                    this.agentFields.push({ name: field, value: this.agentFieldConfig[field] });
+                    this.agentFields.push({ name: field, value: this.agentFieldConfig.hasOwnProperty(field) ? this.agentFieldConfig[field] : "" });
                 });
             },
 
