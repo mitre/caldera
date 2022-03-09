@@ -67,7 +67,7 @@ async def test_display_facts(knowledge_webapp, aiohttp_client):
         'value': 'test'
     }
     await client.post('/facts', json=fact_data, headers=headers)
-    resp = await client.get('/facts', json=fact_data, headers=headers)
+    resp = await client.post('/retrieve_facts', json=fact_data, headers=headers)
     data = await resp.json()
     response = data['found']
 
@@ -95,7 +95,7 @@ async def test_display_relationships(knowledge_webapp, aiohttp_client):
         'origin': op_id_test
     }
     await client.post('/relationships', json=relationship_data, headers=headers)
-    resp = await client.get('/relationships', json=relationship_data, headers=headers)
+    resp = await client.post('/retrieve_relationships', json=relationship_data, headers=headers)
     data = await resp.json()
     response = data['found']
 
@@ -117,7 +117,7 @@ async def test_remove_fact(knowledge_webapp, aiohttp_client):
     pre = await init.json()
     subs = await client.delete('/facts', json=fact_data, headers=headers)
     post = await subs.json()
-    tmp = await client.get('/facts', json=fact_data, headers=headers)
+    tmp = await client.post('/retrieve_facts', json=fact_data, headers=headers)
     cur = await tmp.json()
     current = cur['found']
     start = pre['added']
@@ -149,7 +149,7 @@ async def test_remove_relationship(knowledge_webapp, aiohttp_client):
     pre = await init.json()
     subs = await client.delete('/relationships', json=dict(edge='alpha'), headers=headers)
     post = await subs.json()
-    resp = await client.get('/relationships', json=relationship_data, headers=headers)
+    resp = await client.post('/retrieve_relationships', json=relationship_data, headers=headers)
     cur = await resp.json()
     start = pre['added']
     end = post['removed']
@@ -174,7 +174,7 @@ async def test_add_fact(knowledge_webapp, aiohttp_client):
     assert response[0]['trait'] == 'demo'
     assert response[0]['value'] == 'test'
 
-    tmp = await client.get('/facts', json=fact_data, headers=headers)
+    tmp = await client.post('/retrieve_facts', json=fact_data, headers=headers)
     cur = await tmp.json()
     current = cur['found']
     assert current == response
@@ -196,7 +196,7 @@ async def test_add_fact_to_operation(knowledge_webapp, aiohttp_client, test_oper
     assert response[0]['value'] == 'test'
     assert response[0]['source'] == test_operation['id']
 
-    tmp = await client.get('/facts', json=fact_data, headers=headers)
+    tmp = await client.post('/retrieve_facts', json=fact_data, headers=headers)
     cur = await tmp.json()
     current = cur['found']
     assert current == response
@@ -252,7 +252,7 @@ async def test_add_relationship(knowledge_webapp, aiohttp_client):
     assert response[0]['source']['relationships'] == response[0]['target']['relationships']
     assert response[0]['source']['relationships'][0] == expected_response
 
-    resp = await client.get('/relationships', json=relationship_data, headers=headers)
+    resp = await client.post('/retrieve_relationships', json=relationship_data, headers=headers)
     cur = await resp.json()
     current = cur['found']
     assert current == response
@@ -279,7 +279,7 @@ async def test_patch_fact(knowledge_webapp, aiohttp_client):
     assert len(patched) == 1
     assert patched[0]['value'] == 'jacobson'
 
-    tmp = await client.get('/facts', json=dict(trait='domain.user.name'), headers=headers)
+    tmp = await client.post('/retrieve_facts', json=dict(trait='domain.user.name'), headers=headers)
     cur = await tmp.json()
     current = cur['found']
     assert len(current) == 1
@@ -322,7 +322,7 @@ async def test_patch_relationship(knowledge_webapp, aiohttp_client):
     assert patched[0]['source']['value'] == 'bobross'
     assert patched[0]['edge'] == 'has_admin_password'
 
-    tmp = await client.get('/relationships', json=dict(edge='has_admin_password'), headers=headers)
+    tmp = await client.post('/retrieve_relationships', json=dict(edge='has_admin_password'), headers=headers)
     cur = await tmp.json()
     current = cur['found']
     assert len(current) == 1
