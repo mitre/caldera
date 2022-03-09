@@ -1268,8 +1268,8 @@
             },
 
             getFacts() {
-                apiV2('GET', '/api/v2/facts').then((facts) => {
-                    this.facts = facts;
+                apiV2('POST', '/api/v2/retrieve_facts', { source: this.selectedOperationID }).then((facts) => {
+                    this.facts = facts.found;
                 }).catch(() => {
                     toast('Error getting facts');
                 });
@@ -1425,7 +1425,7 @@
                 const fields = [...new Set( [...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]) )]
                 const opSource = this.selectedOperation.source;
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
-                const facts = opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : []);
+                const facts = (opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : [])).concat(this.facts);
 
                 this.potentialLinkCommand = executor.command;
 
