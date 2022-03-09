@@ -1340,7 +1340,11 @@
 
             rerunOperation() {
                 let { id, start, state, chain, host_group, ...newOp } = this.selectedOperation;
-                newOp.name += ` (${new Date().toLocaleString()})`
+
+                let dateMatches = newOp.name.match(/[(]\d{1,2}\/\d{1,2}\/\d{2,4}, \d{1,2}:\d{2}:\d{2} [A|P]M[)]$/g);
+                let stringToReplace = (dateMatches && dateMatches.length) ? dateMatches[dateMatches.length - 1] : '';
+                let date = `(${new Date().toLocaleString()})`;
+                newOp.name = stringToReplace ? (newOp.name.replace(stringToReplace, date)) : (`${newOp.name} ${date}`);
                 
                 apiV2('POST', this.ENDPOINT, newOp).then((newOperation) => {
                     toast(`Started operation ${newOperation.name}!`, true);
