@@ -270,8 +270,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
             for executor in executors:
                 ex_links = [Link.load(dict(command=self.encode_string(executor.test), paw=self.paw, ability=ability,
                                            executor=executor, deadman=deadman))]
-                valid_links = await bps.remove_links_with_unset_variables(
-                    await bps.add_test_variants(links=ex_links, agent=self, facts=facts))
+                valid_links = await bps.add_test_variants(links=ex_links, agent=self, facts=facts, trim_unset_variables=True)
                 if valid_links:
                     links.extend(valid_links)
                     break

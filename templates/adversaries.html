@@ -128,7 +128,7 @@
                             <td class="has-text-centered">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
                                     <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
-                                </span> 
+                                </span>
                             </td>
                             <td class="has-text-centered">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
@@ -210,17 +210,17 @@
                     </div>
                     <div class="field" x-show="selectedAddAdversary">
                         <div class="control">
-                            <a @click="abilitiesAddAdversary.forEach(a => a.selected = true)">Select All</a> 
-                            / 
+                            <a @click="abilitiesAddAdversary.forEach(a => a.selected = true)">Select All</a>
+                            /
                             <a @click="abilitiesAddAdversary.forEach(a => a.selected = false)">Deselect All</a>
                         </div>
                     </div>
                     <template x-for="ability of abilitiesAddAdversary">
                         <div class="field">
                             <label class="checkbox">
-                                <input type="checkbox" x-model="ability.selected"> 
+                                <input type="checkbox" x-model="ability.selected">
                                 <span>
-                                    <b x-text="ability.name"></b> | 
+                                    <b x-text="ability.name"></b> |
                                     <span x-text="ability.tactic"></span> |
                                     <template x-for="platform of getExecutorDetail('platforms', ability)">
                                         <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
@@ -293,7 +293,7 @@
         </div>
     </div>
 
-    <div class="modal" x-bind:class="{ 'is-active': showAbilityChoiceModal }"> 
+    <div class="modal" x-bind:class="{ 'is-active': showAbilityChoiceModal }">
         <div class="modal-background" @click="showAbilityChoiceModal = false"></div>
         <div class="modal-card wide">
             <header class="modal-card-head">
@@ -308,9 +308,9 @@
                         </div>
                         <div class="field-body">
                             <div class="field">
-                                <div class="control">
-                                    <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()">
-                                    <div class="search-results">
+                                <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                    <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
+                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
                                         <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                             <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
                                         </template>
@@ -331,7 +331,7 @@
                                     <div class="select is-small is-fullwidth">
                                         <select x-model="selectedTactic" x-on:change="selectedAbilityId = ''">
                                             <option default>Choose a tactic</option>
-                                            <template x-for="tactic of [...new Set(abilities.map((e) => e.tactic))]" :key="tactic">
+                                            <template x-for="tactic of Array.from(new Set(abilities.map((e) => e.tactic))).sort()" :key="tactic">
                                                 <option x-bind:value="tactic" x-text="tactic"></option>
                                             </template>
                                         </select>
@@ -350,7 +350,7 @@
                                     <div class="select is-small is-fullwidth">
                                         <select x-model="selectedTechnique" x-bind:disabled="!selectedTactic" x-on:change="selectedAbilityId = ''">
                                             <option default>Choose a technique</option>
-                                            <template :key="exploit.technique_id" x-for="exploit of [...new Set(abilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => abilities.find((e) => e.technique_id === t))">
+                                            <template :key="exploit.technique_id" x-for="exploit of ([...new Set(abilities.filter((e) => selectedTactic === e.tactic).map((e) => e.technique_id))].map((t) => abilities.find((e) => e.technique_id === t))).sort((a,b) => { return a.technique_name === b.technique_name ? 0 : (a.technique_name > b.technique_name ? 1 : -1) })">
                                                 <option x-bind:value="exploit.technique_id" x-text="`${exploit.technique_id} | ${exploit.technique_name}`"></option>
                                             </template>
                                         </select>
@@ -429,12 +429,17 @@
                             </div>
                             <div class="field is-horizontal">
                                 <div class="field-label is-small">
-                                    <label class="label">Tactic</label>
+                                    <label for="tactic-auto-fill" class="label">Tactic</label>
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input id="tactic-auto-fill" class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic" x-on:keyup="searchForAutoFill('tactic')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                                <template x-for="result of searchResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.tactic" @click="selectedAbility.tactic = result; searchResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrorsAbility.includes('tactic')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -446,8 +451,13 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id" x-on:keyup="searchForAutoFill('technique_id')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                                <template x-for="result of searchResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.technique_id" @click="selectedAbility.technique_id = result; searchResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrorsAbility.includes('technique_id')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -459,8 +469,13 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control">
-                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                            <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name" x-on:keyup="searchForAutoFill('technique_name')" @click="focusSearchResults = true">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                                <template x-for="result of searchResults" :key="result">
+                                                    <p x-show="result !== selectedAbility.technique_name" @click="selectedAbility.technique_name = result; searchResults = []" x-text="result"></p>
+                                                </template>
+                                            </div>
                                             <p x-show="fieldErrorsAbility.includes('technique_name')" class="help is-danger">This field is required.</p>
                                         </div>
                                     </div>
@@ -569,7 +584,7 @@
                                                         <select class="select is-multiple" multiple size="6">
                                                             <template x-for="payload of payloads">
                                                                 <option x-show="executor.payloads.indexOf(payload) === -1" x-on:click="executor.payloads.push(payload)" x-text="payload"></option>
-                                                            </template>      
+                                                            </template>
                                                         </select>
                                                     </div>
                                                 </div>
@@ -719,6 +734,7 @@
             selectedTechnique: '',
             selectedAbilityId: '',
             abilitySearchQuery: '',
+            searchResults: [],
             abilitySearchResults: [],
             selectedAbility: {},
             selectedPlatform: '',
@@ -1024,6 +1040,17 @@
                 }
             },
 
+            searchForAutoFill(field = 'tactic') {
+                const results = new Set();
+                if (!this.selectedAbility[field]) return;
+                this.abilities.forEach((ability) => {
+                    if (ability[field].toLowerCase().indexOf(this.selectedAbility[field].toLowerCase()) > -1) {
+                        results.add(ability[field]);
+                    }
+                });
+                this.searchResults = Array.from(results);
+            },
+
             searchForAbility() {
                 this.abilitySearchResults = [];
                 if (!this.abilitySearchQuery) return;
@@ -1195,21 +1222,6 @@
 
     .row-hover {
         background-color: #484848 !important;
-    }
-
-    .search-results {
-        overflow-y: scroll;
-        max-height: 200px;
-        background-color: #010101;
-        border-radius: 0 4px;
-    }
-    .search-results p {
-        margin-bottom: 0 !important;
-        padding: 5px;
-        cursor: pointer;
-    }
-    .search-results p:hover {
-        background-color: #484848;
     }
 
     .tactic-breakdown {
