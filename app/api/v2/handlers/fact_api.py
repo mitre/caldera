@@ -18,8 +18,8 @@ class FactApi(BaseObjectApi):
 
     def add_routes(self, app: web.Application):
         router = app.router
-        router.add_get('/facts', self.get_facts)
-        router.add_get('/relationships', self.get_relationships)
+        router.add_post('/retrieve_facts', self.retrieve_facts)
+        router.add_post('/retrieve_relationships', self.retrieve_relationships)
         router.add_post('/facts', self.add_facts)
         router.add_post('/relationships', self.add_relationships)
         router.add_delete('/facts', self.delete_facts)
@@ -34,7 +34,7 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True),
                                      description='Returns a list of matching facts, dumped in `FactSchema` format.')
-    async def get_facts(self, request: web.Request):
+    async def retrieve_facts(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
         resp = []
@@ -58,7 +58,7 @@ class FactApi(BaseObjectApi):
                                      '`RelationshipSchema` format.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
-    async def get_relationships(self, request: web.Request):
+    async def retrieve_relationships(self, request: web.Request):
         knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
         resp = []
