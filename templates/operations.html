@@ -162,6 +162,27 @@
                                         x-text="'Last ran ' + selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getLastDecideTime() + ')'"></span></em>
                             </div>
                             <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
+                                <div class="mb-6 mr-4">
+                                    <div class="field has-addons">
+                                        <p class="control">
+                                            <input x-model="filterText" placeholder="Filter Links..." type="search" class="input is-small">
+                                        </p>
+                                        <p class="control">
+                                            <span class="is-small select">
+                                                <select x-model="filterCriteria">
+                                                    <option id="select-default" value="" disabled selected>Select Criteria</option>
+                                                    <option value="decide">Decide</option>
+                                                    <option value="status">Status</option>
+                                                    <option value="link">Link</option>
+                                                    <option value="paw">Paw</option>
+                                                    <option value="host">Host</option>
+                                                    <option value="pid">PID</option>
+                                                </select>
+                                            </span>
+                                        </p>
+                                        <button class="button is-small" x-on:click="clearFilterTextandCriteria">Clear</button>
+                                    </div>
+                                </div>
                                 <div class="mb-6 mr-4 text-align-right">
                                     <button title="add manual command" class="button is-small" x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
                                         <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
@@ -178,31 +199,6 @@
                         </div>
                     </template>
                     <div class="timeline-table">
-                        <div class="is-flex is-flex-direction-row is-justify-content-space-between">
-                            <div class="mb-3">
-                                <input x-model="searchText" placeholder="Search..." type="search" class="is-small">
-                            </div>
-                            <div>
-                                <span>Search Criteria:</span>
-                                <input type="radio" id="btncriteria1" x-model="searchCriteria" value="decide" checked>
-                                <label for="btncriteria1">Decide</label>
-
-                                <input type="radio" id="btncriteria2" x-model="searchCriteria" value="status">
-                                <label for="btncriteria2">Status</label>
-
-                                <input type="radio" id="btncriteria3" x-model="searchCriteria" value="link">
-                                <label for="btncriteria3">Link</label>
-
-                                <input type="radio" id="btncriteria4" x-model="searchCriteria" value="paw">
-                                <label for="btncriteria4">Paw</label>
-
-                                <input type="radio" id="btncriteria5" x-model="searchCriteria" value="host">
-                                <label for="btncriteria5">Host</label>
-
-                                <input type="radio" id="btncriteria6" x-model="searchCriteria" value="pid">
-                                <label for="btncriteria6">PID</label>
-                            </div>
-                        </div>
                         <table class="table" @click.outside="selectedLink = null;">
                             <thead>
                             <tr class="table-header">
@@ -231,7 +227,7 @@
                                 </tr>
                                 </tbody>
                             </template>
-                            <template x-for="(link, index) in filterFromSelectedOperation" :key="link.id">
+                            <template x-for="(link, index) in filterLinksFromSelectedOperation" :key="link.id">
                                 <tbody>
                                 <tr x-bind:id="link.id"
                                     x-on:click="selectedLink = link">
@@ -1136,38 +1132,43 @@
             addNewRow: false,
             addedTechniquesIDs: new Set(),
 
-            searchText: '',
-            searchCriteria: 'decide',
+            filterText: '',
+            filterCriteria: '',
 
-            get filterFromSelectedOperation() {
+            get filterLinksFromSelectedOperation() {
                 if (!this.selectedOperation) {
                     return {}
                 }
-                if (this.searchText === '') {
+                if (this.filterText === '' || this.filterCriteria === '') {
                   return this.selectedOperation.chain;
                 }
                 return this.selectedOperation.chain.filter((item) => {
-                    if (this.searchCriteria === 'link') {
+                    if (this.filterCriteria === 'link') {
                         return item.ability.name
                         .toLowerCase()
-                        .includes(this.searchText.toLowerCase());
+                        .includes(this.filterText.toLowerCase());
                     }
-                    else if (this.searchCriteria === 'decide') {
+                    else if (this.filterCriteria === 'decide') {
                         var convertedValue = this.getReadableTime(item.decide);
                         return convertedValue
                                 .toLowerCase()
-                                .includes(this.searchText.toLowerCase());
+                                .includes(this.filterText.toLowerCase());
                     }
-                    else if (this.searchCriteria === 'status') {
+                    else if (this.filterCriteria === 'status') {
                        var convertedValue = item.status in this.LINK_STATUSES ? this.LINK_STATUSES[item.status] : 'queued';
                        return convertedValue
                                 .toLowerCase()
-                                .includes(this.searchText.toLowerCase());
+                                .includes(this.filterText.toLowerCase());
                     }
-                    return item[this.searchCriteria]
+                    return item[this.filterCriteria]
                         .toLowerCase()
-                        .includes(this.searchText.toLowerCase());
+                        .includes(this.filterText.toLowerCase());
                 });
+            },
+
+            get clearFilterTextandCriteria() {
+                this.filterCriteria = '';
+                this.filterText = '';
             },
 
             get EMPTY_MANUAL_COMMAND_OBJECT() {
