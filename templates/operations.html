@@ -1,6 +1,5 @@
 <div id="operationsPage" x-data="alpineOperations()" x-init="initOperations()"
-     xmlns="http://www.w3.org/1999/html"
-     @resize.window="getOperationsMenuCaretDisplay()">
+     xmlns="http://www.w3.org/1999/html">
     <div>
         <div>
             <div x-ref="operationsHeader">
@@ -178,7 +177,7 @@
                         </div>
                     </template>
                     <div class="timeline-table">
-                        <table class="table" @click.outside="selectedLink = null;">
+                        <table class="table">
                             <thead>
                             <tr class="table-header">
                                 <th class="decideColumn">Decide</th>
@@ -228,49 +227,31 @@
                                     </td>
                                     <td class="agentDetails">
                                         <p x-show="!link.host"><em>n/a</em></p>
-                                        <p x-show="link.host"><em
-                                                x-text="link.host"></em></p>
+                                        <p x-show="link.host"><em x-text="link.host"></em></p>
                                     </td>
                                     <td class="agentDetails">
-                                        <p x-show="!link.pid"><em>n/a</em></p>
-                                        <p x-show="link.pid"><em
-                                                x-text="link.pid"></em></p>
+                                        <p x-show="!link.pid" class="mb-0"><em>n/a</em></p>
+                                        <p x-show="link.pid"><em x-text="link.pid"></em></p>
                                     </td>
 
                                     <!--COMMAND COLUMN-->
                                     <td class="commandDetails">
-                                        <template x-if="!isLinkEditable">
-                                            <div class="is-flex is-justify-content-center is-flex-direction-column">
+                                        <div class="is-flex is-justify-content-flex-start">
+                                            <template x-if="!isLinkEditable(link)">
                                                 <button class="button is-small"
                                                         x-on:click="getLink(link); openModal='showCommand'"
                                                         title="view output">View Command
                                                 </button>
-                                            </div>
-                                        </template>
-                                        <template x-if="isLinkEditable">
-                                            <div class="is-flex is-align-items-flex-start is-justify-content-flex-start is-flex-direction-column">
-                                                <label x-show="false" for="edit-command">Edit command</label>
-                                                <textarea id="edit-command"
-                                                          class="code mb-2"
-                                                          contenteditable
-                                                          x-model="editableCommand"
-                                                          spellcheck="false"></textarea>
-
-                                                <!-- BUTTONS TO MANUALLY EXECUTE (APPROVE/DISCARD) COMMAND-->
-                                                <div class="is-flex is-justify-content-space-between">
-                                                    <button type="button"
-                                                            class="button is-small mr-3"
-                                                            x-on:click="updateLink(-2)">
-                                                        Discard
-                                                    </button>
-                                                    <button type="button"
-                                                            class="button is-primary is-small"
-                                                            x-on:click="updateLink(-3, editableCommand)">
-                                                        Approve
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        </template>
+                                            </template>
+                                            <template x-if="isLinkEditable(link)">
+                                                <button class="button is-small is-warning is-outlined"
+                                                        x-on:click="getLink(link); openModal='showCommand'"
+                                                        title="view output">
+                                                    <i class="fas fa-exclamation-triangle pr-2"></i>
+                                                    Review Command
+                                                </button>
+                                            </template>
+                                        </div>
                                     </td>
 
                                     <!--OUTPUT/FACTS COLUMN-->
@@ -291,7 +272,7 @@
                                     <td class="csv-exclude">
                                         <button x-show="selectedLink === link && isOperationRunning && !(link.status in LINK_STATUSES)"
                                                 type="button" title="delete link"
-                                                class="button is-primary is-small ml-2"
+                                                class="button is-danger is-outlined is-small ml-2"
                                                 x-on:click="openModal = 'deleteLinkModal'"><em
                                                 class="pr-1 fas fa-trash"></em>Discard Link
                                         </button>
@@ -417,7 +398,7 @@
                                                 <tr>
                                                     <th>Name</th>
                                                     <th>Value</th>
-                                                    <th>Trait</th>
+                                                    <th>Score</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -457,18 +438,46 @@
                             <p class="modal-card-title">Command</p>
                         </header>
                         <section class="modal-card-body">
-                            <div>
-                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
-                            </div>
+                            <template x-if="isLinkEditable(selectedLink)">
+                                <div>
+                                    <label x-show="false" htmlFor="edit-command">Edit command</label>
+                                    <textarea id="edit-command"
+                                              class="textarea is-small code"
+                                              contentEditable
+                                              x-model="editableCommand"
+                                              spellCheck="false"></textarea>
+                                </div>
+                            </template>
+                            <template x-if="!isLinkEditable(selectedLink)">
+                                <div>
+                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                </div>
+                            </template>
                         </section>
                         <footer class="modal-card-foot">
                             <nav class="level">
                                 <div class="level-left">
+                                    <template x-if="isLinkEditable(selectedLink)">
+                                        <button type="button"
+                                                class="button is-danger is-outlined is-small"
+                                                x-on:click="updateLink(-2); openModal = null;">
+                                            Discard
+                                        </button>
+                                    </template>
                                 </div>
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button class="button is-small" @click="openModal = null">Close</button>
                                     </div>
+                                    <template x-if="isLinkEditable(selectedLink)">
+                                        <div class="level-item">
+                                            <button type="button"
+                                                    class="button is-primary is-small"
+                                                    x-on:click="updateLink(-3, editableCommand); openModal = null;">
+                                                Approve
+                                            </button>
+                                        </div>
+                                    </template>
                                 </div>
                             </nav>
                         </footer>
@@ -1110,7 +1119,6 @@
             filteredAbilitiesList: [],
             schedule: '',
             editableCommand: null,
-            showOperationsMenuCaret: true,
             addNewRow: false,
             addedTechniquesIDs: new Set(),
 
@@ -1162,16 +1170,11 @@
                 return !(this.selectedOperation.state === 'finished' || this.selectedOperation.state === 'cleanup' || this.selectedOperation.state === 'out_of_time');
             },
 
-            get isLinkEditable() {
-                if (!this.selectedLink) return false;
+            isLinkEditable(currentLink) {
+                if (!currentLink) return false;
                 // Link can only be editable if operation is running, and if link is paused, queued, or completed
-                return this.isOperationRunning && ((this.selectedLink.status === -1 || !(this.selectedLink.status in this.LINK_STATUSES))
-                    && !(this.selectedLink.finish.length > 0 || this.selectedLink.output === 'True'));
-            },
-
-            getOperationsMenuCaretDisplay() {
-                const el = document.querySelector('.operation-menu-container');
-                if (el) this.showOperationsMenuCaret = el.scrollWidth > el.offsetWidth;
+                return this.isOperationRunning && ((currentLink.status === -1 || !(currentLink.status in this.LINK_STATUSES))
+                    && !(currentLink.finish.length > 0 || currentLink.output === 'True'));
             },
 
             getReadableTime(date) {
@@ -1219,8 +1222,6 @@
                     this.getOperation();
                     this.getFacts();
                     this.getFields();
-                    this.getOperationsMenuCaretDisplay(); // wait for UI changes to get accurate width calcs
-                    this.getAndCompareOperation();
                 }
             },
 
@@ -1255,13 +1256,12 @@
                     obfuscator: 'plain-text',
                     jitter: '2/8',
                     visibility: '51',
-                }
+                };
             },
 
             getOperations() {
                 apiV2('GET', this.ENDPOINT).then((res) => {
                     this.operations = res;
-                    this.selectedOperationID = this.selectedOperationID;
                 }).catch(() => {
                     toast('Error getting operations');
                 });
@@ -1284,24 +1284,6 @@
                 }).catch(() => {
                     toast('Error getting operation');
                 });
-            },
-
-            getAndCompareOperation() {
-                if (this.selectedOperationID) {
-                    apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
-                        if (this.selectedLink) {
-                            this.selectedOperation = {
-                                ...res,
-                                chain: res.chain.map(link => link.id === this.selectedLink.id ? this.selectedLink : link)
-                            };
-                        } else {
-                            this.selectedOperation = res;
-                        }
-                        this.generateAddedLinksList();
-                    }).catch(() => {
-                        console.error('Error getting operation');
-                    });
-                }
             },
 
             addOperation() {
@@ -1422,7 +1404,7 @@
                 if (!this.selectedPotentialLink.ability_id) return;
 
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
-                const fields = [...new Set( [...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]) )]
+                const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
                 const opSource = this.selectedOperation.source;
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
                 const facts = (opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : [])).concat(this.facts);
@@ -1436,8 +1418,8 @@
                             value: fact.value,
                             origin: fact.origin_type,
                             selected: false
-                        })
-                    })
+                        });
+                    });
                 });
 
                 this.setPotentialLinksToAdd();
@@ -1489,7 +1471,7 @@
                     factGroup.forEach((fact) => {
                         let split = fact.split('|');
                         command = command.replaceAll(`#{${split[0]}}`, split[1])
-                    })
+                    });
 
                     this.potentialLinksToAdd.push({
                         ability: this.selectedPotentialLink,
@@ -1498,8 +1480,8 @@
                             ...executor,
                             command: command
                         }
-                    })
-                })
+                    });
+                });
                 this.isAddingBlankPotentialLink = false;
             },
 
@@ -1678,8 +1660,8 @@
 
             isJitterValid() {
                 const jitterMin = parseInt(this.jitterMin, 10);
-                const jitterMax = parseInt(this.jitterMax, 10); 
-                return (jitterMin >= 0 && jitterMax >= 0 && jitterMin <= jitterMax) 
+                const jitterMax = parseInt(this.jitterMax, 10);
+                return (jitterMin >= 0 && jitterMax >= 0 && jitterMin <= jitterMax);
             },
 
             filterAbilities(abilities) {
@@ -1734,22 +1716,6 @@
     /*MODAL FORM STYLE*/
     #operationsPage .modal-form-fields.download-buttons-container button {
         width: fit-content;
-    }
-
-    #operationsPage .modal-results {
-        overflow-x: hidden;
-        overflow-y: scroll;
-        height: 50vh;
-    }
-
-    #operationsPage .modal-results li.abilities-list-item {
-        box-sizing: border-box;
-        padding: .5em;
-        list-style: none;
-    }
-
-    #operationsPage .modal-results li.abilities-list-item:hover {
-        background-color: rgba(255, 255, 255, 0.1);
     }
 
     /*END MODAL FORM STYLE*/
