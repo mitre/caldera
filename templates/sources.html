@@ -729,7 +729,7 @@
                                             </p>
                                             <div class="is-flex is-align-items-center">
                                                 <label class="is-italic is-size-7" for="adversary-fact-score">Score: </label>
-                                                <input class="input has-background-grey-darker is-small m-2 w-50-px" id="adversary-fact-score" x-model="ability.score" type="number" required pattern="[0-9]*" placeholder="1"/>
+                                                <input class="input has-background-grey-darker is-small m-2 w-50-px" id="adversary-fact-score" x-model="ability.score" type="number" required pattern="[0-9]*" min="0" placeholder="1"/>
                                             </div>
                                             <p x-show="ability.factTraits" class="is-italic is-size-7">
                                                 <span>Facts: </span>
