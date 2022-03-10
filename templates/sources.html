@@ -122,10 +122,10 @@
                             <thead>
                             <tr>
                                 <th class="has-text-left"></th>
-                                <th class="text-align-center">Origin</th>
-                                <th class="has-text-left">Fact Trait</th>
-                                <th class="has-text-left">Value</th>
-                                <th class="has-text-left">Score</th>
+                                <th class="text-align-center">Origin <em @click="sortTable('origin', filteredFacts, 'facts')" class="fas fa-sort"></em></th>
+                                <th class="has-text-left">Fact Trait <em @click="sortTable('trait', filteredFacts, 'facts')" class="fas fa-sort"></em></th>
+                                <th class="has-text-left">Value <em @click="sortTable('value', filteredFacts, 'facts')" class="fas fa-sort"></em></th>
+                                <th class="has-text-left">Score <em @click="sortTable('score', filteredFacts, 'facts')" class="fas fa-sort"></em></th>
                                 <th class="has-text-left"></th>
                             </tr>
                             </thead>
@@ -134,7 +134,7 @@
                                 <td class="is-italic text-align-center" colspan="6">No facts in this source.</td>
                             </tr>
                             </tbody>
-                            <tbody x-show="filteredFacts.length > 0 || showAddFactRow" @click.outside="selectedFactIndex = -1; factIndexToDelete = -1; getSources();">
+                            <tbody x-show="filteredFacts.length > 0 || showAddFactRow" @click.outside="selectedFactIndex = -1; factIndexToDelete = -1">
                             <tr x-data="{ newFact: EMPTY_FACT_OBJECT }" x-show="showAddFactRow">
                                 <td></td>
                                 <td></td>
@@ -267,9 +267,9 @@
                             <thead>
                             <tr>
                                 <th class="has-text-left"></th>
-                                <th class="has-text-left">Match</th>
-                                <th class="has-text-left">Fact Trait</th>
-                                <th class="text-align-center">Action</th>
+                                <th class="has-text-left">Match <em @click="sortTable('match', filteredRules, 'rules')" class="fas fa-sort"></em></th>
+                                <th class="has-text-left">Fact Trait <em @click="sortTable('trait', filteredRules, 'rules')" class="fas fa-sort"></em></th>
+                                <th class="text-align-center">Action <em @click="sortTable('action', filteredRules, 'rules')" class="fas fa-sort"></em></th>
                                 <th class="has-text-left"></th>
                             </tr>
                             </thead>
@@ -278,7 +278,7 @@
                                 <td class="is-italic text-align-center" colspan="6">No rules in this source.</td>
                             </tr>
                             </tbody>
-                            <tbody x-show="filteredRules.length > 0 || showAddRuleRow" @click.outside="selectedRuleIndex = -1; ruleIndexToDelete = -1; getSources();">
+                            <tbody x-show="filteredRules.length > 0 || showAddRuleRow" @click.outside="selectedRuleIndex = -1; ruleIndexToDelete = -1">
                             <template x-if="showAddRuleRow">
                                 <tr x-data="{newRule: EMPTY_RULE_OBJECT}">
                                     <td></td>
@@ -443,9 +443,9 @@
                             <thead>
                             <tr>
                                 <th class="has-text-left"></th>
-                                <th class="has-text-left">Source</th>
-                                <th class="has-text-left">Edge</th>
-                                <th class="has-text-left">Target</th>
+                                <th class="has-text-left">Source <em @click="sortTable('source', filteredRelationships, 'relationships')" class="fas fa-sort"></em></th>
+                                <th class="has-text-left">Edge <em @click="sortTable('edge', filteredRelationships, 'relationships')" class="fas fa-sort"></em></th>
+                                <th class="has-text-left">Target <em @click="sortTable('target', filteredRelationships, 'relationships')" class="fas fa-sort"></em></th>
                                 <th class="has-text-left"></th>
                             </tr>
                             </thead>
@@ -454,7 +454,7 @@
                                 <td class="is-italic text-align-center" colspan="6">No relationships in this source.</td>
                             </tr>
                             </tbody>
-                            <tbody x-show="filteredRelationships.length > 0 || showAddRelationshipRow" @click.outside="selectedRelationshipIndex = -1; relationshipIndexToDelete = -1; getSources();">
+                            <tbody x-show="filteredRelationships.length > 0 || showAddRelationshipRow" @click.outside="selectedRelationshipIndex = -1; relationshipIndexToDelete = -1">
                             <tr x-show="showAddRelationshipRow">
                                 <td></td>
                                 <td>
@@ -816,6 +816,11 @@
                 edge: '',
                 targetTrait: ''
             },
+            sortSettings: {
+                facts: '',
+                rules: '',
+                relationships: ''
+            },
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
@@ -833,6 +838,15 @@
                 this.filteredFacts = this.selectedSource.facts;
                 this.filteredRules = this.selectedSource.rules;
                 this.filteredRelationships = this.selectedSource.relationships;
+
+                // Keep incoming objects sorted, as before
+                Object.keys(this.sortSettings).forEach((k) => {
+                    if (this.sortSettings[k]) {
+                        let key = k[0].toUpperCase() + k.slice(1).toLowerCase();
+                        let val = this.sortSettings[k];
+                        this.sortTable(val, this[`filtered${key}`], k);
+                    }
+                });
             },
 
             filterFacts(input = '') {
@@ -1083,7 +1097,22 @@
             resetSearch() {
                 this.abilitySearch = { query: '', tactic: '', technique: null };
                 this.filterAbilities();
-            }
+            },
+
+            sortTable(field, list, objName) {
+                if (list && list.length > 0 && field in list[0]) {
+                    let reverseSortOrder = this.sortSettings[objName] === field.toUpperCase();
+                    list.sort((a, b) => {
+                        if (!(field in a)) return 0;
+                        if (!(field in b)) return 0;
+                        // if already sorted once (upper case), sort in reverse order
+                        if (reverseSortOrder) return a[field] < b[field] ? 1 : b[field] < a[field] ? -1 : 0;
+                        return a[field] > b[field] ? 1 : b[field] > a[field] ? -1 : 0;
+                    });
+                    this.sortSettings[objName] = reverseSortOrder ? field.toLowerCase() : field.toUpperCase();
+                }
+                return list;
+            },
         };
     }
 
