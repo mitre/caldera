@@ -321,6 +321,32 @@
                                                       x-bind:class="newRule.action === 'ALLOW' ? 'toggle-on' : 'toggle-off'">
                                                         <span x-bind:class="newRule.action === 'ALLOW' ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
                                                     </span>
+                                                </div>
+                                                <label class="has-text-success" for="toggleAction">ALLOW</label>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button type="button"
+                                                    class="button is-small is-primary"
+                                                    x-on:click="addRule(newRule); newRule = EMPTY_RULE_OBJECT">
+                                                Add
+                                            </button>
+                                            <button type="button"
+                                                    class="button is-small"
+                                                    x-on:click="showAddRuleRow = false; newRule = EMPTY_RULE_OBJECT">
+                                                Cancel
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
+                                <template x-for="(rule, index) in filteredRules">
+                                    <tr x-on:click="selectedRuleIndex = index; showAddRuleRow = false;" x-bind:class="selectedRuleIndex === rule ? 'selected' : ''">
+                                        <td x-text="index + 1"></td>
+
+                                        <td x-show="selectedRuleIndex === index">
+                                            <input id="edit-rule-match" class="input is-small" x-model="rule.match" contenteditable>
+                                        </td>
+                                        <td x-show="selectedRuleIndex !== index" class="is-italic" x-text="rule.match"></td>
                                             </div>
                                             <label class="has-text-success" for="toggleAction">ALLOW</label>
                                         </div>
