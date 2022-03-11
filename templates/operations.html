@@ -1268,7 +1268,7 @@
             },
 
             getFacts() {
-                apiV2('GET', '/api/v2/facts/${this.selectedOperationID}').then((facts) => {
+                apiV2('GET', `/api/v2/facts/${this.selectedOperationID}`).then((facts) => {
                     this.facts = facts.found;
                 }).catch(() => {
                     toast('Error getting facts');
