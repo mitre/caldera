@@ -118,8 +118,8 @@
                                 <col width="15%">
                                 <col width="30%">
                                 <col width="30%">
-                                <col width="15%">
                                 <col width="10%">
+                                <col width="15%">
                             </colgroup>
                             <thead>
                             <tr>
@@ -274,8 +274,8 @@
                             <colgroup>
                                 <col width="15%">
                                 <col width="30%">
-                                <col width="45%">
-                                <col width="10%">
+                                <col width="40%">
+                                <col width="15%">
                             </colgroup>
                             <thead>
                             <tr>
@@ -460,10 +460,10 @@
                         <!-- RELATIONSHIPS TABLE -->
                         <table class="table is-striped is-fullwidth">
                             <colgroup>
+                                <col width="25%">
                                 <col width="30%">
                                 <col width="30%">
-                                <col width="30%">
-                                <col width="10%">
+                                <col width="15%">
                             </colgroup>
                             <thead>
                             <tr>
@@ -513,7 +513,6 @@
                             <template x-for="(rel, index) in filteredRelationships">
                                 <tr x-on:click="selectedRelationshipIndex = index; showAddRelationshipRow = false;"
                                     x-bind:class="selectedRelationshipIndex === index ? 'selected' : ''">
-                                    <td></td>
                                     <td x-show="selectedRelationshipIndex !== index" x-text="rel.source?.trait"></td>
                                     <td x-show="selectedRelationshipIndex === index">
                                         <input id="edit-rel-trait" class="input is-small" x-model="rel.source.trait"
