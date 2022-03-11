@@ -105,7 +105,7 @@ class FactApi(BaseObjectApi):
         resp = []
         if relationship_data:
             try:
-                resp = self._find_and_verify_relationships(relationship_data)
+                resp = await self._find_and_verify_relationships(relationship_data)
             except Exception as e:
                 error_msg = f'Encountered issue retrieving relationships associated with operation' \
                             f' {operation_id} - {e}'
