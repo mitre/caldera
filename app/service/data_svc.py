@@ -388,7 +388,6 @@ class DataService(DataServiceInterface, BaseService):
         required_fields = ['name', 'description', 'tactic', 'technique_id', 'technique_name']
         special_extensions = [special_payload for special_payload in
                               self.get_service('file_svc').special_payloads if special_payload.startswith('.')]
-        cleanup_abilities = await self.locate('abilities', dict(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880'))
         for ability in await self.locate('abilities'):
             for field in required_fields:
                 if not getattr(ability, field):
@@ -406,14 +405,6 @@ class DataService(DataServiceInterface, BaseService):
                     if not path:
                         self.log.warning('Payload referenced in %s but not found: %s', ability.ability_id, payload)
                         continue
-
-                    for cleanup_ability in cleanup_abilities:
-                        cleanup_executor = cleanup_ability.find_executor(executor.name, executor.platform)
-                        if cleanup_executor and cleanup_executor.cleanup:
-                            payload_name = '#{payload:%s}' % payload if self.is_uuid4(payload) else payload
-                            cleanup_command = executor.replace_cleanup(cleanup_executor.cleanup[0], payload_name)
-                            if cleanup_command not in executor.cleanup and not ability.delete_payload:
-                                executor.cleanup.append(cleanup_command)
 
     async def _verify_default_objective_exists(self):
         if not await self.locate('objectives', match=dict(name='default')):
