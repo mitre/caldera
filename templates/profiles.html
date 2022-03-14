@@ -72,6 +72,10 @@
                 <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
                 <button class="button is-small" @click="showObjectiveModal = true">Change</button>
                 <div class="vr"></div>
+                <button class="button is-small" @click="exportProfile()">
+                    <span class="icon"><em class="fas fa-file-export"></em></span>
+                    <span>Export</span>
+                </button>
                 <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
                 <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
             </div>
@@ -834,6 +838,29 @@
                 this.createProfileName = '';
                 this.createProfileDescription = '';
                 this.isCreatingProfile = false;
+            },
+
+            importProfile() {
+
+            },
+
+            exportProfile() {
+                let yaml = `id: ${this.selectedProfileId}\n`;
+                yaml += `name: ${this.selectedProfileName}\n`;
+                yaml += `description: ${this.selectedProfileDescription}\n`;
+                yaml += `objective: ${this.selectedObjectiveId}\n`;
+                yaml += `atomic_ordering:\n`;
+                this.selectedProfileAbilities.forEach((ability) => yaml += `- ${ability.ability_id}\n`);
+
+                const blob = new Blob([yaml], { type: 'application/x-yaml' })
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `${this.selectedProfileName}.yaml`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
             },
 
             linkObjective() {
