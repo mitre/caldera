@@ -24,7 +24,7 @@
                 </div>
             </div>
             <div class="control">
-                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">+ New</button>
+                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">+ New Profile</button>
             </div>
         </div>
     </form>
@@ -72,6 +72,13 @@
                 <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
                 <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
             </div>
+
+            <div class="tactic-breakdown pt-4 pb-4" @click="isTacticBreakdownActive = !isTacticBreakdownActive" title="Click to expand/collapse">
+                <template x-for="tactic in getTacticBreakdown" :key="tactic[0]">
+                    <span class="tactic-item has-tooltip-bottom" :class="{ 'active': isTacticBreakdownActive }" x-bind:style="`width: ${tactic[1]}%; background-color: ${hashStringToColor(tactic[0])};`" x-text="`${tactic[0]}  ${tactic[1]}%`"></span>
+                </template>
+            </div>
+
             <table x-show="selectedProfileAbilities.length" class="table is-striped is-fullwidth">
                 <thead>
                     <tr class="ability-row">
@@ -94,7 +101,9 @@
                             <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
                             <td x-text="index + 1"></td>
                             <td x-text="ability.name"></td>
-                            <td x-text="ability.tactic"></td>
+                            <td>
+                                <span x-text="ability.tactic" x-bind:style="`border-bottom: 1px ridge ${hashStringToColor(ability.tactic)}`"></span>
+                            </td>
                             <td x-text="ability.technique_name"></td>
                             <td>
                                 <template x-for="platform of getExecutorDetail('platforms', ability)">
@@ -694,6 +703,7 @@
             needsParser: [],
             onHoverUnlocks: [],
             onHoverLocks: [],
+            isTacticBreakdownActive: false,
 
             // Create a profile
             isEditingProfile: false,
@@ -1171,6 +1181,30 @@
                 this.abilityTableDragEndIndex = undefined;
             },
 
+            getTacticBreakdown() {
+                if (!this.selectedProfileAbilities) return;
+                let counts = {};
+                this.selectedProfileAbilities.forEach((ability) => {
+                    counts[ability.tactic] ? counts[ability.tactic] += 1 : counts[ability.tactic] = 1;
+                });
+                return Object.keys(counts).map((tactic) => {
+                    let percent = Math.ceil(counts[tactic] / this.selectedProfileAbilities.length * 10000) / 100
+                    return [tactic, percent]
+                })
+            },
+
+            hashStringToColor(str) {
+                let hash = 5381;
+                for (let i = 0; i < str.length; i++) {
+                    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+                }
+
+                let r = (hash & 0xFF0000) >> 16;
+                let g = (hash & 0x00FF00) >> 8;
+                let b = hash & 0x0000FF;
+                return "#" + ("0" + r.toString(16)).substr(-2) + ("0" + g.toString(16)).substr(-2) + ("0" + b.toString(16)).substr(-2);
+            }
+
         };
     }
 
@@ -1221,6 +1255,28 @@
 
     .row-hover {
         background-color: #484848 !important;
+    }
+
+    .tactic-breakdown {
+        display: table;
+        width: 100%;
+        overflow: hidden;
+        white-space: nowrap;
+        cursor: pointer;
+        user-select: none;
+        transform-style: preserve-3d;
+    }
+
+    .tactic-item {
+        display: table-cell;
+        line-height: 8px;
+        text-indent: -9999px;
+        border-bottom: none !important;
+    }
+    .tactic-item.active {
+        line-height: 30px;
+        text-indent: 6px;
+        font-size: .7em;
     }
 
     .unlock {
