@@ -59,13 +59,15 @@
 
                     <!-- OPERATION CONTROLS -->
                     <div class="controls-container is-flex is-justify-content-center is-align-items-center">
-                        <div class="is-flex is-flex-direction-column is-align-items-center">
-                            <button x-bind:disabled="!isOperationRunning" class="button no-style is-large"
-                                    x-on:click="updateOperation('state', 'cleanup')" id="op-stop-button"><em
-                                    title="stop" class="fas fa-stop"></em></button>
-                            <label class="label is-small" for="op-stop-button">Stop</label>
-                        </div>
-                        <template x-if="selectedOperation.state ==='running'">
+                        <template x-if="isOperationRunning">
+                            <div class="is-flex is-flex-direction-column is-align-items-center">
+                                <button x-bind:disabled="!isOperationRunning" class="button no-style is-large"
+                                        x-on:click="updateOperation('state', 'cleanup')" id="op-stop-button"><em
+                                        title="stop" class="fas fa-stop"></em></button>
+                                <label class="label is-small" for="op-stop-button">Stop</label>
+                            </div>
+                        </template>
+                        <template x-if="selectedOperation.state === 'running' && isOperationRunning">
                             <div class="is-flex is-flex-direction-column is-align-items-center">
                                 <button x-bind:disabled="!isOperationRunning"
                                         class="button no-style is-larger" id="op-pause-button"
@@ -74,7 +76,7 @@
                                 <label class="label is-small" for="op-pause-button">Pause</label>
                             </div>
                         </template>
-                        <template x-if="selectedOperation.state !== 'running'">
+                        <template x-if="selectedOperation.state !== 'running' && isOperationRunning">
                             <div class="is-flex is-flex-direction-column is-align-items-center">
                                 <button x-bind:disabled="!isOperationRunning"
                                         class="button no-style is-larger" id="op-run-button"
@@ -83,12 +85,22 @@
                                 <label class="label is-small" for="op-run-button">Run</label>
                             </div>
                         </template>
-                        <div class="is-flex is-flex-direction-column is-align-items-center">
-                            <button x-bind:disabled="!isOperationRunning" class="button no-style is-medium"
-                                    x-on:click="updateOperation('state', 'run_one_link')" id="op-run-1-button">
-                                <em title="run one step" class="fas fa-play"><sub>1</sub></em></button>
-                            <label class="label is-small" for="op-run-1-button">Run 1 Link</label>
-                        </div>
+                        <template x-if="isOperationRunning">
+                            <div class="is-flex is-flex-direction-column is-align-items-center">
+                                <button x-bind:disabled="!isOperationRunning" class="button no-style is-medium"
+                                        x-on:click="updateOperation('state', 'run_one_link')" id="op-run-1-button">
+                                    <em title="run one step" class="fas fa-play"><sub>1</sub></em></button>
+                                <label class="label is-small" for="op-run-1-button">Run 1 Link</label>
+                            </div>
+                        </template>
+                        <template x-if="!isOperationRunning">
+                            <div class="is-flex is-flex-direction-column is-align-items-center">
+                                <button class="button no-style is-large" x-on:click="rerunOperation()">
+                                        <em title="Re-run operation with same settings" class="fas fa-redo-alt"></em>
+                                </button>
+                                <label class="label is-small">Re-run operation</label>
+                            </div>
+                        </template>
                     </div>
 
                     <div class="is-flex is-flex-direction-row">
@@ -1306,6 +1318,25 @@
                         toast('Error adding operation');
                     });
                 }
+            },
+
+            rerunOperation() {
+                let { id, start, state, chain, host_group, ...newOp } = this.selectedOperation;
+
+                let dateMatches = newOp.name.match(/[(]\d{1,2}\/\d{1,2}\/\d{2,4}, \d{1,2}:\d{2}:\d{2} [A|P]M[)]$/g);
+                let stringToReplace = (dateMatches && dateMatches.length) ? dateMatches[dateMatches.length - 1] : '';
+                let date = `(${new Date().toLocaleString()})`;
+                newOp.name = stringToReplace ? (newOp.name.replace(stringToReplace, date)) : (`${newOp.name} ${date}`);
+                
+                apiV2('POST', this.ENDPOINT, newOp).then((newOperation) => {
+                    toast(`Started operation ${newOperation.name}!`, true);
+                    this.operations.push(newOperation);
+                    this.selectedOperation = newOperation;
+                    this.selectedOperationID = newOperation.id;
+                }).catch((error) => {
+                    toast('Error adding operation', false);
+                    console.error(error);
+                });
             },
 
             deleteOperation() {
