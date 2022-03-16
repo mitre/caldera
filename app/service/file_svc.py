@@ -74,7 +74,7 @@ class FileSvc(FileServiceInterface, BaseService):
 
     async def create_exfil_operation_directory(self, dir_name):
         now = datetime.now()
-        path = os.path.join((dir_name),now.strftime("%m%d%Y_%H%M"))
+        path = os.path.join((dir_name),now.strftime("%Y%m%d_%H%M%S"))
         if not os.path.exists(path):
             os.makedirs(path)
         return path
