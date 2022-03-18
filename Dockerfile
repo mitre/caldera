@@ -30,14 +30,6 @@ ADD . .
 # Set up config file and disable atomic by default
 RUN grep -v "\- atomic" conf/default.yml > conf/local.yml
 
-# Download golang dependencies
-#RUN go get github.com/grandcat/zeroconf       \
-#           github.com/google/go-github/github \
-#           github.com/grandcat/zeroconf       \
-#           github.com/miekg/dns               \
-#           golang.org/x/oauth2                \
-#           gopkg.in/natefinch/npipe.v2
-
 # Update default sandcat agent binaries
 WORKDIR /usr/src/app/plugins/sandcat
 
