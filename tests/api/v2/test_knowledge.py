@@ -152,11 +152,14 @@ async def test_display_operation_relationships(knowledge_webapp, aiohttp_client)
     response = data['found']
 
     assert len(response) == 1
-    assert response[0]['source']['trait'] == 'a'
-    assert response[0]['source']['value'] == '1'
-    assert response[0]['edge'] == 'gamma'
-    assert response[0]['origin'] == 'this_is_a_valid_operation_id'
-    assert response[0]['source']['source'] == 'this_is_a_valid_operation_id'
+    assert response[0]['source']['trait'] == fact_data_a['trait']
+    assert response[0]['source']['value'] == fact_data_a['value']
+    assert response[0]['target']['trait'] == fact_data_b['trait']
+    assert response[0]['target']['value'] == fact_data_b['value']
+    assert response[0]['edge'] == relationship_data['edge']
+    assert response[0]['origin'] == op_id_test
+    assert response[0]['source']['source'] == op_id_test
+    assert response[0]['target']['source'] == op_id_test
 
 
 async def test_remove_fact(knowledge_webapp, aiohttp_client):
