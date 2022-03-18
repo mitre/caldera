@@ -54,7 +54,10 @@ class PlannerFake:
 class RequirementFake:
     """Fake requirement used to test trim links by missing requirements."""
     async def enforce(self, link, operation):
-        return '0' in BaseWorld.decode_bytes(link.display['command'])
+        for uf in link.used:
+            if uf.value == '0':
+                return True
+        return False
 
 
 def planner_stub(**kwargs):
