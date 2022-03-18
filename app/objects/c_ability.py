@@ -83,10 +83,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.plugin = plugin
 
     def __getattr__(self, item):
-        try:
-            return super().__getattribute__('additional_info')[item]
-        except KeyError:
-            raise AttributeError(item)
+        return super().__getattribute__('additional_info').get('item')
 
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
