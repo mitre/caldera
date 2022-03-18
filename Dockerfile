@@ -28,7 +28,7 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 ADD . .
 
 # Set up config file and disable atomic by default
-RUN grep -v '- atomic' conf/default.yml > conf/local.yml
+RUN grep -v "\- atomic" conf/default.yml > conf/local.yml
 
 # Download golang dependencies
 #RUN go get github.com/grandcat/zeroconf       \
@@ -46,9 +46,9 @@ RUN ./update-agents.sh
 # Check if we can compile the sandcat extensions, which will result in golang dependency downloads
 RUN mkdir /tmp/gocatextensionstest
 
-RUN cp -R ./gocat-extensions/* /tmp/gocatextensionstest/gocat
+RUN cp -R ./gocat /tmp/gocatextensionstest/gocat
+RUN cp -R ./gocat-extensions/* /tmp/gocatextensionstest/gocat/
 
-RUN cp -R ./gocat /tmp/gocatextensionstest/
 RUN cp ./update-agents.sh /tmp/gocatextensionstest/update-agents.sh
 
 WORKDIR /tmp/gocatextensionstest
