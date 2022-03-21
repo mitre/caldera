@@ -100,6 +100,15 @@ docker build . --build-arg WIN_BUILD=true -t caldera:latest
 docker run -p 8888:8888 caldera:latest
 ```
 
+To gracefully terminate your docker container, do the following:
+```Bash
+# Find the container ID for your docker container running CALDERA
+docker ps
+
+# Send interrupt signal, e.g. "docker kill --signal=SIGINT 5b9220dd9c0f"
+docker kill --signal=SIGINT [container ID]
+```
+
 ## Contributing
 
 Refer to our [contributor documentation](CONTRIBUTING.md).
