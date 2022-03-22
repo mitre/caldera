@@ -376,7 +376,7 @@
                                         <div class="field-body">
                                             <div class="field">
                                                 <div class="control has-text-right">
-                                                    <button type="button" class="button is-small is-primary" @click.stop="selectedAbility.requirements.push({'module': 'undefined','relationship_match':[{'source':'undefined', 'edge':'undefined','target':'undefined'}]})">+ Add requirements</button>
+                                                    <button type="button" class="button is-small is-primary" @click.stop="selectedAbility.requirements.push({'module': '','relationship_match':[{'source':'', 'edge':'','target':''}]})">+ Add requirements</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -457,7 +457,7 @@
                                         <div class="field-body">
                                             <div class="field">
                                                 <div class="control has-text-right">
-                                                    <button type="button" class="button is-small is-primary" @click.stop="executor.parsers.push({'module': 'undefined','relationships':[{'source':'undefined', 'edge':'undefined','target':'undefined'}]})">+ Add parsers</button>
+                                                    <button type="button" class="button is-small is-primary" @click.stop="executor.parsers.push({'module': '','relationships':[{'source':'', 'edge':'','target':''}]})">+ Add parsers</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -701,7 +701,6 @@
                     access: {},
                     cleanup: []
                 };
-
                 this.addExecutorToAbility('before');
                 this.showAbilityModal = true;
             },
@@ -747,7 +746,8 @@
                     payloads: [],
                     platform: 'linux',
                     name: 'sh',
-                    cleanup: []
+                    cleanup: [],
+                    parsers: []
                 };
 
                 if (bOrA === 'after') {
@@ -759,21 +759,21 @@
 
             filterUndefined(data){
                 for (let i = 0; i < data.requirements.length; i++){
-                    if (data.requirements[i].module === "undefined" || data.requirements[i].module === ""){
+                    if (data.requirements[i].module === undefined || data.requirements[i].module === ""){
                         data.requirements.splice(i, 1);
                     }
-                    else if (data.requirements[i]['relationship_match'][0].source === "undefined" ||
+                    else if (data.requirements[i]['relationship_match'][0].source === undefined ||
                         data.requirements[i]['relationship_match'][0].source === ""
                     ){
                         data.requirements.splice(i, 1);
                     }
-                    else if (data.requirements[i]['relationship_match'][0].edge === "undefined" ||
+                    else if (data.requirements[i]['relationship_match'][0].edge === undefined ||
                         data.requirements[i]['relationship_match'][0].edge === ""
                     ) {
                         delete data.requirements[i]['relationship_match'][0].edge;
                         delete data.requirements[i]['relationship_match'][0].target;
                     }
-                    else if (data.requirements[i]['relationship_match'][0].target === 'undefined' ||
+                    else if (data.requirements[i]['relationship_match'][0].target === undefined ||
                         data.requirements[i]['relationship_match'][0].target === ""
                     ) {
                         delete data.requirements[i]['relationship_match'][0].target;
@@ -782,22 +782,22 @@
 
                 for (let i = 0; i < data.executors.length; i++){
                     for (let j = 0; j < data.executors[i].parsers.length; j++){
-                        if (data.executors[i].parsers[j].module === "undefined" ||
+                        if (data.executors[i].parsers[j].module === undefined ||
                             data.executors[i].parsers[j].module === ""){
                             data.executors[i].parsers.splice(j, 1);
                         }
-                        else if (data.executors[i].parsers[j]["relationships"][0].source === "undefined" ||
+                        else if (data.executors[i].parsers[j]["relationships"][0].source === undefined ||
                             data.executors[i].parsers[j]["relationships"][0].source === ""
                         ) {
                             data.executors[i].parsers.splice(j, 1);
                         }
-                        else if (data.executors[i].parsers[j]["relationships"][0].edge === "undefined" ||
+                        else if (data.executors[i].parsers[j]["relationships"][0].edge === undefined ||
                             data.executors[i].parsers[j]["relationships"][0].edge === ""
                         ) {
                             delete data.executors[i].parsers[j]['relationships'][0].edge;
                             delete data.executors[i].parsers[j]['relationships'][0].target;
                         }
-                        else if (data.executors[i].parsers[j]["relationships"][0].target === "undefined" ||
+                        else if (data.executors[i].parsers[j]["relationships"][0].target === undefined ||
                             data.executors[i].parsers[j]["relationships"][0].target === ""
                         ) {
                             delete data.executors[i].parsers[j]['relationships'][0].target;
