@@ -79,8 +79,12 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpForbidden(f'Cannot update a finished link: {link_id}')
         if link_data.get('command'):
             command_str = link_data.get('command')
+            d = {}
+            if link_data.get('ability').get('name'):
+                ability_name = link_data.get('ability').get('name')
+                d['name'] = ability_name
             link.executor.command = command_str
-            link.ability = self.build_ability({}, link.executor)
+            link.ability = self.build_ability(d, link.executor)
             link.command = self._encode_string(command_str)
         if link_data.get('status'):
             link_status = link_data['status']
