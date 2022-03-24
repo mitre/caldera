@@ -24,7 +24,16 @@
                 </div>
             </div>
             <div class="control">
-                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">+ New</button>
+                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">
+                    <span class="icon"><em class="fas fa-plus"></em></span>
+                    <span>New</span>
+                </button>
+            </div>
+            <div class="control">
+                <button type="button" class="button is-primary is-small" @click="showImportModal = true">
+                    <span class="icon"><em class="fas fa-file-import"></em></span>
+                    <span>Import</span>
+                </button>
             </div>
         </div>
     </form>
@@ -675,6 +684,41 @@
         </div>
     </div>
 
+    <div class="modal" x-bind:class="{ 'is-active': showImportModal }">
+        <div class="modal-background" @click="showImportModal = false; adversaryImportFile = undefined"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Import Adversary</p>
+            </header>
+            <section class="modal-card-body">
+                <div class="file is-small has-name is-fullwidth">
+                    <label class="file-label">
+                        <input class="file-input" accept=".yml,.yaml" type="file" @change="uploadAdversaryFile($el)">
+                        <span class="file-cta">
+                            <span class="file-icon"><em class="fas fa-upload"></em></span>
+                            <span class="file-label">Choose a file…</span>
+                        </span>
+                        <span class="file-name" x-text="adversaryImportFile ? adversaryImportFile.name : ''"></span>
+                    </label>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showImportModal = false; adversaryImportFile = undefined">Close</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="importProfile()" :disabled="!adversaryImportFile">Import Adversary</button>
+                        </div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
 </div>
 
 <script>
@@ -732,6 +776,11 @@
             selectedAbility: {},
             selectedPlatform: '',
             selectedExecutor: '',
+
+            // Import modal
+            showImportModal: false,
+            adversaryImportFile: undefined,
+            adversaryImportFileContent: undefined,
 
             // Input validation
             requiredFieldsProfile: ['name', 'description'],
@@ -845,8 +894,24 @@
                 this.isCreatingProfile = false;
             },
 
-            importProfile() {
+            uploadAdversaryFile(el) {
+                if (!el.files || !el.files.length) return;
+                this.adversaryImportFile = el.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => this.adversaryImportFileContent = event.target.result;
+                reader.readAsText(this.adversaryImportFile);
+            },
 
+            importProfile() {
+                let keyValSplit;
+                let profile = {};
+                const lines = this.adversaryImportFileContent.split('\n');
+                lines.forEach((line) => {
+                    keyValSplit = line.split(':');
+                    if (keyValSplit.length >= 2 && keyValSplit[1]) {
+                        profile[keyValSplit[0]] = keyValSplit[1];
+                    } 
+                });
             },
 
             exportProfile() {
@@ -867,7 +932,7 @@
                 a.click();
                 window.URL.revokeObjectURL(url);
             },
-            
+
             getAdversaryTactics() {
                 this.adversaries.forEach((adversary) => {
                     let tactics = adversary.atomic_ordering.map((ability_id) => {
