@@ -429,16 +429,16 @@
                                             <div class="field-label is-small">
                                                 <label class="label" x-text="index === 0 ? 'parsers': ' '"></label>
                                             </div>
-                                            <div class="field-body" style="background-color: var(--primary-color-translucent);">
+                                            <div class="field-body p-2" style="background-color: var(--primary-color-translucent);">
                                                 <div class="field has-addons">
                                                     <div class="control is-expanded">
                                                         <label class="label" for="parser-module">Parser Module</label>
                                                         <input id="parser-module" class="input is-small code" x-model="parsers['module']">
-                                                        <label class="label" for="parser-source">Output Source</label>
+                                                        <label class="label mt-1" for="parser-source">Output Source</label>
                                                         <input id="parser-source" class="input is-small code" x-model="parsers['relationships'][0]['source']">
-                                                        <label class="label" for="parser-edge">[optional] Output Edge</label>
+                                                        <label class="label mt-1" for="parser-edge">Output Edge [optional]</label>
                                                         <input id="parser-edge" class="input is-small code" x-model="parsers['relationships'][0]['edge']">
-                                                        <label class="label" for="parser-target">[optional] Output Target</label>
+                                                        <label class="label mt-1" for="parser-target">Output Target [optional]</label>
                                                         <input id="parser-target" class="input is-small code" x-model="parsers['relationships'][0]['target']">
                                                     </div>
                                                     <div class="control">
