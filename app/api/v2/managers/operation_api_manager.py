@@ -95,7 +95,9 @@ class OperationApiManager(BaseApiManager):
         agent = await self.get_agent(operation, data)
         if data['executor']['name'] not in agent.executors:
             raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
-        encoded_command = self._encode_string(data['executor']['command'])
+        encoded_command_temp = self._encode_string(data['executor']['command'])
+        command_with_globals = agent.replace(encoded_command_temp, file_svc=self.services['file_svc'])
+        encoded_command = self._encode_string(command_with_globals)
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
