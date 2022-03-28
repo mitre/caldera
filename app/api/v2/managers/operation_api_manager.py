@@ -80,7 +80,7 @@ class OperationApiManager(BaseApiManager):
         if link_data.get('command'):
             command_str = link_data.get('command')
             link.executor.command = command_str
-            link.ability = self.build_ability({}, link.executor)
+            link.ability = self.build_ability(link_data.get('ability', {}), link.executor)
             link.command = self._encode_string(command_str)
         if link_data.get('status'):
             link_status = link_data['status']
