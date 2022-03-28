@@ -434,7 +434,8 @@ class RestService(RestServiceInterface, BaseService):
         :type prop_name: str
         """
         abilities = []
-        for ability_id in [ability_id.strip() for ability_id in abilities_str.split(',') if ability_id.strip()]:
+        ability_id_list = [ability_id.strip() for ability_id in abilities_str.split(',') if ability_id.strip()]
+        for ability_id in ability_id_list:
             if await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id.strip())):
                 abilities.append(ability_id)
             else:
