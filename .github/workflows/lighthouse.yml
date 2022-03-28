@@ -11,21 +11,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/checkout@v2
-        with:
-          submodules: recursive
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-      - name: Setup python
-        uses: actions/setup-python@v2
-        with:
-          python-version: ${{ matrix.python-version }}
+
+      - name: Setup Python version
+          uses: actions/setup-python@v2
+          with:
+            python-version: 3.8
+
+      - name: Create and start virtual environment
+          run: |
+            python3 -m venv venv
+            source venv/bin/activate
       - name: Install dependencies
-        run: |
-          pip install --upgrade virtualenv
-          pip install tox
+         run: pip3 install -r requirements.txt
       - name: run Lighthouse CI
         run: |
           npm install -g @lhci/cli@0.7.x
           lhci autorun
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.LHCI_GITHUB_APP_TOKEN }}
+
