@@ -24,7 +24,7 @@ jobs:
           python3 -m venv venv
           source venv/bin/activate
       - name: Install dependencies
-        run: pip3 install -r ../../requirements.txt
+        run: pip3 install -r requirements.txt
       - name: run Lighthouse CI
         run: |
           npm install -g @lhci/cli@0.7.x
