@@ -1,28 +1,27 @@
 name: Lighthouse
+
 on:
   push:
     branches: [ master ]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+
 jobs:
   lhci:
     name: Lighthouse
     runs-on: ubuntu-latest
-
     steps:
-      - uses: actions/checkout@v2
-
       - name: Setup Python version
-          uses: actions/setup-python@v2
-          with:
-            python-version: 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
 
       - name: Create and start virtual environment
-          run: |
-            python3 -m venv venv
-            source venv/bin/activate
+        run: |
+          python3 -m venv venv
+          source venv/bin/activate
       - name: Install dependencies
-         run: pip3 install -r requirements.txt
+        run: pip3 install -r requirements.txt
       - name: run Lighthouse CI
         run: |
           npm install -g @lhci/cli@0.7.x
