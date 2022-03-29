@@ -14,8 +14,8 @@ It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is
 
 The framework consists of two components:
 
-1) **The core system**. This is the framework code, consisting of what is available in this repository. Included is 
-an asynchronous command-and-control (C2) server with a REST API and a web interface. 
+1) **The core system**. This is the framework code, consisting of what is available in this repository. Included is
+an asynchronous command-and-control (C2) server with a REST API and a web interface.
 2) **Plugins**. These repositories expand the core framework capabilities and providing additional functionality. Examples include agents, reporting, collections of TTPs and more.
 
 ## Plugins
@@ -77,12 +77,37 @@ pip3 install -r requirements.txt
 ```
 **Super-power your CALDERA server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
 
-Finally, start the server. 
+Finally, start the server.
 ```Bash
 python3 server.py --insecure
 ```
 
 Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use CALDERA.
+
+## Docker Deployment
+To build a CALDERA docker image, ensure you have docker installed and perform the following actions:
+```Bash
+# Recursively clone the CALDERA repository if you have not done so
+git clone https://github.com/mitre/caldera.git --recursive
+
+# Build the docker image. Change image tagging as desired.
+# WIN_BUILD is set to true to allow CALDERA installation to compile windows-based agents.
+# Alternatively, you can use the docker compose YML file via "docker-compose build"
+cd caldera
+docker build . --build-arg WIN_BUILD=true -t caldera:latest
+
+# Run the image. Change port forwarding configuration as desired.
+docker run -p 8888:8888 caldera:latest
+```
+
+To gracefully terminate your docker container, do the following:
+```Bash
+# Find the container ID for your docker container running CALDERA
+docker ps
+
+# Send interrupt signal, e.g. "docker kill --signal=SIGINT 5b9220dd9c0f"
+docker kill --signal=SIGINT [container ID]
+```
 
 ## Contributing
 
@@ -90,6 +115,6 @@ Refer to our [contributor documentation](CONTRIBUTING.md).
 
 ## Licensing
 
-In addition to CALDERA&trade;'s open source capabilities, MITRE maintains several in-house CALDERA&trade; plugins that offer 
-more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to 
+In addition to CALDERA&trade;'s open source capabilities, MITRE maintains several in-house CALDERA&trade; plugins that offer
+more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to
 caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
