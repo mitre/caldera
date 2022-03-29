@@ -34,7 +34,6 @@ jobs:
         run: pip3 install -r requirements.txt
       - name: run Lighthouse CI
         run: |
-          echo $LHCI_GITHUB_APP_TOKEN
           npm install -g @lhci/cli@0.7.x
           lhci autorun
         env:
