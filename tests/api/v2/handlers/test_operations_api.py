@@ -1,7 +1,7 @@
 import pytest
 
 from http import HTTPStatus
-from base64 import b64encode
+from base64 import b64encode, b64decode
 
 from app.objects.c_source import SourceSchema
 from app.objects.secondclass.c_link import Link
@@ -332,6 +332,25 @@ class TestOperationsApi:
     async def test_nonexistent_agent_get_potential_links_by_paw(self, api_v2_client, api_cookies):
         resp = await api_v2_client.get('/api/v2/operations/123/potential-links/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
+
+    async def test_create_potential_link_with_globals(self, api_v2_client, api_cookies, mocker, async_return):
+        with mocker.patch('app.objects.c_operation.Operation.apply') as mock_apply:
+            mock_apply.return_value = async_return(None)
+            payload = {
+                "paw": "123",
+                "executor": {
+                    "platform": "linux",
+                    "name": "sh",
+                    "command": "#{server} #{paw}"
+                },
+                "status": -1
+            }
+            resp = await api_v2_client.post('/api/v2/operations/123/potential-links', cookies=api_cookies, json=payload)
+            result = await resp.json()
+            assert result['paw'] == payload['paw']
+            assert result['id']
+            assert result['ability']['name'] == 'Manual Command'
+            assert b64decode(result['command']).decode('ascii') == "://None:None 123"
 
     async def test_create_potential_link(self, api_v2_client, api_cookies, mocker, async_return):
         with mocker.patch('app.objects.c_operation.Operation.apply') as mock_apply:
