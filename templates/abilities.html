@@ -435,11 +435,11 @@
                                                         <label class="label" for="parser-module">Parser Module</label>
                                                         <input id="parser-module" class="input is-small code" x-model="parsers['module']">
                                                         <label class="label mt-1" for="parser-source">Output Source</label>
-                                                        <input id="parser-source" class="input is-small code" x-model="parsers['relationships'][0]['source']">
+                                                        <input id="parser-source" class="input is-small code" x-model="parsers['parserconfigs'][0]['source']">
                                                         <label class="label mt-1" for="parser-edge">Output Edge [optional]</label>
-                                                        <input id="parser-edge" class="input is-small code" x-model="parsers['relationships'][0]['edge']">
+                                                        <input id="parser-edge" class="input is-small code" x-model="parsers['parserconfigs'][0]['edge']">
                                                         <label class="label mt-1" for="parser-target">Output Target [optional]</label>
-                                                        <input id="parser-target" class="input is-small code" x-model="parsers['relationships'][0]['target']">
+                                                        <input id="parser-target" class="input is-small code" x-model="parsers['parserconfigs'][0]['target']">
                                                     </div>
                                                     <div class="control">
                                                         <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove parser" @click="executor.parsers.splice(index, 1)">
@@ -457,7 +457,7 @@
                                         <div class="field-body">
                                             <div class="field">
                                                 <div class="control has-text-right">
-                                                    <button type="button" class="button is-small is-primary" @click.stop="executor.parsers.push({'module': '','relationships':[{'source':'', 'edge':'','target':''}]})">+ Add parsers</button>
+                                                    <button type="button" class="button is-small is-primary" @click.stop="executor.parsers.push({'module': '', 'parserconfigs':[{'source':'', 'edge':'','target':''}]})">+ Add parsers</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -786,21 +786,21 @@
                             data.executors[i].parsers[j].module === ""){
                             data.executors[i].parsers.splice(j, 1);
                         }
-                        else if (data.executors[i].parsers[j]["relationships"][0].source === undefined ||
-                            data.executors[i].parsers[j]["relationships"][0].source === ""
+                        else if (data.executors[i].parsers[j]["parserconfigs"][0].source === undefined ||
+                            data.executors[i].parsers[j]["parserconfigs"][0].source === ""
                         ) {
                             data.executors[i].parsers.splice(j, 1);
                         }
-                        else if (data.executors[i].parsers[j]["relationships"][0].edge === undefined ||
-                            data.executors[i].parsers[j]["relationships"][0].edge === ""
+                        else if (data.executors[i].parsers[j]["parserconfigs"][0].edge === undefined ||
+                            data.executors[i].parsers[j]["parserconfigs"][0].edge === ""
                         ) {
-                            delete data.executors[i].parsers[j]['relationships'][0].edge;
-                            delete data.executors[i].parsers[j]['relationships'][0].target;
+                            delete data.executors[i].parsers[j]['parserconfigs'][0].edge;
+                            delete data.executors[i].parsers[j]['parserconfigs'][0].target;
                         }
-                        else if (data.executors[i].parsers[j]["relationships"][0].target === undefined ||
-                            data.executors[i].parsers[j]["relationships"][0].target === ""
+                        else if (data.executors[i].parsers[j]["parserconfigs"][0].target === undefined ||
+                            data.executors[i].parsers[j]["parserconfigs"][0].target === ""
                         ) {
-                            delete data.executors[i].parsers[j]['relationships'][0].target;
+                            delete data.executors[i].parsers[j]['parserconfigs'][0].target;
                         }
                     }
                 }
