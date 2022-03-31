@@ -20,6 +20,8 @@ class FactApi(BaseObjectApi):
         router = app.router
         router.add_get('/facts', self.get_facts)
         router.add_get('/relationships', self.get_relationships)
+        router.add_get('/facts/{operation_id}', self.get_facts_by_operation_id)
+        router.add_get('/relationships/{operation_id}', self.get_relationships_by_operation_id)
         router.add_post('/facts', self.add_facts)
         router.add_post('/relationships', self.add_relationships)
         router.add_delete('/facts', self.delete_facts)
@@ -35,16 +37,34 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True),
                                      description='Returns a list of matching facts, dumped in `FactSchema` format.')
     async def get_facts(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager.knowledge_svc
         fact_data = await self._api_manager.extract_data(request)
         resp = []
         if fact_data:
             try:
-                FactSchema(partial=True).load(fact_data)
-                store = await knowledge_svc_handle.get_facts(criteria=fact_data)
-                resp = await self._api_manager.verify_fact_integrity(store)
+                resp = await self._find_and_verify_facts(fact_data)
             except Exception as e:
                 error_msg = f'Encountered issue retrieving fact {fact_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
+        return web.json_response(dict(found=resp))
+
+    @aiohttp_apispec.docs(tags=['facts'],
+                          summary='Retrieve Facts by operation id',
+                          description='Retrieves facts associated with an operation. Returned facts will either be '
+                                      'user-generated facts or learned facts.')
+    @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
+    @aiohttp_apispec.response_schema(FactSchema(many=True, partial=True),
+                                     description='Returns a list of facts associated with operation_id, dumped in '
+                                                 '`FactSchema` format.')
+    async def get_facts_by_operation_id(self, request: web.Request):
+        operation_id = request.match_info.get('operation_id')
+        fact_data = {'source': operation_id}
+        resp = []
+        if fact_data:
+            try:
+                resp = await self._find_and_verify_facts(fact_data)
+            except Exception as e:
+                error_msg = f'Encountered issue retrieving facts associated with operation {operation_id} - {e}'
                 self.log.warning(error_msg)
                 raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
@@ -59,16 +79,36 @@ class FactApi(BaseObjectApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
     async def get_relationships(self, request: web.Request):
-        knowledge_svc_handle = self._api_manager.knowledge_svc
         relationship_data = await self._api_manager.extract_data(request)
         resp = []
         if relationship_data:
             try:
-                RelationshipSchema(partial=True).load(relationship_data)
-                store = await knowledge_svc_handle.get_relationships(criteria=relationship_data)
-                resp = await self._api_manager.verify_relationship_integrity(store)
+                resp = await self._find_and_verify_relationships(relationship_data)
             except Exception as e:
                 error_msg = f'Encountered issue retrieving relationship {relationship_data} - {e}'
+                self.log.warning(error_msg)
+                raise JsonHttpBadRequest(error_msg)
+        return web.json_response(dict(found=resp))
+
+    @aiohttp_apispec.docs(tags=['relationships'],
+                          summary="Retrieve Relationships by operation id",
+                          description='Retrieve relationships associated with an operation. Returned relationships '
+                                      'will be either user-generated relationships or learned relationships.')
+    @aiohttp_apispec.response_schema(RelationshipSchema,
+                                     description='Returns a list of matching relationships, dumped in '
+                                                 '`RelationshipSchema` format.')
+    @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
+    @aiohttp_apispec.response_schema(RelationshipSchema(many=True, partial=True))
+    async def get_relationships_by_operation_id(self, request: web.Request):
+        operation_id = request.match_info.get('operation_id')
+        relationship_data = {'origin': operation_id}
+        resp = []
+        if relationship_data:
+            try:
+                resp = await self._find_and_verify_relationships(relationship_data)
+            except Exception as e:
+                error_msg = f'Encountered issue retrieving relationships associated with operation' \
+                            f' {operation_id} - {e}'
                 self.log.warning(error_msg)
                 raise JsonHttpBadRequest(error_msg)
         return web.json_response(dict(found=resp))
@@ -245,3 +285,15 @@ class FactApi(BaseObjectApi):
                 self.log.warning(error_msg)
                 raise JsonHttpBadRequest(error_msg)
         raise JsonHttpBadRequest("Need a 'criteria' to match on and 'updates' to apply.")
+
+    async def _find_and_verify_facts(self, fact_data: dict):
+        knowledge_svc_handle = self._api_manager.knowledge_svc
+        FactSchema(partial=True).load(fact_data)
+        store = await knowledge_svc_handle.get_facts(criteria=fact_data)
+        return await self._api_manager.verify_fact_integrity(store)
+
+    async def _find_and_verify_relationships(self, relationship_data):
+        knowledge_svc_handle = self._api_manager.knowledge_svc
+        RelationshipSchema(partial=True).load(relationship_data)
+        store = await knowledge_svc_handle.get_relationships(criteria=relationship_data)
+        return await self._api_manager.verify_relationship_integrity(store)

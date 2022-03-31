@@ -77,6 +77,26 @@ async def test_display_facts(knowledge_webapp, aiohttp_client):
     assert response[0]['source'] == WILDCARD_STRING
 
 
+async def test_display_operation_facts(knowledge_webapp, aiohttp_client):
+    client = await aiohttp_client(knowledge_webapp)
+    op_id_test = 'this_is_a_valid_operation_id'
+
+    fact_data = {
+        'trait': 'demo',
+        'value': 'test',
+        'source': op_id_test
+    }
+    await client.post('/facts', json=fact_data, headers=headers)
+    resp = await client.get(f'/facts/{op_id_test}', headers=headers)
+    data = await resp.json()
+    response = data['found']
+
+    assert len(response) == 1
+    assert response[0]['trait'] == 'demo'
+    assert response[0]['value'] == 'test'
+    assert response[0]['source'] == op_id_test
+
+
 async def test_display_relationships(knowledge_webapp, aiohttp_client):
     client = await aiohttp_client(knowledge_webapp)
     op_id_test = 'this_is_a_valid_operation_id'
@@ -105,6 +125,41 @@ async def test_display_relationships(knowledge_webapp, aiohttp_client):
     assert response[0]['edge'] == 'gamma'
     assert response[0]['origin'] == 'this_is_a_valid_operation_id'
     assert response[0]['source']['source'] == 'this_is_a_valid_operation_id'
+
+
+async def test_display_operation_relationships(knowledge_webapp, aiohttp_client):
+    client = await aiohttp_client(knowledge_webapp)
+    op_id_test = 'this_is_a_valid_operation_id'
+    fact_data_a = {
+        'trait': 'a',
+        'value': '1',
+        'source': op_id_test
+    }
+    fact_data_b = {
+        'trait': 'b',
+        'value': '2',
+        'source': op_id_test
+    }
+    relationship_data = {
+        'source': fact_data_a,
+        'edge': 'gamma',
+        'target': fact_data_b,
+        'origin': op_id_test
+    }
+    await client.post('/relationships', json=relationship_data, headers=headers)
+    resp = await client.get(f'/relationships/{op_id_test}', headers=headers)
+    data = await resp.json()
+    response = data['found']
+
+    assert len(response) == 1
+    assert response[0]['source']['trait'] == fact_data_a['trait']
+    assert response[0]['source']['value'] == fact_data_a['value']
+    assert response[0]['target']['trait'] == fact_data_b['trait']
+    assert response[0]['target']['value'] == fact_data_b['value']
+    assert response[0]['edge'] == relationship_data['edge']
+    assert response[0]['origin'] == op_id_test
+    assert response[0]['source']['source'] == op_id_test
+    assert response[0]['target']['source'] == op_id_test
 
 
 async def test_remove_fact(knowledge_webapp, aiohttp_client):
