@@ -305,7 +305,7 @@
                         </div>
                         <div class="field-body">
                             <div class="field">
-                                <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                <div class="control auto-complete mb-3" x-data="{focusSearchResults: true}">
                                     <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
                                     <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
                                         <template x-for="result of abilitySearchResults" :key="result.ability_id">
