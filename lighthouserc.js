@@ -1,7 +1,9 @@
 module.exports = {
     ci: {
       assert: {
-        preset: 'lighthouse:recommended',
+        assertions: {
+            "categories:accessibility": ["error", {"minScore": 0.9}]
+        }
       },
       collect: {
         url: ['http://localhost:8888/'],
