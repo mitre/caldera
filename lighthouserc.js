@@ -9,7 +9,7 @@ module.exports = {
                   }
                 }
             ],
-        }
+        },
         collect: {
             numberOfRuns: 1,
             maxAutodiscoverUrls: 0,
