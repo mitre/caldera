@@ -7,13 +7,13 @@
         <div class="tabs is-centered is-small is-toggle">
             <ul>
                 <li x-bind:class="{ 'is-active': activeTab === 'settings' }" @click="activeTab = 'settings'">
-                    <a>
+                    <a aria-label="Settings">
                         <span class="icon is-small"><i class="fas fa-cogs" aria-hidden="true"></i></span>
                         <span>Settings</span>
                     </a>
                 </li>
-                <li x-bind:class="{ 'is-active': activeTab === 'plugins' }" @click="activeTab = 'plugins'"> 
-                    <a>
+                <li x-bind:class="{ 'is-active': activeTab === 'plugins' }" @click="activeTab = 'plugins'">
+                    <a aria-label="Plugins">
                         <span class="icon is-small"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>
                         <span>Plugins</span>
                     </a>

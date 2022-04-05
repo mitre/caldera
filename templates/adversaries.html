@@ -391,7 +391,7 @@
                                             <input class="input is-small" x-model="selectedAbility.ability_id" disabled>
                                         </div>
                                         <div class="control">
-                                            <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Generate New ID" @click="selectedAbility.ability_id = uuidv4()">
+                                            <a aria-label="Generate new ID" class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Generate New ID" @click="selectedAbility.ability_id = uuidv4()">
                                                 <span class="icon is-small"><i class="fas fa-sync"></i></span>
                                             </a>
                                         </div>
@@ -563,7 +563,7 @@
                                                     <div class="control">
                                                         <div class="tags has-addons">
                                                             <span class="tag is-small is-link" x-text="payload"></span>
-                                                            <a class="tag is-delete" x-on:click="executor.payloads.splice(index, 1)"></a>
+                                                            <a aria-label="Payload" class="tag is-delete" x-on:click="executor.payloads.splice(index, 1)"></a>
                                                         </div>
                                                     </div>
                                                 </template>
@@ -623,7 +623,7 @@
                                                         <input class="input is-small code" x-model="executor.cleanup[index]"></input>
                                                     </div>
                                                     <div class="control">
-                                                        <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(index, 1)">
+                                                        <a aria-label="Remove cleanup command" class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(index, 1)">
                                                             <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
                                                         </a>
                                                     </div>

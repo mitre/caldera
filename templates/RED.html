@@ -23,7 +23,7 @@
     <body>
         <main id="home" class="main" x-data="alpineCore()" x-init="initPage()">
             <div class="navigation">
-                <a href="#home" class="scroll-top button is-rounded is-primary" x-show="scrollTop > 0">
+                <a aria-label="Scroll to top" href="#home" class="scroll-top button is-rounded is-primary" x-show="scrollTop > 0">
                     <span class="icon"><i class="fas fa-chevron-up"></i></span>
                 </a>
                 <div class="nav-logo">
@@ -34,7 +34,7 @@
                 </div>
                 <template x-if="errors.length > 0">
                     <div class="is-flex is-justify-content-center">
-                        <a id="startup-errors-warning" class="has-text-warning">
+                        <a aria-label="Startup errors" id="startup-errors-warning" class="has-text-warning">
                             <em class="fas fa-exclamation-triangle pr-1"></em>
                             <span title="Click for to view startup errors" class="has-text-warning" x-text="`${errors.length} startup warnings`" @click="showErrors = true"></span>
                         </a>
@@ -52,7 +52,7 @@
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
                             <li>
-                                <a href="#home" x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item">
+                                <a aria-label="{{plugin.name | e}}" href="#home" x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item">
                                     {{ plugin.name }}
                                     <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
                                         <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup>
@@ -70,7 +70,7 @@
                         <li><a href="#home" class="nav-item" x-on:click="addTab('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('configuration', '/advanced/configurations')">configuration</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('exfilled files', '/advanced/exfills')">exfilled files</a></li>
-                        <li><a href="./api/docs" target="_blank">
+                        <li><a href="./api/docs" target="_blank" aria-label="API docs">
                             api docs
                             <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup></a>
                         </li>
@@ -78,7 +78,7 @@
                     <br>
                     <ul class="menu-list has-text-centered">
                         <li>
-                            <a href="/logout">
+                            <a aria-label="Log out" href="/logout">
                                 <span class="icon"><em class="fas fa-sign-out-alt"></em></span>
                                 <span>Log out</span>
                             </a>
@@ -88,7 +88,7 @@
                         <li>
                             <p class="mt-6" x-text="`v${version}`"></p>
                             <p x-show="newVersionLink">
-                                <a class="has-text-info is-size-7" x-bind:href="newVersionLink" target="_blank">
+                                <a aria-label="Version info" class="has-text-info is-size-7" x-bind:href="newVersionLink" target="_blank">
                                     New version available <br> (v<span x-text="newVersionLink.split('/')[newVersionLink.split('/').length - 1]"></span>)
                                 </a>
                             </p>
@@ -102,7 +102,7 @@
                     <ul>
                         <template x-for="(tab, index) in openTabs" :key="index">
                             <li x-bind:class="{ 'is-active' : activeTabIndex === index }">
-                                <a x-on:click="activeTabIndex = index">
+                                <a aria-label="Delete tab" x-on:click="activeTabIndex = index">
                                     <span x-text="tab.name"></span>
                                     <span class="icon is-small tab-delete" x-on:click.stop="deleteTab(index, tab.contentID)"><em class="fas fa-sm fa-times"></em></span>
                                 </a>
@@ -189,11 +189,11 @@
                             <div class="block">
                                 <label class="label">📬 Get in touch</label>
                                 <div class="buttons">
-                                    <a class="button is-small is-primary" target="_blank" rel="noopener" href="https://join.slack.com/t/mitre-caldera/shared_invite/zt-rvngjjpw-OQHAqpUT87DcyClTosF8dQ">
+                                    <a aria-label="Join our Slack" class="button is-small is-primary" target="_blank" rel="noopener" href="https://join.slack.com/t/mitre-caldera/shared_invite/zt-rvngjjpw-OQHAqpUT87DcyClTosF8dQ">
                                         <span class="icon"><em class="fab fa-slack"></em></span>
                                         <span>Join our Slack</span>
                                     </a>
-                                    <a class="button is-small" href="mailto:caldera@mitre.org">
+                                    <a aria-label="Email us" class="button is-small" href="mailto:caldera@mitre.org">
                                         <span class="icon"><em class="far fa-envelope"></em></span>
                                         <span>Email us</span>
                                     </a>
