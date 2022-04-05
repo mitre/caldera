@@ -16,7 +16,7 @@ module.exports = {
         },
         collect: {
             numberOfRuns: 1,
-            maxAutodiscoverUrls: 0,
+            maxAutodiscoverUrls: 1,
             staticDistDir: './templates'
         },
         upload: {
