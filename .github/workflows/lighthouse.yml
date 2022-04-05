@@ -12,26 +12,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          submodules: recursive
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
-
-      - uses: actions/setup-go@v3
-        with:
-          go-version: '^1.13.1' # The Go version to download (if necessary) and use.
-      - run: go version
-      - name: Setup Python version
-        uses: actions/setup-python@v2
-        with:
-          python-version: 3.8
-
-      - name: Create and start virtual environment
-        run: |
-          python3 -m venv venv
-          source venv/bin/activate
-      - name: Install dependencies
-        run: pip3 install -r requirements.txt
       - name: run Lighthouse CI
         run: |
           npm install -g @lhci/cli@0.7.x
