@@ -547,3 +547,18 @@ class TestPlanningService:
 
         await planning_svc.remove_links_with_unset_variables(links)
         assert len(links) == 0
+
+    async def test_link_host_presence(self, setup_planning_test, planning_svc):
+        _, agent, operation, ability = setup_planning_test
+        link = Link.load(dict(command=BaseWorld.encode_string(test_string), paw=agent.paw, ability=ability,
+                              executor=next(ability.executors), status=0))
+
+        f0 = Fact(trait='1_2_3', value='a')
+        f1 = Fact(trait='a.b.c', value='b')
+        f2 = Fact(trait='a.b.d', value='c')
+        f3 = Fact(trait='a.b.e', value='d')
+
+        handle = [link]
+        gen = await planning_svc.add_test_variants(handle, agent, facts=[f0, f1, f2, f3])
+
+        assert gen[0].host == handle[0].host
