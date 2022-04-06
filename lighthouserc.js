@@ -9,7 +9,7 @@ module.exports = {
                     "html-lang-valid": "off",
                     "document-title": "off",
                     "list": "off",
-                    "categories:accessibility": ["error", {"minScore": 0.8}]
+                    "categories:accessibility": ["error", {"minScore": 0.75}]
                   }
                 }
             ],
