@@ -96,6 +96,9 @@ class BasePlanningService(BaseService):
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))
 
+            if not link.host:
+                link.host = agent.host  # Required to allow host specific parsers to work
+
             if not variables:
                 # apply_id() modifies link.command so the order of these operations matter
                 link.command = self.encode_string(decoded_test)
