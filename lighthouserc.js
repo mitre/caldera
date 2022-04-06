@@ -5,6 +5,9 @@ module.exports = {
                 {
                   "matchingUrlPattern": ".*",
                   "assertions": {
+                    "html-has-lang": "off",
+                    "html-lang-valid": "off",
+                    "document-title": "off",
                     "categories:accessibility": ["error", {"minScore": 0.8}]
                   }
                 }
