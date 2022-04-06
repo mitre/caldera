@@ -245,6 +245,18 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Delete payload</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control mt-2">
+                                            <input type="checkbox" x-model="selectedAbility.delete_payload">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                         <p class="has-text-centered">Executors</p>
                         <p x-show="fieldErrors.includes('executors')" class="help is-danger">At least one executor is required.</p>
@@ -343,6 +355,44 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <template x-for="(requirements, index) of selectedAbility.requirements">
+                                        <div class="field is-horizontal">
+                                            <div class="field-label is-small">
+                                                <label class="label" x-text="index === 0 ? 'requirements': ' '"></label>
+                                            </div>
+                                            <div class="field-body" style="background-color: var(--primary-color-translucent);">
+                                                <div class="field has-addons">
+                                                    <div class="control is-expanded">
+                                                        <label class="label" for="requirement-module">Requirement Module</label>
+                                                        <input id="requirement-module" class="input is-small code" x-model="requirements['module']">
+                                                        <label class="label" for="requirement-source">Source</label>
+                                                        <input id="requirement-source" class="input is-small code" x-model="requirements['relationship_match'][0]['source']">
+                                                        <label class="label" for="requirement-edge">Edge</label>
+                                                        <input id="requirement-edge" class="input is-small code" x-model="requirements['relationship_match'][0]['edge']">
+                                                        <label class="label" for="requirement-target">[optional] Target</label>
+                                                        <input id="requirement-target" class="input is-small code" x-model="requirements['relationship_match'][0]['target']">
+                                                    </div>
+                                                    <div class="control">
+                                                        <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove requirement" @click="selectedAbility.requirements.splice(index, 1)">
+                                                            <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small" x-show="!selectedAbility.requirements.length">
+                                            <label class="label">requirements</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control has-text-right">
+                                                    <button type="button" class="button is-small is-primary" @click.stop="selectedAbility.requirements.push({'module': '','relationship_match':[{'source':'', 'edge':'','target':''}]})">+ Add requirements</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div class="field is-horizontal">
                                         <div class="field-label is-small">
                                             <label class="label">timeout</label>
@@ -382,6 +432,44 @@
                                             <div class="field">
                                                 <div class="control has-text-right">
                                                     <button type="button" class="button is-small is-primary" @click.stop="executor.cleanup.push('')">+ Add Cleanup Command</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <template x-for="(parsers, index) of executor.parsers">
+                                        <div class="field is-horizontal">
+                                            <div class="field-label is-small">
+                                                <label class="label" x-text="index === 0 ? 'parsers': ' '"></label>
+                                            </div>
+                                            <div class="field-body p-2" style="background-color: var(--primary-color-translucent);">
+                                                <div class="field has-addons">
+                                                    <div class="control is-expanded">
+                                                        <label class="label" for="parser-module">Parser Module</label>
+                                                        <input id="parser-module" class="input is-small code" x-model="parsers['module']">
+                                                        <label class="label mt-1" for="parser-source">Output Source</label>
+                                                        <input id="parser-source" class="input is-small code" x-model="parsers['parserconfigs'][0]['source']">
+                                                        <label class="label mt-1" for="parser-edge">Output Edge [optional]</label>
+                                                        <input id="parser-edge" class="input is-small code" x-model="parsers['parserconfigs'][0]['edge']">
+                                                        <label class="label mt-1" for="parser-target">Output Target [optional]</label>
+                                                        <input id="parser-target" class="input is-small code" x-model="parsers['parserconfigs'][0]['target']">
+                                                    </div>
+                                                    <div class="control">
+                                                        <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove parser" @click="executor.parsers.splice(index, 1)">
+                                                            <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small" x-show="!executor.parsers.length">
+                                            <label class="label">parsers</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control has-text-right">
+                                                    <button type="button" class="button is-small is-primary" @click.stop="executor.parsers.push({'module': '', 'parserconfigs':[{'source':'', 'edge':'','target':''}]})">+ Add parsers</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -625,7 +713,6 @@
                     access: {},
                     cleanup: []
                 };
-
                 this.addExecutorToAbility('before');
                 this.showAbilityModal = true;
             },
@@ -633,8 +720,8 @@
             saveAbility() {
                 this.fieldErrors = validateInputs(this.selectedAbility, this.requiredFields);
                 if (this.fieldErrors.length) return;
-
-                apiV2('PUT', `/api/v2/abilities/${this.selectedAbility.ability_id}`, this.selectedAbility).then((response) => {
+                let data = this.filterUndefined(this.selectedAbility);
+                apiV2('PUT', `/api/v2/abilities/${this.selectedAbility.ability_id}`, data).then((response) => {
                     toast('Saved ability!', true);
 
                     if (this.isCreatingAbility) {
@@ -671,7 +758,8 @@
                     payloads: [],
                     platform: 'linux',
                     name: 'sh',
-                    cleanup: []
+                    cleanup: [],
+                    parsers: []
                 };
 
                 if (bOrA === 'after') {
@@ -681,6 +769,55 @@
                 }
             },
 
+            filterUndefined(data){
+                for (let i = 0; i < data.requirements.length; i++){
+                    if (data.requirements[i].module === undefined || data.requirements[i].module === ""){
+                        data.requirements.splice(i, 1);
+                    }
+                    else if (data.requirements[i]['relationship_match'][0].source === undefined ||
+                        data.requirements[i]['relationship_match'][0].source === ""
+                    ){
+                        data.requirements.splice(i, 1);
+                    }
+                    else if (data.requirements[i]['relationship_match'][0].edge === undefined ||
+                        data.requirements[i]['relationship_match'][0].edge === ""
+                    ) {
+                        delete data.requirements[i]['relationship_match'][0].edge;
+                        delete data.requirements[i]['relationship_match'][0].target;
+                    }
+                    else if (data.requirements[i]['relationship_match'][0].target === undefined ||
+                        data.requirements[i]['relationship_match'][0].target === ""
+                    ) {
+                        delete data.requirements[i]['relationship_match'][0].target;
+                    }
+                }
+
+                for (let i = 0; i < data.executors.length; i++){
+                    for (let j = 0; j < data.executors[i].parsers.length; j++){
+                        if (data.executors[i].parsers[j].module === undefined ||
+                            data.executors[i].parsers[j].module === ""){
+                            data.executors[i].parsers.splice(j, 1);
+                        }
+                        else if (data.executors[i].parsers[j]["parserconfigs"][0].source === undefined ||
+                            data.executors[i].parsers[j]["parserconfigs"][0].source === ""
+                        ) {
+                            data.executors[i].parsers.splice(j, 1);
+                        }
+                        else if (data.executors[i].parsers[j]["parserconfigs"][0].edge === undefined ||
+                            data.executors[i].parsers[j]["parserconfigs"][0].edge === ""
+                        ) {
+                            delete data.executors[i].parsers[j]['parserconfigs'][0].edge;
+                            delete data.executors[i].parsers[j]['parserconfigs'][0].target;
+                        }
+                        else if (data.executors[i].parsers[j]["parserconfigs"][0].target === undefined ||
+                            data.executors[i].parsers[j]["parserconfigs"][0].target === ""
+                        ) {
+                            delete data.executors[i].parsers[j]['parserconfigs'][0].target;
+                        }
+                    }
+                }
+                return data;
+            }
         };
     }
 

@@ -80,7 +80,7 @@ class OperationApiManager(BaseApiManager):
         if link_data.get('command'):
             command_str = link_data.get('command')
             link.executor.command = command_str
-            link.ability = self.build_ability({}, link.executor)
+            link.ability = self.build_ability(link_data.get('ability', {}), link.executor)
             link.command = self._encode_string(command_str)
         if link_data.get('status'):
             link_status = link_data['status']
@@ -95,7 +95,8 @@ class OperationApiManager(BaseApiManager):
         agent = await self.get_agent(operation, data)
         if data['executor']['name'] not in agent.executors:
             raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
-        encoded_command = self._encode_string(data['executor']['command'])
+        encoded_command = self._encode_string(agent.replace(self._encode_string(data['executor']['command']),
+                                              file_svc=self.services['file_svc']))
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
         link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=executor,

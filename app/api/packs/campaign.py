@@ -18,7 +18,7 @@ class CampaignPack(BaseWorld):
     async def enable(self):
         self.app_svc.application.router.add_route('GET', '/campaign/agents', self._section_agent)
         self.app_svc.application.router.add_route('GET', '/campaign/abilities', self._section_abilities)
-        self.app_svc.application.router.add_route('GET', '/campaign/profiles', self._section_profiles)
+        self.app_svc.application.router.add_route('GET', '/campaign/adversaries', self._section_profiles)
         self.app_svc.application.router.add_route('GET', '/campaign/operations', self._section_operations)
 
     @check_authorization
@@ -49,7 +49,7 @@ class CampaignPack(BaseWorld):
         return dict(platforms=platforms, payloads=payloads)
 
     @check_authorization
-    @template('profiles.html')
+    @template('adversaries.html')
     async def _section_profiles(self, request):
         access = dict(access=tuple(await self.auth_svc.get_permissions(request)))
         abilities = await self.data_svc.locate('abilities', match=access)
