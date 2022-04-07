@@ -70,7 +70,7 @@ class FileSvc(FileServiceInterface, BaseService):
             os.makedirs(path)
         return path
 
-    async def create_exfil_operation_directory(self, dir_name,agent_name):
+    async def create_exfil_operation_directory(self, dir_name, agent_name):
         op_list = self.data_svc.ram['operations']
         op_list_filtered = [x for x in op_list if x.state not in x.get_finished_states()]
         timestamp_chars = str.maketrans({'T': '_', ':': ''})
@@ -190,7 +190,7 @@ class FileSvc(FileServiceInterface, BaseService):
                     exfil_files[exfil_agent_key][exfil_subdir] = dict()
                 if file not in exfil_files[exfil_agent_key][exfil_subdir]:
                     exfil_files[exfil_agent_key][exfil_subdir][file] = dict()
-                    exfil_files[exfil_agent_key][exfil_subdir][file] = os.path.join(agent_path,file)
+                    exfil_files[exfil_agent_key][exfil_subdir][file] = os.path.join(agent_path, file)
         return exfil_files
 
     @staticmethod
