@@ -15,8 +15,6 @@ from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
-from datetime import datetime
-
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 
@@ -75,8 +73,11 @@ class FileSvc(FileServiceInterface, BaseService):
     async def create_exfil_operation_directory(self, dir_name,agent_name):
         op_list = self.data_svc.ram['operations']
         op_list_filtered = [x for x in op_list if x.state not in x.get_finished_states()]
-        agent_opid = [(x.name,' ',x.start.strftime("%Y-%m-%dT%H:%M:%SZ").replace("T"," @ ")) for x in op_list_filtered if agent_name in [y.paw for y in x.agents]]
-        path = os.path.join((dir_name),''.join(agent_opid[0]))
+        timestamp_chars = str.maketrans({'T': '_', ':': ''})
+        special_chars = {ord(c): '_' for c in ':<>"/\|?*'}
+        agent_opid = [(x.name.translate(special_chars), '_', x.start.strftime("%Y-%m-%dT%H:%M:%SZ").translate(timestamp_chars))
+                      for x in op_list_filtered if agent_name in [y.paw for y in x.agents]]
+        path = os.path.join((dir_name), ''.join(agent_opid[0]))
         if not os.path.exists(path):
             os.makedirs(path)
         return path
