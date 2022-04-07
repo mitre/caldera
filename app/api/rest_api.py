@@ -61,7 +61,12 @@ class RestApi(BaseWorld):
             return await self.auth_svc.login_redirect(request)
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
         data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))
-        return render_template('%s.html' % access[0].name, request, data)
+        template_name = access[0].name
+        if template_name == "RED":
+            template_name = "core_red"
+        elif template_name == "BLUE":
+            template_name = "core_blue"
+        return render_template(f"{template_name}.html", request, data)
 
     @check_authorization
     async def rest_core(self, request):
@@ -165,3 +170,4 @@ class RestApi(BaseWorld):
     def _request_errors(request):
         errors = []
         return errors
+
