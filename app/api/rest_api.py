@@ -170,4 +170,3 @@ class RestApi(BaseWorld):
     def _request_errors(request):
         errors = []
         return errors
-
