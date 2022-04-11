@@ -67,43 +67,74 @@
             </div>
         </div>
 
+        <template x-if="selectedSourceId">
         <!-- RIGHT SIDEBAR -->
-        <div class="column m-0 sources-view is-10" x-data="{inView: ['facts']}">
-            <!-- TOPBAR CHIPS-->
-            <template x-if="selectedSourceId">
+            <div class="column m-0 sources-view is-10" x-data="{inView: ['facts']}">
+                <!-- TOPBAR CHIPS-->
                 <div>
                     <template x-for="chip of ['facts', 'rules', 'relationships']">
-                        <!--                        TODO-->
-                        <span class="tag is-rounded" x-on:mouseover="inView.push(chip)" x-on:mouseout="inView.pop()"
-                              x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></span>
+                        <button class="is-small button is-rounded m-1" x-on:click="inView = [chip]"
+                              x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></button>
                     </template>
+                    <!--                        TODO-->
                     <button class="button is-rounded is-small"><em class="fas fa-sort"></em></button>
                 </div>
                 <div class="hr"></div>
-            </template>
 
-            <template x-if="selectedSourceId && inView.includes('facts')">
-                <!-- FACTS -->
-                <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
-                    <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
-                        <p class="is-italic">+ new fact</p>
-                    </div>
-                    <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
-                        <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                            <p x-text="fact.trait"></p>
-                            <div class="is-flex is-justify-content-center is-flex-direction-row">
-                                <template x-for="(val, index) in fact.values" :key="val.value">
-                                    <p class="has-text-black is-italic m-1 break-spaces is-size-7"
-                                       x-bind:class="{'has-background-warning': val.score === 1, 'has-background-danger': val.score > 1}"
-                                       x-text="val.value">
-                                    </p>
-                                </template>
-                            </div>
+                <template x-if="inView.includes('facts')">
+                    <!-- FACTS -->
+                    <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
+                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
+                            <p class="is-italic">+ new fact</p>
                         </div>
-                    </template>
-                </div>
-            </template>
-        </div>
+                        <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                                <p x-text="fact.trait"></p>
+                                <div class="is-flex is-justify-content-center is-flex-direction-row">
+                                    <span x-show="fact.values" class="is-italic is-size-7">Value: </span>
+                                    <template x-for="(val, index) in fact.values" :key="val.value">
+                                        <p class="has-text-black is-italic m-1 break-spaces is-size-7"
+                                           x-bind:class="{'has-background-warning': val.score === 1, 'has-background-danger': val.score > 1}"
+                                           x-text="val.value">
+                                        </p>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <template x-if="inView.includes('rules')">
+                    <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
+                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
+                            <p class="is-italic">+ new rule</p>
+                        </div>
+                        <template x-for="(rule, index) in filteredRules" :key="rule.trait">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                                <p x-text="rule.trait"></p>
+                                <div class="is-size-7">
+                                    <span x-show="rule.allow_matches" class="is-italic">Allow: </span>
+                                    <template x-for="(match, index) in rule.allow_matches" :key="match">
+                                        <p class="tag is-success is-italic m-1 break-spaces"
+                                           x-text="match">
+                                        </p>
+                                    </template>
+                                </div>
+                                <div class="is-size-7">
+                                    <span x-show="rule.deny_matches" class="is-italic">Deny: </span>
+                                    <template x-for="(match, index) in rule.deny_matches" :key="match">
+                                        <p class="tag is-danger is-italic m-1 break-spaces"
+                                           x-text="match">
+                                        </p>
+                                    </template>
+                                </div>
+
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
     </div>
 
 
@@ -370,7 +401,6 @@
             },
 
             sources: [],
-            filteredSources: [],
             filteredFacts: [],
             filteredRules: [],
             filteredRelationships: [],
@@ -450,8 +480,25 @@
                         });
                     }
                 });
+                let rules = {};
+                this.selectedSource.rules.forEach((rule) => {
+                    if (rules[rule.trait]) {
+                        if (rule.action === 'ALLOW') {
+                            rules[rule.trait].allow_matches.push(rule.match)
+                        } else if (rule.action === 'DENY') {
+                            rules[rule.trait].deny_matches.push(rule.match)
+                        }
+                    } else {
+                        if (rule.action === 'ALLOW') {
+                            rules[rule.trait] = {trait: rule.trait, allow_matches: [rule.match], deny_matches: []};
+                        } else if (rule.action === 'DENY') {
+                            rules[rule.trait] = {trait: rule.trait, allow_matches: [], deny_matches: [rule.match]};
+                        }
+                    }
+                });
+
                 this.filteredFacts = Object.keys(facts).map(key => facts[key]);
-                this.filteredRules = this.selectedSource.rules;
+                this.filteredRules = Object.keys(rules).map(key => rules[key]);
                 this.filteredRelationships = this.selectedSource.relationships;
 
                 // Keep incoming objects sorted, as before
