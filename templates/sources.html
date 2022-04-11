@@ -110,10 +110,15 @@
                                 <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
                                 <div class="is-flex is-justify-content-center is-flex-direction-row">
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                                        <label x-show="fact.values" class="label is-italic mb-0 is-size-7" x-text="fact.values.length > 1 ? 'Values: ' : 'Value: '"></label>
-                                        <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
-                                            <template x-for="(val, index) in fact.values" :key="val.value">
-                                                <span class="is-italic tag is-light" x-text="val.value"></span>
+                                        <label x-show="fact.scores" class="label is-italic mb-0 is-size-7" x-text="'Values'"></label>
+                                        <div>
+                                            <template x-for="(score, index) in fact.scores" :key="fact.trait + score.score">
+                                                <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
+                                                    <label x-show="fact.scores" class="label is-italic mb-0 is-size-7 pr-1" x-text="score.score + ' pt:'"></label>
+                                                    <template x-for="(val, index) in score.values" :key="val">
+                                                        <span class="is-italic tag is-light" x-text="val"></span>
+                                                    </template>
+                                                </div>
                                             </template>
                                         </div>
                                     </div>
@@ -493,20 +498,23 @@
                 const facts = {};
                 this.selectedSource.facts.forEach((f) => {
                     if (!(facts[f.trait])) {
-                        const vals = [...f.value.split(',')];
+                        const vals = {};
+                        vals[f.score] = [...f.value.split(',')];
                         facts[f.trait] = {
                             trait: f.trait,
-                            values: vals.map(v => ({
-                                value: v,
-                                score: f.score
-                            }))
+                            scores: vals
                         };
                     } else {
-                        const vals = [...f.value.split(',')];
-                        facts[f.trait].values = [
-                            ...facts[f.trait].values,
-                            ...vals.map(v => ({value: v, score: f.score}))
-                        ];
+                        const vals = {};
+                        vals[f.score] = [...f.value.split(',')];
+                        if (!facts[f.trait].scores[f.score]) {
+                            facts[f.trait].scores[f.score] = {score: f.score, values: vals};
+                        } else {
+                            facts[f.trait].scores[f.score].values = [
+                                ...facts[f.trait].scores[f.score].values,
+                                ...vals[f.score]
+                            ]
+                        }
                     }
                 });
 
@@ -536,7 +544,11 @@
                     }
                 });
 
-                this.filteredFacts = Object.keys(facts).map(key => facts[key]);
+                this.filteredFacts = Object.keys(facts).map(key => {
+                    const fact = facts[key];
+                    fact.scores = Object.keys(fact.scores).map(s => ({ score: s, values: facts[key].scores[s] }));
+                    return fact;
+                });
                 this.filteredRules = Object.keys(rules).map(key => rules[key]);
                 this.filteredRelationships = Object.keys(relationships).map(key => relationships[key]);
             },
@@ -758,7 +770,7 @@
                     return;
                 }
 
-                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, { name: this.selectedSource.name }).then((res) => {
+                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, { name: this.selectedSource.name }).then(() => {
                     toast('Source name updated', true);
                     this.isEditingSourceName = false;
                 }).catch((error) => {
@@ -767,12 +779,13 @@
                 });
             },
 
-            updateFactSource() {
-                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then((res) => {
+            editSource(fact = {trait: '', scores: []}) {
+
+            },
+
+            updateFactSource(source = this.selectedSource) {
+                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, source).then(() => {
                     toast('Updated source', true);
-                    this.selectedFactIndex = -1;
-                    this.selectedRuleIndex = -1;
-                    this.selectedRelationshipIndex = -1;
                     this.getSources();
                 }).catch((error) => {
                     toast('Error loading page', false);
