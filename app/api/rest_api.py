@@ -126,7 +126,7 @@ class RestApi(BaseWorld):
         agent = request.headers.get('X-Request-ID', str(uuid.uuid4()))
         created_dir = os.path.normpath('/' + agent).lstrip('/')
         saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
-        operation_dir = await self.file_svc.create_exfil_operation_directory(dir_name=saveto_dir,agent_name=agent[-6:])
+        operation_dir = await self.file_svc.create_exfil_operation_directory(dir_name=saveto_dir, agent_name=agent[-6:])
         return await self.file_svc.save_multipart_file_upload(request, operation_dir)
 
     async def download_file(self, request):

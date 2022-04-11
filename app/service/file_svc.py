@@ -74,7 +74,7 @@ class FileSvc(FileServiceInterface, BaseService):
         op_list = self.data_svc.ram['operations']
         op_list_filtered = [x for x in op_list if x.state not in x.get_finished_states()]
         timestamp_chars = str.maketrans({'T': '_', ':': ''})
-        special_chars = {ord(c): '_' for c in ':<>"/\|?*'}
+        special_chars = {ord(c): '_' for c in r':<>"/\|?*'}
         agent_opid = [(x.name.translate(special_chars), '_', x.start.strftime("%Y-%m-%dT%H:%M:%SZ").translate(timestamp_chars))
                       for x in op_list_filtered if agent_name in [y.paw for y in x.agents]]
         path = os.path.join((dir_name), ''.join(agent_opid[0]))
@@ -189,7 +189,6 @@ class FileSvc(FileServiceInterface, BaseService):
                 if exfil_subdir not in exfil_files[exfil_agent_key]:
                     exfil_files[exfil_agent_key][exfil_subdir] = dict()
                 if file not in exfil_files[exfil_agent_key][exfil_subdir]:
-                    exfil_files[exfil_agent_key][exfil_subdir][file] = dict()
                     exfil_files[exfil_agent_key][exfil_subdir][file] = os.path.join(agent_path, file)
         return exfil_files
 
