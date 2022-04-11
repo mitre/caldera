@@ -25,20 +25,21 @@
                     </template>
                 </select>
             </div>
-            <button type="button" class="button is-primary is-small is-fullwidth mb-4" @click="createSource()"><span class="icon"><em class="fas fa-plus"></em></span><span>Create Source</span></button>
+            <button type="button" class="button is-primary is-small is-fullwidth mb-4" @click="createSource()"><span
+                    class="icon"><em class="fas fa-plus"></em></span><span>Create Source</span></button>
 
             <label for="sourceName" x-show="false" class="label">Source Name</label>
 
-            <div class="has-text-centered" x-show="selectedSourceId && !isEditingSourceName" >
+            <div class="has-text-centered" x-show="selectedSourceId && !isEditingSourceName">
                 <h3 x-text="selectedSource.name" class="pointer tooltip has-tooltip-arrow mt-0 mb-5"
-                data-tooltip="Click to edit" @click="isEditingSourceName = true"></h3>
+                    data-tooltip="Click to edit" @click="isEditingSourceName = true"></h3>
             </div>
             <input x-show="selectedSourceId && isEditingSourceName"
                    @click.outside="isEditingSourceName = false"
                    id="sourceName" class="input mb-5" placeholder="Enter a source name" x-model="selectedSource.name">
 
 
-                <template x-if="!selectedSourceId">
+            <template x-if="!selectedSourceId">
                 <p class="is-flex is-justify-content-center is-italic mt-2">Select a fact source to get started.</p>
             </template>
 
@@ -67,364 +68,40 @@
         </div>
 
         <!-- RIGHT SIDEBAR -->
-        <div class="column sources-view is-10">
+        <div class="column m-0 sources-view is-10" x-data="{inView: ['facts']}">
             <!-- TOPBAR CHIPS-->
             <template x-if="selectedSourceId">
-                <div x-data="{inView: ['facts']}">
+                <div>
                     <template x-for="chip of ['facts', 'rules', 'relationships']">
                         <!--                        TODO-->
-                        <span class="tag is-rounded" x-on:mouseover="inView.push(chip)" x-on:mouseout="inView.pop()" x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></span>
+                        <span class="tag is-rounded" x-on:mouseover="inView.push(chip)" x-on:mouseout="inView.pop()"
+                              x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></span>
                     </template>
                     <button class="button is-rounded is-small"><em class="fas fa-sort"></em></button>
                 </div>
+                <div class="hr"></div>
             </template>
 
-            <template x-if="selectedSourceId">
+            <template x-if="selectedSourceId && inView.includes('facts')">
                 <!-- FACTS -->
-                <div>
-                    <div class="box mb-2 mr-2 p-3"></div>
-                    <template x-for="(fact, index) in filteredFacts" :key="index">
-                        <div class="box mb-2 mr-2 p-3">
+                <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
+                    <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
+                        <p class="is-italic">+ new fact</p>
+                    </div>
+                    <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
+                        <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                             <p x-text="fact.trait"></p>
-                            <p x-text="fact.value"></p>
+                            <div class="is-flex is-justify-content-center is-flex-direction-row">
+                                <template x-for="(val, index) in fact.values" :key="val.value">
+                                    <p class="has-text-black is-italic m-1 break-spaces is-size-7"
+                                       x-bind:class="{'has-background-warning': val.score === 1, 'has-background-danger': val.score > 1}"
+                                       x-text="val.value">
+                                    </p>
+                                </template>
+                            </div>
                         </div>
                     </template>
                 </div>
-
-                <!-- RULES -->
-                <div x-data="{collapseRules: false}">
-                    <div class="collapsible-header mt-3 mb-1">
-                        <button class="button px-0 no-style is-size-5" x-on:click="collapseRules = !collapseRules"
-                                x-bind:class="collapseRules ? 'collapsed' : 'expanded'">
-                            <span x-text="`Rules (${filteredRules.length})`"></span>
-                        </button>
-                    </div>
-                    <div x-show="!collapseRules">
-                        <div class="is-flex is-flex-direction-row mb-3">
-                            <button type="button"
-                                    class="button is-small mr-2"
-                                    x-on:click="showAddRuleRow = true; selectedRuleIndex = -1"
-                                    x-bind:disabled="showAddRuleRow">
-                                <span class="icon"><em class="fas fa-plus"></em></span>
-                                <span>Add Rule</span>
-                            </button>
-                            <div class="field mr-2"
-                                 x-show="selectedSource.rules">
-                                <p class="control has-icons-left">
-                                    <input class="input is-small"
-                                           id="rule-search"
-                                           placeholder="Find a rule..."
-                                           x-on:keyup="filterRules($el.value)">
-                                    <span class="icon is-small is-left">
-                                            <em class="fas fa-search"></em>
-                                        </span>
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- RULES TABLE -->
-                        <table class="table is-striped is-fullwidth" x-show="filteredRules">
-                            <colgroup>
-                                <col width="15%">
-                                <col width="30%">
-                                <col width="40%">
-                                <col width="15%">
-                            </colgroup>
-                            <thead>
-                            <tr>
-                                <th @click="sortTable('match', filteredRules, 'rules')"
-                                    class="has-text-left is-clickable">Match <em class="fas fa-sort pr-2"></em></th>
-                                <th @click="sortTable('trait', filteredRules, 'rules')"
-                                    class="has-text-left is-clickable">Fact Trait <em class="fas fa-sort pr-2"></em>
-                                </th>
-                                <th @click="sortTable('action', filteredRules, 'rules')"
-                                    class="text-align-center is-clickable">Action <em class="fas fa-sort pr-2"></em>
-                                </th>
-                                <th class="has-text-left"></th>
-                            </tr>
-                            </thead>
-                            <tbody x-show="filteredRules.length === 0 && !showAddRuleRow">
-                            <tr>
-                                <td class="is-italic text-align-center" colspan="6">No rules in this source.</td>
-                            </tr>
-                            </tbody>
-                            <tbody x-show="filteredRules.length > 0 || showAddRuleRow"
-                                   @click.outside="selectedRuleIndex = -1; ruleIndexToDelete = -1">
-                            <template x-if="showAddRuleRow">
-                                <tr x-data="{newRule: EMPTY_RULE_OBJECT}">
-                                    <td>
-                                        <input id="new-rule-match" class="input is-small" x-model="newRule.match"
-                                               contenteditable>
-                                    </td>
-                                    <td>
-                                        <input id="new-rule-trait" class="input is-small" x-model="newRule.trait"
-                                               contenteditable>
-                                    </td>
-                                    <td>
-                                        <div class="toggleContainer is-flex is-justify-content-center"
-                                             id="new-rule-action">
-                                            <label class="has-text-danger" for="toggleAction">DENY</label>
-                                            <div class="toggleSwitch mx-2">
-                                                <input type="checkbox"
-                                                       id="toggleAction"
-                                                       x-model="newRule.action"
-                                                       x-bind:checked="newRule.action === 'ALLOW' ? 'checked' : null"/>
-                                                <span class="toggleSlider toggleSliderRound"
-                                                      x-on:click="newRule.action = (newRule.action === 'ALLOW' ? 'DENY' : 'ALLOW')"
-                                                      x-bind:class="newRule.action === 'ALLOW' ? 'toggle-on' : 'toggle-off'">
-                                                            <span x-bind:class="newRule.action === 'ALLOW' ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
-                                                        </span>
-                                            </div>
-                                            <label class="has-text-success" for="toggleAction">ALLOW</label>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        <button type="button"
-                                                class="button is-small is-primary"
-                                                x-on:click="addRule(newRule); newRule = EMPTY_RULE_OBJECT">
-                                            Add
-                                        </button>
-                                        <button type="button"
-                                                class="button is-small"
-                                                x-on:click="showAddRuleRow = false; newRule = EMPTY_RULE_OBJECT">
-                                            Cancel
-                                        </button>
-                                    </td>
-                                </tr>
-                            </template>
-                            <template x-for="(rule, index) in filteredRules">
-                                <tr x-on:click="selectedRuleIndex = index; showAddRuleRow = false;"
-                                    x-bind:class="selectedRuleIndex === rule ? 'selected' : ''">
-                                    <td x-show="selectedRuleIndex === index">
-                                        <input id="edit-rule-match" class="input is-small" x-model="rule.match"
-                                               contenteditable>
-                                    </td>
-                                    <td x-show="selectedRuleIndex !== index" class="is-italic" x-text="rule.match"></td>
-
-                                    <td x-show="selectedRuleIndex === index">
-                                        <input id="edit-rule-trait" class="input is-small" x-model="rule.trait"
-                                               contenteditable>
-                                    </td>
-                                    <td x-show="selectedRuleIndex !== index">
-                                        <span class="tag is-dark" x-text="rule.trait"></span>
-                                    </td>
-
-                                    <td x-show="selectedRuleIndex === index">
-                                        <div class="toggleContainer is-flex is-justify-content-center">
-                                            <label for="toggleRuleAction"><span
-                                                    class="tag is-danger">DENY</span></label>
-                                            <div class="toggleSwitch mx-2">
-                                                <input type="checkbox"
-                                                       id="toggleRuleAction"
-                                                       x-model="rule.action"
-                                                       x-bind:checked="rule.action === 'ALLOW' ? 'checked' : null"/>
-                                                <span class="toggleSlider toggleSliderRound"
-                                                      x-on:click="rule.action = (rule.action === 'ALLOW' ? 'DENY' : 'ALLOW')"
-                                                      x-bind:class="rule.action === 'ALLOW' ? 'toggle-on' : 'toggle-off'">
-                                                            <span x-bind:class="rule.action === 'ALLOW' ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
-                                                        </span>
-                                            </div>
-                                            <label class="has-text-success" for="toggleAction"><span
-                                                    class="tag is-success">ALLOW</span></label>
-                                        </div>
-                                    </td>
-                                    <td x-show="selectedRuleIndex !== index" class="text-align-center">
-                                                <span class="tag"
-                                                      x-bind:class="rule.action === 'ALLOW' ? 'is-success' : 'is-danger'"
-                                                      x-text="rule.action"></span>
-                                    </td>
-
-                                    <td class="has-text-right"
-                                        x-show="selectedRuleIndex !== index && ruleIndexToDelete !== index">
-                                        <button class="delete is-danger"
-                                                @click.stop="ruleIndexToDelete = index"></button>
-                                    </td>
-
-                                    <td class="has-text-right"
-                                        x-show="ruleIndexToDelete === -1 && selectedRuleIndex === index">
-                                        <button type="button"
-                                                class="button is-small is-primary"
-                                                x-on:click.stop="updateFactSource()">
-                                                    <span class="icon">
-                                                        <em class="fas fa-save"></em>
-                                                    </span>
-                                            <span>Save</span>
-                                        </button>
-                                        <button type="button"
-                                                class="button is-small"
-                                                x-on:click.stop="selectedRuleIndex = -1; getSources();">
-                                            Cancel
-                                        </button>
-                                    </td>
-
-                                    <td class="has-text-right" x-show="ruleIndexToDelete === index">
-                                        <div class="is-flex is-justify-content-end">
-                                            <p class="m-1 mr-3"></p>
-                                            <button type="button" class="button is-small is-danger mr-2"
-                                                    x-on:click.stop="deleteRule(ruleIndexToDelete)">
-                                                Delete Rule
-                                            </button>
-                                            <button type="button" class="button is-small"
-                                                    x-on:click.stop="ruleIndexToDelete = -1; selectedRuleIndex = -1">
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- RELATIONSHIPS -->
-                <div x-data="{collapseRelationships: false}">
-                <div class="collapsible-header mt-3 mb-1">
-                    <button class="button px-0 no-style is-size-5"
-                            x-on:click="collapseRelationships = !collapseRelationships"
-                            x-bind:class="collapseRelationships ? 'collapsed' : 'expanded'">
-                        <span x-text="`Relationships (${selectedSource.relationships.length})`"></span>
-                    </button>
-                </div>
-                <div x-show="!collapseRelationships" x-data="{selectedRelationshipIndex: -1}">
-                    <div class="is-flex is-flex-direction-row mb-3">
-                        <div class="pl-0 is-flex is-align-content-flex-start">
-                            <button type="button"
-                                    class="button is-small mr-2"
-                                    x-on:click="showAddRelationshipRow = true; selectedRelationshipIndex = -1"
-                                    x-bind:disabled="showAddRelationshipRow">
-                                <span class="icon"><em class="fas fa-plus"></em></span>
-                                <span>Add Relationship</span>
-                            </button>
-                            <div class="field mr-2">
-                                <p class="control has-icons-left">
-                                    <input class="input is-small"
-                                           id="relationship-search"
-                                           placeholder="Find a relationship..."
-                                           x-on:keyup="filterRelationships($el.value)">
-                                    <span class="icon is-small is-left">
-                                            <em class="fas fa-search"></em>
-                                        </span>
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- RELATIONSHIPS TABLE -->
-                    <table class="table is-striped is-fullwidth">
-                        <colgroup>
-                            <col width="25%">
-                            <col width="30%">
-                            <col width="30%">
-                            <col width="15%">
-                        </colgroup>
-                        <thead>
-                        <tr>
-                            <th @click="sortTable('source', filteredRelationships, 'relationships')"
-                                class="has-text-left is-clickable">Source <em class="fas fa-sort pr-2"></em></th>
-                            <th @click="sortTable('edge', filteredRelationships, 'relationships')"
-                                class="has-text-left is-clickable">Edge <em class="fas fa-sort pr-2"></em></th>
-                            <th @click="sortTable('target', filteredRelationships, 'relationships')"
-                                class="has-text-left is-clickable">Target <em class="fas fa-sort pr-2"></em></th>
-                            <th class="has-text-left"></th>
-                        </tr>
-                        </thead>
-                        <tbody x-show="filteredRelationships.length === 0 && !showAddRelationshipRow">
-                        <tr>
-                            <td class="is-italic text-align-center" colspan="6">No relationships in this source.
-                            </td>
-                        </tr>
-                        </tbody>
-                        <tbody x-show="filteredRelationships.length > 0 || showAddRelationshipRow"
-                               @click.outside="selectedRelationshipIndex = -1; relationshipIndexToDelete = -1">
-                        <tr x-show="showAddRelationshipRow">
-                            <td>
-                                <input id="new-relationship-source" class="input is-small"
-                                       x-model="newRelationship.sourceTrait" contenteditable>
-                            </td>
-                            <td>
-                                <input id="new-relationship-edge" class="input is-small"
-                                       x-model="newRelationship.edge" contenteditable>
-                            </td>
-                            <td>
-                                <input id="new-relationship-target" class="input is-small"
-                                       x-model="newRelationship.targetTrait" contenteditable>
-                            </td>
-                            <td>
-                                <button type="button"
-                                        class="button is-small is-primary"
-                                        x-on:click.stop="addRelationship(newRelationship)">
-                                    Add
-                                </button>
-                                <button type="button"
-                                        class="button is-small"
-                                        x-on:click.stop="showAddRelationshipRow = false">
-                                    Cancel
-                                </button>
-                            </td>
-                        </tr>
-                        <template x-for="(rel, index) in filteredRelationships">
-                            <tr x-on:click="selectedRelationshipIndex = index; showAddRelationshipRow = false;"
-                                x-bind:class="selectedRelationshipIndex === index ? 'selected' : ''">
-                                <td x-show="selectedRelationshipIndex !== index" x-text="rel.source?.trait"></td>
-                                <td x-show="selectedRelationshipIndex === index">
-                                    <input id="edit-rel-trait" class="input is-small" x-model="rel.source.trait"
-                                           contenteditable>
-                                </td>
-
-                                <td x-show="selectedRelationshipIndex !== index" x-text="rel.edge"></td>
-                                <td x-show="selectedRelationshipIndex === index">
-                                    <input id="edit-rel-trait" class="input is-small" x-model="rel.edge"
-                                           contenteditable>
-                                </td>
-
-                                <td x-show="selectedRelationshipIndex !== index" x-text="rel.target?.trait"></td>
-                                <td x-show="selectedRelationshipIndex === index">
-                                    <input id="edit-rel-trait" class="input is-small" x-model="rel.target.trait"
-                                           contenteditable>
-                                </td>
-
-                                <td class="has-text-right"
-                                    x-show="selectedRelationshipIndex !== index && relationshipIndexToDelete !== index">
-                                    <button class="delete is-danger"
-                                            @click.stop="relationshipIndexToDelete = index"></button>
-                                </td>
-
-                                <td class="has-text-right"
-                                    x-show="relationshipIndexToDelete === -1 && selectedRelationshipIndex === index">
-                                    <button type="button"
-                                            class="button is-small is-primary"
-                                            x-on:click.stop="updateFactSource()">
-                                                <span class="icon">
-                                                    <em class="fas fa-save"></em>
-                                                </span>
-                                        <span>Save</span>
-                                    </button>
-                                    <button type="button"
-                                            class="button is-small"
-                                            x-on:click.stop="selectedRelationshipIndex = -1; getSources();">
-                                        Cancel
-                                    </button>
-                                </td>
-
-                                <td class="has-text-right" x-show="relationshipIndexToDelete === index">
-                                    <div class="is-flex is-justify-content-end">
-                                        <button type="button" class="button is-small is-danger mr-2"
-                                                x-on:click.stop="deleteRelationship(relationshipIndexToDelete)">
-                                            Delete Relationship
-                                        </button>
-                                        <button type="button" class="button is-small"
-                                                x-on:click.stop="relationshipIndexToDelete = -1; selectedRelationshipIndex = -1">
-                                            Cancel
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        </template>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
             </template>
         </div>
     </div>
@@ -537,7 +214,7 @@
                                 <span x-text="`${ability.technique_id}`"></span>
                             </p>
                             <div class="is-flex is-align-items-center">
-                                <label class="is-italic is-size-7" for="ability-fact-score">Score: </label>
+                                <label class="is-italic is-size-7 break-spaces" for="ability-fact-score">Score: </label>
                                 <input class="input has-background-grey-darker is-small m-2 w-50-px"
                                        id="ability-fact-score" x-model="ability.score" type="number" required
                                        pattern="[0-9]*" min="0" placeholder="1"/>
@@ -756,7 +433,24 @@
             handleSelectSource() {
                 if (!this.selectedSourceId) return;
                 this.selectedSource = this.sources.find((source) => source.id === this.selectedSourceId);
-                this.filteredFacts = this.selectedSource.facts;
+                const facts = {};
+                this.selectedSource.facts.forEach((f) => {
+                    if (!(facts[f.trait])) {
+                        facts[f.trait] = {
+                            trait: f.trait,
+                            values: [{
+                                value: f.value,
+                                score: f.score
+                            }]
+                        };
+                    } else {
+                        facts[f.trait].values.push({
+                            value: f.value,
+                            score: f.score
+                        });
+                    }
+                });
+                this.filteredFacts = Object.keys(facts).map(key => facts[key]);
                 this.filteredRules = this.selectedSource.rules;
                 this.filteredRelationships = this.selectedSource.relationships;
 
@@ -768,11 +462,6 @@
                         this.sortTable(val, this[`filtered${key}`], k);
                     }
                 });
-            },
-
-            filterFacts(input = '') {
-                input = input.toLowerCase();
-                this.filteredFacts = this.selectedSource.facts.filter((f) => (f.trait.toLowerCase().includes(input) || f.value.toLowerCase().includes(input)));
             },
 
             filterRules(input = '') {
@@ -1052,7 +741,7 @@
     // # sourceURL=sources.js
 </script>
 
-<style>
+<style scoped>
     .filters {
         border-right: 1px solid rgb(97, 97, 97);
     }
@@ -1074,24 +763,48 @@
         color: white;
     }
 
-    @media(max-width: 1200px) {
-        .box {
+    @media (max-width: 900px) {
+        .box.sources {
             width: 98%;
         }
     }
-    @media(min-width: 1200px) {
-        .box {
+
+    @media (min-width: 900px) and (max-width: 1300px) {
+        .box.sources {
             width: 48%;
         }
     }
-    .box {
+
+    @media (min-width: 1300px) {
+        .box.sources {
+            width: 32%;
+        }
+    }
+
+    .box.sources {
         position: relative;
-        cursor: pointer;
+        /*cursor: pointer;*/
         border: 1px solid transparent;
         background-color: #272727;
+        word-break: break-word;
     }
-    .box:hover {
+
+    .box.sources:hover {
         border: 1px solid #474747;
+    }
+
+    .box.sources.add-new {
+        border: 2px solid #ffffff08;
+    }
+
+    .box.sources.add-new:hover {
+        cursor: pointer;
+        background-color: #ffffff38;
+    }
+
+    .break-spaces, .button.is-small {
+        white-space: break-spaces;
+        height: fit-content;
     }
 
     /*.sources-view {*/
