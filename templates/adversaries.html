@@ -506,6 +506,18 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="field is-horizontal">
+                                <div class="field-label is-small">
+                                    <label class="label">Delete payload</label>
+                                </div>
+                                <div class="field-body">
+                                    <div class="field">
+                                        <div class="control mt-2">
+                                            <input type="checkbox" x-model="selectedAbility.delete_payload">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </form>
                         <p class="has-text-centered">Executors</p>
                         <p x-show="fieldErrorsAbility.includes('executors')" class="help is-danger">At least one executor is required.</p>
