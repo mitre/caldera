@@ -146,11 +146,12 @@
                         <template x-for="(relationship, index) in filteredRelationships" :key="relationship.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <p x-text="relationship.trait"></p>
-                                <div class="is-size-7">
                                     <template x-for="(rel, index) in relationship.relationships" :key="rel">
-                                        <span class="tag is-outlined is-italic m-1 break-spaces" x-text="rel.from"></span>
-                                        <em class="has-text-white fas fa-arrow-right"></em>
-                                        <span class="tag is-outlined is-italic m-1 break-spaces" x-text="rel.to"></span>
+                                        <div class="is-size-7" x-bind:class="{'pr-2': index > 0}">
+                                            <span class="tag is-outlined is-light is-italic m-1 break-spaces" x-text="rel.from"></span>
+                                            <em class="has-text-white fas fa-arrow-right"></em>
+                                            <span class="tag is-outlined is-light is-italic m-1 break-spaces" x-text="rel.to"></span>
+                                        </div>
                                     </template>
                                 </div>
                             </div>
@@ -526,15 +527,15 @@
                 let relationships = {};
                 this.selectedSource.relationships.forEach((r) => {
                     if (relationships[r.edge]) {
-                        relationships[r.edge].relationships.push({from: r.source, to: r.target});
+                        relationships[r.edge].relationships.push({from: r.source.name, to: r.target.name});
                     } else {
-                        relationships[r.edge] = {trait: r.edge, relationships: [{from: r.source, to: r.target}]};
+                        relationships[r.edge] = {trait: r.edge, relationships: [{from: r.source.name, to: r.target.name}]};
                     }
                 });
 
                 this.filteredFacts = Object.keys(facts).map(key => facts[key]);
                 this.filteredRules = Object.keys(rules).map(key => rules[key]);
-                this.filteredRelationships = Object.keys(relationships).map(key => rules[key]);
+                this.filteredRelationships = Object.keys(relationships).map(key => relationships[key]);
 
                 // Keep incoming objects sorted, as before
                 Object.keys(this.sortSettings).forEach((k) => {
