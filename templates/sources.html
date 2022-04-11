@@ -2,7 +2,7 @@
      xmlns:x-on="http://www.w3.org/1999/xhtml">
 
     <!-- PAGE HEADER -->
-    <div>
+    <div x-ref="headerSources">
         <h2>Fact Sources</h2>
         <p>
             Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
@@ -18,7 +18,7 @@
         <div class="column m-0 is-2 filters">
             <label x-show="false" class="label">Select a source &nbsp;&nbsp;&nbsp;</label>
             <div class="select is-small is-fullwidth mb-2">
-                <select x-on:change="handleSelectSource()" x-model="selectedSourceId">
+                <select x-on:change="getSource()" x-model="selectedSourceId">
                     <option value="" default disabled selected>Select a source...</option>
                     <template x-for="source of sources" :key="source.id">
                         <option x-bind:value="source.id" x-text="source.name"></option>
@@ -84,20 +84,38 @@
                 <template x-if="inView.includes('facts')">
                     <!-- FACTS -->
                     <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
-                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
+                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
+                             x-on:click="addNewCard = true">
                             <p class="is-italic">+ new fact</p>
                         </div>
+                        <template x-if="addNewCard">
+                            <div x-data="{newFact: {trait: '', value: '', score: ''}}" class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                                <label class="label" x-show="false" for="new-fact-trait">Fact trait</label>
+                                <input id="new-fact-trait" class="input mb-5" placeholder="fact trait" x-model="newFact.trait">
+                                <input id="new-fact-value" class="input mb-5 is-small" placeholder="fact value" x-model="newFact.value">
+                                <input id="new-fact-score" class="input mb-5 is-small" type="number" pattern="[0-9]*" min="0" placeholder="1" placeholder="fact score" x-model="newFact.score">
+                                <div>
+                                    <button class="button is-small" @click="addNewCard = false">
+                                        <span>Cancel</span>
+                                    </button>
+                                    <button class="button is-small is-primary" @click="addFact(newFact)" x-bind:disabled="!newFact.trait">
+                                        <span class="icon"><i class="fas fa-save"></i></span>
+                                        <span>Save</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
                                 <div class="is-flex is-justify-content-center is-flex-direction-row">
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                                        <label x-show="fact.values" class="label is-italic mb-0 is-size-7">Value: </label>
-                                        <template x-for="(val, index) in fact.values" :key="val.value">
-                                            <p class="is-italic m-1 break-spaces is-size-7"
-                                               x-text="val.value + '-' + val.score">
-                                            </p>
-                                        </template>
+                                        <label x-show="fact.values" class="label is-italic mb-0 is-size-7" x-text="fact.values.length > 1 ? 'Values: ' : 'Value: '"></label>
+                                        <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
+                                            <template x-for="(val, index) in fact.values" :key="val.value">
+                                                <span class="is-italic tag is-light" x-text="val.value"></span>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -105,6 +123,7 @@
                     </div>
                 </template>
 
+                <!-- RULES -->
                 <template x-if="inView.includes('rules')">
                     <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
                         <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
@@ -138,6 +157,7 @@
                     </div>
                 </template>
 
+                <!-- RELATIONSHIPS -->
                 <template x-if="inView.includes('relationships')">
                     <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
                         <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
@@ -413,18 +433,6 @@
 <script>
     function alpineSources() {
         return {
-            // CONSTANTS
-            EMPTY_FACT_OBJECT: {
-                trait: '',
-                value: '',
-                score: 1
-            },
-            EMPTY_RULE_OBJECT: {
-                action: 'ALLOW',
-                match: '',
-                trait: ''
-            },
-
             sources: [],
             filteredFacts: [],
             filteredRules: [],
@@ -460,50 +468,45 @@
             ruleIndexToDelete: -1,
             relationshipIndexToDelete: -1,
 
-            showAddFactRow: false,
-            showAddRuleRow: false,
-            showAddRelationshipRow: false,
+            addNewCard: false,
 
             newRelationship: {
                 sourceTrait: '',
                 edge: '',
                 targetTrait: ''
             },
-            sortSettings: {
-                facts: '',
-                rules: '',
-                relationships: ''
-            },
 
             getSources() {
                 apiV2('GET', '/api/v2/sources').then((sources) => {
                     this.sources = sources.sort((a, b) => a.name.toLowerCase() > b.name.toLowerCase());
-                    this.handleSelectSource();
+                    this.getSource();
                 }).catch((error) => {
                     toast('Error loading page', false);
                     console.error(error);
                 });
             },
 
-            handleSelectSource() {
+            getSource() {
                 if (!this.selectedSourceId) return;
                 this.selectedSource = this.sources.find((source) => source.id === this.selectedSourceId);
 
                 const facts = {};
                 this.selectedSource.facts.forEach((f) => {
                     if (!(facts[f.trait])) {
+                        const vals = [...f.value.split(',')];
                         facts[f.trait] = {
                             trait: f.trait,
-                            values: [{
-                                value: f.value,
+                            values: vals.map(v => ({
+                                value: v,
                                 score: f.score
-                            }]
+                            }))
                         };
                     } else {
-                        facts[f.trait].values.push({
-                            value: f.value,
-                            score: f.score
-                        });
+                        const vals = [...f.value.split(',')];
+                        facts[f.trait].values = [
+                            ...facts[f.trait].values,
+                            ...vals.map(v => ({value: v, score: f.score}))
+                        ];
                     }
                 });
 
@@ -536,25 +539,6 @@
                 this.filteredFacts = Object.keys(facts).map(key => facts[key]);
                 this.filteredRules = Object.keys(rules).map(key => rules[key]);
                 this.filteredRelationships = Object.keys(relationships).map(key => relationships[key]);
-
-                // Keep incoming objects sorted, as before
-                Object.keys(this.sortSettings).forEach((k) => {
-                    if (this.sortSettings[k]) {
-                        let key = k[0].toUpperCase() + k.slice(1).toLowerCase();
-                        let val = this.sortSettings[k];
-                        this.sortTable(val, this[`filtered${key}`], k);
-                    }
-                });
-            },
-
-            filterRules(input = '') {
-                input = input.toLowerCase();
-                this.filteredRules = this.selectedSource.rules.filter((r) => (r.match.toLowerCase().includes(input) || r.trait.toLowerCase().includes(input)));
-            },
-
-            filterRelationships(input = '') {
-                input = input.toLowerCase();
-                this.filteredRelationships = this.selectedSource.relationships.filter((r) => (r.source.trait.toLowerCase().includes(input) || r.target.trait.toLowerCase().includes(input)));
             },
 
             createSource() {
@@ -571,7 +555,7 @@
                     this.sources.push(src);
                     this.selectedSourceId = src.id;
                     this.selectedSource = src;
-                    this.handleSelectSource();
+                    this.getSource();
                     this.$nextTick(() => {
                         document.getElementById('sourceName').focus();
                     });
@@ -672,7 +656,7 @@
                     this.sources.push(src);
                     this.selectedSourceId = src.id;
                     this.selectedSource = src;
-                    this.handleSelectSource();
+                    this.getSource();
                     toast('Duplicated fact source', true);
                 }).catch((error) => {
                     toast('Error duplicating source', false);
@@ -687,6 +671,7 @@
                     if (!bulkAdd) toast('Updated source', res);
                     this.showAddFactRow = false;
                     this.getSources();
+                    this.addNewCard = false;
                 }).catch((error) => {
                     toast('Error adding fact', false);
                     console.error(error);
@@ -803,21 +788,6 @@
                 };
                 this.filterAbilities();
             },
-
-            sortTable(field, list, objName) {
-                if (list && list.length > 0 && field in list[0]) {
-                    let reverseSortOrder = this.sortSettings[objName] === field.toUpperCase();
-                    list.sort((a, b) => {
-                        if (!(field in a)) return 0;
-                        if (!(field in b)) return 0;
-                        // if already sorted once (upper case), sort in reverse order
-                        if (reverseSortOrder) return a[field] < b[field] ? 1 : b[field] < a[field] ? -1 : 0;
-                        return a[field] > b[field] ? 1 : b[field] > a[field] ? -1 : 0;
-                    });
-                    this.sortSettings[objName] = reverseSortOrder ? field.toLowerCase() : field.toUpperCase();
-                }
-                return list;
-            },
         };
     }
 
@@ -866,7 +836,7 @@
 
     .box.sources {
         position: relative;
-        /*cursor: pointer;*/
+        cursor: text;
         border: 1px solid transparent;
         background-color: #272727;
         word-break: break-word;
