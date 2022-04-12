@@ -110,11 +110,11 @@
                                 <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
                                 <div class="is-flex is-justify-content-center is-flex-direction-row">
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                                        <label x-show="fact.scores" class="label is-italic mb-0 is-size-7" x-text="'Values'"></label>
+                                        <label x-show="fact.scores" class="label mb-0 is-size-7" x-text="'Values'"></label>
                                         <div>
                                             <template x-for="(score, index) in fact.scores" :key="fact.trait + score.score">
                                                 <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
-                                                    <label x-show="fact.scores" class="label is-italic mb-0 is-size-7 pr-1" x-text="score.score + ' pt:'"></label>
+                                                    <label x-show="fact.scores" class="label mb-0 is-size-7 pr-1" x-text="score.score + ' pt:'"></label>
                                                     <template x-for="(val, index) in score.values" :key="val">
                                                         <span class="is-italic tag is-light" x-text="val"></span>
                                                     </template>
@@ -495,25 +495,18 @@
                 if (!this.selectedSourceId) return;
                 this.selectedSource = this.sources.find((source) => source.id === this.selectedSourceId);
 
-                const facts = {};
+                const facts = {}; // bucket facts by 1) trait, 2) score
                 this.selectedSource.facts.forEach((f) => {
                     if (!(facts[f.trait])) {
-                        const vals = {};
-                        vals[f.score] = [...f.value.split(',')];
-                        facts[f.trait] = {
-                            trait: f.trait,
-                            scores: vals
-                        };
+                        const bucket = {};
+                        bucket[f.score] = {score: f.score, values: [...f.value.split(',')]} // score is defined twice because this object becomes an array later, and this keeps the score even after the {} is converted to an []
+                        facts[f.trait] = {trait: f.trait, scores: bucket}
                     } else {
-                        const vals = {};
-                        vals[f.score] = [...f.value.split(',')];
                         if (!facts[f.trait].scores[f.score]) {
-                            facts[f.trait].scores[f.score] = {score: f.score, values: vals};
+                            const bucket = {score: f.score, values: [...f.value.split(',')]};
+                            facts[f.trait].scores[f.score] = bucket;
                         } else {
-                            facts[f.trait].scores[f.score].values = [
-                                ...facts[f.trait].scores[f.score].values,
-                                ...vals[f.score]
-                            ]
+                            facts[f.trait].scores[f.score].values = facts[f.trait].scores[f.score].values.concat([...f.value.split(',')]);
                         }
                     }
                 });
@@ -546,7 +539,7 @@
 
                 this.filteredFacts = Object.keys(facts).map(key => {
                     const fact = facts[key];
-                    fact.scores = Object.keys(fact.scores).map(s => ({ score: s, values: facts[key].scores[s] }));
+                    fact.scores = Object.keys(fact.scores).map(s => facts[key].scores[s]);
                     return fact;
                 });
                 this.filteredRules = Object.keys(rules).map(key => rules[key]);
