@@ -1242,6 +1242,26 @@
                 return !(this.selectedOperation.state === 'finished' || this.selectedOperation.state === 'cleanup' || this.selectedOperation.state === 'out_of_time');
             },
 
+            init() {
+                this.selectedOperation = { chain: [] };
+                this.selectedOperationID = '';
+                this.agentGroups = [];
+                this.selectedOperationID = '';
+                this.selectedOperation = null;
+                this.selectedAgentIndex = 0;
+                this.isSelectedAdversaryRepeatable = false;
+                this.selectedLink = null;
+                this.selectedLinkResults = null;
+                this.selectedLinkFacts = null;
+                this.selectedLinkCommand = null;
+                this.selectedReportType = 'full-report';
+                this.isAgentOutputSelected = false;
+                this.openModal = null;
+                this.openModalForm = { advanced: false };
+                this.operations = [];
+                this.operationToStart = {};
+            },
+
             isLinkEditable(currentLink) {
                 if (!currentLink) return false;
                 // Link can only be editable if operation is running, and if link is paused, queued, or completed
@@ -1340,8 +1360,9 @@
             },
 
             getFacts() {
-                apiV2('GET', '/api/v2/facts').then((facts) => {
-                    this.facts = facts;
+                if (!this.selectedOperationID) return;
+                apiV2('GET', `/api/v2/facts/${this.selectedOperationID}`).then((facts) => {
+                    this.facts = facts.found;
                 }).catch(() => {
                     toast('Error getting facts');
                 });
@@ -1402,8 +1423,7 @@
             deleteOperation() {
                 apiV2('DELETE', `${this.ENDPOINT}/${this.selectedOperationID}`)
                     .then(() => {
-                        this.selectedOperation = { chain: [] };
-                        this.selectedOperationID = '';
+                        this.init();
                         this.getOperations();
                         toast('Deleted operation.', true);
                     })
@@ -1498,7 +1518,7 @@
                 const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
                 const opSource = this.selectedOperation.source;
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
-                const facts = opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : []);
+                const facts = (opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : [])).concat(this.facts);
 
                 this.potentialLinkCommand = executor.command;
 

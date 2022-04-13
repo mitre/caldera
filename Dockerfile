@@ -1,4 +1,5 @@
-FROM ubuntu:focal
+FROM ubuntu:latest
+SHELL ["/bin/bash", "-c"]
 
 ARG TZ="UTC"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
@@ -6,39 +7,40 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
 
 WORKDIR /usr/src/app
 
+# Make sure user cloned caldera recursively before installing anything.
+ADD . .
+RUN if [ -z "$(ls plugins/stockpile)" ]; then echo "stockpile plugin not downloaded - please ensure you recursively cloned the caldera git repository and try again."; exit 1; fi
+
 RUN apt-get update && \
-    apt-get -y install python3 python3-pip golang git
+    apt-get -y install python3 python3-pip git curl
 
 #WIN_BUILD is used to enable windows build in sandcat plugin
 ARG WIN_BUILD=false
 RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y install mingw-w64; fi
 
 # Install pip requirements
-ADD requirements.txt .
-
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-ADD . .
+# Set up config file and disable atomic by default
+RUN grep -v "\- atomic" conf/default.yml > conf/local.yml
 
-# Download golang dependencies
-RUN go get github.com/grandcat/zeroconf       \
-           github.com/google/go-github/github \
-           github.com/grandcat/zeroconf       \
-           github.com/miekg/dns               \
-           golang.org/x/oauth2                \
-           gopkg.in/natefinch/npipe.v2
+# Install golang
+RUN curl -L https://go.dev/dl/go1.17.6.linux-amd64.tar.gz -o go1.17.6.linux-amd64.tar.gz
+RUN rm -rf /usr/local/go && tar -C /usr/local -xzf go1.17.6.linux-amd64.tar.gz;
+ENV PATH="${PATH}:/usr/local/go/bin"
+RUN go version;
 
-# Update default sandcat agent binaries
+# Compile default sandcat agent binaries, which will download basic golang dependencies.
 WORKDIR /usr/src/app/plugins/sandcat
 
 RUN ./update-agents.sh
 
-# Check if we can compile the sandcat extensions
+# Check if we can compile the sandcat extensions, which will download golang dependencies for agent extensions
 RUN mkdir /tmp/gocatextensionstest
 
-RUN cp -R ./gocat-extensions /tmp/gocatextensionstest/gocat
+RUN cp -R ./gocat /tmp/gocatextensionstest/gocat
+RUN cp -R ./gocat-extensions/* /tmp/gocatextensionstest/gocat/
 
-RUN cp -R ./gocat /tmp/gocatextensionstest/
 RUN cp ./update-agents.sh /tmp/gocatextensionstest/update-agents.sh
 
 WORKDIR /tmp/gocatextensionstest
