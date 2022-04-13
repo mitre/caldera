@@ -76,7 +76,7 @@
                 <!-- TOPBAR CHIPS-->
                 <div class="is-flex is-align-items-center">
                     <template x-for="chip of ['facts', 'rules', 'relationships']">
-                        <button class="is-small button is-rounded m-1" x-on:click="inView = [chip]"
+                        <button class="is-small button is-rounded m-1" x-on:click="inView = [chip]; addNewCard = false;"
                                 x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></button>
                     </template>
                     <!--                        TODO-->
@@ -239,9 +239,63 @@
                 <!-- RULES -->
                 <template x-if="inView.includes('rules')">
                     <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
-                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center">
+                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
+                             x-on:click="addNewCard = true">
                             <p class="is-italic">+ new rule</p>
                         </div>
+                        <template x-if="addNewCard">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
+                                 x-data="{newRule: {trait: '', allow: '', deny: ''}}">
+                                <form>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label" for="new-rule-trait">Trait</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <input id="new-rule-trait" class="input" placeholder="fact trait"
+                                                   x-model="newRule.trait">
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                        </div>
+                                        <div class="field-body">
+                                            <label class="label is-small">Enter matches separated by commas (i.e. 127.0.0.1, 224.*).</label>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label" for="new-rule-allow">Allow</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <input id="new-rule-allow" class="input mb-5 is-small"
+                                                   placeholder="allow match"
+                                                   x-model="newRule.allow">
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small">
+                                            <label class="label" for="new-rule-deny">Deny</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <input id="new-rule-deny" class="input mb-5 is-small"
+                                                   placeholder="deny match"
+                                                   x-model="newRule.deny">
+                                        </div>
+                                    </div>
+                                </form>
+                                <div>
+                                    <button class="button is-small" @click="addNewCard = false">
+                                        <span>Cancel</span>
+                                    </button>
+                                    <button class="button is-small is-primary" @click="addRule(newRule)"
+                                            x-bind:disabled="!newRule.trait">
+                                        <span class="icon"><i class="fas fa-save"></i></span>
+                                        <span>Save</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
                         <template x-for="(rule, index) in filteredRules" :key="rule.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <p x-text="rule.trait"></p>
@@ -873,16 +927,18 @@
             },
 
             addRule(newRule) {
-                if (!this.validateRule(newRule)) {
-                    toast('Error: Rule already exists');
-                    return;
+                if (newRule.allow) {
+                    const allowMatches = newRule.allow.split(',').map((m) => ({trait: newRule.trait, match: m, action: 'ALLOW'}))
+                    this.selectedSource.rules = this.selectedSource.rules.concat(allowMatches);
                 }
-                const updatedSource = { ...this.selectedSource };
-                updatedSource.rules.push(newRule);
-                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
+                if (newRule.deny) {
+                    const denyMatches = newRule.deny.split(',').map((m) => ({trait: newRule.trait, match: m, action: 'DENY'}))
+                    this.selectedSource.rules = this.selectedSource.rules.concat(denyMatches);
+                }
+                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then(() => {
                     toast('Updated source', true);
-                    this.showAddRuleRow = false;
                     this.getSources();
+                    this.addNewCard = false;
                 }).catch((error) => {
                     toast('Error adding rule', false);
                     console.error(error);
