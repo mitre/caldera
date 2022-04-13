@@ -6,5 +6,5 @@
 /requirements.txt @wbooth
 
 # UI
-/templates/   @argaudreau
-/static/   @argaudreau
+/templates/   @mitre/squad-q
+/static/   @mitre/squad-q
