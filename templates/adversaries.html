@@ -58,12 +58,16 @@
             </form>
             <div class="control-buttons is-flex is-flex-direction-row">
                 <button class="button is-small" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
-                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span class="icon"><em class="fas fa-plus"></em></span>
                     <span>Add Ability</span>
                 </button>
                 <button class="button is-small" @click="showAddAdversaryModal = true">
-                    <span class="icon"><i class="fas fa-plus"></i></span>
+                    <span class="icon"><em class="fas fa-plus"></em></span>
                     <span>Add Adversary</span>
+                </button>
+                <button class="button is-small" @click="showFactBreakdownModal = true">
+                    <span class="icon"><em class="fas fa-unlock-alt"></em></span>
+                    <span>Fact Breakdown</span>
                 </button>
                 <div class="vr"></div>
                 <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
@@ -108,28 +112,28 @@
                             <td>
                                 <template x-for="platform of getExecutorDetail('platforms', ability)">
                                     <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
-                                        <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
+                                        <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
                                     </span>
                                 </template>
                             </td>
                             <td class="has-text-centered" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
                                 <span class=" has-tooltip-arrow no-underline" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
-                                    <span class="icon is-small"><i class="fas fa-lock"></i></span>
+                                    <span class="icon is-small"><em class="fas fa-lock"></em></span>
                                 </span>
                             </td>
                             <td class="has-text-centered" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
-                                    <span class="icon is-small"><i class="fas fa-key"></i></span>
+                                    <span class="icon is-small"><em class="fas fa-key"></em></span>
                                 </span>
                             </td>
                             <td class="has-text-centered">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
-                                    <span class="icon is-small"><i class="fas fa-weight-hanging"></i></span>
+                                    <span class="icon is-small"><em class="fas fa-weight-hanging"></em></span>
                                 </span>
                             </td>
                             <td class="has-text-centered">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
-                                    <span class="icon is-small"><i class="fas fa-trash"></i></span>
+                                    <span class="icon is-small"><em class="fas fa-trash"></em></span>
                                 </span>
                             </td>
                             <td class="has-text-centered"><button class="delete is-danger" @click.stop="removeAbility(index)"></button></td>
@@ -142,7 +146,7 @@
             </div>
             <div class="icon-text" x-show="needsParser.length">
                 <span class="icon has-text-warning">
-                    <i class="fas fa-exclamation-triangle"></i>
+                    <em class="fas fa-exclamation-triangle"></em>
                 </span>
                 <span>One or more of the abilities have unmet requirements, which may result in a failed operation if ran sequentially.</span>
             </div>
@@ -220,12 +224,12 @@
                                     <b x-text="ability.name"></b> |
                                     <span x-text="ability.tactic"></span> |
                                     <template x-for="platform of getExecutorDetail('platforms', ability)">
-                                        <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
+                                        <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
                                     </template> |
-                                    <span class="icon is-small" x-show="getExecutorDetail('requirements', ability)"><i class="fas fa-lock"></i></span>
-                                    <span class="icon is-small" x-show="getExecutorDetail('cleanup', ability)"><i class="fas fa-trash"></i></span>
-                                    <span class="icon is-small" x-show="getExecutorDetail('parser', ability)"><i class="fas fa-key"></i></span>
-                                    <span class="icon is-small" x-show="getExecutorDetail('payload', ability)"><i class="fas fa-weight-hanging"></i></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('requirements', ability)"><em class="fas fa-lock"></em></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('cleanup', ability)"><em class="fas fa-trash"></em></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('parser', ability)"><em class="fas fa-key"></em></span>
+                                    <span class="icon is-small" x-show="getExecutorDetail('payload', ability)"><em class="fas fa-weight-hanging"></em></span>
                                 </span>
                             </label>
                         </div>
@@ -392,7 +396,7 @@
                                         </div>
                                         <div class="control">
                                             <a class="button is-small has-tooltip-left has-tooltip-arrow" data-tooltip="Generate New ID" @click="selectedAbility.ability_id = uuidv4()">
-                                                <span class="icon is-small"><i class="fas fa-sync"></i></span>
+                                                <span class="icon is-small"><em class="fas fa-sync"></em></span>
                                             </a>
                                         </div>
                                     </div>
@@ -636,7 +640,7 @@
                                                     </div>
                                                     <div class="control">
                                                         <a class="button is-small has-tooltip-bottom has-tooltip-arrow" data-tooltip="Remove cleanup command" @click="executor.cleanup.splice(index, 1)">
-                                                            <span class="icon is-small"><i class="fas fa-minus-square"></i></span>
+                                                            <span class="icon is-small"><em class="fas fa-minus-square"></em></span>
                                                         </a>
                                                     </div>
                                                 </div>
@@ -671,7 +675,7 @@
                     <div class="level-left">
                         <div class="level-item" x-show="selectedAbility">
                             <button class="button is-small" @click="saveAbility(false)" x-bind:disabled="!selectedAbilityId">
-                                <span class="icon"><i class="fas fa-save"></i></span>
+                                <span class="icon"><em class="fas fa-save"></em></span>
                                 <span>Save</span>
                             </button>
                         </div>
@@ -685,6 +689,41 @@
                                 <span class="icon"><em class="fas fa-plus"></em></span>
                                 <span>Save & Add</span>
                             </button>
+                        </div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
+    <div class="modal" x-bind:class="{ 'is-active': showFactBreakdownModal }">
+        <div class="modal-background" @click="showFactBreakdownModal = false"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Fact Breakdown</p>
+            </header>
+            <section class="modal-card-body">
+                <p class="help">
+                    <span class="tag is-small is-success">&nbsp;</span> Required and Collected
+                    <span class="tag is-small is-warning">&nbsp;</span> Required and not Collected
+                    <span class="tag is-small is-dark">&nbsp;</span> Collected but not Required
+                </p>
+                <div class="tags" x-show="factBreakdown.length">
+                    <template x-for="(fact, index) of factBreakdown.sort()" :key="index">
+                        <span class="tag is-small no-pointer" :class="{ 'is-warning': fact.type === 'unmet', 'is-success': fact.type === 'met' }">
+                            <span class="icon"><em class="fas" :class="{ 'fa-exclamation-triangle': fact.type === 'unmet', 'fa-check': fact.type === 'met', 'fa-minus': fact.type === 'extra' }"></em></span>
+                            <span x-text="fact.fact"></span>
+                        </span>
+                    </template>
+                </div>
+                <p x-show="!factBreakdown.length">No facts to show</p>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left"></div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showFactBreakdownModal = false">Close</button>
                         </div>
                     </div>
                 </nav>
@@ -750,6 +789,10 @@
             selectedAbility: {},
             selectedPlatform: '',
             selectedExecutor: '',
+
+            // Fact breakdown modal
+            showFactBreakdownModal: false,
+            factBreakdown: [],
 
             // Input validation
             requiredFieldsProfile: ['name', 'description'],
@@ -921,6 +964,8 @@
 
             findAbilityDependencies() {
                 const types = {};
+                let factsCollected = [];
+                let factsRequired = [];
 
                 this.selectedProfileAbilities.forEach((ability, index) => {
                     let requireTypes = [];
@@ -982,6 +1027,20 @@
                         // Same dimension as requireTypes, but true/false if requirement has been met
                         requireTypesMet: requireTypesMet,
                     };
+
+                    // Update fact totals for fact breakdown
+                    factsCollected = factsCollected.concat(types[ability.ability_id].enableTypes);
+                    factsRequired = factsRequired.concat(types[ability.ability_id].requireTypes);
+                });
+
+                this.factBreakdown = [];
+                factsCollected = [...new Set(factsCollected)];
+                factsRequired = [...new Set(factsRequired)];
+                factsRequired.forEach((fact) => {
+                    this.factBreakdown.push({ fact: fact, type: factsCollected.includes(fact) ? 'met' : 'unmet' });
+                });
+                factsCollected.filter(x => !factsRequired.includes(x)).forEach((fact) => {
+                    this.factBreakdown.push({ fact: fact, type: 'extra' });
                 });
 
                 this.hasMetAbilityDependencies();
@@ -1255,6 +1314,10 @@
 
     .no-underline.has-tooltip-arrow {
         border-bottom: none;
+    }
+
+    .no-pointer {
+        cursor: default;
     }
 
     .pointer {
