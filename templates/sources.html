@@ -45,16 +45,19 @@
 
             <div class="control-buttons is-flex is-fullwidth is-flex-direction-column">
                 <button class="button is-small mb-2"
+                        x-bind:disabled="!selectedSourceId"
                         @click="openModal = { isOpen: true, name: 'Add From Ability' }; filterAbilities()">
                     <span class="icon"><em class="fas fa-plus"></em></span>
                     <span>Facts from Ability</span>
                 </button>
                 <button class="button is-small mb-2"
+                        x-bind:disabled="!selectedSourceId"
                         @click="openModal = { isOpen: true, name: 'Add From Adversary' }; getAdversaries();">
                     <span class="icon"><em class="fas fa-user-plus"></em></span>
                     <span>Facts from Adversary</span>
                 </button>
-                <button class="button is-small mb-2" @click="duplicateSource(selectedSource)">
+                <button class="button is-small mb-2" @click="duplicateSource(selectedSource)"
+                        x-bind:disabled="!selectedSourceId">
                     <span class="icon"><em class="fas fa-copy"></em></span>
                     <span>Duplicate Source</span>
                 </button>
@@ -117,7 +120,7 @@
                                         <div class="field-body">
                                             <input id="new-fact-score" class="input mb-5 is-small" type="number"
                                                    pattern="[0-9]*"
-                                                   min="0" placeholder="1" placeholder="fact score"
+                                                   min="0" placeholder="1"
                                                    x-model="newFact.score">
                                         </div>
                                     </div>
@@ -137,50 +140,55 @@
                         </template>
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
-                                 x-data="{editedValues: {}, editedScores: {}, newTags: []}">
+                                 x-data="{editedValues: {}, editedScores: {}, deletedValues: [], newTags: []}">
                                 <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
                                 <div class="is-flex is-justify-content-center is-flex-direction-row">
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                         <label x-show="fact.scores" class="label mb-0 is-size-7"
                                                x-text="'Values'"></label>
-                                        <template x-for="(score) in fact.scores"
-                                                  :key="fact.trait + score.score"
-                                                  x-init="$watch('filteredFacts', _ => fact.scores = filteredFacts[index].scores)">
-                                            <div>
-                                            <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap"
-                                                 @click="editCard = fact.trait" >
-                                                <span x-show-="editCard !== fact.trait"
-                                                      class="tag break-spaces is-info"
-                                                      x-text="score.score + ' pt:'"></span>
-                                                <template x-for="(val, index) in score.values" :key="val">
-                                                    <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
-                                                        <template x-if="editCard !== fact.trait">
-                                                            <span class="tag is-light break-spaces editable-tag"
-                                                                  x-text="val"></span>
-                                                        </template>
-                                                        <template x-if="editCard === fact.trait">
+                                        <div class="field is-grouped is-grouped-multiline is-justify-content-center">
+                                            <template x-for="(score) in fact.scores"
+                                                      :key="fact.trait + score.score"
+                                                      x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores})">
+                                                <div>
+                                                    <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap"
+                                                         @click="editCard = fact.trait">
+                                                        <span x-show-="editCard !== fact.trait"
+                                                              class="tag break-spaces is-info"
+                                                              x-text="score.score + ' pt:'"></span>
+                                                        <template x-for="(val, index) in score.values" :key="val">
                                                             <div>
-                                                                <div class="tags has-addons mb-0">
+                                                                <template x-if="editCard !== fact.trait">
+                                                                    <span class="tag is-light break-spaces editable-tag"
+                                                                          x-text="val"></span>
+                                                                </template>
+                                                                <template x-if="editCard === fact.trait">
+                                                                    <div>
+                                                                        <div class="tags has-addons mb-0">
                                                                 <span class="is-italic tag is-light break-spaces">
                                                                   <input type="text" class="fact-value-input"
                                                                          x-bind:value="val"
                                                                          x-on:change="val = editedValues[fact.unique] = $event.target.value;">
                                                                 </span>
-                                                                    <span class="tag is-white break-spaces"><input
-                                                                            class="fact-score-input" type="number"
-                                                                            placeholder="1"
-                                                                            x-bind:value="score.score"
-                                                                            x-on:change="score.score = editedScores[fact.unique] = $event.target.value;">
-                                                                        <button class="delete is-small"></button>
+                                                                <span class="tag is-white break-spaces">
+                                                                    <input class="fact-score-input"
+                                                                           type="number"
+                                                                           min="0"
+                                                                           pattern="[0-9]*"
+                                                                           placeholder="1"
+                                                                           x-bind:value="score.score"
+                                                                           x-on:change="score.score = editedScores[fact.unique] = $event.target.value;">
+                                                                    <button @click="deletedValues.push(fact.unique)" class="delete is-small"></button>
                                                                 </span>
-                                                                </div>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
                                                             </div>
                                                         </template>
                                                     </div>
-                                                </template>
-                                            </div>
-                                            </div>
-                                        </template>
+                                                </div>
+                                            </template>
+                                        </div>
                                         <template x-if="editCard === fact.trait">
                                             <div class="mt-2">
                                                 <template x-for="(tag, index) in newTags">
@@ -192,13 +200,17 @@
                                                                 </span>
                                                         <span class="tag is-white break-spaces"><input
                                                                 class="fact-score-input" type="number"
+                                                                pattern="[0-9]*"
+                                                                min="0"
                                                                 placeholder="1"
-                                                                x-model="tag.score"><button class="delete is-small"></button>
+                                                                x-model="tag.score">
+                                                            <button class="delete is-small"></button>
                                                         </span>
                                                     </div>
                                                 </template>
                                                 <div class="is-flex is-justify-content-center">
                                                     <span class="tag is-white break-spaces ml-2"
+                                                          data-tooltip="Add a new value"
                                                           @click="newTags.push({trait: fact.trait, value: '', score: 1})">
                                                         <em class="fas fa-plus"></em>
                                                     </span>
@@ -211,7 +223,7 @@
                                                     <span>Cancel</span>
                                                 </button>
                                                 <button class="button is-small is-primary"
-                                                        @click="updateFact(editedValues, editedScores, newTags); newTags = [];">
+                                                        @click="updateFact(editedValues, editedScores, deletedValues, newTags); deletedValues = []; newTags = [];">
                                                     <span class="icon"><i class="fas fa-save"></i></span>
                                                     <span>Save</span>
                                                 </button>
@@ -816,7 +828,7 @@
                 this.updateFactSource(this.selectedSource);
             },
 
-            updateFact(editedValues, editedScores, newTags) {
+            updateFact(editedValues, editedScores, deletedValues, newTags) {
                 // Do a comparison of facts and new facts--replace uniques with ones in the new one
                 let updated = this.selectedSource.facts.map((f) => {
                     if (!editedValues[f.unique] && !editedScores[f.unique]) {
@@ -835,6 +847,10 @@
                     }
                     return fact;
                 });
+
+                if (deletedValues) {
+                    updated = updated.filter((f) => !deletedValues.includes(f));
+                }
 
                 updated = updated.concat(newTags);
                 this.editCard = '';
@@ -1037,8 +1053,7 @@
         width: 2em;
     }
 
-    /*.sources-view {*/
-    /*    height: calc(100vh - 160px);*/
-    /*    overflow: scroll;*/
-    /*}*/
+    .w-50-px {
+        width: 50px !important;
+    }
 </style>
