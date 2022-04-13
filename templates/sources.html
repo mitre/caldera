@@ -76,7 +76,7 @@
                 <!-- TOPBAR CHIPS-->
                 <div class="is-flex is-align-items-center">
                     <template x-for="chip of ['facts', 'rules', 'relationships']">
-                        <button class="is-small button is-rounded m-1" x-on:click="inView = [chip]; addNewCard = false;"
+                        <button class="is-small button is-rounded m-1" x-on:click="inView = [chip]; addNewCard = false; editCard = ''"
                                 x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></button>
                     </template>
                     <!--                        TODO-->
@@ -298,27 +298,78 @@
                         </template>
                         <template x-for="(rule, index) in filteredRules" :key="rule.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                                <p x-text="rule.trait"></p>
-                                <div class="is-size-7">
-                                    <template x-if="rule.allow_matches.length > 0">
-                                        <label class="label is-italic mb-0 is-inline-block">Allow: </label>
-                                    </template>
-                                    <template x-for="(match, index) in rule.allow_matches" :key="match">
-                                        <p class="tag is-success is-italic m-1 break-spaces"
-                                           x-text="match">
-                                        </p>
-                                    </template>
-                                </div>
-                                <div class="is-size-7">
-                                    <template x-if="rule.deny_matches.length > 0">
-                                        <label class="label is-italic mb-0 is-inline-block">Deny: </label>
-                                    </template>
-                                    <template x-for="(match, index) in rule.deny_matches" :key="match">
-                                        <p class="tag is-danger is-italic m-1 break-spaces"
-                                           x-text="match">
-                                        </p>
-                                    </template>
-                                </div>
+                                <template x-if="editCard !== rule.trait">
+                                    <div @click="editCard = rule.trait">
+                                        <div class="is-flex is-justify-content-center mb-2">
+                                            <p x-text="rule.trait"></p>
+                                        </div>
+                                        <div class="is-size-7">
+                                            <template x-if="rule.allow_matches.length > 0">
+                                                <label class="label is-italic mb-0 is-inline-block">Allow: </label>
+                                            </template>
+                                            <template x-for="(match, index) in rule.allow_matches" :key="match">
+                                                <p class="tag is-success is-italic m-1 break-spaces editable-tag"
+                                                   x-text="match">
+                                                </p>
+                                            </template>
+                                        </div>
+                                        <div class="is-size-7">
+                                            <template x-if="rule.deny_matches.length > 0">
+                                                <label class="label is-italic mb-0 is-inline-block">Deny: </label>
+                                            </template>
+                                            <template x-for="(match, index) in rule.deny_matches" :key="match">
+                                                <p class="tag is-danger is-italic m-1 break-spaces editable-tag"
+                                                   x-text="match">
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="editCard === rule.trait">
+                                    <div x-data="{updatedRule: {trait: rule.trait, allow: rule.allow_matches.join(', '), deny: rule.deny_matches.join(', ')}}">
+                                        <div class="is-flex is-justify-content-center mb-2">
+                                            <p class="has-background-warning has-text-black is-italic" x-text="rule.trait"></p>
+                                        </div>
+                                        <form>
+                                            <div class="field is-horizontal">
+                                                <div class="field-label is-small">
+                                                </div>
+                                                <div class="field-body">
+                                                    <label class="label is-small">Enter matches separated by commas (i.e. 127.0.0.1, 224.*).</label>
+                                                </div>
+                                            </div>
+                                            <div class="field is-horizontal">
+                                                <div class="field-label is-small">
+                                                    <label class="label" for="edit-rule-allow">Allow</label>
+                                                </div>
+                                                <div class="field-body">
+                                                    <input id="edit-rule-allow" class="input mb-5 is-small"
+                                                           placeholder="allow match"
+                                                           x-model="updatedRule.allow">
+                                                </div>
+                                            </div>
+                                            <div class="field is-horizontal">
+                                                <div class="field-label is-small">
+                                                    <label class="label" for="edit-rule-deny">Deny</label>
+                                                </div>
+                                                <div class="field-body">
+                                                    <input id="edit-rule-deny" class="input mb-5 is-small"
+                                                           placeholder="deny match"
+                                                           x-model="updatedRule.deny">
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <div class="is-flex is-justify-content-center">
+                                            <button class="button is-small" @click="editCard = ''">
+                                                <span>Cancel</span>
+                                            </button>
+                                            <button class="button is-small is-primary" @click="updateRules(updatedRule)">
+                                                <span class="icon"><i class="fas fa-save"></i></span>
+                                                <span>Save</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
                             </div>
                         </template>
                     </div>
@@ -924,6 +975,12 @@
 
             validateRule(newRule) {
                 return !this.selectedSource.rules.find((r) => (r.match === newRule.match && r.trait === newRule.trait));
+            },
+
+            updateRules(updatedRule) {
+                this.selectedSource.rules = this.selectedSource.rules.filter(match => match.trait !== updatedRule.trait);
+                this.editCard = '';
+                this.addRule(updatedRule);
             },
 
             addRule(newRule) {
