@@ -4,3 +4,7 @@
 /app/utility/base_planning_svc.py   @mitre/squad-x
 /tests/services/test_planning_svc.py  @mitre/squad-x
 /requirements.txt @wbooth
+
+# UI
+/templates/   @agaudreau
+/static/   @agaudreau
