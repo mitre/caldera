@@ -79,7 +79,8 @@
                                 x-on:click="inView = [chip]; addNewCard = false; editCard = ''; sortAToZ = false;"
                                 x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></button>
                     </template>
-                    <button class="button is-rounded is-small" @click="sortDisplay()"><em class="fas fa-sort"></em></button>
+                    <button class="button is-rounded is-small" @click="sortDisplay(); sortAToZ = !sortAToZ;"><em class="fas fa-sort"></em>
+                    </button>
                 </div>
 
                 <template x-if="inView.includes('facts')">
@@ -139,7 +140,7 @@
                         </template>
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
-                                 x-data="{editedValues: {}, editedScores: {}, deletedValues: [], newTags: []}">
+                                 x-data="{editedValues: {}, editedScores: {}, newTags: []}">
                                 <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
                                 <div class="is-flex is-justify-content-center is-flex-direction-row">
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
@@ -227,7 +228,7 @@
                                                     <span>Cancel</span>
                                                 </button>
                                                 <button class="button is-small is-primary ml-2"
-                                                        @click="updateFact(editedValues, editedScores, deletedValues, newTags); deletedValues = []; newTags = [];">
+                                                        @click="updateFact(editedValues, editedScores, newTags); newTags = [];">
                                                     <span class="icon"><i class="fas fa-save"></i></span>
                                                     <span>Save</span>
                                                 </button>
@@ -888,6 +889,7 @@
                 });
                 this.filteredRules = Object.keys(rules).map(key => rules[key]);
                 this.filteredRelationships = Object.keys(relationships).map(key => relationships[key]);
+                this.sortDisplay();
             },
 
             sortDisplay() {
@@ -905,7 +907,6 @@
                             this.filteredRelationships = this.filteredRelationships.sort((a, b) => a.trait.toLowerCase() > b.trait.toLowerCase() ? -1 : 1);
                     }
                 }
-                this.sortAToZ = !this.sortAToZ;
             },
 
             createSource() {
@@ -1044,7 +1045,7 @@
                 });
             },
 
-            updateFact(editedValues, editedScores, deletedValues, newTags) {
+            updateFact(editedValues, editedScores, newTags) {
                 // Do a comparison of facts and new facts--replace uniques with ones in the new one
                 let updated = this.selectedSource.facts.map((f) => {
                     if (!editedValues[f.unique] && !editedScores[f.unique]) {
