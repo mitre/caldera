@@ -11,7 +11,6 @@
     </div>
     <hr>
 
-
     <!-- SOURCES TABLE -->
     <div class="columns">
         <!-- LEFT SIDEBAR -->
@@ -1182,16 +1181,16 @@
 </script>
 
 <style scoped>
-    .box.selectable:hover, .box.selected {
+    #sourcePage .box.selectable:hover, #sourcePage .box.selected {
         cursor: hand;
         border: 2px solid white;
     }
 
-    .filters {
+    #sourcePage .filters {
         border-right: 1px solid rgb(97, 97, 97);
     }
 
-    .hr {
+    #sourcePage .hr {
         content: "";
         height: 1px;
         background-color: rgb(97, 97, 97);
@@ -1204,29 +1203,29 @@
         box-shadow: none;
     }
 
-    .button.no-style:focus, .button.no-style.is-focused {
+    #sourcePage .button.no-style:focus, #sourcePage .button.no-style.is-focused {
         color: white;
     }
 
     @media (max-width: 900px) {
-        .box.sources {
+        #sourcePage .box.sources {
             width: 98%;
         }
     }
 
     @media (min-width: 900px) and (max-width: 1300px) {
-        .box.sources {
+        #sourcePage .box.sources {
             width: 48%;
         }
     }
 
     @media (min-width: 1300px) {
-        .box.sources {
+        #sourcePage .box.sources {
             width: 32%;
         }
     }
 
-    .box.sources {
+    #sourcePage .box.sources {
         position: relative;
         cursor: pointer;
         border: 1px solid transparent;
@@ -1234,24 +1233,24 @@
         word-break: break-word;
     }
 
-    .box.sources:hover {
+    #sourcePage .box.sources:hover {
         border: 1px solid #474747;
     }
 
-    .box.sources.add-new {
+    #sourcePage .box.sources.add-new {
         border: 2px solid #ffffff08;
     }
 
-    .box.sources.add-new:hover {
+    #sourcePage .box.sources.add-new:hover {
         cursor: pointer;
         background-color: #ffffff38;
     }
 
-    .editable-tag {
+    #sourcePage .editable-tag {
         cursor: text !important;
     }
 
-    .break-spaces, .button.is-small {
+    #sourcePage .break-spaces, #sourcePage .button.is-small {
         height: auto !important;
         max-width: 250px;
         overflow-wrap: anywhere;
@@ -1259,28 +1258,28 @@
         min-height: 2.3em;
     }
 
-    .tag-input, .tag-number-input {
+    #sourcePage .tag-input, #sourcePage .tag-number-input {
         border: none;
         background-color: transparent;
     }
 
-    .tag-number-input {
+    #sourcePage .tag-number-input {
         width: 2em;
     }
 
-    .w-50-px {
+    #sourcePage .w-50-px {
         width: 50px !important;
     }
 
-    .w-35 {
+    #sourcePage .w-35 {
         width: 35% !important;
     }
 
-    .w-90 {
+    #sourcePage .w-90 {
         width: 90% !important;
     }
 
-    .w-100 {
+    #sourcePage .w-100 {
         width: 100% !important;
     }
 </style>
