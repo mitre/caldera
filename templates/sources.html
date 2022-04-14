@@ -141,7 +141,12 @@
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
                                  x-data="{editedValues: {}, editedScores: {}, newTags: []}">
-                                <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
+                                <div>
+                                    <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
+                                    <template x-if="editCard === fact.trait">
+                                        <button class="button is-danger is-outlined is-small delete-fact-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
+                                    </template>
+                                </div>
                                 <div class="is-flex is-justify-content-center is-flex-direction-row">
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                         <label x-show="fact.scores" class="label mb-0 is-size-7"
@@ -156,34 +161,31 @@
                                                         <span x-show-="editCard !== fact.trait"
                                                               class="tag break-spaces is-info"
                                                               x-text="score.score + (score.score > 1 ? ' pts:' :' pt:')"></span>
-                                                        <template x-for="(val, index) in score.values" :key="val">
+                                                        <template x-for="(val, index) in score.values" :key="val+index">
                                                             <div>
                                                                 <template x-if="editCard !== fact.trait">
                                                                     <span class="tag is-light break-spaces editable-tag"
                                                                           x-text="(val ? val : '--')"></span>
                                                                 </template>
-<!--                                                                <template x-if="!val && editCard !== fact.trait">-->
-<!--                                                                    <span class="icon has-text-warning">-->
-<!--                                                                        <em class="fas fa-exclamation-triangle"></em>-->
-<!--                                                                    </span>-->
-<!--                                                                </template>-->
                                                                 <template x-if="editCard === fact.trait">
                                                                     <div>
                                                                         <div class="tags has-addons mb-0">
-                                                                <span class="is-italic tag is-light break-spaces">
-                                                                  <input type="text" class="tag-input"
-                                                                         x-bind:value="val"
-                                                                         x-on:change="val = editedValues[fact.unique] = $event.target.value;">
-                                                                </span>
+                                                                            <span class="is-italic tag is-light break-spaces">
+                                                                              <input type="text" class="tag-input"
+                                                                                     x-bind:value="val"
+                                                                                     x-on:change="val = editedValues[score.unique] = $event.target.value;">
+                                                                            </span>
                                                                             <span class="tag is-white break-spaces">
-                                                                    <input class="tag-number-input"
-                                                                           type="number"
-                                                                           min="0"
-                                                                           pattern="[0-9]*"
-                                                                           placeholder="1"
-                                                                           x-bind:value="score.score"
-                                                                           x-on:change="score.score = editedScores[fact.unique] = $event.target.value;">
-                                                                </span>
+                                                                                <input class="tag-number-input"
+                                                                                       type="number"
+                                                                                       min="0"
+                                                                                       pattern="[0-9]*"
+                                                                                       placeholder="1"
+                                                                                       x-bind:value="score.score"
+                                                                                       x-on:change="score.score = editedScores[score.unique] = $event.target.value;">
+                                                                            </span>
+                                                                            <button @click="deleteFactValue(fact.trait, score.unique, val)"
+                                                                                    class="button delete is-small"></button>
                                                                         </div>
                                                                     </div>
                                                                 </template>
@@ -766,7 +768,7 @@
             sortAToZ: true,
             isEditingSourceName: false,
 
-            // filteredFacts = [{trait: '', scores: {1: [{score: 1, value: ''}], 2: [{score: 2, value: ''}]}}]
+            // filteredFacts = [{trait: '', scores: {1: [{score: 1, unique: '', value: ''}], 2: [{score: 2,  unique: '', value: ''}]}}]
             filteredFacts: [],
             // filteredRules = [{trait: '', allow_matches: [{value: '', allow: true}], deny_matches: [{value: '', allow: false}]}]
             filteredRules: [],
@@ -810,26 +812,29 @@
             // Gets selected source and modifies object for display (i.e. filteredFacts is a different object from the source.facts object from the rest API)
             getSource() {
                 if (!this.selectedSourceId) return;
-                this.selectedSource = null;
                 this.selectedSource = this.sources.find((source) => source.id === this.selectedSourceId);
+                this.filterSource();
+            },
 
+            filterSource() {
                 const facts = {}; // bucket facts by 1) trait, 2) score
                 this.selectedSource.facts.forEach((f) => {
                     if (!(facts[f.trait])) {
                         const bucket = {};
                         bucket[f.score] = {
                             score: f.score,
+                            unique: f.unique,
                             values: [f.value.replaceAll(',', ', ')]
                         }; // score is defined twice because this object becomes an array later, and this keeps the score even after the {} is converted to an []
                         facts[f.trait] = {
                             trait: f.trait,
-                            unique: f.unique,
                             scores: bucket
                         };
                     } else {
                         if (!facts[f.trait].scores[f.score]) {
                             const bucket = {
                                 score: f.score,
+                                unique: f.unique,
                                 values: [f.value.replaceAll(',', ', ')]
                             };
                             facts[f.trait].scores[f.score] = bucket;
@@ -882,6 +887,7 @@
                     }
                 });
 
+                // Convert buckets {} into array for easy looping in template
                 this.filteredFacts = Object.keys(facts).map(key => {
                     const fact = facts[key];
                     fact.scores = Object.keys(fact.scores).map(s => facts[key].scores[s]);
@@ -1024,10 +1030,21 @@
                     this.sources.push(src);
                     this.selectedSourceId = src.id;
                     this.selectedSource = src;
-                    this.getSource();
+                    this.getSources();
                     toast('Duplicated fact source', true);
                 }).catch((error) => {
                     toast('Error duplicating source', false);
+                    console.error(error);
+                });
+            },
+
+            updateFactSource(source = this.selectedSource) {
+                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, source).then((r) => {
+                    toast('Updated source', true);
+                    this.selectedSource = r;
+                    this.getSources();
+                }).catch((error) => {
+                    toast('Error loading page', false);
                     console.error(error);
                 });
             },
@@ -1065,24 +1082,23 @@
                     return fact;
                 });
 
-                if (deletedValues) {
-                    updated = updated.filter((f) => !deletedValues.includes(f));
-                }
-
                 updated = updated.concat(newTags);
                 this.editCard = '';
                 this.selectedSource.facts = updated;
                 this.updateFactSource(this.selectedSource);
             },
 
-            updateFactSource(source = this.selectedSource) {
-                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, source).then(() => {
-                    toast('Updated source', true);
-                    this.getSources();
-                }).catch((error) => {
-                    toast('Error loading page', false);
-                    console.error(error);
+            deleteFactValue(trait, unique, value) {
+                this.selectedSource.facts = this.selectedSource.facts.filter((f) => {
+                    return (f.unique !== unique || f.value !== value);
                 });
+                if (this.selectedSource.facts.filter((f) => f.trait === trait).length < 1) this.deleteFact(trait); // delete fact if it doesn't have any values
+                this.updateFactSource(this.selectedSource);
+            },
+
+            deleteFact(factTrait) {
+                this.selectedSource.facts = this.selectedSource.facts.filter((f) => f.trait !== factTrait);
+                this.updateFactSource(this.selectedSource);
             },
 
             updateRules(updatedRule) {
@@ -1185,6 +1201,12 @@
     #sourcePage .box.selectable:hover, #sourcePage .box.selected {
         cursor: hand;
         border: 2px solid white;
+    }
+
+    #sourcePage .delete-fact-button {
+        position: absolute;
+        top: 10px;
+        right: 16px;
     }
 
     #sourcePage .filters {
