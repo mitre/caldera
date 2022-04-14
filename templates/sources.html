@@ -14,7 +14,7 @@
     <!-- SOURCES TABLE -->
     <div class="columns">
         <!-- LEFT SIDEBAR -->
-        <div class="column m-0 is-2 filters">
+        <div class="column m-0 is-2 sidebar">
             <label x-show="false" class="label">Select a source &nbsp;&nbsp;&nbsp;</label>
             <div class="select is-small is-fullwidth mb-2">
                 <select x-on:change="getSource()" x-model="selectedSourceId">
@@ -1226,7 +1226,8 @@
         right: 16px;
     }
 
-    #sourcePage .filters {
+    #sourcePage .sidebar {
+        min-height: calc(100vh - 230px);
         border-right: 1px solid rgb(97, 97, 97);
     }
 
