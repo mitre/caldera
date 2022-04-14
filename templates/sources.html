@@ -35,7 +35,7 @@
                     data-tooltip="Click to edit" @click="isEditingSourceName = true"></h3>
             </div>
             <input x-show="selectedSourceId && isEditingSourceName"
-                   @click.outside="isEditingSourceName = false"
+                   @click.outside="isEditingSourceName = false; saveSourceName()"
                    id="sourceName" class="input mb-5" placeholder="Enter a source name" x-model="selectedSource.name">
 
 
@@ -72,16 +72,15 @@
 
         <template x-if="selectedSourceId">
             <!-- RIGHT SIDEBAR -->
-            <div class="column m-0 pt-0 sources-view is-10" x-data="{inView: ['facts']}">
+            <div class="column m-0 pt-0 sources-view is-10">
                 <!-- TOPBAR CHIPS-->
                 <div class="is-flex is-align-items-center">
                     <template x-for="chip of ['facts', 'rules', 'relationships']">
                         <button class="is-small button is-rounded m-1"
-                                x-on:click="inView = [chip]; addNewCard = false; editCard = ''"
+                                x-on:click="inView = [chip]; addNewCard = false; editCard = ''; sortAToZ = false;"
                                 x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></button>
                     </template>
-                    <!--                        TODO-->
-                    <!--                    <button class="button is-rounded is-small"><em class="fas fa-sort"></em></button>-->
+                    <button class="button is-rounded is-small" @click="sortDisplay()"><em class="fas fa-sort"></em></button>
                 </div>
 
                 <template x-if="inView.includes('facts')">
@@ -131,7 +130,7 @@
                                     <button class="button is-small" @click="addNewCard = false">
                                         <span>Cancel</span>
                                     </button>
-                                    <button class="button is-small is-primary" @click="addFact(newFact)"
+                                    <button class="button is-small is-primary ml-2" @click="addFact(newFact)"
                                             x-bind:disabled="!newFact.trait">
                                         <span class="icon"><i class="fas fa-save"></i></span>
                                         <span>Save</span>
@@ -147,7 +146,7 @@
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                         <label x-show="fact.scores" class="label mb-0 is-size-7"
                                                x-text="'Values'"></label>
-                                        <div class="field is-grouped is-grouped-multiline is-flex is-align-items-center is-justify-content-center mb-2">
+                                        <div class="field is-grouped is-grouped-multiline is-flex is-align-items-center is-justify-content-center">
                                             <template x-for="(score) in fact.scores"
                                                       :key="fact.trait + score.score"
                                                       x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores})">
@@ -156,13 +155,18 @@
                                                          @click="editCard = fact.trait">
                                                         <span x-show-="editCard !== fact.trait"
                                                               class="tag break-spaces is-info"
-                                                              x-text="score.score + ' pt:'"></span>
+                                                              x-text="score.score + (score.score > 1 ? ' pts:' :' pt:')"></span>
                                                         <template x-for="(val, index) in score.values" :key="val">
                                                             <div>
                                                                 <template x-if="editCard !== fact.trait">
                                                                     <span class="tag is-light break-spaces editable-tag"
-                                                                          x-text="val"></span>
+                                                                          x-text="(val ? val : '--')"></span>
                                                                 </template>
+<!--                                                                <template x-if="!val && editCard !== fact.trait">-->
+<!--                                                                    <span class="icon has-text-warning">-->
+<!--                                                                        <em class="fas fa-exclamation-triangle"></em>-->
+<!--                                                                    </span>-->
+<!--                                                                </template>-->
                                                                 <template x-if="editCard === fact.trait">
                                                                     <div>
                                                                         <div class="tags has-addons mb-0">
@@ -190,7 +194,7 @@
                                             </template>
                                         </div>
                                         <template x-if="editCard === fact.trait">
-                                            <div class="mt-2">
+                                            <div>
                                                 <template x-for="(tag, index) in newTags">
                                                     <div class="tags has-addons mb-0">
                                                                 <span class="is-italic tag is-light break-spaces">
@@ -210,7 +214,7 @@
                                                     </div>
                                                 </template>
                                                 <div class="is-flex is-justify-content-center">
-                                                    <span class="tag is-white break-spaces ml-2"
+                                                    <span class="tag is-white break-spaces"
                                                           data-tooltip="Add a new value"
                                                           @click="newTags.push({trait: fact.trait, value: '', score: 1})">
                                                         <em class="fas fa-plus"></em>
@@ -223,7 +227,7 @@
                                                 <button class="button is-small" @click="editCard = null">
                                                     <span>Cancel</span>
                                                 </button>
-                                                <button class="button is-small is-primary"
+                                                <button class="button is-small is-primary ml-2"
                                                         @click="updateFact(editedValues, editedScores, deletedValues, newTags); deletedValues = []; newTags = [];">
                                                     <span class="icon"><i class="fas fa-save"></i></span>
                                                     <span>Save</span>
@@ -290,7 +294,7 @@
                                     <button class="button is-small" @click="addNewCard = false">
                                         <span>Cancel</span>
                                     </button>
-                                    <button class="button is-small is-primary" @click="addRule(newRule)"
+                                    <button class="button is-small is-primary ml-2" @click="addRule(newRule)"
                                             x-bind:disabled="!newRule.trait">
                                         <span class="icon"><i class="fas fa-save"></i></span>
                                         <span>Save</span>
@@ -342,12 +346,12 @@
                                                         (i.e. 127.0.0.1, 224.*).</label>
                                                 </div>
                                             </div>
-                                            <div class="field is-horizontal">
+                                            <div class="field is-horizontal mb-0">
                                                 <div class="field-label is-small">
                                                     <label class="label" for="edit-rule-allow">Allow</label>
                                                 </div>
                                                 <div class="field-body">
-                                                    <input id="edit-rule-allow" class="input mb-5 is-small"
+                                                    <input id="edit-rule-allow" class="input mb-3 is-small"
                                                            placeholder="allow match"
                                                            x-model="updatedRule.allow">
                                                 </div>
@@ -367,7 +371,7 @@
                                             <button class="button is-small" @click="editCard = ''">
                                                 <span>Cancel</span>
                                             </button>
-                                            <button class="button is-small is-primary"
+                                            <button class="button is-small is-primary ml-2"
                                                     @click="updateRules(updatedRule)">
                                                 <span class="icon"><i class="fas fa-save"></i></span>
                                                 <span>Save</span>
@@ -427,7 +431,8 @@
                                     <button class="button is-small" @click="addNewCard = false">
                                         <span>Cancel</span>
                                     </button>
-                                    <button class="button is-small is-primary" @click="addRelationship(newRelationship); newRelationship = {edge: '', source: {}, target: {}}"
+                                    <button class="button is-small is-primary ml-2"
+                                            @click="addRelationship(newRelationship); newRelationship = {edge: '', source: {}, target: {}}"
                                             x-bind:disabled="!newRelationship.edge">
                                         <span class="icon"><i class="fas fa-save"></i></span>
                                         <span>Save</span>
@@ -439,10 +444,12 @@
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <div @click="editCard = relationship.trait">
                                     <div class="is-flex is-justify-content-center mb-2">
-                                        <p x-bind:class="{'has-background-warning has-text-black is-italic': editCard === relationship.trait}" x-text="relationship.trait"></p>
+                                        <p x-bind:class="{'has-background-warning has-text-black is-italic': editCard === relationship.trait}"
+                                           x-text="relationship.trait"></p>
                                     </div>
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                                        <template x-for="(rel, index) in relationship.relationships" :key="rel.from+index">
+                                        <template x-for="(rel, index) in relationship.relationships"
+                                                  :key="rel.from+index">
                                             <div class="is-size-7" x-bind:class="{'pr-2': index > 0}">
                                                 <span class="tag is-outlined is-light is-italic m-1 break-spaces"
                                                       x-text="rel.from"></span>
@@ -455,7 +462,8 @@
                                 </div>
                                 <template x-if="editCard === relationship.trait">
                                     <div class="is-flex is-flex-direction-column is-flex-wrap-wrap is-align-items-center">
-                                        <template x-for="(newTag, index) in newRelationships" :key="'new'+relationship.trait+index">
+                                        <template x-for="(newTag, index) in newRelationships"
+                                                  :key="'new'+relationship.trait+index">
                                             <div class="is-size-7" x-bind:class="{'pr-2': index > 0}">
                                                 <div class="is-grouped is-grouped-multiline is-flex is-justify-content-center is-align-items-center mb-2">
                                                     <span class="tag is-light is-italic m-1 break-spaces w-35">
@@ -485,7 +493,7 @@
                                             <button class="button is-small" @click="editCard = ''">
                                                 <span>Cancel</span>
                                             </button>
-                                            <button class="button is-small is-primary"
+                                            <button class="button is-small is-primary ml-2"
                                                     @click="updateRelationship(newRelationships); editCard = ''; newRelationships = []">
                                                 <span class="icon"><i class="fas fa-save"></i></span>
                                                 <span>Save</span>
@@ -645,7 +653,7 @@
                         <div class="level-right">
                             <div class="level-item">
                                 <button x-bind:disabled="!selectedAbility" class="button is-primary is-small"
-                                        @click="addFromAbility(selectedAbility.factTraits, selectedAbility.score); openModal.isOpen = false">
+                                        @click="addFromAbility(selectedAbility.factTraits, selectedAbility.score); openModal.isOpen = false; inView = ['facts'];">
                                     <span>Add Facts</span>
                                 </button>
                                 <div>
@@ -738,7 +746,7 @@
                             <div class="level-item">
                                 <button x-bind:disabled="filteredAbilities.length < 1"
                                         class="button is-primary is-small"
-                                        @click="addFromAdversary(); openModal.isOpen = false">
+                                        @click="addFromAdversary(); openModal.isOpen = false; inView = ['facts']">
                                     <span>Add All Facts</span>
                                 </button>
                                 <div>
@@ -754,8 +762,15 @@
     function alpineSources() {
         return {
             sources: [],
+            inView: ['facts'],
+            sortAToZ: true,
+            isEditingSourceName: false,
+
+            // filteredFacts = [{trait: '', scores: {1: [{score: 1, value: ''}], 2: [{score: 2, value: ''}]}}]
             filteredFacts: [],
+            // filteredRules = [{trait: '', allow_matches: [{value: '', allow: true}], deny_matches: [{value: '', allow: false}]}]
             filteredRules: [],
+            // filteredRelationships = [{trait: '', relationships: [{from: '', to: ''}, {from: '', to: ''}]}]
             filteredRelationships: [],
 
             selectedSource: {
@@ -763,11 +778,6 @@
                 relationships: []
             },
             selectedSourceId: '',
-            selectedRelationshipIndex: null,
-            selectedFactIndex: null,
-            selectedRuleIndex: null,
-
-            isEditingSourceName: false,
 
             openModal: {
                 isOpen: false,
@@ -784,10 +794,6 @@
             abilities: [],
             adversaries: [],
 
-            factIndexToDelete: -1,
-            ruleIndexToDelete: -1,
-            relationshipIndexToDelete: -1,
-
             addNewCard: false,
             editCard: '',
 
@@ -801,6 +807,7 @@
                 });
             },
 
+            // Gets selected source and modifies object for display (i.e. filteredFacts is a different object from the source.facts object from the rest API)
             getSource() {
                 if (!this.selectedSourceId) return;
                 this.selectedSource = null;
@@ -882,6 +889,24 @@
                 });
                 this.filteredRules = Object.keys(rules).map(key => rules[key]);
                 this.filteredRelationships = Object.keys(relationships).map(key => relationships[key]);
+            },
+
+            sortDisplay() {
+                if (this.inView.length > 0) {
+                    if (this.inView.includes('facts')) {
+                        this.sortAToZ ? this.filteredFacts = this.filteredFacts.sort((a, b) => a.trait.toLowerCase() < b.trait.toLowerCase() ? -1 : 1) :
+                            this.filteredFacts = this.filteredFacts.sort((a, b) => a.trait.toLowerCase() > b.trait.toLowerCase() ? -1 : 1);
+                    }
+                    if (this.inView.includes('rules')) {
+                        this.sortAToZ ? this.filteredRules = this.filteredRules.sort((a, b) => a.trait.toLowerCase() < b.trait.toLowerCase() ? -1 : 1) :
+                            this.filteredRules = this.filteredRules.sort((a, b) => a.trait.toLowerCase() > b.trait.toLowerCase() ? -1 : 1);
+                    }
+                    if (this.inView.includes('relationships')) {
+                        this.sortAToZ ? this.filteredRelationships = this.filteredRelationships.sort((a, b) => a.trait.toLowerCase() < b.trait.toLowerCase() ? -1 : 1) :
+                            this.filteredRelationships = this.filteredRelationships.sort((a, b) => a.trait.toLowerCase() > b.trait.toLowerCase() ? -1 : 1);
+                    }
+                }
+                this.sortAToZ = !this.sortAToZ;
             },
 
             createSource() {
@@ -1020,12 +1045,6 @@
                 });
             },
 
-            deleteFactValue(fact) {
-                let index = this.selectedSource.facts.findIndex((f) => f.unique === fact.unique);
-                this.selectedSource.facts.splice(index, 1);
-                this.updateFactSource(this.selectedSource);
-            },
-
             updateFact(editedValues, editedScores, deletedValues, newTags) {
                 // Do a comparison of facts and new facts--replace uniques with ones in the new one
                 let updated = this.selectedSource.facts.map((f) => {
@@ -1064,10 +1083,6 @@
                     toast('Error loading page', false);
                     console.error(error);
                 });
-            },
-
-            validateRule(newRule) {
-                return !this.selectedSource.rules.find((r) => (r.match === newRule.match && r.trait === newRule.trait));
             },
 
             updateRules(updatedRule) {
@@ -1135,24 +1150,6 @@
                     toast('Error deleting source', false);
                     console.error(error);
                 });
-            },
-
-            deleteFact(index) {
-                this.selectedSource.facts.splice(index, 1);
-                this.factIndexToDelete = -1;
-                this.updateFactSource();
-            },
-
-            deleteRule(index) {
-                this.selectedSource.rules.splice(index, 1);
-                this.ruleIndexToDelete = -1;
-                this.updateFactSource();
-            },
-
-            deleteRelationship(index) {
-                this.selectedSource.relationships.splice(index, 1);
-                this.relationshipIndexToDelete = -1;
-                this.updateFactSource();
             },
 
             saveSourceName() {
