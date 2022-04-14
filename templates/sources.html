@@ -144,7 +144,7 @@
                                 <div>
                                     <p class="has-background-warning has-text-black is-italic" x-text="fact.trait"></p>
                                     <template x-if="editCard === fact.trait">
-                                        <button class="button is-danger is-outlined is-small delete-fact-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
+                                        <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
                                     </template>
                                 </div>
                                 <div class="is-flex is-justify-content-center is-flex-direction-row">
@@ -336,8 +336,10 @@
                                 <template x-if="editCard === rule.trait">
                                     <div x-data="{updatedRule: {trait: rule.trait, allow: rule.allow_matches.join(', '), deny: rule.deny_matches.join(', ')}}">
                                         <div class="is-flex is-justify-content-center mb-2">
-                                            <p class="has-background-warning has-text-black is-italic"
-                                               x-text="rule.trait"></p>
+                                            <p class="has-background-warning has-text-black is-italic" x-text="rule.trait"></p>
+                                            <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteRule(rule.trait)">
+                                                <span class="icon"><em class="fas fa-trash"></em></span>
+                                            </button>
                                         </div>
                                         <form>
                                             <div class="field is-horizontal">
@@ -448,6 +450,11 @@
                                     <div class="is-flex is-justify-content-center mb-2">
                                         <p x-bind:class="{'has-background-warning has-text-black is-italic': editCard === relationship.trait}"
                                            x-text="relationship.trait"></p>
+                                        <template x-if="editCard === relationship.trait">
+                                            <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteRelationship(relationship.trait)">
+                                                <span class="icon"><em class="fas fa-trash"></em></span>
+                                            </button>
+                                        </template>
                                     </div>
                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                         <template x-for="(rel, index) in relationship.relationships"
@@ -1134,6 +1141,11 @@
                 });
             },
 
+            deleteRule(trait) {
+                this.selectedSource.rules = this.selectedSource.rules.filter((r) => r.trait !== trait);
+                this.updateFactSource();
+            },
+
             updateRelationship(newRelationships) {
                 if (newRelationships) {
                     newRelationships.forEach((r) => this.addRelationship(r));
@@ -1151,6 +1163,11 @@
                     toast('Error adding relationship', false);
                     console.error(error);
                 });
+            },
+
+            deleteRelationship(trait) {
+                this.selectedSource.relationships = this.selectedSource.relationships.filter((r) => r.edge !== trait);
+                this.updateFactSource();
             },
 
             deleteSource() {
@@ -1203,7 +1220,7 @@
         border: 2px solid white;
     }
 
-    #sourcePage .delete-fact-button {
+    #sourcePage .delete-card-button {
         position: absolute;
         top: 10px;
         right: 16px;
