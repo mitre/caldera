@@ -3,7 +3,7 @@
 [![Security Status](https://github.com/mitre/caldera/actions/workflows/security.yml/badge.svg?branch=master)](https://github.com/mitre/caldera/actions/workflows/security.yml?query=branch%3Amaster)
 [![codecov](https://codecov.io/gh/mitre/caldera/branch/master/graph/badge.svg)](https://codecov.io/gh/mitre/caldera)
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
-[![Lighthouse](https://github.com/iguannalin/caldera/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/iguannalin/caldera/actions/workflows/lighthouse.yml)
+[![Lighthouse](https://github.com/mitre/caldera/actions/workflows/lighthouse.yml/badge.svg)](https://github.com/mitre/caldera/actions/workflows/lighthouse.yml)
 
 # CALDERA&trade;
 
