@@ -12,6 +12,7 @@ class InstructionSchema(ma.Schema):
     payloads = ma.fields.List(ma.fields.String())
     deadman = ma.fields.Boolean()
     uploads = ma.fields.List(ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String()))
+    delete_payload = ma.fields.Bool(missing=None)
 
     @ma.post_load
     def build_instruction(self, data, **_):
@@ -25,9 +26,10 @@ class Instruction(BaseObject):
     @property
     def display(self):
         return self.clean(dict(id=self.id, sleep=self.sleep, command=self.command, executor=self.executor,
-                               timeout=self.timeout, payloads=self.payloads, uploads=self.uploads, deadman=self.deadman))
+                               timeout=self.timeout, payloads=self.payloads, uploads=self.uploads, deadman=self.deadman,
+                               delete_payload=self.delete_payload))
 
-    def __init__(self, id, command, executor, payloads=None, uploads=None, sleep=0, timeout=60, deadman=False):
+    def __init__(self, id, command, executor, payloads=None, uploads=None, sleep=0, timeout=60, deadman=False, delete_payload=True):
         super().__init__()
         self.id = id
         self.sleep = sleep
@@ -37,3 +39,4 @@ class Instruction(BaseObject):
         self.payloads = payloads if payloads else []
         self.uploads = uploads if uploads else []
         self.deadman = deadman
+        self.delete_payload = delete_payload
