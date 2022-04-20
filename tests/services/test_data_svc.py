@@ -73,3 +73,22 @@ class TestDataService:
         event_loop.run_until_complete(data_svc.remove('agents', match=dict(paw=a1.paw)))
         agents = event_loop.run_until_complete(data_svc.locate('agents', match=dict(paw=a1.paw)))
         assert len(agents) == 0
+
+    def test_no_autogen_cleanup_cmds(self, event_loop, data_svc):
+        cleanup_executor = Executor(name='sh', platform='linux', cleanup='rm #{payload}')
+        event_loop.run_until_complete(data_svc.store(
+            Ability(ability_id='4cd4eb44-29a7-4259-91ae-e457b283a880', tactic='defense-evasion', technique_id='T1070.004',
+                    technique_name='Indicator Removal on Host: File Deletion', name='Delete payload',
+                    description='Remove a downloaded payload file', privilege=None, executors=[cleanup_executor])
+        ))
+        executor = Executor(name='special_executor', platform='darwin', command='whoami', payloads=['wifi.sh'])
+        event_loop.run_until_complete(data_svc.store(
+            Ability(ability_id='123', tactic='discovery', technique_id='1', technique_name='T1033', name='test',
+                    description='find active user', privilege=None, executors=[executor])
+        ))
+        event_loop.run_until_complete(data_svc._verify_abilities())
+        abilities = event_loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
+
+        for ability in abilities:
+            for executor in ability.executors:
+                assert not executor.cleanup
