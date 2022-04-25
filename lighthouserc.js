@@ -17,7 +17,7 @@ module.exports = {
         collect: {
             numberOfRuns: 1,
             maxAutodiscoverUrls: 0,
-            staticDistDir: './templates'
+            staticDistDir: '\\/templates\\/?[a-zA-Z0-9.-]+\.(html)$'
         },
         upload: {
             target: 'temporary-public-storage'
