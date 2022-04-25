@@ -47,13 +47,13 @@
                     </div>
                     <div class="dropdown-menu" id="bulk-actions" role="menu">
                         <div class="dropdown-content">
-                            <a href="#" class="dropdown-item" @click="confirmAlt('Are you sure you want to remove all dead agents?', removeDeadAgents)">
+                            <a aria-label="Remove dead agents" href="#" class="dropdown-item" @click="confirmAlt('Are you sure you want to remove all dead agents?', removeDeadAgents)">
                                 Remove dead agents
                             </a>
-                            <a href="#" class="dropdown-item" @click="confirmAlt('Are you sure you want to remove all agents? Agents that beacon after they are removed will reappear.', removeAllAgents)">
+                            <a aria-label="Remove all agents" href="#" class="dropdown-item" @click="confirmAlt('Are you sure you want to remove all agents? Agents that beacon after they are removed will reappear.', removeAllAgents)">
                                 Remove all agents
                             </a>
-                            <a href="#" class="dropdown-item has-text-danger" @click="confirmAlt('You are about to kill all agents. Are you sure?', killAllAgents)">
+                            <a aria-label="Kill all agents" href="#" class="dropdown-item has-text-danger" @click="confirmAlt('You are about to kill all agents. Are you sure?', killAllAgents)">
                                 Kill all agents
                             </a>
                         </div>
@@ -158,7 +158,7 @@
                                         <input class="input is-small" type="text" x-model="field.value">
                                     </div>
                                     <div class="control">
-                                        <a class="button is-small has-tooltip-arrow" data-tooltip="Reset to default" @click="field.value = agentFieldConfig[field.name]">
+                                        <a aria-label="Reset to default" class="button is-small has-tooltip-arrow" data-tooltip="Reset to default" @click="field.value = agentFieldConfig[field.name]">
                                             <span class="icon"><i class="fas fa-undo"></i></span>
                                         </a>
                                     </div>
@@ -182,7 +182,7 @@
                             </div>
                             <div class="box container">
                                 <pre class="box" x-text="getCommandField(command.command)"></pre>
-                                <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(command.command))" x-show="window.isSecureContext">
+                                <a aria-label="Copy" class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(command.command))" x-show="window.isSecureContext">
                                     <span class="icon"><i class="far fa-lg fa-copy"></i></span>
                                     <span>Copy</span>
                                 </a>
@@ -201,7 +201,7 @@
                                     </div>
                                     <div class="box container">
                                         <pre class="box" x-text="getCommandField(variation.command).replaceAll(';', ';\n')"></pre>
-                                        <a class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(variation.command))" x-show="window.isSecureContext">
+                                        <a aria-label="Copy" class="button is-small is-outlined cmd-copy-button" @click="copyCommandToClipboard(getCommandField(variation.command))" x-show="window.isSecureContext">
                                             <span class="icon"><i class="far fa-lg fa-copy"></i></span>
                                             <span>Copy</span>
                                         </a>
@@ -291,14 +291,14 @@
                                     <template x-for="(abilityId, index) of bootstrapAbilities">
                                         <div class="control">
                                             <div class="tags has-addons">
-                                                <a class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
-                                                <a class="tag is-delete" @click="bootstrapAbilities.splice(index, 1)"></a>
+                                                <a aria-label="Info" class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
+                                                <a aria-label="Delete" class="tag is-delete" @click="bootstrapAbilities.splice(index, 1)"></a>
                                             </div>
                                         </div>
                                     </template>
                                     <div class="control">
                                         <div class="tags has-addons">
-                                            <a class="tag is-primary" @click="isAddingBootstrapAbility = true; isAddingDeadmanAbility = false" x-show="!isAddingBootstrapAbility">
+                                            <a aria-label="Add" class="tag is-primary" @click="isAddingBootstrapAbility = true; isAddingDeadmanAbility = false" x-show="!isAddingBootstrapAbility">
                                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                             </a>
                                         </div>
@@ -328,14 +328,14 @@
                                     <template x-for="(abilityId, index) of deadmanAbilities">
                                         <div class="control">
                                             <div class="tags has-addons">
-                                                <a class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
-                                                <a class="tag is-delete" @click="deadmanAbilities.splice(index, 1)"></a>
+                                                <a aria-label="Info" class="tag is-info" x-text="getAbilityName(abilityId)" x-bind:data-tooltip="getAbilityDescription(abilityId)"></a>
+                                                <a aria-label="Delete" class="tag is-delete" @click="deadmanAbilities.splice(index, 1)"></a>
                                             </div>
                                         </div>
                                     </template>
                                     <div class="control">
                                         <div class="tags has-addons">
-                                            <a class="tag is-primary" @click="isAddingDeadmanAbility = true; isAddingBootstrapAbility = false" x-show="!isAddingDeadmanAbility">
+                                            <a aria-label="Add" class="tag is-primary" @click="isAddingDeadmanAbility = true; isAddingBootstrapAbility = false" x-show="!isAddingDeadmanAbility">
                                                 <span class="icon"><i class="fas fa-plus"></i></span>
                                             </a>
                                         </div>

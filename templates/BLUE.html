@@ -1,22 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <title>{{ page_title }} | CALDERA</title>
+        <title>Blue | CALDERA</title>
         <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
         <link rel="stylesheet" href="/gui/css/shared.css">
         <link rel="stylesheet" href="/gui/css/core.css">
         <link rel="stylesheet" href="/gui/css/modal.css">
         <link rel="stylesheet" href="/gui/css/basic.css">
         <link rel="stylesheet" href="/gui/css/timeline.css">
-        <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
+        <link rel="stylesheet" href="/gui/css/multi-select.css">
         <link rel="stylesheet" href="/gui/css/lib/custom-bulma.css">
         <link rel="stylesheet" href="/gui/css/lib/bulma-tooltip.min.css">
         <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
         <style>
             :root {
-                --primary-color: {{ primary_color }};
-                --primary-color-hover: {{ primary_color_hover }};
-                --primary-color-translucent: {{ primary_color_translucent }};
+                --primary-color: #191970;
+                --primary-color-hover: #0f0f4c;
+                --primary-color-translucent: #19197050;
             }
         </style>
     </head>
@@ -30,7 +30,7 @@
                     <img src="/gui/img/caldera-logo.png" alt="CALDERA logo" @click="window.open('https://caldera.mitre.org?ref=caldera', '_blank')"/>
                 </div>
                 <div class="is-flex is-justify-content-center">
-                    <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><em class="fas fa-user pr-3"></em>{{ user_name }}</span>
+                    <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><em class="fas fa-user pr-3"></em>blue</span>
                 </div>
                 <template x-if="errors.length > 0">
                     <div class="is-flex is-justify-content-center">
@@ -45,15 +45,15 @@
                     <ul class="menu-list">
                         <li><a href="#home" class="nav-item" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('abilities', '/campaign/abilities')">abilities</a></li>
-                        <li><a href="#home" class="nav-item" x-on:click="addTab('adversaries', '/campaign/adversaries')">{{ team_name }}</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('adversaries', '/campaign/adversaries')">defenders</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
                     </ul>
                     <p class="menu-label nav-header"><em class="fas fa-puzzle-piece pr-2"></em>Plugins</p>
                     <ul class="menu-list">
                         {% for plugin in plugins | sort(attribute='name') %}
-                            <li>
-                                <a aria-label="{{plugin.name | e}}" href="#home" x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item">
-                                    {{ plugin.name }}
+                        <li>
+                            <a aria-label="{{ plugin.name | e }}" href="#home" x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item">
+                                {{ plugin.name }}
                                     <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
                                         <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup>
                                     </template>
@@ -78,7 +78,7 @@
                     <br>
                     <ul class="menu-list has-text-centered">
                         <li>
-                            <a aria-label="Log out" href="/logout">
+                            <a href="/logout" aria-label="Log out">
                                 <span class="icon"><em class="fas fa-sign-out-alt"></em></span>
                                 <span>Log out</span>
                             </a>
@@ -87,11 +87,6 @@
                     <ul class="menu-list has-text-centered">
                         <li>
                             <p class="mt-6" x-text="`v${version}`"></p>
-                            <p x-show="newVersionLink">
-                                <a aria-label="Version info" class="has-text-info is-size-7" x-bind:href="newVersionLink" target="_blank">
-                                    New version available <br> (v<span x-text="newVersionLink.split('/')[newVersionLink.split('/').length - 1]"></span>)
-                                </a>
-                            </p>
                         </li>
                     </ul>
                 </aside>
@@ -101,7 +96,7 @@
                 <div class="tabs nav is-boxed">
                     <ul>
                         <template x-for="(tab, index) in openTabs" :key="index">
-                            <li x-bind:class="{ 'is-active' : activeTabIndex === index }">
+                            <li x-bind:class="activeTabIndex === index ? 'is-active' : ''">
                                 <a aria-label="Delete tab" x-on:click="activeTabIndex = index">
                                     <span x-text="tab.name"></span>
                                     <span class="icon is-small tab-delete" x-on:click.stop="deleteTab(index, tab.contentID)"><em class="fas fa-sm fa-times"></em></span>
@@ -119,43 +114,12 @@
                     </p>
                     <p>
                         <a href="docs/Getting-started.html" target="blank">Getting Started Guide</a>
+                        <p x-show="newVersionLink">
+                            <a aria-label="Version info" class="has-text-info is-size-7" x-bind:href="newVersionLink" target="_blank">
+                                New version available <br> (v<span x-text="newVersionLink.split('/')[newVersionLink.split('/').length - 1]"></span>)
+                            </a>
+                        </p>
                     </p>
-                </div>
-            </div>
-
-            <div x-bind:class="{ 'is-active': showErrors }" class="modal">
-                <div class="modal-background" @click="showErrors = false"></div>
-                <div class="modal-card">
-                    <div>
-                        <header class="modal-card-head">
-                            <h2>Startup Errors</h2>
-                        </header>
-                        <section class="modal-card-body">
-                            <div class="modal-form">
-                                <template x-if="!errors || errors.length < 1">
-                                    <div class="is-flex is-justify-content-center">
-                                        <em>No startup errors.</em>
-                                    </div>
-                                </template>
-                                <template x-for="error of errors" :key="error.msg">
-                                    <article class="media">
-                                        <div class="media-content">
-                                            <div class="content">
-                                                <p>
-                                                    <strong x-text="error.name"></strong>
-                                                    <br>
-                                                    <span x-text="error.msg"></span>
-                                                </p>
-                                            </div>
-                                        </div>
-                                    </article>
-                                </template>
-                            </div>
-                        </section>
-                    </div>
-                    <footer class="modal-card-foot">
-                        <button class="button is-primary is-small is-fullwidth" @click="showErrors = false">Close</button>
-                    </footer>
                 </div>
             </div>
 
@@ -202,7 +166,43 @@
                         </section>
                     </div>
                     <footer class="modal-card-foot">
-                        <button class="button fancy-button is-small is-fullwidth" @click="isFirstVisit = false">🚀 Get started</button>
+                        <button class="button is-primary is-small is-fullwidth" @click="isFirstVisit = false">🚀 Get started</button>
+                    </footer>
+                </div>
+            </div>
+
+            <div x-bind:class="{ 'is-active': showErrors }" class="modal">
+                <div class="modal-background" @click="showErrors = false"></div>
+                <div class="modal-card">
+                    <div>
+                        <header class="modal-card-head">
+                            <h2>Startup Errors</h2>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <template x-if="!errors || errors.length < 1">
+                                    <div class="is-flex is-justify-content-center">
+                                        <em>No startup errors.</em>
+                                    </div>
+                                </template>
+                                <template x-for="error of errors" :key="error.msg">
+                                    <article class="media">
+                                        <div class="media-content">
+                                            <div class="content">
+                                                <p>
+                                                    <strong x-text="error.name"></strong>
+                                                    <br>
+                                                    <span x-text="error.msg"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </article>
+                                </template>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="modal-card-foot">
+                        <button class="button fancy-button is-small is-fullwidth" @click="showErrors = false">Close</button>
                     </footer>
                 </div>
             </div>
