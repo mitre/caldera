@@ -9,7 +9,7 @@ module.exports = {
                     "html-lang-valid": "off",
                     "document-title": "off",
                     "list": "off",
-                    "categories:accessibility": ["error", {"minScore": 0.75}]
+                    "categories:accessibility": ["error", {"minScore": 0.65}]
                   }
                 }
             ],
@@ -17,7 +17,7 @@ module.exports = {
         collect: {
             numberOfRuns: 1,
             maxAutodiscoverUrls: 0,
-            staticDistDir: '\\/templates\\/?[a-zA-Z0-9.-]+\.(html)$'
+            staticDistDir: './templates/*'
         },
         upload: {
             target: 'temporary-public-storage'
