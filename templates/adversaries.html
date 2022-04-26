@@ -881,7 +881,7 @@
                 this.selectedProfileDescription = selectedAdversary.description;
                 this.selectedObjectiveId = this.objectives.find((objective) => objective.id === selectedAdversary.objective).id;
                 this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
-
+                this.adversarySearchQuery = selectedAdversary.name;
                 this.findAbilityDependencies();
             },
 
@@ -1267,7 +1267,6 @@
                 this.selectedProfileId = id;
                 this.loadProfile();
                 this.adversarySearchResults = this.adversaries;
-                this.adversarySearchQuery = name;
             },
 
             searchForAbility() {
