@@ -63,14 +63,16 @@
                         (<span x-text="adversaries.filter((a) => a.objective === selectedObjective.id).length"></span>)
                     </span>
                 </button>
-                <button class="button is-small" @click="cancelEditing()" x-show="isEditing">
-                    <span class="icon"><i class="fas fa-times-circle"></i></span>
-                    <span>Cancel Changes</span>
-                </button>
-                <button class="button is-success is-small" @click="saveObjective()" x-show="isEditing">
-                    <span class="icon"><i class="fas fa-save"></i></span>
-                    <span>Save</span>
-                </button>
+                <div class="mt-3">
+                    <button class="button is-small" @click="cancelEditing()" x-show="isEditing">
+                        <span class="icon"><i class="fas fa-times-circle"></i></span>
+                        <span>Cancel Changes</span>
+                    </button>
+                    <button class="button is-success is-small" @click="saveObjective()" x-show="isEditing">
+                        <span class="icon"><i class="fas fa-save"></i></span>
+                        <span>Save</span>
+                    </button>
+                </div>
             </div>
             <br>
             <h4>Goals</h4>
@@ -136,7 +138,7 @@
                                 <input class="input is-small" x-model="goal.value">
                             </td>
                             <td>
-                                <input class="input is-small" type="number" x-model="goal.count">
+                                <input class="input is-small" type="number" x-model="goal.count" min="0">
                             </td>
                             <td>
                                 <span class="icon has-text-success" x-show="goal.achieved">
@@ -231,6 +233,7 @@ function alpineObjectives() {
                 goals: []
             });
             this.selectedObjective = this.objectives[this.objectives.length - 1];
+            this.selectedObjectiveId = this.selectedObjective.id;
             this.addGoal();
             this.isCreating = true;
             this.isEditing = true;
