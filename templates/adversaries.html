@@ -29,8 +29,8 @@
                     <span>New Profile</span>
                 </button>
             </div>
-            <div class="control">
-                <button type="button" class="button is-primary is-small" @click="showImportModal = true">
+            <div class="control ml-2">
+                <button type="button" class="button is-small" @click="showImportModal = true">
                     <span class="icon"><em class="fas fa-file-import"></em></span>
                     <span>Import</span>
                 </button>
@@ -942,6 +942,7 @@
 
                 apiV2('POST', '/api/v2/adversaries', requestBody).then((response) => {
                     this.adversaries.push(requestBody);
+                    this.adversaries = this.adversaries.sort((a, b) => a.name > b.name);
                     this.selectedProfileId = newId;
                     this.getAdversaryTactics();
                     this.loadProfile();
@@ -973,6 +974,8 @@
                 let profile = {};
                 const lines = this.adversaryImportFileContent.split('\n');
                 lines.forEach((line) => {
+                    // Remove comments
+                    line = line.split('#')[0];
                     // Line has a key-value pair
                     keyValSplit = line.split(':');
                     if (keyValSplit.length >= 2) {
@@ -984,13 +987,14 @@
                         }
                     }
                     // Line is a list item
-                    if (line.trim()[0] === '-') {
+                    if (line.trim()[0] === '-' && line.trim() !== '---') {
                         profile[lastKey].push(line.replace('-', '').trim());
                     }
                 });
                
                 apiV2('POST', '/api/v2/adversaries', profile).then((response) => {
                     this.adversaries.push(response);
+                    this.adversaries = this.adversaries.sort((a, b) => a.name > b.name);
                     this.selectedProfileId = response.adversary_id;
                     this.getAdversaryTactics();
                     this.loadProfile();
