@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>Red | CALDERA</title>
+        <title>{{ page_title }} | CALDERA</title>
         <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
         <link rel="stylesheet" href="/gui/css/shared.css">
         <link rel="stylesheet" href="/gui/css/core.css">
@@ -14,9 +14,9 @@
         <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
         <style>
             :root {
-                --primary-color: #8B0000;
-                --primary-color-hover: #690000;
-                --primary-color-translucent: #8B000050;
+                --primary-color: {{ primary_color }};
+                --primary-color-hover: {{ primary_color_hover }};
+                --primary-color-translucent: {{ primary_color_translucent }};
             }
         </style>
     </head>
@@ -30,7 +30,7 @@
                     <img src="/gui/img/caldera-logo.png" alt="CALDERA logo" @click="window.open('https://caldera.mitre.org?ref=caldera', '_blank')"/>
                 </div>
                 <div class="is-flex is-justify-content-center">
-                    <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><em class="fas fa-user pr-3"></em>red</span>
+                    <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><em class="fas fa-user pr-3"></em>{{ user_name }}</span>
                 </div>
                 <template x-if="errors.length > 0">
                     <div class="is-flex is-justify-content-center">
@@ -45,7 +45,7 @@
                     <ul class="menu-list">
                         <li><a href="#home" class="nav-item" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('abilities', '/campaign/abilities')">abilities</a></li>
-                        <li><a href="#home" class="nav-item" x-on:click="addTab('adversaries', '/campaign/adversaries')">adversaries</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('adversaries', '/campaign/adversaries')">{{ team_name }}</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
                     </ul>
                     <p class="menu-label nav-header"><em class="fas fa-puzzle-piece pr-2"></em>Plugins</p>
