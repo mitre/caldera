@@ -36,9 +36,9 @@
         </form>
 
         <template x-if="selectedOperation && selectedOperationID">
-            <div class="section p-0 pb-2">
-                <div>
-                    <h3 x-text="selectedOperation.name"></h3>
+            <div class="section p-2 pb-2">
+                <div class="is-flex-direction-row p-2 mb-2">
+                    <span x-text="'Current Operation:  ' + selectedOperation.name + '  |  ' + selectedOperation.adversary.name + '  |  ' + selectedOperation.source.name" ></span>
                 </div>
                 <div class="control-buttons is-flex is-flex-direction-row is-justify-content-space-between">
                     <div class="is-flex is-flex-direction-row">
