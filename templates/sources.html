@@ -91,7 +91,7 @@
                             <p class="is-italic">+ new fact</p>
                         </div>
                         <template x-if="addNewCard">
-                            <div x-data="{newFact: {trait: '', value: '', score: 1}}"
+                            <div x-data="{newFact: {trait: '', value: '', score: 1}, newFactTags: []}"
                                  class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <form>
                                     <div class="field is-horizontal">
@@ -102,37 +102,38 @@
                                             <div class="field">
                                                 <div class="control">
                                                 <input id="new-fact-trait" class="input is-small" placeholder="fact trait"
-                                                   x-mo del="newFact.trait">
+                                                   x-model="newFact.trait">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
-                                            <label class="label" for="new-fact-value">Value</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field">
-                                                <div class="control">
-                                                    <input id="new-fact-value" class="input is-small"
-                                                       placeholder="fact value"
-                                                       x-model="newFact.value">
+                                    <div class="field is-flex is-horizontal is-align-items-flex-start">
+                                        <label class="label pt-2 is-small">Values:</label>
+                                        <div class="control">
+                                            <template x-for="(tag, index) in newFactTags">
+                                                <div id="new-fact-value" class="tags has-addons mb-0">
+                                                        <span class="is-italic tag is-light break-spaces">
+                                                          <input type="text" class="tag-input w-110-px"
+                                                                 placeholder="value"
+                                                                 x-model="tag.value">
+                                                        </span>
+                                                    <span class="tag is-white break-spaces"><input
+                                                            class="tag-number-input" type="number"
+                                                            pattern="[0-9]*"
+                                                            min="0"
+                                                            placeholder="1"
+                                                            x-model="tag.score">
+                                                    <button @click="newFactTags.pop(index)"
+                                                            class="delete is-small"></button>
+                                                </span>
                                                 </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
-                                            <label class="label" for="new-fact-score">Score</label>
-                                        </div>
-                                        <div class="field-body">
-                                            <div class="field">
-                                                <div class="control">
-                                                    <input id="new-fact-score" class="input mb-5 is-small" type="number"
-                                                       pattern="[0-9]*"
-                                                       min="0" placeholder="1"
-                                                       x-model="newFact.score">
-                                                </div>
+                                            </template>
+                                            <div class="is-flex is-justify-content-center">
+                                                <span class="tag is-white break-spaces"
+                                                      data-tooltip="Add a new value"
+                                                      @click="newFactTags.push({trait: newFact.trait, value: '', score: 1})">
+                                                    <em class="fas fa-plus"></em>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>
@@ -1334,6 +1335,10 @@
 
     #sourcePage .tag-number-input {
         width: 2em;
+    }
+
+    #sourcePage .w-110-px {
+        width: 110px;
     }
 
     #sourcePage .w-50-px {
