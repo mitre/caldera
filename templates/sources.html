@@ -91,7 +91,7 @@
                             <p class="is-italic">+ new fact</p>
                         </div>
                         <template x-if="addNewCard">
-                            <div x-data="{newFact: {trait: '', value: '', score: ''}}"
+                            <div x-data="{newFact: {trait: '', value: '', score: 1}}"
                                  class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <form>
                                     <div class="field is-horizontal">
@@ -99,8 +99,12 @@
                                             <label class="label" for="new-fact-trait">Trait</label>
                                         </div>
                                         <div class="field-body">
-                                            <input id="new-fact-trait" class="input" placeholder="fact trait"
-                                                   x-model="newFact.trait">
+                                            <div class="field">
+                                                <div class="control">
+                                                <input id="new-fact-trait" class="input is-small" placeholder="fact trait"
+                                                   x-mo del="newFact.trait">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="field is-horizontal">
@@ -108,9 +112,13 @@
                                             <label class="label" for="new-fact-value">Value</label>
                                         </div>
                                         <div class="field-body">
-                                            <input id="new-fact-value" class="input is-small"
-                                                   placeholder="fact value"
-                                                   x-model="newFact.value">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <input id="new-fact-value" class="input is-small"
+                                                       placeholder="fact value"
+                                                       x-model="newFact.value">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="field is-horizontal">
@@ -118,10 +126,14 @@
                                             <label class="label" for="new-fact-score">Score</label>
                                         </div>
                                         <div class="field-body">
-                                            <input id="new-fact-score" class="input mb-5 is-small" type="number"
-                                                   pattern="[0-9]*"
-                                                   min="0" placeholder="1"
-                                                   x-model="newFact.score">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <input id="new-fact-score" class="input mb-5 is-small" type="number"
+                                                       pattern="[0-9]*"
+                                                       min="0" placeholder="1"
+                                                       x-model="newFact.score">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </form>
@@ -259,8 +271,12 @@
                                             <label class="label" for="new-rule-trait">Trait</label>
                                         </div>
                                         <div class="field-body">
-                                            <input id="new-rule-trait" class="input" placeholder="fact trait"
-                                                   x-model="newRule.trait">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <input id="new-rule-trait" class="input" placeholder="fact trait"
+                                                       x-model="newRule.trait">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="field is-horizontal">
@@ -276,9 +292,13 @@
                                             <label class="label" for="new-rule-allow">Allow</label>
                                         </div>
                                         <div class="field-body">
-                                            <input id="new-rule-allow" class="input is-small"
-                                                   placeholder="allow match"
-                                                   x-model="newRule.allow">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <input id="new-rule-allow" class="input is-small"
+                                                       placeholder="allow match"
+                                                       x-model="newRule.allow">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="field is-horizontal">
@@ -286,9 +306,13 @@
                                             <label class="label" for="new-rule-deny">Deny</label>
                                         </div>
                                         <div class="field-body">
-                                            <input id="new-rule-deny" class="input mb-5 is-small"
-                                                   placeholder="deny match"
-                                                   x-model="newRule.deny">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <input id="new-rule-deny" class="input mb-5 is-small"
+                                                       placeholder="deny match"
+                                                       x-model="newRule.deny">
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </form>
@@ -405,7 +429,7 @@
                                                 <label class="label" for="new-relationship-edge">Edge</label>
                                             </div>
                                             <div class="field-body">
-                                                <input id="new-relationship-edge" class="input" placeholder="edge"
+                                                <input id="new-relationship-edge" class="input is-small" placeholder="edge"
                                                        x-model="newRelationship.edge">
                                             </div>
                                         </div>
@@ -1264,6 +1288,10 @@
         #sourcePage .box.sources {
             width: 32%;
         }
+    }
+
+    #sourcePage .box.sources .field-body {
+        flex-grow: 4 !important;
     }
 
     #sourcePage .box.sources {
