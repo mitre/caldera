@@ -95,7 +95,7 @@
                                  class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <form>
                                     <div class="field is-horizontal">
-                                        <div class="field-label is-small">
+                                        <div class="field-label is-small is-flex-grow-2">
                                             <label class="label" for="new-fact-trait">Trait</label>
                                         </div>
                                         <div class="field-body">
@@ -123,7 +123,7 @@
                                                             min="0"
                                                             placeholder="1"
                                                             x-model="tag.score">
-                                                    <button @click="newFact.tags.pop(index)"
+                                                    <button @click="newFact.tags.splice(index, 1)"
                                                             class="delete is-small"></button>
                                                 </span>
                                                 </div>
@@ -223,7 +223,7 @@
                                                                 min="0"
                                                                 placeholder="1"
                                                                 x-model="tag.score">
-                                                            <button @click="newTags.pop(index)"
+                                                            <button @click="newTags.splice(index, 1)"
                                                                     class="delete is-small"></button>
                                                         </span>
                                                     </div>
@@ -265,55 +265,65 @@
                         </div>
                         <template x-if="addNewCard">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
-                                 x-data="{newRule: {trait: '', allow: '', deny: ''}}">
+                                 x-data="{newRule: {trait: '', allow: [], deny: []}, addNewAllow: false, addNewDeny: false, newAllow: '', newDeny: ''}">
                                 <form>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
+                                    <div class="field is-horizontal is-flex is-align-items-center">
+                                        <div class="field-label is-small is-flex-grow-2">
                                             <label class="label" for="new-rule-trait">Trait</label>
                                         </div>
                                         <div class="field-body">
                                             <div class="field">
                                                 <div class="control">
-                                                    <input id="new-rule-trait" class="input" placeholder="fact trait"
-                                                       x-model="newRule.trait">
+                                                    <input id="new-rule-trait" class="input is-small" placeholder="fact trait"
+                                                           x-model="newRule.trait">
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
-                                        </div>
-                                        <div class="field-body">
-                                            <label class="label is-small">Enter matches separated by commas (i.e.
-                                                127.0.0.1, 224.*).</label>
-                                        </div>
-                                    </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
+                                    <div class="field is-horizontal mb-3 is-flex is-align-items-center">
+                                        <div class="field-label is-small is-flex-grow-2">
                                             <label class="label" for="new-rule-allow">Allow</label>
                                         </div>
-                                        <div class="field-body">
-                                            <div class="field">
-                                                <div class="control">
-                                                    <input id="new-rule-allow" class="input is-small"
-                                                       placeholder="allow match"
-                                                       x-model="newRule.allow">
-                                                </div>
-                                            </div>
+                                        <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="new-rule-allow">
+                                            <template x-for="(match, index) in [...new Set(newRule.allow)]" :key="match">
+                                                        <span class="tag is-success is-italic m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="newRule.allow.splice(newRule.allow.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                            </template>
+                                            <template x-if="addNewAllow">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newAllow"/>
+                                                        </span>
+                                            </template>
+                                            <span class="tag is-white break-spaces"
+                                                  data-tooltip="Add a new rule"
+                                                  @click="if (newAllow) {newRule.allow.push(newAllow); newAllow = '';}; addNewAllow = true">
+                                                        <em class="fas fa-plus"></em>
+                                                    </span>
                                         </div>
                                     </div>
-                                    <div class="field is-horizontal">
-                                        <div class="field-label is-small">
+                                    <div class="field is-horizontal is-flex is-align-items-center mb-3">
+                                        <div class="field-label is-small is-flex-grow-2">
                                             <label class="label" for="new-rule-deny">Deny</label>
                                         </div>
-                                        <div class="field-body">
-                                            <div class="field">
-                                                <div class="control">
-                                                    <input id="new-rule-deny" class="input mb-5 is-small"
-                                                       placeholder="deny match"
-                                                       x-model="newRule.deny">
-                                                </div>
-                                            </div>
+                                        <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="new-rule-deny">
+                                            <template x-for="(match, index) in [...new Set(newRule.deny)]" :key="match">
+                                                         <span class="tag is-danger is-italic m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="newRule.deny.splice(newRule.deny.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                            </template>
+                                            <template x-if="addNewDeny">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newDeny"/>
+                                                        </span>
+                                            </template>
+                                            <span class="tag is-white break-spaces"
+                                                  data-tooltip="Add a new rule"
+                                                  @click="if (newDeny) {newRule.deny.push(newDeny); newDeny = '';}; addNewDeny = true">
+                                                <em class="fas fa-plus"></em>
+                                            </span>
                                         </div>
                                     </div>
                                 </form>
@@ -321,7 +331,8 @@
                                     <button class="button is-small" @click="addNewCard = false">
                                         <span>Cancel</span>
                                     </button>
-                                    <button class="button is-small is-primary ml-2" @click="addRule(newRule)"
+                                    <button class="button is-small is-primary ml-2"
+                                            @click="if (newAllow) {newRule.allow.push(newAllow); newAllow = '';}; if (newDeny) {newRule.deny.push(newDeny); newDeny = '';}; addRule(newRule)"
                                             x-bind:disabled="!newRule.trait">
                                         <span class="icon"><i class="fas fa-save"></i></span>
                                         <span>Save</span>
@@ -359,7 +370,7 @@
                                     </div>
                                 </template>
                                 <template x-if="editCard === rule.trait">
-                                    <div x-data="{updatedRule: {trait: rule.trait, allow: rule.allow_matches.join(', '), deny: rule.deny_matches.join(', ')}}">
+                                    <div x-data="{updatedRule: {trait: rule.trait, allow: rule.allow_matches, deny: rule.deny_matches}, addNewAllow: false, addNewDeny: false, newAllow: '', newDeny: ''}">
                                         <div class="is-flex is-justify-content-center mb-2">
                                             <p class="has-background-warning has-text-black is-italic" x-text="rule.trait"></p>
                                             <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteRule(rule.trait)">
@@ -367,32 +378,50 @@
                                             </button>
                                         </div>
                                         <form>
-                                            <div class="field is-horizontal">
-                                                <div class="field-label is-small">
-                                                </div>
-                                                <div class="field-body">
-                                                    <label class="label is-small">Enter matches separated by commas
-                                                        (i.e. 127.0.0.1, 224.*).</label>
-                                                </div>
-                                            </div>
-                                            <div class="field is-horizontal mb-0">
-                                                <div class="field-label is-small">
+                                            <div class="field is-horizontal mb-3 is-flex is-align-items-center">
+                                                <div class="field-label is-small is-flex-grow-2">
                                                     <label class="label" for="edit-rule-allow">Allow</label>
                                                 </div>
-                                                <div class="field-body">
-                                                    <input id="edit-rule-allow" class="input mb-3 is-small"
-                                                           placeholder="allow match"
-                                                           x-model="updatedRule.allow">
+                                                <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="edit-rule-allow">
+                                                    <template x-for="(match, index) in [...new Set(updatedRule.allow)]" :key="match">
+                                                        <span class="tag is-success is-italic m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="updatedRule.allow.splice(updatedRule.allow.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="addNewAllow">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newAllow"/>
+                                                        </span>
+                                                    </template>
+                                                    <span class="tag is-white break-spaces"
+                                                          data-tooltip="Add a new rule"
+                                                          @click="if (newAllow) {updatedRule.allow.push(newAllow); newAllow = '';}; addNewAllow = true">
+                                                        <em class="fas fa-plus"></em>
+                                                    </span>
                                                 </div>
                                             </div>
-                                            <div class="field is-horizontal">
-                                                <div class="field-label is-small">
+                                            <div class="field is-horizontal is-flex is-align-items-center mb-3">
+                                                <div class="field-label is-small is-flex-grow-2">
                                                     <label class="label" for="edit-rule-deny">Deny</label>
                                                 </div>
-                                                <div class="field-body">
-                                                    <input id="edit-rule-deny" class="input mb-5 is-small"
-                                                           placeholder="deny match"
-                                                           x-model="updatedRule.deny">
+                                                <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="edit-rule-deny">
+                                                    <template x-for="(match, index) in [...new Set(updatedRule.deny)]" :key="match">
+                                                         <span class="tag is-danger is-italic m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="updatedRule.deny.splice(updatedRule.deny.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="addNewDeny">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newDeny"/>
+                                                        </span>
+                                                    </template>
+                                                    <span class="tag is-white break-spaces"
+                                                          data-tooltip="Add a new rule"
+                                                          @click="if (newDeny) {updatedRule.deny.push(newDeny); newDeny = '';}; addNewDeny = true">
+                                                        <em class="fas fa-plus"></em>
+                                                    </span>
                                                 </div>
                                             </div>
                                         </form>
@@ -401,7 +430,7 @@
                                                 <span>Cancel</span>
                                             </button>
                                             <button class="button is-small is-primary ml-2"
-                                                    @click="updateRules(updatedRule)">
+                                                    @click="if (newAllow) {updatedRule.allow.push(newAllow); newAllow = '';}; if (newDeny) {updatedRule.deny.push(newDeny); newDeny = '';}; updateRules(updatedRule)">
                                                 <span class="icon"><i class="fas fa-save"></i></span>
                                                 <span>Save</span>
                                             </button>
@@ -511,7 +540,7 @@
                                                                placeholder="target trait"
                                                                x-model="newTag.target.trait">
                                                     </span>
-                                                    <button @click="newRelationships.pop(index)"
+                                                    <button @click="newRelationships.splice(index, 1)"
                                                             class="button delete is-small"></button>
                                                 </div>
                                             </div>
@@ -599,7 +628,7 @@
                             </div>
                         </div>
                         <div class="field is-horizontal">
-                            <div class="field-label is-small">
+                            <div class="field-label is-small is-flex-grow-2">
                                 <label class="label">Tactic</label>
                             </div>
                             <div class="field-body">
@@ -619,7 +648,7 @@
                             </div>
                         </div>
                         <div class="field is-horizontal">
-                            <div class="field-label is-small">
+                            <div class="field-label is-small is-flex-grow-2">
                                 <label class="label">Technique</label>
                             </div>
                             <div class="field-body">
@@ -704,7 +733,7 @@
                 <section class="modal-card-body">
                     <form>
                         <div class="field is-horizontal">
-                            <div class="field-label is-small">
+                            <div class="field-label is-small is-flex-grow-2">
                                 <label class="label" for="sourcesAdversaryDropdown">Adversary</label>
                             </div>
                             <div class="field-body">
@@ -1146,7 +1175,7 @@
 
             addRule(newRule) {
                 if (newRule.allow) {
-                    const allowMatches = newRule.allow.split(',').map((m) => ({
+                    const allowMatches = newRule.allow.map((m) => ({
                         trait: newRule.trait,
                         match: m,
                         action: 'ALLOW'
@@ -1154,7 +1183,7 @@
                     this.selectedSource.rules = this.selectedSource.rules.concat(allowMatches);
                 }
                 if (newRule.deny) {
-                    const denyMatches = newRule.deny.split(',').map((m) => ({
+                    const denyMatches = newRule.deny.map((m) => ({
                         trait: newRule.trait,
                         match: m,
                         action: 'DENY'
@@ -1268,7 +1297,7 @@
         margin: 0.5em 0 1em;
     }
 
-    button.no-style {
+    #sourcePage button.no-style {
         background-color: transparent;
         border: none;
         box-shadow: none;
