@@ -87,11 +87,11 @@
                     <!-- FACTS -->
                     <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
                         <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
-                             x-on:click="addNewCard = true">
+                             x-on:click="addNewCard = true; editCard = null;">
                             <p class="is-italic">+ new fact</p>
                         </div>
                         <template x-if="addNewCard">
-                            <div x-data="{newFact: {trait: '', value: '', score: 1}, newFactTags: []}"
+                            <div x-data="{newFact: {trait: '', tags: [] }}"
                                  class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
                                 <form>
                                     <div class="field is-horizontal">
@@ -108,9 +108,9 @@
                                         </div>
                                     </div>
                                     <div class="field is-flex is-horizontal is-align-items-flex-start">
-                                        <label class="label pt-2 is-small">Values:</label>
-                                        <div class="control">
-                                            <template x-for="(tag, index) in newFactTags">
+                                        <label class="label pt-2 is-small">Values</label>
+                                        <div class="control ml-4">
+                                            <template x-for="(tag, index) in newFact.tags">
                                                 <div id="new-fact-value" class="tags has-addons mb-0">
                                                         <span class="is-italic tag is-light break-spaces">
                                                           <input type="text" class="tag-input w-110-px"
@@ -123,7 +123,7 @@
                                                             min="0"
                                                             placeholder="1"
                                                             x-model="tag.score">
-                                                    <button @click="newFactTags.pop(index)"
+                                                    <button @click="newFact.tags.pop(index)"
                                                             class="delete is-small"></button>
                                                 </span>
                                                 </div>
@@ -131,7 +131,7 @@
                                             <div class="is-flex is-justify-content-center">
                                                 <span class="tag is-white break-spaces"
                                                       data-tooltip="Add a new value"
-                                                      @click="newFactTags.push({trait: newFact.trait, value: '', score: 1})">
+                                                      @click="newFact.tags.push({trait: newFact.trait, value: '', score: 1})">
                                                     <em class="fas fa-plus"></em>
                                                 </span>
                                             </div>
@@ -139,11 +139,11 @@
                                     </div>
                                 </form>
 
-                                <div>
+                                <div class="mt-3">
                                     <button class="button is-small" @click="addNewCard = false">
                                         <span>Cancel</span>
                                     </button>
-                                    <button class="button is-small is-primary ml-2" @click="addFact(newFact)"
+                                    <button class="button is-small is-primary ml-2" @click="addFacts(newFact.tags)"
                                             x-bind:disabled="!newFact.trait">
                                         <span class="icon"><i class="fas fa-save"></i></span>
                                         <span>Save</span>
@@ -196,9 +196,9 @@
                                                                                        placeholder="1"
                                                                                        x-bind:value="score.score"
                                                                                        x-on:change="score.score = editedScores[score.unique] = $event.target.value;">
+                                                                                <button @click="deleteFactValue(fact.trait, score.unique, val)"
+                                                                                    class="delete is-small"></button>
                                                                             </span>
-                                                                            <button @click="deleteFactValue(fact.trait, score.unique, val)"
-                                                                                    class="button delete is-small"></button>
                                                                         </div>
                                                                     </div>
                                                                 </template>
@@ -212,11 +212,11 @@
                                             <div>
                                                 <template x-for="(tag, index) in newTags">
                                                     <div class="tags has-addons mb-0">
-                                                                <span class="is-italic tag is-light break-spaces">
-                                                                  <input type="text" class="tag-input"
-                                                                         placeholder="value"
-                                                                         x-model="tag.value">
-                                                                </span>
+                                                        <span class="is-italic tag is-light break-spaces">
+                                                          <input type="text" class="tag-input"
+                                                                 placeholder="value"
+                                                                 x-model="tag.value">
+                                                        </span>
                                                         <span class="tag is-white break-spaces"><input
                                                                 class="tag-number-input" type="number"
                                                                 pattern="[0-9]*"
@@ -260,7 +260,7 @@
                 <template x-if="inView.includes('rules')">
                     <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
                         <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
-                             x-on:click="addNewCard = true">
+                             x-on:click="addNewCard = true; editCard = null;">
                             <p class="is-italic">+ new rule</p>
                         </div>
                         <template x-if="addNewCard">
@@ -418,7 +418,7 @@
                     <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start"
                          x-data="{newRelationships: [], newRelationship: {edge: '', source: {}, target: {}}}">
                         <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
-                             x-on:click="addNewCard = true">
+                             x-on:click="addNewCard = true; editCard = null;">
                             <p class="is-italic">+ new relationship</p>
                         </div>
                         <template x-if="addNewCard">
@@ -1092,6 +1092,11 @@
                     toast('Error adding fact', false);
                     console.error(error);
                 });
+            },
+
+            addFacts(newFacts) {
+                newFacts.forEach(f => this.addFact(f, true));
+                toast('Added new fact.', true);
             },
 
             updateFact(editedValues, editedScores, newTags) {
