@@ -1,8 +1,6 @@
 import logging
-import socket
-from unittest.mock import AsyncMock, MagicMock
-from app.contacts.contact_websocket_interactive import Handler, Contact
-from tests.conftest import app_svc
+from unittest.mock import MagicMock
+from app.contacts.contact_websocket_interactive import Handler
 logger = logging.getLogger(__name__)
 
 

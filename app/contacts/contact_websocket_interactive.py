@@ -1,5 +1,4 @@
 import asyncio
-import time
 import websockets
 import json
 from app.utility.base_world import BaseWorld
@@ -15,8 +14,7 @@ class Contact(BaseWorld):
         self.stop_future = asyncio.Future()
 
     async def start(self):
-        web_socket = self.get_config('app.contact.websocket_interactive') # Does not appear to pull form default conf well.
-        web_socket = "0.0.0.0:7013" 
+        web_socket = self.get_config('app.contact.websocket_interactive')
         self.log.info("Starting websocket on %s" % web_socket)
         try:
             async with websockets.serve(self.handler.handle, web_socket.split(':')[0], web_socket.split(':')[1]):
@@ -64,7 +62,7 @@ class Handler:
                 if agent.executor_change_to_assign:
                     response['executor_change'] = agent.assign_pending_executor_change()
                     self.log.debug('Asking agent to update executor: %s', response.get('executor_change'))
-                response['sleep'] = 2 # We want sleep 0 but that will spam request and response so fast the whole server stops.
+                response['sleep'] = 2     # We want sleep 0 but that will spam request and response so fast the whole server stops.
                 await socket.send(self.contact_svc.encode_string(json.dumps(response)))
         except Exception as e:
-           self.log.debug(e)
+            self.log.debug(e)
