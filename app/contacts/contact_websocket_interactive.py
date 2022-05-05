@@ -15,8 +15,7 @@ class Contact(BaseWorld):
         self.stop_future = asyncio.Future()
 
     async def start(self):
-        web_socket = self.get_config('app.contact.websocket_interactive') # Does not appear to pull form default conf well.
-        web_socket = "0.0.0.0:7013" 
+        web_socket = self.get_config('app.contact.websocket_interactive')
         self.log.info("Starting websocket on %s" % web_socket)
         try:
             async with websockets.serve(self.handler.handle, web_socket.split(':')[0], web_socket.split(':')[1]):
