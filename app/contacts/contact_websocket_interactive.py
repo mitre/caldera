@@ -37,33 +37,23 @@ class Handler:
     def __init__(self, services):
         self.services = services
         self.handles = []
-        self.name = "Websocket"
+        self.name = "WebsocketInteractive"
         self.contact_svc = services.get('contact_svc')
         self.log = BaseWorld.create_logger('websocket_handler')
         self.log.info("Handle init")
 
     async def handle(self, socket, path):
         self.log.info("Handle handle")
-        # try:
+        #try:
         while True:
             message = await socket.recv()
-            print(message)
             profile = json.loads(self.contact_svc.decode_bytes(message))
-            print(profile)
             profile['paw'] = profile.get('paw')
-            print(profile['paw'])
             profile['contact'] = profile.get('contact', self.name)
-            print(profile['contact'])
             while True:
-                print("Getting instructions")
                 agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
                 inst_tmp = json.dumps([json.dumps(i.display) for i in instructions])
                 break
-                # The server gets stuck in this loop and the rest of caldera freezes.
-                # if len(instructions) > 0:
-                #     break
-                # else:
-                #     time.sleep(1)
             response = dict(paw=agent.paw,
                             sleep=await agent.calculate_sleep(),
                             watchdog=agent.watchdog,
@@ -75,8 +65,8 @@ class Handler:
                 response['executor_change'] = agent.assign_pending_executor_change()
                 self.log.debug('Asking agent to update executor: %s', response.get('executor_change'))
             response['sleep'] = 2 # We want sleep 0 but that will spam request and response so fast the whole server stops.
-            print(response)
             await socket.send(self.contact_svc.encode_string(json.dumps(response)))
+            return response
 
-        # except Exception as e:
-        #     self.log.debug(e)
+        #except Exception as e:
+        #    self.log.debug(e)
