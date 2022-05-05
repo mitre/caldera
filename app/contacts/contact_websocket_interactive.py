@@ -44,29 +44,27 @@ class Handler:
 
     async def handle(self, socket, path):
         self.log.info("Handle handle")
-        #try:
-        while True:
-            message = await socket.recv()
-            profile = json.loads(self.contact_svc.decode_bytes(message))
-            profile['paw'] = profile.get('paw')
-            profile['contact'] = profile.get('contact', self.name)
+        try:
             while True:
-                agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
-                inst_tmp = json.dumps([json.dumps(i.display) for i in instructions])
-                break
-            response = dict(paw=agent.paw,
-                            sleep=await agent.calculate_sleep(),
-                            watchdog=agent.watchdog,
-                            instructions=inst_tmp)
-            if agent.pending_contact != agent.contact:
-                response['new_contact'] = agent.pending_contact
-                self.log.debug('Sending agent instructions to switch from C2 channel %s to %s' % (agent.contact, agent.pending_contact))
-            if agent.executor_change_to_assign:
-                response['executor_change'] = agent.assign_pending_executor_change()
-                self.log.debug('Asking agent to update executor: %s', response.get('executor_change'))
-            response['sleep'] = 2 # We want sleep 0 but that will spam request and response so fast the whole server stops.
-            await socket.send(self.contact_svc.encode_string(json.dumps(response)))
-            return response
-
-        #except Exception as e:
-        #    self.log.debug(e)
+                message = await socket.recv()
+                profile = json.loads(self.contact_svc.decode_bytes(message))
+                profile['paw'] = profile.get('paw')
+                profile['contact'] = profile.get('contact', self.name)
+                while True:
+                    agent, instructions = await self.contact_svc.handle_heartbeat(**profile)
+                    inst_tmp = json.dumps([json.dumps(i.display) for i in instructions])
+                    break
+                response = dict(paw=agent.paw,
+                                sleep=await agent.calculate_sleep(),
+                                watchdog=agent.watchdog,
+                                instructions=inst_tmp)
+                if agent.pending_contact != agent.contact:
+                    response['new_contact'] = agent.pending_contact
+                    self.log.debug('Sending agent instructions to switch from C2 channel %s to %s' % (agent.contact, agent.pending_contact))
+                if agent.executor_change_to_assign:
+                    response['executor_change'] = agent.assign_pending_executor_change()
+                    self.log.debug('Asking agent to update executor: %s', response.get('executor_change'))
+                response['sleep'] = 2 # We want sleep 0 but that will spam request and response so fast the whole server stops.
+                await socket.send(self.contact_svc.encode_string(json.dumps(response)))
+        except Exception as e:
+           self.log.debug(e)
