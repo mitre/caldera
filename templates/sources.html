@@ -30,7 +30,7 @@
             <label for="sourceName" x-show="false" class="label">Source Name</label>
 
             <div class="has-text-centered" x-show="selectedSourceId && !isEditingSourceName">
-                <h3 x-text="selectedSource.name" class="pointer tooltip has-tooltip-arrow mt-0 mb-5"
+                <h3 x-text="selectedSource.name" class="subtitle pointer tooltip has-tooltip-arrow mt-0 mb-5"
                     data-tooltip="Click to edit" @click="isEditingSourceName = true"></h3>
             </div>
             <input x-show="selectedSourceId && isEditingSourceName"
