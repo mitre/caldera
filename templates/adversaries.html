@@ -101,7 +101,7 @@
                 </thead>
                 <tbody>
                     <template x-for="(ability, index) of selectedProfileAbilities">
-                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1, 'row-hover': ability.ability_id === abilityTableDragHoverId }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id">
+                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1 , 'row-hover': ability.ability_id === abilityTableDragHoverId, 'grey-out-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id">
                             <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
                             <td x-text="index + 1"></td>
                             <td x-text="ability.name"></td>
@@ -112,27 +112,27 @@
                             <td>
                                 <template x-for="platform of getExecutorDetail('platforms', ability)">
                                     <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
-                                        <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
+                                        <span class="icon is-small"><em class="fab" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
                                     </span>
                                 </template>
                             </td>
                             <td class="has-text-centered" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
-                                <span class=" has-tooltip-arrow no-underline" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
+                                <span class=" has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
                                     <span class="icon is-small"><em class="fas fa-lock"></em></span>
                                 </span>
                             </td>
                             <td class="has-text-centered" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
-                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
+                                <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
                                     <span class="icon is-small"><em class="fas fa-key"></em></span>
                                 </span>
                             </td>
                             <td class="has-text-centered">
-                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
+                                <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
                                     <span class="icon is-small"><em class="fas fa-weight-hanging"></em></span>
                                 </span>
                             </td>
                             <td class="has-text-centered">
-                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
+                                <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
                                     <span class="icon is-small"><em class="fas fa-trash"></em></span>
                                 </span>
                             </td>
@@ -149,6 +149,12 @@
                     <em class="fas fa-exclamation-triangle"></em>
                 </span>
                 <span>One or more of the abilities have unmet requirements, which may result in a failed operation if ran sequentially.</span>
+            </div>
+            <div class="icon-text mt-2" x-show="undefinedAbilities.length">
+                <span class="icon has-text-warning">
+                    <em class="fas fa-exclamation-triangle"></em>
+                </span>
+                <span>One or more of the referenced abilities are not defined.</span>
             </div>
         </div>
     </template>
@@ -752,6 +758,7 @@
             // Ability dependencies & parsers
             abilityDependencies: {},
             needsParser: [],
+            undefinedAbilities: [],
             onHoverUnlocks: [],
             onHoverLocks: [],
             isTacticBreakdownActive: false,
@@ -966,25 +973,33 @@
                 const types = {};
                 let factsCollected = [];
                 let factsRequired = [];
+                this.undefinedAbilities = [];
 
-                this.selectedProfileAbilities.forEach((ability, index) => {
-                    let requireTypes = [];
+                this.selectedProfileAbilities.forEach((ability, index) => {	
+					let requireTypes = [];
                     let enableTypes = [];
+						 
+                    //skip building out enable types and require types if ability is unknown
+                    if(ability.ability_id != undefined) {    
 
-                    // Get all parser types from executors
-                    ability.executors.forEach((executor) => {
-                        executor.parsers.forEach((parser) => {
-                            enableTypes = enableTypes.concat(parser.parserconfigs.map((rel) => rel.source));
+                        // Get all parser types from executors
+                        ability.executors.forEach((executor) => {
+                            executor.parsers.forEach((parser) => {
+                                enableTypes = enableTypes.concat(parser.parserconfigs.map((rel) => rel.source));
+                            });
                         });
-                    });
 
-                    // Get all requirement types
-                    ability.requirements.forEach((requirement) => {
-                        requireTypes = requireTypes.concat(requirement.relationship_match.map((match) => match.source));
-                    });
+                        // Get all requirement types
+                        ability.requirements.forEach((requirement) => {
+                            requireTypes = requireTypes.concat(requirement.relationship_match.map((match) => match.source));
+                        });
+                    
+                    } else {
+                        this.undefinedAbilities.push(ability.ability_id);
+                    }
 
-                    types[ability.ability_id] = {
-                        enableTypes: [...new Set(enableTypes)],
+				    types[ability.ability_id] = {
+                	    enableTypes: [...new Set(enableTypes)],
                         requireTypes: [...new Set(requireTypes)]
                     };
                 });
@@ -1322,6 +1337,12 @@
 
     .pointer {
         cursor: pointer;
+    }
+
+    .grey-out-unclickable {
+        pointer-events: none;
+        color: grey;
+        border: 2px solid #ffdd57;
     }
 
     .red-row {
