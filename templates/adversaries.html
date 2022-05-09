@@ -101,18 +101,18 @@
                 </thead>
                 <tbody>
                     <template x-for="(ability, index) of selectedProfileAbilities">
-                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1 , 'row-hover': ability.ability_id === abilityTableDragHoverId, 'grey-out-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id">
+                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1 , 'row-hover': ability.ability_id === abilityTableDragHoverId && abilityTableDragHoverId != undefined, 'grey-out-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id"> 
                             <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
                             <td x-text="index + 1"></td>
-                            <td x-text="ability.name"></td>
+                            <td x-text="ability.ability_id ? ability.name : 'Undefined Ability'"></td>
                             <td>
                                 <span x-text="ability.tactic" x-bind:style="`border-bottom: 1px ridge ${hashStringToColor(ability.tactic)}`"></span>
                             </td>
                             <td x-text="ability.technique_name"></td>
                             <td>
                                 <template x-for="platform of getExecutorDetail('platforms', ability)">
-                                    <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
-                                        <span class="icon is-small"><em class="fab" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
+                                    <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:data-tooltip="platform">
+                                        <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
                                     </span>
                                 </template>
                             </td>
@@ -155,6 +155,7 @@
                     <em class="fas fa-exclamation-triangle"></em>
                 </span>
                 <span>One or more of the referenced abilities are not defined.</span>
+                <span x-text="index"></span>
             </div>
         </div>
     </template>
@@ -1341,12 +1342,12 @@
 
     .grey-out-unclickable {
         pointer-events: none;
-        color: grey;
-        border: 2px solid #ffdd57;
+        font-weight: bold;
+        border: 2px solid orange;
     }
 
     .red-row {
-        border: 2px solid #8B0000;
+        border: 3px solid #8B0000;
     }
 
     .row-hover {
