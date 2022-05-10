@@ -1,3 +1,4 @@
+markupsafe==2.0.1 # version of markupsafe that suports soft_unicode function (now replaced by soft_str which is not used in caldera3/4)
 aiohttp-jinja2==1.5.0
 aiohttp==3.8.1
 aiohttp_session==2.9.0
