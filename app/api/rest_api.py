@@ -30,6 +30,7 @@ class RestApi(BaseWorld):
 
     async def enable(self):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
+        self.app_svc.application.router.add_static('/assets', 'templates/assets', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('*', '/', self.landing)
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)

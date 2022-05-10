@@ -49,3 +49,6 @@
 [submodule "plugins/emu"]
 	path = plugins/emu
 	url = https://github.com/mitre/emu.git
+[submodule "plugins/dummy"]
+	path = plugins/dummy
+	url = https://github.com/iguannalin/dummy.git
