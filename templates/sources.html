@@ -47,13 +47,13 @@
                         x-bind:disabled="!selectedSourceId"
                         @click="openModal = { isOpen: true, name: 'Add From Ability' }; filterAbilities()">
                     <span class="icon"><em class="fas fa-plus"></em></span>
-                    <span>Facts from Ability</span>
+                    <span>Add Facts from Ability</span>
                 </button>
                 <button class="button is-small mb-2"
                         x-bind:disabled="!selectedSourceId"
                         @click="openModal = { isOpen: true, name: 'Add From Adversary' }; getAdversaries();">
                     <span class="icon"><em class="fas fa-user-plus"></em></span>
-                    <span>Facts from Adversary</span>
+                    <span>Add Facts from Adversary</span>
                 </button>
                 <button class="button is-small mb-2" @click="duplicateSource(selectedSource)"
                         x-bind:disabled="!selectedSourceId">
@@ -156,7 +156,7 @@
                                  @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
                                  x-data="{editedValues: {}, editedScores: {}, newTags: []}">
                                 <div>
-                                    <p x-bind:class="{'has-background-warning has-text-black is-italic': editCard === fact.trait}" x-text="fact.trait"></p>
+                                    <p x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
                                     <template x-if="editCard === fact.trait">
                                         <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
                                     </template>
@@ -286,7 +286,7 @@
                                         </div>
                                         <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="new-rule-allow">
                                             <template x-for="(match, index) in [...new Set(newRule.allow)]" :key="match">
-                                                        <span class="tag is-success is-italic m-1 break-spaces editable-tag">
+                                                        <span class="tag is-success m-1 break-spaces editable-tag">
                                                             <span x-text="match"></span>
                                                             <button @click="newRule.allow.splice(newRule.allow.findIndex(v => v === match), 1)" class="delete is-small"></button>
                                                         </span>
@@ -309,7 +309,7 @@
                                         </div>
                                         <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="new-rule-deny">
                                             <template x-for="(match, index) in [...new Set(newRule.deny)]" :key="match">
-                                                         <span class="tag is-danger is-italic m-1 break-spaces editable-tag">
+                                                         <span class="tag is-danger m-1 break-spaces editable-tag">
                                                             <span x-text="match"></span>
                                                             <button @click="newRule.deny.splice(newRule.deny.findIndex(v => v === match), 1)" class="delete is-small"></button>
                                                         </span>
@@ -341,28 +341,28 @@
                             </div>
                         </template>
                         <template x-for="(rule, index) in filteredRules" :key="rule.trait">
-                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column" @click.self="editCard = rule.trait">
                                 <template x-if="editCard !== rule.trait">
-                                    <div @click="editCard = rule.trait">
+                                    <div>
                                         <div class="is-flex is-justify-content-center mb-2">
                                             <p x-text="rule.trait"></p>
                                         </div>
                                         <div class="is-size-7">
                                             <template x-if="rule.allow_matches.length > 0">
-                                                <label class="label is-italic mb-0 is-inline-block">Allow: </label>
+                                                <label class="label mb-0 is-inline-block">Allow: </label>
                                             </template>
                                             <template x-for="(match, index) in rule.allow_matches" :key="match">
-                                                <p class="tag is-success is-italic m-1 break-spaces editable-tag"
+                                                <p class="tag is-success m-1 break-spaces editable-tag"
                                                    x-text="match">
                                                 </p>
                                             </template>
                                         </div>
                                         <div class="is-size-7">
                                             <template x-if="rule.deny_matches.length > 0">
-                                                <label class="label is-italic mb-0 is-inline-block">Deny: </label>
+                                                <label class="label mb-0 is-inline-block">Deny: </label>
                                             </template>
                                             <template x-for="(match, index) in rule.deny_matches" :key="match">
-                                                <p class="tag is-danger is-italic m-1 break-spaces editable-tag"
+                                                <p class="tag is-danger m-1 break-spaces editable-tag"
                                                    x-text="match">
                                                 </p>
                                             </template>
@@ -372,7 +372,7 @@
                                 <template x-if="editCard === rule.trait">
                                     <div x-data="{updatedRule: {trait: rule.trait, allow: rule.allow_matches, deny: rule.deny_matches}, addNewAllow: false, addNewDeny: false, newAllow: '', newDeny: ''}">
                                         <div class="is-flex is-justify-content-center mb-2">
-                                            <p class="has-background-warning has-text-black is-italic" x-text="rule.trait"></p>
+                                            <p class="has-background-warning has-text-black p-1" x-text="rule.trait"></p>
                                             <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteRule(rule.trait)">
                                                 <span class="icon"><em class="fas fa-trash"></em></span>
                                             </button>
@@ -384,7 +384,7 @@
                                                 </div>
                                                 <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="edit-rule-allow">
                                                     <template x-for="(match, index) in [...new Set(updatedRule.allow)]" :key="match">
-                                                        <span class="tag is-success is-italic m-1 break-spaces editable-tag">
+                                                        <span class="tag is-success m-1 break-spaces editable-tag">
                                                             <span x-text="match"></span>
                                                             <button @click="updatedRule.allow.splice(updatedRule.allow.findIndex(v => v === match), 1)" class="delete is-small"></button>
                                                         </span>
@@ -407,7 +407,7 @@
                                                 </div>
                                                 <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="edit-rule-deny">
                                                     <template x-for="(match, index) in [...new Set(updatedRule.deny)]" :key="match">
-                                                         <span class="tag is-danger is-italic m-1 break-spaces editable-tag">
+                                                         <span class="tag is-danger m-1 break-spaces editable-tag">
                                                             <span x-text="match"></span>
                                                             <button @click="updatedRule.deny.splice(updatedRule.deny.findIndex(v => v === match), 1)" class="delete is-small"></button>
                                                         </span>
@@ -499,10 +499,10 @@
                             </div>
                         </template>
                         <template x-for="(relationship, index) in filteredRelationships" :key="relationship.trait">
-                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                                <div @click="editCard = relationship.trait">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column" @click.self="editCard = relationship.trait">
+                                <div>
                                     <div class="is-flex is-justify-content-center mb-2">
-                                        <p x-bind:class="{'has-background-warning has-text-black is-italic': editCard === relationship.trait}"
+                                        <p x-bind:class="{'has-background-warning has-text-black': editCard === relationship.trait}" class="p-1"
                                            x-text="relationship.trait"></p>
                                         <template x-if="editCard === relationship.trait">
                                             <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteRelationship(relationship.trait)">
@@ -1360,7 +1360,6 @@
 
     #sourcePage .break-spaces, #sourcePage .button.is-small {
         height: auto !important;
-        max-width: 250px;
         overflow-wrap: anywhere;
         white-space: break-spaces !important;
         min-height: 2.3em;
