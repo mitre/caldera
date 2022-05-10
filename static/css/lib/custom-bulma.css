@@ -2239,7 +2239,8 @@ div.icon-text {
   color: #fff;
 }
 .table td.is-warning,
-.table th.is-warning {
+.table th.is-warning,
+.table tr.is-warning {
   background-color: #ffdd57;
   border-color: #ffdd57;
   color: rgba(0, 0, 0, 0.7);

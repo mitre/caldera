@@ -101,38 +101,55 @@
                 </thead>
                 <tbody>
                     <template x-for="(ability, index) of selectedProfileAbilities">
-                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1 , 'row-hover': ability.ability_id === abilityTableDragHoverId && abilityTableDragHoverId != undefined, 'grey-out-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id"> 
+                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" 
+                            x-bind:class="{ 'orange-row': needsParser.indexOf(ability.name) > -1 ,
+                                            'row-hover': ability.ability_id === abilityTableDragHoverId && abilityTableDragHoverId != undefined, 
+                                            'red-row-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }" 
+                            x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id"> 
                             <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
-                            <td x-text="index + 1"></td>
-                            <td x-text="ability.ability_id ? ability.name : 'Undefined Ability'"></td>
                             <td>
+                                <div class="icon-text">
+                                    <span x-text="index + 1"></span>
+                                    <span class="icon has-text-danger" x-show="!ability.ability_id">
+                                        <em class="fas fa-ban"></em>
+                                    </span>
+                                    <span class="icon has-text-warning" x-show="needsParser.indexOf(ability.name) > -1">
+                                        <em class="fas fa-exclamation-triangle"></em>
+                                    </span>
+                                </div>
+                            </td>
+                            <td x-text="ability.ability_id ? ability.name : 'Undefined Ability'"></td>
+                            <template x-if="!ability.ability_id">
+                                <td colspan="7" x-text="'ID - ' + abilityIDs[index]"></td>
+                            </template>
+                            <td x-show="undefinedAbilities.indexOf(ability.ability_id)">
                                 <span x-text="ability.tactic" x-bind:style="`border-bottom: 1px ridge ${hashStringToColor(ability.tactic)}`"></span>
                             </td>
-                            <td x-text="ability.technique_name"></td>
-                            <td>
+                            <td x-text="ability.technique_name" x-show="undefinedAbilities.indexOf(ability.ability_id)"></td>
+                            <td x-show="undefinedAbilities.indexOf(ability.ability_id)">
                                 <template x-for="platform of getExecutorDetail('platforms', ability)">
-                                    <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:data-tooltip="platform">
+                                    <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
                                         <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
                                     </span>
                                 </template>
                             </td>
-                            <td class="has-text-centered" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
-                                <span class=" has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
+                                <span class=" has-tooltip-arrow no-underline" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
                                     <span class="icon is-small"><em class="fas fa-lock"></em></span>
                                 </span>
                             </td>
-                            <td class="has-text-centered" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
-                                <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
                                     <span class="icon is-small"><em class="fas fa-key"></em></span>
                                 </span>
                             </td>
-                            <td class="has-text-centered">
-                                <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
                                     <span class="icon is-small"><em class="fas fa-weight-hanging"></em></span>
                                 </span>
                             </td>
-                            <td class="has-text-centered">
-                                <span class="has-tooltip-arrow no-underline" x-show="undefinedAbilities.indexOf(ability.ability_id) && getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)">
+                                <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
                                     <span class="icon is-small"><em class="fas fa-trash"></em></span>
                                 </span>
                             </td>
@@ -151,11 +168,10 @@
                 <span>One or more of the abilities have unmet requirements, which may result in a failed operation if ran sequentially.</span>
             </div>
             <div class="icon-text mt-2" x-show="undefinedAbilities.length">
-                <span class="icon has-text-warning">
-                    <em class="fas fa-exclamation-triangle"></em>
+                <span class="icon has-text-danger">
+                    <em class="fas fa-ban"></em>
                 </span>
                 <span>One or more of the referenced abilities are not defined.</span>
-                <span x-text="index"></span>
             </div>
         </div>
     </template>
@@ -746,6 +762,7 @@
             // Global page variables
             adversaries: [],
             abilities: [],
+			abilityIDs: [],
             objectives: [],
             platforms: JSON.parse('{{ platforms | tojson }}'),
             payloads: JSON.parse('{{ payloads | tojson }}').sort(),
@@ -836,7 +853,7 @@
                 this.selectedProfileDescription = selectedAdversary.description;
                 this.selectedObjectiveId = this.objectives.find((objective) => objective.id === selectedAdversary.objective).id;
                 this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
-
+                this.abilityIDs = selectedAdversary.atomic_ordering;
                 this.findAbilityDependencies();
             },
 
@@ -979,7 +996,7 @@
                 this.selectedProfileAbilities.forEach((ability, index) => {	
 					let requireTypes = [];
                     let enableTypes = [];
-						 
+
                     //skip building out enable types and require types if ability is unknown
                     if(ability.ability_id != undefined) {    
 
@@ -1340,14 +1357,14 @@
         cursor: pointer;
     }
 
-    .grey-out-unclickable {
+    .red-row-unclickable {
         pointer-events: none;
         font-weight: bold;
-        border: 2px solid orange;
+        border: 3px solid #8B0000;
     }
 
-    .red-row {
-        border: 3px solid #8B0000;
+    .orange-row {
+        border: 2px solid orange;
     }
 
     .row-hover {
