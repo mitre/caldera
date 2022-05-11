@@ -1,4 +1,3 @@
-import asyncio
 import glob
 import json
 import yaml
@@ -165,7 +164,7 @@ class TestDataService:
     @mock.patch.object(BaseWorld, 'strip_yml', wraps=strip_payload_yaml)
     @mock.patch('app.service.data_svc.DataService._apply_special_payload_hooks')
     @mock.patch('app.service.data_svc.DataService._apply_special_extension_hooks')
-    async def test_load_payloads(self, mock_ext_hooks, mock_payload_hooks, mock_strip_yml, data_svc):
+    def test_load_payloads(self, mock_ext_hooks, mock_payload_hooks, mock_strip_yml, event_loop, data_svc):
         def _mock_apply_payload_config(config=None, **_):
             TestDataService.mock_payload_config = config
 
@@ -174,7 +173,7 @@ class TestDataService:
         with patch.object(glob, 'iglob', return_value=['path1', 'path2']) as mock_iglob:
             with patch.object(BaseWorld, 'apply_config', wraps=_mock_apply_payload_config) as mock_apply_config:
                 with patch.object(DataService, 'get_config', return_value=self.mock_payload_config):
-                    await data_svc._load_payloads(test_plugin)
+                    event_loop.run_until_complete(data_svc._load_payloads(test_plugin))
         mock_iglob.assert_called_once_with('test_plugin/data/payloads/*.yml', recursive=False)
         mock_strip_yml.assert_has_calls([call('path1'), call('path2')])
         mock_payload_hooks.assert_has_calls([
@@ -206,7 +205,7 @@ class TestDataService:
         with patch.object(glob, 'iglob', return_value=['path3']) as mock_iglob2:
             with patch.object(BaseWorld, 'apply_config', wraps=_mock_apply_payload_config) as mock_apply_config2:
                 with patch.object(DataService, 'get_config', return_value=self.mock_payload_config):
-                    await data_svc._load_payloads(test_plugin2)
+                    event_loop.run_until_complete(data_svc._load_payloads(test_plugin2))
         mock_iglob2.assert_called_once_with('test_plugin2/data/payloads/*.yml', recursive=False)
         mock_strip_yml.assert_called_with('path3')
         mock_payload_hooks.assert_called_with(PAYLOAD_CONFIG_YAMLS['path3'][0]['special_payloads'])
