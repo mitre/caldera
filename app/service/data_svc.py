@@ -310,15 +310,28 @@ class DataService(DataServiceInterface, BaseService):
             await self.load_yaml_file(Objective, filename, plugin.access)
 
     async def _load_payloads(self, plugin):
+        payload_config = dict(
+            standard_payloads=dict(),
+            special_payloads=dict(),
+            extensions=dict(),
+        )
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
             data = self.strip_yml(filename)
-            payload_config = self.get_config(name='payloads')
-            payload_config['standard_payloads'] = data[0]['standard_payloads']
-            payload_config['special_payloads'] = data[0]['special_payloads']
-            payload_config['extensions'] = data[0]['extensions']
-            await self._apply_special_payload_hooks(payload_config['special_payloads'])
-            await self._apply_special_extension_hooks(payload_config['extensions'])
-            self.apply_config(name='payloads', config=payload_config)
+            special_payloads = data[0].get('special_payloads', dict())
+            extensions = data[0].get('extensions', dict())
+            await self._apply_special_payload_hooks(special_payloads)
+            await self._apply_special_extension_hooks(extensions)
+            payload_config['standard_payloads'].update(data[0].get('standard_payloads', dict()))
+            payload_config['special_payloads'].update(special_payloads)
+            payload_config['extensions'].update(extensions)
+        self._update_payload_config(payload_config)
+
+    def _update_payload_config(self, updates):
+        payload_config = self.get_config(name='payloads')
+        updates['standard_payloads'].update(payload_config.get('standard_payloads', dict()))
+        updates['special_payloads'].update(payload_config.get('special_payloads', dict()))
+        updates['extensions'].update(payload_config.get('extensions', dict()))
+        self.apply_config(name='payloads', config=updates)
 
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
