@@ -37,6 +37,10 @@ DATA_FILE_GLOBS = (
     'data/object_store',
 )
 
+PAYLOADS_CONFIG_STANDARD_KEY = 'standard_payloads'
+PAYLOADS_CONFIG_SPECIAL_KEY = 'special_payloads'
+PAYLOADS_CONFIG_EXTENSIONS_KEY = 'extensions'
+
 
 class DataService(DataServiceInterface, BaseService):
 
@@ -317,21 +321,24 @@ class DataService(DataServiceInterface, BaseService):
         )
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
             data = self.strip_yml(filename)
-            special_payloads = data[0].get('special_payloads', dict())
-            extensions = data[0].get('extensions', dict())
+            special_payloads = data[0].get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())
+            extensions = data[0].get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())
             await self._apply_special_payload_hooks(special_payloads)
             await self._apply_special_extension_hooks(extensions)
-            payload_config['standard_payloads'].update(data[0].get('standard_payloads', dict()))
-            payload_config['special_payloads'].update(special_payloads)
-            payload_config['extensions'].update(extensions)
+            payload_config[PAYLOADS_CONFIG_STANDARD_KEY].update(data[0].get(PAYLOADS_CONFIG_STANDARD_KEY, dict()))
+            payload_config[PAYLOADS_CONFIG_SPECIAL_KEY].update(special_payloads)
+            payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY].update(extensions)
         self._update_payload_config(payload_config)
 
     def _update_payload_config(self, updates):
         payload_config = self.get_config(name='payloads')
-        updates['standard_payloads'].update(payload_config.get('standard_payloads', dict()))
-        updates['special_payloads'].update(payload_config.get('special_payloads', dict()))
-        updates['extensions'].update(payload_config.get('extensions', dict()))
-        self.apply_config(name='payloads', config=updates)
+        payload_config[PAYLOADS_CONFIG_STANDARD_KEY] = {**payload_config.get(PAYLOADS_CONFIG_STANDARD_KEY, dict()),
+                                                        **updates.get(PAYLOADS_CONFIG_STANDARD_KEY, dict())}
+        payload_config[PAYLOADS_CONFIG_SPECIAL_KEY] = {**payload_config.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict()),
+                                                       **updates.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())}
+        payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY] = {**payload_config.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict()),
+                                                          **updates.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())}
+        self.apply_config(name='payloads', config=payload_config)
 
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
