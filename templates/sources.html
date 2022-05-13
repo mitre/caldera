@@ -107,9 +107,11 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-flex is-horizontal is-align-items-flex-start">
-                                        <label class="label pt-2 is-small">Values</label>
-                                        <div class="control ml-4">
+                                    <div class="field is-flex is-horizontal is-flex is-align-items-center">
+                                        <div class="field-label is-small is-flex-grow-2">
+                                            <label class="label pt-2">Values</label>
+                                        </div>
+                                        <div class="field-body">
                                             <template x-for="(tag, index) in newFact.tags">
                                                 <div id="new-fact-value" class="tags has-addons mb-0">
                                                         <span class="is-italic tag is-light break-spaces">
@@ -194,8 +196,7 @@
                                                                                        min="0"
                                                                                        pattern="[0-9]*"
                                                                                        placeholder="1"
-                                                                                       x-bind:value="score.score"
-                                                                                       x-on:change="score.score = editedScores[score.unique] = $event.target.value;">
+                                                                                       x-bind:value="score.score">
                                                                                 <button @click="deleteFactValue(fact.trait, score.unique, val)"
                                                                                     class="delete is-small"></button>
                                                                             </span>
@@ -239,11 +240,11 @@
                                         </template>
                                         <template x-if="editCard === fact.trait">
                                             <div class="mt-3">
-                                                <button class="button is-small">
+                                                <button class="button is-small" @click="editCard = null;">
                                                     <span id="cancel-edit-fact">Cancel</span>
                                                 </button>
                                                 <button class="button is-small is-primary ml-2"
-                                                        @click="updateFact(editedValues, editedScores, newTags); newTags = [];">
+                                                        @click="updateFact(editedValues, editedScores, newTags); newTags = []; $event.stopPropagation();">
                                                     <span class="icon"><i class="fas fa-save"></i></span>
                                                     <span>Save</span>
                                                 </button>
@@ -1149,7 +1150,7 @@
                 });
 
                 updated = updated.concat(newTags);
-                this.editCard = '';
+                this.editCard = null;
                 this.selectedSource.facts = updated;
                 this.updateFactSource(this.selectedSource);
             },
