@@ -43,6 +43,17 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
 
+    @template('login.html', status=401)
+    async def login(self, request):
+        return dict()
+
+    async def validate_login(self, request):
+        return await self.auth_svc.login_user(request)
+
+    @template('login.html')
+    async def logout(self, request):
+        await self.auth_svc.logout_user(request)
+
     async def landing(self, request):
         return render_template("index.html", request, {})
 

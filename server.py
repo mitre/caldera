@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 import warnings
+import subprocess
 
 import aiohttp_apispec
 from aiohttp_apispec import validation_middleware
@@ -50,7 +51,7 @@ async def start_server():
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
 
-def run_tasks(services):
+def run_tasks(services, start_vue_server=False):
     loop = asyncio.get_event_loop()
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
@@ -67,6 +68,8 @@ def run_tasks(services):
     loop.create_task(learning_svc.build_model())
     loop.create_task(app_svc.watch_ability_files())
     loop.run_until_complete(start_server())
+    if start_vue_server:
+        loop.run_until_complete(start_vue_dev_server())
     try:
         logging.info('All systems ready.')
         loop.run_forever()
@@ -93,6 +96,13 @@ def init_swagger_documentation(app):
     app.middlewares.append(apispec_request_validation_middleware)
     app.middlewares.append(validation_middleware)
 
+async def start_vue_dev_server():
+    await asyncio.create_subprocess_shell(
+        'npm run dev',
+        stdout=sys.stdout,
+        stderr=sys.stderr,
+        cwd='./magma/')
+    logging.info('VueJS development server is live.')
 
 if __name__ == '__main__':
     def list_str(values):
@@ -108,6 +118,8 @@ if __name__ == '__main__':
                         help='Start up with a single plugin', type=list_str)
     parser.add_argument('--insecure', action='store_true', required=False, default=False,
                         help='Start caldera with insecure default config values. Equivalent to "-E default".')
+    parser.add_argument('--uidev', action='store_true', required=False, default=False,
+                        help='Start VueJS dev server for front-end alongside the caldera server')
 
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
@@ -150,4 +162,4 @@ if __name__ == '__main__':
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
         asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
 
-    run_tasks(services=app_svc.get_services())
+    run_tasks(services=app_svc.get_services(), start_vue_server=args.uidev)
