@@ -964,12 +964,15 @@
                 let hasPayload = false;
                 let hasParser = false;
 
-                ability.executors.forEach((executor) => {
-                    if (executor.cleanup.length > 0) hasCleanup = true;
-                    if (executor.parsers.length > 0) hasParser = true;
-                    if (executor.payloads.length > 0) hasPayload = true;
-                    plats.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
-                });
+                if(ability.executors)
+                {
+                    ability.executors.forEach((executor) => {
+                        if (executor.cleanup.length > 0) hasCleanup = true;
+                        if (executor.parsers.length > 0) hasParser = true;
+                        if (executor.payloads.length > 0) hasPayload = true;
+                        plats.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
+                    });
+                }
 
                 switch (detail) {
                 case 'cleanup':
@@ -979,7 +982,9 @@
                 case 'payload':
                     return hasPayload;
                 case 'requirements':
-                    return ability.requirements.length > 0;
+                    if(ability.requirements){
+                        return ability.requirements.length > 0;
+                    }
                 case 'platforms':
                     return plats;
                 default:
@@ -994,7 +999,7 @@
                 this.undefinedAbilities = [];
 
                 this.selectedProfileAbilities.forEach((ability, index) => {	
-					let requireTypes = [];
+                    let requireTypes = [];
                     let enableTypes = [];
 
                     //skip building out enable types and require types if ability is unknown
@@ -1016,8 +1021,8 @@
                         this.undefinedAbilities.push(ability.ability_id);
                     }
 
-				    types[ability.ability_id] = {
-                	    enableTypes: [...new Set(enableTypes)],
+                    types[ability.ability_id] = {
+                        enableTypes: [...new Set(enableTypes)],
                         requireTypes: [...new Set(requireTypes)]
                     };
                 });
@@ -1029,9 +1034,11 @@
 
                     // For each parser, look at and forward for any ability it unlocks
                     types[ability.ability_id].enableTypes.forEach((key) => {
-                        for (let i = index; i < this.selectedProfileAbilities.length; i++) {
-                            if (types[this.selectedProfileAbilities[i].ability_id].requireTypes.indexOf(key) > -1) {
-                                enablesAbilityIds.push(this.selectedProfileAbilities[i].ability_id);
+                        if(this.selectedProfileAbilities) {
+                            for (let i = index; i < this.selectedProfileAbilities.length; i++) {
+                                if (types[this.selectedProfileAbilities[i].ability_id].requireTypes.indexOf(key) > -1) {
+                                    enablesAbilityIds.push(this.selectedProfileAbilities[i].ability_id);
+                                }
                             }
                         }
                     });
@@ -1299,8 +1306,10 @@
 
             hashStringToColor(str) {
                 let hash = 5381;
-                for (let i = 0; i < str.length; i++) {
-                    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+                if(str) {
+                    for (let i = 0; i < str.length; i++) {
+                        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+                    }
                 }
 
                 let r = (hash & 0xFF0000) >> 16;
