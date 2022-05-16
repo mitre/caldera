@@ -1,4 +1,4 @@
-aiohttp-jinja2==1.5.0
+aiohttp-jinja2==1.4.2
 aiohttp==3.8.1
 aiohttp_session==2.9.0
 aiohttp-security==0.4.0
