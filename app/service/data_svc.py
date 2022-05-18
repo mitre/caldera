@@ -323,22 +323,41 @@ class DataService(DataServiceInterface, BaseService):
             data = self.strip_yml(filename)
             special_payloads = data[0].get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())
             extensions = data[0].get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())
-            await self._apply_special_payload_hooks(special_payloads)
-            await self._apply_special_extension_hooks(extensions)
-            payload_config[PAYLOADS_CONFIG_STANDARD_KEY].update(data[0].get(PAYLOADS_CONFIG_STANDARD_KEY, dict()))
-            payload_config[PAYLOADS_CONFIG_SPECIAL_KEY].update(special_payloads)
-            payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY].update(extensions)
-        self._update_payload_config(payload_config)
+            standard_payloads = data[0].get(PAYLOADS_CONFIG_STANDARD_KEY, dict())
+            payload_config[PAYLOADS_CONFIG_STANDARD_KEY].update(standard_payloads)
+            if special_payloads:
+                await self._apply_special_payload_hooks(special_payloads)
+                payload_config[PAYLOADS_CONFIG_SPECIAL_KEY].update(special_payloads)
+            if extensions:
+                await self._apply_special_extension_hooks(extensions)
+                payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY].update(extensions)
+        self._update_payload_config(payload_config, plugin.name)
 
-    def _update_payload_config(self, updates):
+    def _update_payload_config(self, updates, curr_plugin_name):
         payload_config = self.get_config(name='payloads')
-        payload_config[PAYLOADS_CONFIG_STANDARD_KEY] = {**payload_config.get(PAYLOADS_CONFIG_STANDARD_KEY, dict()),
-                                                        **updates.get(PAYLOADS_CONFIG_STANDARD_KEY, dict())}
-        payload_config[PAYLOADS_CONFIG_SPECIAL_KEY] = {**payload_config.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict()),
-                                                       **updates.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())}
-        payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY] = {**payload_config.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict()),
-                                                          **updates.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())}
+        curr_standard_payloads = payload_config.get(PAYLOADS_CONFIG_STANDARD_KEY, dict())
+        curr_special_payloads = payload_config.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())
+        curr_extensions = payload_config.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())
+        new_standard_payloads = updates.get(PAYLOADS_CONFIG_STANDARD_KEY, dict())
+        new_special_payloads = updates.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())
+        new_extensions = updates.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())
+
+        self._check_payload_overlaps(curr_standard_payloads, new_standard_payloads, PAYLOADS_CONFIG_STANDARD_KEY,
+                                     curr_plugin_name)
+        self._check_payload_overlaps(curr_special_payloads, new_special_payloads, PAYLOADS_CONFIG_SPECIAL_KEY,
+                                     curr_plugin_name)
+        self._check_payload_overlaps(curr_extensions, new_extensions, PAYLOADS_CONFIG_EXTENSIONS_KEY, curr_plugin_name)
+
+        payload_config[PAYLOADS_CONFIG_STANDARD_KEY] = {**curr_standard_payloads, **new_standard_payloads}
+        payload_config[PAYLOADS_CONFIG_SPECIAL_KEY] = {**curr_special_payloads, **new_special_payloads}
+        payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY] = {**curr_extensions, **new_extensions}
         self.apply_config(name='payloads', config=payload_config)
+
+    def _check_payload_overlaps(self, old_dict, new_dict, config_section_name, curr_plugin_name):
+        overlap = set(old_dict).intersection(new_dict)
+        for payload in overlap:
+            self.log.warn('Config for %s already exists in the %s section of the payloads config and will be '
+                          'overridden by plugin %s', payload, config_section_name, curr_plugin_name)
 
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):

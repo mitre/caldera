@@ -66,6 +66,11 @@ special_payloads:
     id: specialid3
     service: stockpile_svc
     function: funcname
+  file.cpp:
+    description: overridden desc
+    id: overridden
+    service: stockpile_svc
+    function: overridden
 extensions:
   .testext: handler
 ''')],
@@ -188,7 +193,6 @@ class TestDataService:
             call(PAYLOAD_CONFIG_YAMLS['path2'][0]['special_payloads']),
         ], any_order=True)
         mock_ext_hooks.assert_has_calls([
-            call(dict()),
             call(PAYLOAD_CONFIG_YAMLS['path1'][0]['extensions']),
         ], any_order=True)
 
@@ -227,7 +231,8 @@ class TestDataService:
             },
             'special_payloads': {
                 'file.go': PAYLOAD_CONFIG_YAMLS['path1'][0]['special_payloads']['file.go'],
-                'file.cpp': PAYLOAD_CONFIG_YAMLS['path2'][0]['special_payloads']['file.cpp'],
+                # test override
+                'file.cpp': PAYLOAD_CONFIG_YAMLS['path3'][0]['special_payloads']['file.cpp'],
                 'special.py': PAYLOAD_CONFIG_YAMLS['path3'][0]['special_payloads']['special.py'],
             },
             'extensions': {
