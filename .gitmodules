@@ -46,3 +46,6 @@
 [submodule "plugins/emu"]
 	path = plugins/emu
 	url = https://github.com/mitre/emu.git
+[submodule "magma"]
+	path = magma
+	url = https://gitlab.mitre.org/caldera/other/magma
