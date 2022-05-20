@@ -84,6 +84,21 @@ python3 server.py --insecure
 
 Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use CALDERA.
 
+### User Interface Development
+
+If you'll be developing the UI, there are a few more additional installation steps.
+
+**Requirements**  
+* NodeJS (v16+ recommended)
+
+**Setup**
+
+1. Add the Magma submodule: `git submodule add https://gitlab.mitre.org/caldera/other/magma`
+1. Install NodeJS dependencies: `cd magma && npm install && cd ..`
+1. Start the CALDERA server with an additional flag: `python3 server.py --uidev`
+
+Your CALDERA server is available at http://localhost:8888 as usual, but there will now be a hot-reloading development server for the VueJS front-end available at http://localhost:3000. Both logs from the server and the front-end will display in the terminal you launched the server from.
+
 ## Docker Deployment
 To build a CALDERA docker image, ensure you have docker installed and perform the following actions:
 ```Bash
