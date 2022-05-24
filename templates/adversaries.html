@@ -1038,8 +1038,9 @@
                 yaml += `description: ${this.selectedProfileDescription}\n`;
                 yaml += `objective: ${this.selectedObjectiveId}\n`;
                 yaml += `atomic_ordering:\n`;
-                this.selectedProfileAbilities.forEach((ability) => yaml += `- ${ability.ability_id}\n`);
-
+                this.selectedProfileAbilities.forEach((ability, index) => 
+                    ability.ability_id ? yaml += `- ${ability.ability_id}\n` : yaml += `- ${this.abilityIDs[index]}\n`);
+                console.log(this.selectedProfileAbilities)
                 const blob = new Blob([yaml], { type: 'application/x-yaml' })
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1050,6 +1051,7 @@
                 a.click();
                 window.URL.revokeObjectURL(url);
             },
+
 
             getAdversaryTactics() {
                 this.adversaries.forEach((adversary) => {
