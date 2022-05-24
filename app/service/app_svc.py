@@ -115,7 +115,7 @@ class AppService(AppServiceInterface, BaseService):
             asyncio.get_event_loop().create_task(load(plug))
 
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
-        templates.append('front_end')
+        templates.append('magma/dist')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform, location=''):
