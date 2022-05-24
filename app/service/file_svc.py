@@ -70,6 +70,17 @@ class FileSvc(FileServiceInterface, BaseService):
             os.makedirs(path)
         return path
 
+    async def create_exfil_operation_directory(self, dir_name, agent_name):
+        op_list = self.data_svc.ram['operations']
+        op_list_filtered = [x for x in op_list if x.state not in x.get_finished_states()]
+        special_chars = {ord(c): '_' for c in r':<>"/\|?*'}
+        agent_opid = [(x.name.translate(special_chars), '_', x.start.strftime("%Y-%m-%d_%H%M%SZ"))
+                      for x in op_list_filtered if agent_name in [y.paw for y in x.agents]]
+        path = os.path.join((dir_name), ''.join(agent_opid[0]))
+        if not os.path.exists(path):
+            os.makedirs(path)
+        return path
+
     async def save_multipart_file_upload(self, request, target_dir, encrypt=True):
         try:
             reader = await request.multipart()
@@ -165,14 +176,19 @@ class FileSvc(FileServiceInterface, BaseService):
             startdir = self.get_config('exfil_dir')
         if not os.path.exists(startdir):
             return dict()
-
         exfil_files = dict()
-        exfil_folders = [f.path for f in os.scandir(startdir) if f.is_dir()]
-        for d in exfil_folders:
-            exfil_key = d.split(os.sep)[-1]
-            exfil_files[exfil_key] = {}
-            for file in [f.path for f in os.scandir(d) if f.is_file()]:
-                exfil_files[exfil_key][file.split(os.sep)[-1]] = file
+        exfil_list = [x for x in os.walk(startdir) if x[2]]
+        for d in exfil_list:
+            agent_path = d[0]
+            exfil_agent_key = d[0].split(os.sep)[-2]
+            exfil_subdir = d[0].split(os.sep)[-1]
+            if exfil_agent_key not in exfil_files:
+                exfil_files[exfil_agent_key] = dict()
+            for file in d[-1]:
+                if exfil_subdir not in exfil_files[exfil_agent_key]:
+                    exfil_files[exfil_agent_key][exfil_subdir] = dict()
+                if file not in exfil_files[exfil_agent_key][exfil_subdir]:
+                    exfil_files[exfil_agent_key][exfil_subdir][file] = os.path.join(agent_path, file)
         return exfil_files
 
     @staticmethod
