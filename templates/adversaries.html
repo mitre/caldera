@@ -24,7 +24,16 @@
                 </div>
             </div>
             <div class="control">
-                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">+ New Profile</button>
+                <button type="button" class="button is-primary is-small" @click="isCreatingProfile = true">
+                    <span class="icon"><em class="fas fa-plus"></em></span>
+                    <span>New Profile</span>
+                </button>
+            </div>
+            <div class="control ml-2">
+                <button type="button" class="button is-small" @click="showImportModal = true">
+                    <span class="icon"><em class="fas fa-file-import"></em></span>
+                    <span>Import</span>
+                </button>
             </div>
         </div>
     </form>
@@ -73,6 +82,10 @@
                 <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
                 <button class="button is-small" @click="showObjectiveModal = true">Change</button>
                 <div class="vr"></div>
+                <button class="button is-small" @click="exportProfile()">
+                    <span class="icon"><em class="fas fa-file-export"></em></span>
+                    <span>Export</span>
+                </button>
                 <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
                 <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
             </div>
@@ -719,6 +732,41 @@
         </div>
     </div>
 
+    <div class="modal" x-bind:class="{ 'is-active': showImportModal }">
+        <div class="modal-background" @click="showImportModal = false; adversaryImportFile = undefined"></div>
+        <div class="modal-card">
+            <header class="modal-card-head">
+                <p class="modal-card-title">Import Adversary</p>
+            </header>
+            <section class="modal-card-body">
+                <div class="file is-small has-name is-fullwidth">
+                    <label class="file-label">
+                        <input class="file-input" accept=".yml,.yaml" type="file" @change="uploadAdversaryFile($el)">
+                        <span class="file-cta">
+                            <span class="file-icon"><em class="fas fa-upload"></em></span>
+                            <span class="file-label">Choose a file…</span>
+                        </span>
+                        <span class="file-name" x-text="adversaryImportFile ? adversaryImportFile.name : ''"></span>
+                    </label>
+                </div>
+            </section>
+            <footer class="modal-card-foot">
+                <nav class="level">
+                    <div class="level-left">
+                        <div class="level-item">
+                            <button class="button is-small" @click="showImportModal = false; adversaryImportFile = undefined">Close</button>
+                        </div>
+                    </div>
+                    <div class="level-right">
+                        <div class="level-item">
+                            <button class="button is-primary is-small" @click="importProfile()" :disabled="!adversaryImportFile">Import Adversary</button>
+                        </div>
+                    </div>
+                </nav>
+            </footer>
+        </div>
+    </div>
+
     <div class="modal" x-bind:class="{ 'is-active': showFactBreakdownModal }">
         <div class="modal-background" @click="showFactBreakdownModal = false"></div>
         <div class="modal-card">
@@ -815,6 +863,11 @@
             selectedPlatform: '',
             selectedExecutor: '',
 
+            // Import modal
+            showImportModal: false,
+            adversaryImportFile: undefined,
+            adversaryImportFileContent: undefined,
+
             // Fact breakdown modal
             showFactBreakdownModal: false,
             factBreakdown: [],
@@ -854,6 +907,7 @@
                 this.selectedObjectiveId = this.objectives.find((objective) => objective.id === selectedAdversary.objective).id;
                 this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
                 this.abilityIDs = selectedAdversary.atomic_ordering;
+                this.adversarySearchQuery = selectedAdversary.name;
                 this.findAbilityDependencies();
             },
 
@@ -914,6 +968,7 @@
 
                 apiV2('POST', '/api/v2/adversaries', requestBody).then((response) => {
                     this.adversaries.push(requestBody);
+                    this.adversaries = this.adversaries.sort((a, b) => a.name > b.name);
                     this.selectedProfileId = newId;
                     this.getAdversaryTactics();
                     this.loadProfile();
@@ -929,6 +984,71 @@
                 this.createProfileName = '';
                 this.createProfileDescription = '';
                 this.isCreatingProfile = false;
+            },
+
+            uploadAdversaryFile(el) {
+                if (!el.files || !el.files.length) return;
+                this.adversaryImportFile = el.files[0];
+                const reader = new FileReader();
+                reader.onload = (event) => this.adversaryImportFileContent = event.target.result;
+                reader.readAsText(this.adversaryImportFile);
+            },
+
+            importProfile() {
+                let keyValSplit;
+                let lastKey;
+                let profile = {};
+                const lines = this.adversaryImportFileContent.split('\n');
+                lines.forEach((line) => {
+                    // Remove comments
+                    line = line.split('#')[0];
+                    // Line has a key-value pair
+                    keyValSplit = line.split(':');
+                    if (keyValSplit.length >= 2) {
+                        if (keyValSplit[1]) {
+                            profile[keyValSplit[0]] = keyValSplit[1].trim();
+                        } else {
+                            lastKey = keyValSplit[0];
+                            profile[lastKey] = [];
+                        }
+                    }
+                    // Line is a list item
+                    if (line.trim()[0] === '-' && line.trim() !== '---') {
+                        profile[lastKey].push(line.replace('-', '').trim());
+                    }
+                });
+               
+                apiV2('POST', '/api/v2/adversaries', profile).then((response) => {
+                    this.adversaries.push(response);
+                    this.adversaries = this.adversaries.sort((a, b) => a.name > b.name);
+                    this.selectedProfileId = response.adversary_id;
+                    this.getAdversaryTactics();
+                    this.loadProfile();
+                    this.showImportModal = false;
+                    toast('Profile imported!', true);
+                }).catch((error) => {
+                    toast('Error importing profile, please ensure YAML file is in correct format.', false);
+                    console.error(error);
+                });
+            },
+
+            exportProfile() {
+                let yaml = `id: ${this.selectedProfileId}\n`;
+                yaml += `name: ${this.selectedProfileName}\n`;
+                yaml += `description: ${this.selectedProfileDescription}\n`;
+                yaml += `objective: ${this.selectedObjectiveId}\n`;
+                yaml += `atomic_ordering:\n`;
+                this.selectedProfileAbilities.forEach((ability) => yaml += `- ${ability.ability_id}\n`);
+
+                const blob = new Blob([yaml], { type: 'application/x-yaml' })
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `${this.selectedProfileName}.yaml`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
             },
 
             getAdversaryTactics() {
@@ -1192,7 +1312,6 @@
                 this.selectedProfileId = id;
                 this.loadProfile();
                 this.adversarySearchResults = this.adversaries;
-                this.adversarySearchQuery = name;
             },
 
             searchForAbility() {
@@ -1348,6 +1467,13 @@
 
     .drag {
         cursor: grab;
+    }
+
+    .file-cta {
+        background-color: #262626;
+    }
+    .file-label:hover .file-cta {
+        background-color: #1e1e1e;
     }
 
     .lock {
