@@ -376,8 +376,10 @@ class DataService(DataServiceInterface, BaseService):
     def _check_payload_overlaps(self, old_dict, new_dict, config_section_name, curr_plugin_name):
         overlap = set(old_dict).intersection(new_dict)
         for payload in overlap:
-            self.log.warning('Config for %s already exists in the %s section of the payloads config and will be '
-                             'overridden by plugin %s', payload, config_section_name, curr_plugin_name)
+            if old_dict[payload] != new_dict[payload]:
+                self.log.warning('Config for %s already exists in the %s section of the payloads config and will be '
+                                 'overridden using new payload config data from plugin %s', payload,
+                                 config_section_name, curr_plugin_name)
 
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
