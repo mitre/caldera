@@ -1,8 +1,8 @@
 .scroll-top {
     width: 0;
     position: fixed !important;
-    bottom: 40px;
-    right: 40px;
+    bottom: 20px;
+    right: 20px;
     z-index: 2;
 }
 

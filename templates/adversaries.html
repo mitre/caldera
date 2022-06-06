@@ -2,7 +2,7 @@
 
     <!-- PAGE DETAILS -->
 
-    <div x-init="initPage()">
+    <div x-init="initPage()" x-ref="headerAdversaries">
         <h2>Adversary Profiles</h2>
         <p>
             Adversary Profiles are collections of ATT&CK TTPs, designed to create specific effects on a host or network.
@@ -15,9 +15,9 @@
     <form>
         <div id="select-adversary" class="field has-addons">
             <label class="label" for="profile-search">Select a profile &nbsp;&nbsp;&nbsp;</label>
-            <div class="control is-expanded auto-complete" x-data="{focusSearchResults: false}">
+            <div class="control is-expanded auto-complete" x-data="{focusSearchResults: false}" @click.outside="focusSearchResults = false; searchResults = []">
                 <input id="profile-search" class="input is-small is-fullwidth" x-model="adversarySearchQuery" placeholder="Search for an adversary profile or tactic..." x-on:keyup="searchForAdversary()" @click="focusSearchResults = true">
-                <div class="search-results is-size-7" x-show="adversarySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                <div class="search-results is-size-7" x-show="adversarySearchResults && focusSearchResults">
                     <template x-for="result of adversarySearchResults" :key="result.adversary_id">
                         <p @click="selectAdversary(result.adversary_id, `${result.name} (${(result.tactics.join(', '))})`); focusSearchResults = false" x-text="`${result.name} (${(result.tactics.join(', '))})`" x-bind:title="result.description"></p>
                     </template>
@@ -114,37 +114,54 @@
                 </thead>
                 <tbody>
                     <template x-for="(ability, index) of selectedProfileAbilities">
-                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" x-bind:class="{ 'red-row': needsParser.indexOf(ability.name) > -1, 'row-hover': ability.ability_id === abilityTableDragHoverId }" x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id">
+                        <tr @click="selectAbility(ability.ability_id)" class="ability-row" 
+                            x-bind:class="{ 'orange-row': needsParser.indexOf(ability.name) > -1 ,
+                                            'row-hover': ability.ability_id === abilityTableDragHoverId && abilityTableDragHoverId != undefined, 
+                                            'red-row-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }" 
+                            x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id"> 
                             <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
-                            <td x-text="index + 1"></td>
-                            <td x-text="ability.name"></td>
                             <td>
+                                <div class="icon-text">
+                                    <span x-text="index + 1"></span>
+                                    <span class="icon has-text-danger" x-show="!ability.ability_id">
+                                        <em class="fas fa-ban"></em>
+                                    </span>
+                                    <span class="icon has-text-warning" x-show="needsParser.indexOf(ability.name) > -1">
+                                        <em class="fas fa-exclamation-triangle"></em>
+                                    </span>
+                                </div>
+                            </td>
+                            <td x-text="ability.ability_id ? ability.name : 'Undefined Ability'"></td>
+                            <template x-if="!ability.ability_id">
+                                <td colspan="7" x-text="'ID - ' + abilityIDs[index]"></td>
+                            </template>
+                            <td x-show="undefinedAbilities.indexOf(ability.ability_id)">
                                 <span x-text="ability.tactic" x-bind:style="`border-bottom: 1px ridge ${hashStringToColor(ability.tactic)}`"></span>
                             </td>
-                            <td x-text="ability.technique_name"></td>
-                            <td>
+                            <td x-text="ability.technique_name" x-show="undefinedAbilities.indexOf(ability.ability_id)"></td>
+                            <td x-show="undefinedAbilities.indexOf(ability.ability_id)">
                                 <template x-for="platform of getExecutorDetail('platforms', ability)">
                                     <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
                                         <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
                                     </span>
                                 </template>
                             </td>
-                            <td class="has-text-centered" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:class="{ 'unlock': onHoverUnlocks.indexOf(ability.ability_id) > -1 }">
                                 <span class=" has-tooltip-arrow no-underline" x-show="getExecutorDetail('requirements', ability)" x-bind:data-tooltip="`This ability has requirements: (${abilityDependencies[ability.ability_id].requireTypes})`">
                                     <span class="icon is-small"><em class="fas fa-lock"></em></span>
                                 </span>
                             </td>
-                            <td class="has-text-centered" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)" x-bind:class="{ 'lock': onHoverLocks.indexOf(ability.ability_id) > -1 }">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('parser', ability)" x-bind:data-tooltip="`This ability unlocks other abilities: (${abilityDependencies[ability.ability_id].enableTypes})`">
                                     <span class="icon is-small"><em class="fas fa-key"></em></span>
                                 </span>
                             </td>
-                            <td class="has-text-centered">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('payload', ability)" data-tooltip="This ability uses a payload">
                                     <span class="icon is-small"><em class="fas fa-weight-hanging"></em></span>
                                 </span>
                             </td>
-                            <td class="has-text-centered">
+                            <td class="has-text-centered" x-show="undefinedAbilities.indexOf(ability.ability_id)">
                                 <span class="has-tooltip-arrow no-underline" x-show="getExecutorDetail('cleanup', ability)" data-tooltip="This ability can clean itself up">
                                     <span class="icon is-small"><em class="fas fa-trash"></em></span>
                                 </span>
@@ -162,6 +179,12 @@
                     <em class="fas fa-exclamation-triangle"></em>
                 </span>
                 <span>One or more of the abilities have unmet requirements, which may result in a failed operation if ran sequentially.</span>
+            </div>
+            <div class="icon-text mt-2" x-show="undefinedAbilities.length">
+                <span class="icon has-text-danger">
+                    <em class="fas fa-ban"></em>
+                </span>
+                <span>One or more of the referenced abilities are not defined.</span>
             </div>
         </div>
     </template>
@@ -322,9 +345,9 @@
                         </div>
                         <div class="field-body">
                             <div class="field">
-                                <div class="control auto-complete mb-3" x-data="{focusSearchResults: true}">
+                                <div class="control auto-complete mb-3" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                     <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
-                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults">
                                         <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                             <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
                                         </template>
@@ -447,9 +470,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                             <input id="tactic-auto-fill" class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic" x-on:keyup="searchForAutoFill('tactic')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults">
                                                 <template x-for="result of searchResults" :key="result">
                                                     <p x-show="result !== selectedAbility.tactic" @click="selectedAbility.tactic = result; searchResults = []" x-text="result"></p>
                                                 </template>
@@ -465,9 +488,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id" x-on:keyup="searchForAutoFill('technique_id')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults">
                                                 <template x-for="result of searchResults" :key="result">
                                                     <p x-show="result !== selectedAbility.technique_id" @click="selectedAbility.technique_id = result; searchResults = []" x-text="result"></p>
                                                 </template>
@@ -483,9 +506,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name" x-on:keyup="searchForAutoFill('technique_name')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults">
                                                 <template x-for="result of searchResults" :key="result">
                                                     <p x-show="result !== selectedAbility.technique_name" @click="selectedAbility.technique_name = result; searchResults = []" x-text="result"></p>
                                                 </template>
@@ -787,6 +810,7 @@
             // Global page variables
             adversaries: [],
             abilities: [],
+			abilityIDs: [],
             objectives: [],
             platforms: JSON.parse('{{ platforms | tojson }}'),
             payloads: JSON.parse('{{ payloads | tojson }}').sort(),
@@ -800,6 +824,7 @@
             // Ability dependencies & parsers
             abilityDependencies: {},
             needsParser: [],
+            undefinedAbilities: [],
             onHoverUnlocks: [],
             onHoverLocks: [],
             isTacticBreakdownActive: false,
@@ -861,8 +886,14 @@
                     this.abilities = abilities;
                     this.getAdversaryTactics();
                     return apiV2('GET', '/api/v2/objectives');
-                }).then((objectives) => {
+                }).then(async (objectives) => {
                     this.objectives = objectives;
+
+                    while (this.$refs.headerAdversaries) {
+                        await sleep(3000);
+                        this.abilities = await apiV2('GET', '/api/v2/abilities');
+                        this.getAdversaryTactics();
+                    }
                 }).catch((error) => {
                     toast('Error initializing page', false);
                     console.error(`Error initializing page: ${error}`);
@@ -881,6 +912,7 @@
                 this.selectedProfileDescription = selectedAdversary.description;
                 this.selectedObjectiveId = this.objectives.find((objective) => objective.id === selectedAdversary.objective).id;
                 this.selectedProfileAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
+                this.abilityIDs = selectedAdversary.atomic_ordering;
                 this.adversarySearchQuery = selectedAdversary.name;
                 this.findAbilityDependencies();
             },
@@ -1012,8 +1044,8 @@
                 yaml += `description: ${this.selectedProfileDescription}\n`;
                 yaml += `objective: ${this.selectedObjectiveId}\n`;
                 yaml += `atomic_ordering:\n`;
-                this.selectedProfileAbilities.forEach((ability) => yaml += `- ${ability.ability_id}\n`);
-
+                this.selectedProfileAbilities.forEach((ability, index) => 
+                    ability.ability_id ? yaml += `- ${ability.ability_id}\n` : yaml += `- ${this.abilityIDs[index]}\n`);
                 const blob = new Blob([yaml], { type: 'application/x-yaml' })
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
@@ -1024,6 +1056,7 @@
                 a.click();
                 window.URL.revokeObjectURL(url);
             },
+
 
             getAdversaryTactics() {
                 this.adversaries.forEach((adversary) => {
@@ -1058,12 +1091,15 @@
                 let hasPayload = false;
                 let hasParser = false;
 
-                ability.executors.forEach((executor) => {
-                    if (executor.cleanup.length > 0) hasCleanup = true;
-                    if (executor.parsers.length > 0) hasParser = true;
-                    if (executor.payloads.length > 0) hasPayload = true;
-                    plats.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
-                });
+                if(ability.executors)
+                {
+                    ability.executors.forEach((executor) => {
+                        if (executor.cleanup.length > 0) hasCleanup = true;
+                        if (executor.parsers.length > 0) hasParser = true;
+                        if (executor.payloads.length > 0) hasPayload = true;
+                        plats.push(`${executor.platform} (${executorNameMap.get(executor.name) || executor.name})`);
+                    });
+                }
 
                 switch (detail) {
                 case 'cleanup':
@@ -1073,7 +1109,9 @@
                 case 'payload':
                     return hasPayload;
                 case 'requirements':
-                    return ability.requirements.length > 0;
+                    if(ability.requirements){
+                        return ability.requirements.length > 0;
+                    }
                 case 'platforms':
                     return plats;
                 default:
@@ -1085,22 +1123,30 @@
                 const types = {};
                 let factsCollected = [];
                 let factsRequired = [];
+                this.undefinedAbilities = [];
 
-                this.selectedProfileAbilities.forEach((ability, index) => {
+                this.selectedProfileAbilities.forEach((ability, index) => {	
                     let requireTypes = [];
                     let enableTypes = [];
 
-                    // Get all parser types from executors
-                    ability.executors.forEach((executor) => {
-                        executor.parsers.forEach((parser) => {
-                            enableTypes = enableTypes.concat(parser.parserconfigs.map((rel) => rel.source));
-                        });
-                    });
+                    //skip building out enable types and require types if ability is unknown
+                    if(ability.ability_id != undefined) {    
 
-                    // Get all requirement types
-                    ability.requirements.forEach((requirement) => {
-                        requireTypes = requireTypes.concat(requirement.relationship_match.map((match) => match.source));
-                    });
+                        // Get all parser types from executors
+                        ability.executors.forEach((executor) => {
+                            executor.parsers.forEach((parser) => {
+                                enableTypes = enableTypes.concat(parser.parserconfigs.map((rel) => rel.source));
+                            });
+                        });
+
+                        // Get all requirement types
+                        ability.requirements.forEach((requirement) => {
+                            requireTypes = requireTypes.concat(requirement.relationship_match.map((match) => match.source));
+                        });
+                    
+                    } else {
+                        this.undefinedAbilities.push(ability.ability_id);
+                    }
 
                     types[ability.ability_id] = {
                         enableTypes: [...new Set(enableTypes)],
@@ -1115,9 +1161,11 @@
 
                     // For each parser, look at and forward for any ability it unlocks
                     types[ability.ability_id].enableTypes.forEach((key) => {
-                        for (let i = index; i < this.selectedProfileAbilities.length; i++) {
-                            if (types[this.selectedProfileAbilities[i].ability_id].requireTypes.indexOf(key) > -1) {
-                                enablesAbilityIds.push(this.selectedProfileAbilities[i].ability_id);
+                        if(this.selectedProfileAbilities) {
+                            for (let i = index; i < this.selectedProfileAbilities.length; i++) {
+                                if (types[this.selectedProfileAbilities[i].ability_id].requireTypes.indexOf(key) > -1) {
+                                    enablesAbilityIds.push(this.selectedProfileAbilities[i].ability_id);
+                                }
                             }
                         }
                     });
@@ -1384,8 +1432,10 @@
 
             hashStringToColor(str) {
                 let hash = 5381;
-                for (let i = 0; i < str.length; i++) {
-                    hash = ((hash << 5) + hash) + str.charCodeAt(i);
+                if(str) {
+                    for (let i = 0; i < str.length; i++) {
+                        hash = ((hash << 5) + hash) + str.charCodeAt(i);
+                    }
                 }
 
                 let r = (hash & 0xFF0000) >> 16;
@@ -1449,8 +1499,14 @@
         cursor: pointer;
     }
 
-    .red-row {
-        border: 2px solid #8B0000;
+    .red-row-unclickable {
+        pointer-events: none;
+        font-weight: bold;
+        border: 3px solid #8B0000;
+    }
+
+    .orange-row {
+        border: 2px solid orange;
     }
 
     .row-hover {

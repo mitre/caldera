@@ -1184,10 +1184,8 @@
 
             init() {
                 this.selectedOperation = { chain: [] };
-                this.selectedOperationID = '';
                 this.agentGroups = [];
                 this.selectedOperationID = '';
-                this.selectedOperation = null;
                 this.selectedAgentIndex = 0;
                 this.isSelectedAdversaryRepeatable = false;
                 this.selectedLink = null;
@@ -1199,7 +1197,7 @@
                 this.openModal = null;
                 this.openModalForm = { advanced: false };
                 this.operations = [];
-                this.operationToStart = {};
+                this.operationToStart = { planner: '', source: ''};
             },
 
             isLinkEditable(currentLink) {
