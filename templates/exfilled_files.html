@@ -30,20 +30,28 @@
                 <li class="root-child">
                     <span class="icon is-small"><i class="far fa-folder-open"></i></span>
                     <span x-text="agentName"></span>
-                    <ul class="tree">
-                        <template x-for="filename of Object.keys(files[agentName])" :key="filename">
-                            <li class="agent-child">
-                                <label class="checkbox">
-                                    <input type="checkbox" class="file-checkbox" x-bind:value="files[agentName][filename]" @click="toggleFile($el, files[agentName][filename])">
-                                    <span class="icon is-small"><i class="far fa-file-alt"></i></span>
-                                    <span x-text="filename"></span>
-                                </label>
-                            </li>
+                        <template x-for="operation of Object.keys(files[agentName])" :key="operation">
+                            <ul class="tree">
+                                <li class="agentName-child">
+                                    <span class="icon is-small"><i class="fas fa-dragon"></i></span>
+                                    <span x-text="operation"></span>
+                                    <ul class="tree">
+                                        <template x-for="filename of Object.keys(files[agentName][operation])" :key="filename">
+                                            <li class="agent-child">
+                                                <label class="checkbox">
+                                                    <input type="checkbox" class="file-checkbox" x-bind:value="files[agentName][operation][filename]" @click="toggleFile($el, files[agentName][operation][filename])">
+                                                    <span class="icon is-small"><i class="far fa-file-alt"></i></span>
+                                                    <span x-text="filename"></span>
+                                                </label>
+                                            </li>
+                                        </template>
+                                        <li class="agent-child" x-show="!Object.keys(files[agentName][operation]).length">
+                                            (none)
+                                        </li>
+                                    </ul>     
+                                </li>
+                            </ul>    
                         </template>
-                        <li class="agent-child" x-show="!Object.keys(files[agentName]).length">
-                            (none)
-                        </li>
-                    </ul>
                 </li>
             </template>
         </ul>  
@@ -194,6 +202,9 @@
         display: none;
     }
     ul.tree li.root-child:last-child:after {
+        display: none;
+    }
+    ul.tree li.agentName-child:after{
         display: none;
     }
     ul.tree li.agent-child:nth-last-child(2):after {

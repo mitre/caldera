@@ -173,9 +173,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; autoFillResults = []">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('tactic') }" x-model="selectedAbility.tactic" x-on:keyup="searchForAutoFill('tactic')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults" @click.outside="focusSearchResults = false; autoFillResults = []">
+                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults">
                                                 <template x-for="result of autoFillResults" :key="result">
                                                     <p x-show="result !== selectedAbility.tactic" @click="selectedAbility.tactic = result; autoFillResults = []" x-text="result"></p>
                                                 </template>
@@ -191,9 +191,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; autoFillResults = []">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_id') }" x-model="selectedAbility.technique_id" x-on:keyup="searchForAutoFill('technique_id')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults" @click.outside="focusSearchResults = false; autoFillResults = []">
+                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults">
                                                 <template x-for="result of autoFillResults" :key="result">
                                                     <p x-show="result !== selectedAbility.technique_id" @click="selectedAbility.technique_id = result; autoFillResults = []" x-text="result"></p>
                                                 </template>
@@ -209,9 +209,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; autoFillResults = []">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrors.includes('technique_name') }" x-model="selectedAbility.technique_name" x-on:keyup="searchForAutoFill('technique_name')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults" @click.outside="focusSearchResults = false; autoFillResults = []">
+                                            <div class="search-results is-size-7" x-show="autoFillResults && focusSearchResults">
                                                 <template x-for="result of autoFillResults" :key="result">
                                                     <p x-show="result !== selectedAbility.technique_name" @click="selectedAbility.technique_name = result; autoFillResults = []" x-text="result"></p>
                                                 </template>

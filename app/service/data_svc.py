@@ -37,6 +37,10 @@ DATA_FILE_GLOBS = (
     'data/object_store',
 )
 
+PAYLOADS_CONFIG_STANDARD_KEY = 'standard_payloads'
+PAYLOADS_CONFIG_SPECIAL_KEY = 'special_payloads'
+PAYLOADS_CONFIG_EXTENSIONS_KEY = 'extensions'
+
 
 class DataService(DataServiceInterface, BaseService):
 
@@ -310,15 +314,52 @@ class DataService(DataServiceInterface, BaseService):
             await self.load_yaml_file(Objective, filename, plugin.access)
 
     async def _load_payloads(self, plugin):
+        payload_config = dict(
+            standard_payloads=dict(),
+            special_payloads=dict(),
+            extensions=dict(),
+        )
         for filename in glob.iglob('%s/payloads/*.yml' % plugin.data_dir, recursive=False):
             data = self.strip_yml(filename)
-            payload_config = self.get_config(name='payloads')
-            payload_config['standard_payloads'] = data[0]['standard_payloads']
-            payload_config['special_payloads'] = data[0]['special_payloads']
-            payload_config['extensions'] = data[0]['extensions']
-            await self._apply_special_payload_hooks(payload_config['special_payloads'])
-            await self._apply_special_extension_hooks(payload_config['extensions'])
-            self.apply_config(name='payloads', config=payload_config)
+            special_payloads = data[0].get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())
+            extensions = data[0].get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())
+            standard_payloads = data[0].get(PAYLOADS_CONFIG_STANDARD_KEY, dict())
+            payload_config[PAYLOADS_CONFIG_STANDARD_KEY].update(standard_payloads)
+            if special_payloads:
+                await self._apply_special_payload_hooks(special_payloads)
+                payload_config[PAYLOADS_CONFIG_SPECIAL_KEY].update(special_payloads)
+            if extensions:
+                await self._apply_special_extension_hooks(extensions)
+                payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY].update(extensions)
+        self._update_payload_config(payload_config, plugin.name)
+
+    def _update_payload_config(self, updates, curr_plugin_name):
+        payload_config = self.get_config(name='payloads')
+        curr_standard_payloads = payload_config.get(PAYLOADS_CONFIG_STANDARD_KEY, dict())
+        curr_special_payloads = payload_config.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())
+        curr_extensions = payload_config.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())
+        new_standard_payloads = updates.get(PAYLOADS_CONFIG_STANDARD_KEY, dict())
+        new_special_payloads = updates.get(PAYLOADS_CONFIG_SPECIAL_KEY, dict())
+        new_extensions = updates.get(PAYLOADS_CONFIG_EXTENSIONS_KEY, dict())
+
+        self._check_payload_overlaps(curr_standard_payloads, new_standard_payloads, PAYLOADS_CONFIG_STANDARD_KEY,
+                                     curr_plugin_name)
+        self._check_payload_overlaps(curr_special_payloads, new_special_payloads, PAYLOADS_CONFIG_SPECIAL_KEY,
+                                     curr_plugin_name)
+        self._check_payload_overlaps(curr_extensions, new_extensions, PAYLOADS_CONFIG_EXTENSIONS_KEY, curr_plugin_name)
+
+        payload_config[PAYLOADS_CONFIG_STANDARD_KEY] = {**curr_standard_payloads, **new_standard_payloads}
+        payload_config[PAYLOADS_CONFIG_SPECIAL_KEY] = {**curr_special_payloads, **new_special_payloads}
+        payload_config[PAYLOADS_CONFIG_EXTENSIONS_KEY] = {**curr_extensions, **new_extensions}
+        self.apply_config(name='payloads', config=payload_config)
+
+    def _check_payload_overlaps(self, old_dict, new_dict, config_section_name, curr_plugin_name):
+        overlap = set(old_dict).intersection(new_dict)
+        for payload in overlap:
+            if old_dict[payload] != new_dict[payload]:
+                self.log.warning('Config for %s already exists in the %s section of the payloads config and will be '
+                                 'overridden using new payload config data from plugin %s', payload,
+                                 config_section_name, curr_plugin_name)
 
     async def _load_planners(self, plugin):
         for filename in glob.iglob('%s/planners/*.yml' % plugin.data_dir, recursive=False):
