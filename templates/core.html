@@ -34,9 +34,9 @@
                 </div>
                 <template x-if="errors.length > 0">
                     <div class="is-flex is-justify-content-center">
-                        <a id="startup-errors-warning" class="has-text-warning">
-                            <em class="fas fa-exclamation-triangle pr-1"></em>
-                            <span title="Click for to view startup errors" class="has-text-warning" x-text="`${errors.length} startup warnings`" @click="showErrors = true"></span>
+                        <a id="startup-errors-warning" class="has-text-info">
+                            <em class="fas fa-comment-alt pr-1"></em>
+                            <span title="Click for to view startup errors" class="has-text-info" x-text="`${errors.length} startup message${errors.length > 1 ? 's' : ''}`" @click="showErrors = true"></span>
                         </a>
                     </div>
                 </template>
@@ -84,16 +84,6 @@
                             </a>
                         </li>
                     </ul>
-                    <ul class="menu-list has-text-centered">
-                        <li>
-                            <p class="mt-6" x-text="`v${version}`"></p>
-                            <p x-show="newVersionLink">
-                                <a class="has-text-info is-size-7" x-bind:href="newVersionLink" target="_blank">
-                                    New version available <br> (v<span x-text="newVersionLink.split('/')[newVersionLink.split('/').length - 1]"></span>)
-                                </a>
-                            </p>
-                        </li>
-                    </ul>
                 </aside>
             </div>
 
@@ -128,13 +118,13 @@
                 <div class="modal-card">
                     <div>
                         <header class="modal-card-head">
-                            <h2>Startup Errors</h2>
+                            <h2>Startup Messages</h2>
                         </header>
                         <section class="modal-card-body">
                             <div class="modal-form">
                                 <template x-if="!errors || errors.length < 1">
                                     <div class="is-flex is-justify-content-center">
-                                        <em>No startup errors.</em>
+                                        <em>No startup messages.</em>
                                     </div>
                                 </template>
                                 <template x-for="error of errors" :key="error.msg">
@@ -142,8 +132,10 @@
                                         <div class="media-content">
                                             <div class="content">
                                                 <p>
-                                                    <strong x-text="error.name"></strong>
-                                                    <br>
+                                                    <span class="is-flex">
+                                                        <strong x-text="error.name" class="mr-2"></strong>
+                                                        <span class="tag" x-show="error.optional">Optional</span>
+                                                    </span>
                                                     <span x-text="error.msg"></span>
                                                 </p>
                                             </div>

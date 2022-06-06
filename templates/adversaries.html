@@ -2,7 +2,7 @@
 
     <!-- PAGE DETAILS -->
 
-    <div x-init="initPage()">
+    <div x-init="initPage()" x-ref="headerAdversaries">
         <h2>Adversary Profiles</h2>
         <p>
             Adversary Profiles are collections of ATT&CK TTPs, designed to create specific effects on a host or network.
@@ -15,9 +15,9 @@
     <form>
         <div id="select-adversary" class="field has-addons">
             <label class="label" for="profile-search">Select a profile &nbsp;&nbsp;&nbsp;</label>
-            <div class="control is-expanded auto-complete" x-data="{focusSearchResults: false}">
+            <div class="control is-expanded auto-complete" x-data="{focusSearchResults: false}" @click.outside="focusSearchResults = false; searchResults = []">
                 <input id="profile-search" class="input is-small is-fullwidth" x-model="adversarySearchQuery" placeholder="Search for an adversary profile or tactic..." x-on:keyup="searchForAdversary()" @click="focusSearchResults = true">
-                <div class="search-results is-size-7" x-show="adversarySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                <div class="search-results is-size-7" x-show="adversarySearchResults && focusSearchResults">
                     <template x-for="result of adversarySearchResults" :key="result.adversary_id">
                         <p @click="selectAdversary(result.adversary_id, `${result.name} (${(result.tactics.join(', '))})`); focusSearchResults = false" x-text="`${result.name} (${(result.tactics.join(', '))})`" x-bind:title="result.description"></p>
                     </template>
@@ -345,9 +345,9 @@
                         </div>
                         <div class="field-body">
                             <div class="field">
-                                <div class="control auto-complete mb-3" x-data="{focusSearchResults: true}">
+                                <div class="control auto-complete mb-3" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                     <input class="input is-small" x-model="abilitySearchQuery" placeholder="Search for an ability..." x-on:keyup="searchForAbility()" @click="focusSearchResults = true">
-                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                    <div class="search-results is-size-7" x-show="abilitySearchResults && focusSearchResults">
                                         <template x-for="result of abilitySearchResults" :key="result.ability_id">
                                             <p @click="selectAbility(result.ability_id)" x-text="result.name"></p>
                                         </template>
@@ -470,9 +470,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                             <input id="tactic-auto-fill" class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('tactic') }" x-model="selectedAbility.tactic" x-on:keyup="searchForAutoFill('tactic')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults">
                                                 <template x-for="result of searchResults" :key="result">
                                                     <p x-show="result !== selectedAbility.tactic" @click="selectedAbility.tactic = result; searchResults = []" x-text="result"></p>
                                                 </template>
@@ -488,9 +488,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_id') }" x-model="selectedAbility.technique_id" x-on:keyup="searchForAutoFill('technique_id')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults">
                                                 <template x-for="result of searchResults" :key="result">
                                                     <p x-show="result !== selectedAbility.technique_id" @click="selectedAbility.technique_id = result; searchResults = []" x-text="result"></p>
                                                 </template>
@@ -506,9 +506,9 @@
                                 </div>
                                 <div class="field-body">
                                     <div class="field">
-                                        <div class="control auto-complete" x-data="{focusSearchResults: true}">
+                                        <div class="control auto-complete" x-data="{focusSearchResults: true}" @click.outside="focusSearchResults = false; searchResults = []">
                                             <input class="input is-small" x-bind:class="{ 'is-danger': fieldErrorsAbility.includes('technique_name') }" x-model="selectedAbility.technique_name" x-on:keyup="searchForAutoFill('technique_name')" @click="focusSearchResults = true">
-                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults" @click.outside="focusSearchResults = false; searchResults = []">
+                                            <div class="search-results is-size-7" x-show="searchResults && focusSearchResults">
                                                 <template x-for="result of searchResults" :key="result">
                                                     <p x-show="result !== selectedAbility.technique_name" @click="selectedAbility.technique_name = result; searchResults = []" x-text="result"></p>
                                                 </template>
@@ -886,8 +886,14 @@
                     this.abilities = abilities;
                     this.getAdversaryTactics();
                     return apiV2('GET', '/api/v2/objectives');
-                }).then((objectives) => {
+                }).then(async (objectives) => {
                     this.objectives = objectives;
+
+                    while (this.$refs.headerAdversaries) {
+                        await sleep(3000);
+                        this.abilities = await apiV2('GET', '/api/v2/abilities');
+                        this.getAdversaryTactics();
+                    }
                 }).catch((error) => {
                     toast('Error initializing page', false);
                     console.error(`Error initializing page: ${error}`);
