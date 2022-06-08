@@ -9,6 +9,7 @@ from collections import namedtuple
 from datetime import datetime, timezone
 from importlib import import_module
 
+import aiohttp_cors
 import aiohttp_jinja2
 import jinja2
 import yaml
@@ -18,7 +19,7 @@ from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
 
-Error = namedtuple('Error', ['name', 'msg', 'optional'])
+Error = namedtuple('Error', ['name', 'msg'])
 
 
 class AppService(AppServiceInterface, BaseService):
@@ -92,6 +93,15 @@ class AppService(AppServiceInterface, BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(op.run(self.get_services()))
 
+    async def enable_cors(self):
+        cors = aiohttp_cors.setup(self.application, defaults={
+            "http://localhost:3000": aiohttp_cors.ResourceOptions()
+        })
+        for route in list(self.application.router.routes()):
+            if route._method != '*':
+                cors.add(route)
+
+
     async def load_plugins(self, plugins):
         def trim(p):
             if p.startswith('.'):
@@ -164,7 +174,7 @@ class AppService(AppServiceInterface, BaseService):
                 self.log.warning(msg)
             else:
                 self.log.error(msg)
-            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version']), params.get('optional')))
+            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
             return False
         return True
 
