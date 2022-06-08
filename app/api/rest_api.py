@@ -29,7 +29,7 @@ class RestApi(BaseWorld):
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
-        self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
+        self.app_svc.application.router.add_static('/assets', 'magma/dist/assets/', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('*', '/', self.landing)
         self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
@@ -55,18 +55,7 @@ class RestApi(BaseWorld):
         await self.auth_svc.logout_user(request)
 
     async def landing(self, request):
-        access = await self.auth_svc.get_permissions(request)
-        if not access:
-            # If user doesn't have access, server will attempt to redirect to login.
-            return await self.auth_svc.login_redirect(request)
-        plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))
-        template_name = access[0].name
-        if template_name == "RED":
-            template_name = "core_red"
-        elif template_name == "BLUE":
-            template_name = "core_blue"
-        return render_template(f"{template_name}.html", request, data)
+        return render_template("index.html", request, {})
 
     @check_authorization
     async def rest_core(self, request):
