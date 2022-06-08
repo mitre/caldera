@@ -845,7 +845,7 @@
                                         <span class="has-text-weight-bold" x-text="ability.name"></span>
                                         <span x-text="`(${ability.technique_id})`"></span>
                                     </p>
-                                    <p class="help mb-0" x-text="ability.description" style="width: 90%; word-wrap: anywhere;"></p>
+                                    <p class="help mb-0" x-text="ability.description" style="width: 90%; white-space: pre-line;"></p>
                                     <span class="icon is-large ability-icon"><em class="fas fa-lg fa-arrow-right"></em></span>
                                 </div>
                             </template>
@@ -854,7 +854,7 @@
                         <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
-                            <p x-text="selectedPotentialLink.description" style="word-wrap: anywhere;"></p>
+                            <p x-text="selectedPotentialLink.description" style="white-space: pre-line;"></p>
                             <hr>
                             <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
                             <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
