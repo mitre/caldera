@@ -7,6 +7,7 @@ import pathlib
 import uuid
 from datetime import time
 import re
+import logging
 
 import yaml
 from aiohttp import web
@@ -27,6 +28,7 @@ from app.utility.base_service import BaseService
 class RestService(RestServiceInterface, BaseService):
 
     def __init__(self):
+        logging.getLogger('asyncio').setLevel(logging.WARNING)
         self.log = self.add_service('rest_svc', self)
         self.loop = asyncio.get_event_loop()
 
