@@ -396,7 +396,7 @@
                 <div class="modal-background" @click="openModal = null; selectPotentialLink({})"></div>
 
                 <template x-if="openModal === 'showOutput'">
-                    <div class="modal-card">
+                    <div class="modal-card wide">
                         <header class="modal-card-head">
                             <p class="modal-card-title">Output</p>
                         </header>
@@ -445,7 +445,7 @@
                 </template>
 
                 <template x-if="openModal === 'showCommand'">
-                    <div class="modal-card">
+                    <div class="modal-card wide">
                         <header class="modal-card-head">
                             <p class="modal-card-title">Command</p>
                         </header>
@@ -753,7 +753,7 @@
                                             <div class="control">
                                                 <div class="select is-small is-fullwidth">
                                                     <select id="link-agent" x-model="selectedAgentIndex" x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
-                                                        <option default value="">Choose an agent</option>
+                                                        <option default disabled value="">Choose an agent</option>
                                                         <template x-for="(agent, index) in selectedOperation.host_group" :key="agent.paw">
                                                             <option :value="index" x-bind:selected="index === 0" x-text="agent.display_name + '-' + agent.paw"></option>
                                                         </template>
@@ -772,7 +772,7 @@
                                             <div class="control">
                                                 <div class="select is-small is-fullwidth">
                                                     <select id="link-exec" x-model="potentialLink.executor" x-on:change="filterAbilities(abilities)">
-                                                        <option default value="" disabled>Select an executor</option>
+                                                        <option value="" disabled>Select an executor</option>
                                                         <template x-for="(exec, index) of selectedAgentExecutors" :key="exec.executor">
                                                             <option x-text="exec.display" :value="exec.executor"></option>
                                                         </template>
@@ -840,12 +840,12 @@
                                 <p x-text="`${filteredAbilitiesList.length} potential link${((filteredAbilitiesList.length === 1) ? '' : 's')}`"></p>
                             </div>
                             <template x-for="ability in filteredAbilitiesList" :key="ability.ability_id">
-                                <div class="box mb-2 mr-2 p-3 ability" @click="selectPotentialLink(ability)">
+                                <div class="box mb-2 mr-2 p-3 op-ability" @click="selectPotentialLink(ability)">
                                     <p style="width: 90%">
                                         <span class="has-text-weight-bold" x-text="ability.name"></span>
                                         <span x-text="`(${ability.technique_id})`"></span>
                                     </p>
-                                    <p class="help mb-0" x-text="ability.description" style="width: 90%; word-wrap: anywhere;"></p>
+                                    <p class="help mb-0" x-text="ability.description" style="width: 90%; white-space: pre-line;"></p>
                                     <span class="icon is-large ability-icon"><em class="fas fa-lg fa-arrow-right"></em></span>
                                 </div>
                             </template>
@@ -854,7 +854,7 @@
                         <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
-                            <p x-text="selectedPotentialLink.description" style="word-wrap: anywhere;"></p>
+                            <p x-text="selectedPotentialLink.description" style="white-space: pre-line;"></p>
                             <hr>
                             <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
                             <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
@@ -1273,6 +1273,11 @@
             },
 
             resetOperationToStart() {
+                let defaultSourceId = 'ed32b9c3-9593-4c33-b0db-e2007315096b'  // basic fact source
+                if (!this.SOURCES.find((s) => s.id === defaultSourceId) && this.SOURCES[0]) {
+                    defaultSourceId = this.SOURCES[0].id
+                }
+
                 this.operationToStart = {
                     name: '',
                     group: '',
@@ -1281,7 +1286,7 @@
                     state: 'running',
                     autonomous: 1,
                     planner: { id: this.PLANNERS[0] ? this.PLANNERS[0].id : 'aaa7c857-37a0-4c4a-85f7-4e9f7f30e31a' },
-                    source: { id: this.SOURCES[0] ? this.SOURCES[0].id : 'ed32b9c3-9593-4c33-b0db-e2007315096b' },
+                    source: { id: defaultSourceId },
                     use_learning_parsers: 1,
                     obfuscator: 'plain-text',
                     jitter: '2/8',
@@ -1454,10 +1459,9 @@
 
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
                 const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
-                const opSource = this.selectedOperation.source;
+                const opSource = this.SOURCES.find((s) => s.id === this.selectedOperation.source.id);
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
                 const facts = (opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : [])).concat(this.facts);
-
                 this.potentialLinkCommand = executor.command;
 
                 fields.filter((field) => facts.find((fact) => fact.name === field)).forEach((field) => {
@@ -1747,13 +1751,13 @@
         font-size: 1em !important;
     }
 
-    #operationsPage .box.ability {
+    #operationsPage .box.op-ability {
         position: relative;
         cursor: pointer;
         border: 1px solid transparent;
         background-color: #272727;
     }
-    #operationsPage .box.ability:hover {
+    #operationsPage .box.op-ability:hover {
         border: 1px solid #474747;
     }
     #operationsPage .ability-icon {
