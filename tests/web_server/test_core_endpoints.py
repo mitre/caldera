@@ -10,11 +10,7 @@ from app.api.rest_api import RestApi
 from app.objects.c_agent import Agent
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
-from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
-from app.service.file_svc import FileSvc
-from app.service.learning_svc import LearningService
-from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.service.interfaces.i_login_handler import LoginHandlerInterface
 from app.utility.base_service import BaseService
