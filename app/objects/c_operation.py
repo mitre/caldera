@@ -120,6 +120,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.name = name
         self.group = group
         self.agents = agents if agents else []
+        self.untrusted_agents = []
         self.adversary = adversary
         self.jitter = jitter
         self.source = source
