@@ -158,6 +158,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
     def has_link(self, link_id):
         return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
 
+    def update_untrusted_agents(self, agent):
+        if not agent.trusted and agent in self.agents:
+            self.untrusted_agents.append(agent.paw)
+
     async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         seeded_facts = []

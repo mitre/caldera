@@ -46,7 +46,7 @@ class AppService(AppServiceInterface, BaseService):
                     if silence_time > (self.get_config(name='agents', prop='untrusted_timer') + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
-                        await self.mark_agent_as_untrusted(a.paw)
+                        await self.update_operations_with_untrusted_agent(a)
                     else:
                         trust_time_left = self.get_config(name='agents', prop='untrusted_timer') - silence_time
                         if trust_time_left < next_check:
@@ -55,11 +55,11 @@ class AppService(AppServiceInterface, BaseService):
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
 
-    async def mark_agent_as_untrusted(self, agent_paw: str):
+    async def update_operations_with_untrusted_agent(self, untrusted_agent):
         all_operations = await self.get_service('data_svc').locate('operations')
         for op in all_operations:
-            if (not await op.is_finished()) and any(agent_paw == agent.paw for agent in op.agents):
-                op.untrusted_agents.append(agent_paw)
+            if (not await op.is_finished()) and any(untrusted_agent.paw == agent.paw for agent in op.agents):
+                op.update_untrusted_agents(untrusted_agent)
 
     async def find_link(self, unique):
         operations = await self.get_service('data_svc').locate('operations')
