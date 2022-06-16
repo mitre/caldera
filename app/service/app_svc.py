@@ -165,7 +165,7 @@ class AppService(AppServiceInterface, BaseService):
             if params.get('optional', False):
                 msg = '. '.join([
                     msg,
-                    '%s is an optional dependency and its absence will not affect Caldera\'s core operation' % requirement.capitalize(),
+                    '%s is an optional dependency which adds more functionality' % requirement.capitalize(),
                     params.get('reason', '')
                 ])
                 self.log.warning(msg)
