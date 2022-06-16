@@ -52,9 +52,10 @@ class TestAppService:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_objective.Objective.completed') as mock_completed:
                 mock_completed.return_value = False
-                operation = (await BaseService.get_service('data_svc').locate('operations', {'id': test_operation['id']}))[0]
+                operation = (await BaseService.get_service('data_svc').locate('operations',
+                                                                              {'id': test_operation['id']}))[0]
                 test_agent.trusted = False
-                await app_svc.mark_agent_as_untrusted(test_agent.paw)
+                await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.RUNNING.value
                 assert test_agent in operation.agents
                 assert test_agent.paw in operation.untrusted_agents
@@ -65,10 +66,10 @@ class TestAppService:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_objective.Objective.completed') as mock_completed:
                 mock_completed.return_value = False
-                operation = \
-                (await BaseService.get_service('data_svc').locate('operations', {'id': test_operation['id']}))[0]
+                operation = (await BaseService.get_service('data_svc').locate('operations',
+                                                                              {'id': test_operation['id']}))[0]
                 test_agent.trusted = False
-                await app_svc.mark_agent_as_untrusted(test_agent.paw)
+                await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.RUN_ONE_LINK.value
                 assert test_agent in operation.agents
                 assert test_agent.paw in operation.untrusted_agents
@@ -79,10 +80,10 @@ class TestAppService:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_objective.Objective.completed') as mock_completed:
                 mock_completed.return_value = False
-                operation = \
-                (await BaseService.get_service('data_svc').locate('operations', {'id': test_operation['id']}))[0]
+                operation = (await BaseService.get_service('data_svc').locate('operations',
+                                                                              {'id': test_operation['id']}))[0]
                 test_agent.trusted = False
-                await app_svc.mark_agent_as_untrusted(test_agent.paw)
+                await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.PAUSED.value
                 assert test_agent in operation.agents
                 assert test_agent.paw in operation.untrusted_agents
@@ -93,10 +94,10 @@ class TestAppService:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_objective.Objective.completed') as mock_completed:
                 mock_completed.return_value = False
-                operation = \
-                (await BaseService.get_service('data_svc').locate('operations', {'id': test_operation['id']}))[0]
+                operation = (await BaseService.get_service('data_svc').locate('operations',
+                                                                              {'id': test_operation['id']}))[0]
                 test_agent.trusted = False
-                await app_svc.mark_agent_as_untrusted(test_agent.paw)
+                await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.OUT_OF_TIME.value
                 assert test_agent in operation.agents
                 assert test_agent.paw not in operation.untrusted_agents
@@ -107,10 +108,10 @@ class TestAppService:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_objective.Objective.completed') as mock_completed:
                 mock_completed.return_value = False
-                operation = \
-                (await BaseService.get_service('data_svc').locate('operations', {'id': test_operation['id']}))[0]
+                operation = (await BaseService.get_service('data_svc').locate('operations',
+                                                                              {'id': test_operation['id']}))[0]
                 test_agent.trusted = False
-                await app_svc.mark_agent_as_untrusted(test_agent.paw)
+                await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.FINISHED.value
                 assert test_agent in operation.agents
                 assert test_agent.paw not in operation.untrusted_agents
@@ -121,10 +122,10 @@ class TestAppService:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_objective.Objective.completed') as mock_completed:
                 mock_completed.return_value = False
-                operation = \
-                (await BaseService.get_service('data_svc').locate('operations', {'id': test_operation['id']}))[0]
+                operation = (await BaseService.get_service('data_svc').locate('operations',
+                                                                              {'id': test_operation['id']}))[0]
                 test_agent.trusted = False
-                await app_svc.mark_agent_as_untrusted(test_agent.paw)
+                await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.CLEANUP.value
                 assert test_agent in operation.agents
                 assert test_agent.paw not in operation.untrusted_agents
