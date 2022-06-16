@@ -438,4 +438,3 @@ class TestOperation:
         op = Operation(name='test', agents=[], adversary=adversary)
         op.update_untrusted_agents(operation_agent)
         assert operation_agent.paw not in op.untrusted_agents
-
