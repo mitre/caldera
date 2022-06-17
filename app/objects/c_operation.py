@@ -120,7 +120,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.name = name
         self.group = group
         self.agents = agents if agents else []
-        self.untrusted_agents = []
+        self.untrusted_agents = set()
         self.adversary = adversary
         self.jitter = jitter
         self.source = source
@@ -160,7 +160,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def update_untrusted_agents(self, agent):
         if not agent.trusted and agent in self.agents:
-            self.untrusted_agents.append(agent.paw)
+            self.untrusted_agents.add(agent.paw)
 
     async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
