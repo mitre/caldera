@@ -100,7 +100,7 @@ class TestAppService:
                 await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.OUT_OF_TIME.value
                 assert test_agent in operation.agents
-                assert test_agent.paw not in operation.untrusted_agents
+                assert not operation.untrusted_agents
 
     async def test_mark_agent_as_untrusted_finished_operation(self, setup_finished_operation, test_agent, app_svc,
                                                               mocker, async_return, test_operation):
@@ -114,7 +114,7 @@ class TestAppService:
                 await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.FINISHED.value
                 assert test_agent in operation.agents
-                assert test_agent.paw not in operation.untrusted_agents
+                assert not operation.untrusted_agents
 
     async def test_mark_agent_as_untrusted_cleanup_operation(self, setup_cleanup_operation, test_agent, app_svc, mocker,
                                                              async_return, test_operation):
@@ -128,4 +128,4 @@ class TestAppService:
                 await app_svc.update_operations_with_untrusted_agent(test_agent)
                 assert operation.state == operation.States.CLEANUP.value
                 assert test_agent in operation.agents
-                assert test_agent.paw not in operation.untrusted_agents
+                assert not operation.untrusted_agents

@@ -419,7 +419,7 @@ class TestOperation:
         operation_agent.trusted = True
         op = Operation(name='test', agents=[operation_agent], adversary=adversary)
         op.update_untrusted_agents(operation_agent)
-        assert operation_agent.paw not in op.untrusted_agents
+        assert not op.untrusted_agents
 
     def test_update_untrusted_agents_with_untrusted(self, operation_agent, ability, adversary):
         operation_agent.trusted = False
@@ -431,10 +431,10 @@ class TestOperation:
         operation_agent.trusted = True
         op = Operation(name='test', agents=[], adversary=adversary)
         op.update_untrusted_agents(operation_agent)
-        assert operation_agent.paw not in op.untrusted_agents
+        assert not op.untrusted_agents
 
     def test_update_untrusted_agents_with_untrusted_no_operation_agents(self, operation_agent, ability, adversary):
         operation_agent.trusted = False
         op = Operation(name='test', agents=[], adversary=adversary)
         op.update_untrusted_agents(operation_agent)
-        assert operation_agent.paw not in op.untrusted_agents
+        assert not op.untrusted_agents
