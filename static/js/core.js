@@ -8,21 +8,15 @@ function alpineCore() {
         showErrors: false,
         version: '0.0.0',
         isFirstVisit: false,
-        newVersionLink: '',
-        scrollTop: document.body.scrollTop,
+        scrollTop: window.scrollY,
 
         initPage() {
             window.onscroll = () => {
-                this.scrollTop = document.body.scrollTop;
+                this.scrollTop = window.scrollY;
             };
 
             apiV2('GET', '/api/v2/health').then((response) => {
                 this.version = response.version;
-                return apiV2('GET', 'https://api.github.com/repos/mitre/caldera/releases');
-            }).then((releases) => {
-                if (releases.findIndex((release) => release.tag_name === this.version) > 0) {
-                    this.newVersionLink = releases[0].html_url;
-                }
                 this.checkIfFirstVisit();
             }).catch((error) => {
                 console.error(error);

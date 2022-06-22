@@ -201,12 +201,12 @@ class AuthService(AuthServiceInterface, BaseService):
         provided_handler = primary_handler if primary_handler else self._get_login_handler_from_config(services)
         if provided_handler:
             if isinstance(provided_handler, LoginHandlerInterface):
-                self.log.info('Setting primary login handler: %s', provided_handler.name)
+                self.log.debug('Setting primary login handler: %s', provided_handler.name)
                 self._login_handler = provided_handler
             else:
                 raise TypeError('Attempted to set login handler that does not implement LoginHandlerInterface.')
         else:
-            self.log.info('Using default login handler.')
+            self.log.debug('Using default login handler.')
             self._login_handler = self._default_login_handler
 
     def _get_login_handler_from_config(self, services):

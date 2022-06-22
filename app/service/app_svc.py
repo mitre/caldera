@@ -18,7 +18,7 @@ from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
 
-Error = namedtuple('Error', ['name', 'msg'])
+Error = namedtuple('Error', ['name', 'msg', 'optional'])
 
 
 class AppService(AppServiceInterface, BaseService):
@@ -158,13 +158,13 @@ class AppService(AppServiceInterface, BaseService):
             if params.get('optional', False):
                 msg = '. '.join([
                     msg,
-                    '%s is an optional dependency and its absence will not affect Caldera\'s core operation' % requirement.capitalize(),
+                    '%s is an optional dependency which adds more functionality' % requirement.capitalize(),
                     params.get('reason', '')
                 ])
                 self.log.warning(msg)
             else:
                 self.log.error(msg)
-            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
+            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version']), params.get('optional')))
             return False
         return True
 
