@@ -435,7 +435,8 @@ class TestOperation:
         assert len(op.ignored_links) == 1
         assert test_link in op.chain
 
-    async def test_wait_for_links_completion_non_ignorable_link(self, make_test_link, untrusted_operation_agent, mocker):
+    async def test_wait_for_links_completion_non_ignorable_link(self, make_test_link, untrusted_operation_agent, mocker,
+                                                                async_return):
         test_agent = untrusted_operation_agent
         test_link = make_test_link(9876, test_agent.paw)
         op = Operation(name='test', agents=[test_agent], state='running')
@@ -443,7 +444,7 @@ class TestOperation:
         assert not op.ignored_links
         assert test_link in op.chain
         with mocker.patch('asyncio.sleep') as mock_sleep:
-            mock_sleep.side_effect = None
+            mock_sleep.return_value = async_return(None)
             await op.wait_for_links_completion([test_link.id])
         assert not op.ignored_links
         assert test_link in op.chain
