@@ -12,7 +12,7 @@
     <hr>
 
     <!-- ADVERSARY SELECTION -->
-    <form>
+    <form autocomplete="off">
         <div id="select-adversary" class="field has-addons">
             <label class="label" for="profile-search">Select a profile &nbsp;&nbsp;&nbsp;</label>
             <div class="control is-expanded auto-complete" x-data="{focusSearchResults: false}" @click.outside="focusSearchResults = false; searchResults = []">
@@ -113,7 +113,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <template x-for="(ability, index) of selectedProfileAbilities">
+                    <template x-for="(ability, index) of selectedProfileAbilities" :key="ability.ability_id">
                         <tr @click="selectAbility(ability.ability_id)" class="ability-row" 
                             x-bind:class="{ 'orange-row': needsParser.indexOf(ability.name) > -1 ,
                                             'row-hover': ability.ability_id === abilityTableDragHoverId && abilityTableDragHoverId != undefined, 
@@ -1067,6 +1067,7 @@
                     adversary.tactics = [...new Set(tactics)];
                 });
                 this.adversarySearchResults = this.adversaries;
+                this.searchForAdversary()
             },
 
             linkObjective() {
@@ -1400,14 +1401,14 @@
                 const children = Array.from(event.target.parentNode.parentNode.children);
 
                 if (children.indexOf(event.target.parentNode) > children.indexOf(this.abilityTableDragTarget)) {
-                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].children[0].children[0].innerHTML, 10);
                 } else {
-                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].children[0].children[0].innerHTML, 10);
                 }
             },
 
             swapAbilities(event) {
-                const fromIndex = parseInt(this.abilityTableDragTarget.children[1].innerHTML, 10) - 1;
+                const fromIndex = parseInt(this.abilityTableDragTarget.children[1].children[0].children[0].innerHTML, 10) - 1;
                 const toIndex = this.abilityTableDragEndIndex - 1;
                 const temp = this.selectedProfileAbilities[fromIndex];
                 this.selectedProfileAbilities[fromIndex] = this.selectedProfileAbilities[toIndex];
