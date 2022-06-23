@@ -39,6 +39,11 @@
             <div class="section p-2 pb-2">
                 <div class="is-flex-direction-row p-2 mb-2">
                     <span x-text="'Current Operation:  ' + selectedOperation.name + '  |  ' + selectedOperation.adversary.name + '  |  ' + selectedOperation.source.name" ></span>
+                    <button class="button is-small"
+                        x-on:click="openModal='showOperationDetails'"
+                        title="view operation details">View Operation Details
+                    </button>
+
                 </div>
                 <div class="control-buttons is-flex is-flex-direction-row is-justify-content-space-between">
                     <div class="is-flex is-flex-direction-row">
@@ -737,6 +742,136 @@
                     </div>
                 </template>
 
+                <template x-if="openModal === 'showOperationDetails'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Operation Details</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <table>
+                                <col width="35%">
+                                <col width="65%">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">adversary: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.adversary.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">fact source: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.source.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">group: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="(selectedOperation.group ? selectedOperation.group : 'all')"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">planner: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.planner.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">obfuscator: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.obfuscator"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">autonomous: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="(selectedOperation.autonomous === 0 ? 'manual' : 'autonomous')"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">parser: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.use_learning_parsers"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">auto_close: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.auto_close"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <div class="is-align-items-center is-flex is-align-items-center">
+                                                <span class="top-right-anchor">
+                                                    <label class="label">jitter: </label>
+                                                </span>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.jitter"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                
+                            </table>
+                            <div class="level-right">
+                                <div class="level-item">
+                                    <button class="button is-small" @click="openModal = null">Close</button>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </template>
+                
                 <template x-if="openModal === 'addLink'">
                     <div class="modal-card wide" x-init="getAbilities()">
                         <header class="modal-card-head">
