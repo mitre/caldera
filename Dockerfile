@@ -33,6 +33,11 @@ RUN go version;
 # Compile default sandcat agent binaries, which will download basic golang dependencies.
 WORKDIR /usr/src/app/plugins/sandcat
 
+# Fix line ending error that can be caused by cloning the project in a Windows environment
+RUN if [ "$WIN_BUILD" = "true" ] ; then cp ./update-agents.sh ./update-agents-copy.sh; fi
+RUN if [ "$WIN_BUILD" = "true" ] ; then tr -d '\15\32' < ./update-agents-copy.sh > ./update-agents.sh; fi
+RUN if [ "$WIN_BUILD" = "true" ] ; then rm ./update-agents-copy.sh; fi
+
 RUN ./update-agents.sh
 
 # Check if we can compile the sandcat extensions, which will download golang dependencies for agent extensions
