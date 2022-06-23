@@ -38,10 +38,10 @@
         <template x-if="selectedOperation && selectedOperationID">
             <div class="section p-2 pb-2">
                 <div class="is-flex-direction-row p-2 mb-2">
-                    <span x-text="'Current Operation:  ' + selectedOperation.name + '  |  ' + selectedOperation.adversary.name + '  |  ' + selectedOperation.source.name" ></span>
+                    <span x-text="selectedOperation.name" ></span>
                     <button class="button is-small"
                         x-on:click="openModal='showOperationDetails'"
-                        title="view operation details">View Operation Details
+                        title="view operation details">More Details
                     </button>
 
                 </div>
@@ -746,6 +746,7 @@
                     <div class="modal-card">
                         <header class="modal-card-head">
                             <p class="modal-card-title">Operation Details</p>
+                            <span x-text="selectedOperation.name" ></span>
                         </header>
                         <section class="modal-card-body">
                             <table>
