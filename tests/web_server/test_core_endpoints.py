@@ -10,11 +10,7 @@ from app.api.rest_api import RestApi
 from app.objects.c_agent import Agent
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
-from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
-from app.service.file_svc import FileSvc
-from app.service.learning_svc import LearningService
-from app.service.planning_svc import PlanningService
 from app.service.rest_svc import RestService
 from app.service.interfaces.i_login_handler import LoginHandlerInterface
 from app.utility.base_service import BaseService
@@ -33,15 +29,10 @@ async def aiohttp_client(aiohttp_client):
         app_svc = AppService(web.Application())
         _ = DataService()
         _ = RestService()
-        _ = PlanningService()
-        _ = LearningService()
         auth_svc = AuthService()
-        _ = ContactService()
-        _ = FileSvc()
         services = app_svc.get_services()
         os.chdir(str(Path(__file__).parents[2]))
 
-        await app_svc.register_contacts()
         await app_svc.load_plugins(['sandcat', 'ssl'])
         _ = await RestApi(services).enable()
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
