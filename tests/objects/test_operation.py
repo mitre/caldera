@@ -414,3 +414,27 @@ class TestOperation:
 
         report = event_loop.run_until_complete(op_with_learning_and_seeded.report(file_svc, data_svc))
         assert len(report['facts']) == 2
+
+    def test_update_untrusted_agents_with_trusted(self, operation_agent, ability, adversary):
+        operation_agent.trusted = True
+        op = Operation(name='test', agents=[operation_agent], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert not op.untrusted_agents
+
+    def test_update_untrusted_agents_with_untrusted(self, operation_agent, ability, adversary):
+        operation_agent.trusted = False
+        op = Operation(name='test', agents=[operation_agent], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert operation_agent.paw in op.untrusted_agents
+
+    def test_update_untrusted_agents_with_trusted_no_operation_agents(self, operation_agent, ability, adversary):
+        operation_agent.trusted = True
+        op = Operation(name='test', agents=[], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert not op.untrusted_agents
+
+    def test_update_untrusted_agents_with_untrusted_no_operation_agents(self, operation_agent, ability, adversary):
+        operation_agent.trusted = False
+        op = Operation(name='test', agents=[], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert not op.untrusted_agents
