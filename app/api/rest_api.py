@@ -50,7 +50,6 @@ class RestApi(BaseWorld):
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
 
-    @template('login.html')
     async def logout(self, request):
         await self.auth_svc.logout_user(request)
 
