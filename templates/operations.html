@@ -463,7 +463,9 @@
                             <template x-if="!isLinkEditable(selectedLink)">
                                 <div>
                                     <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
-                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkPlaintextCommand"></pre>
+                                    <template x-if="selectedLinkPlaintextCommand">
+                                        <pre class="has-text-left white-space-pre-line" x-text="'Plaintext: ' + selectedLinkPlaintextCommand"></pre>
+                                    </template>
                                 </div>
                             </template>
                         </section>
