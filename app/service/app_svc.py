@@ -8,9 +8,8 @@ import time
 from collections import namedtuple
 from datetime import datetime, timezone
 from importlib import import_module
-from aiohttp_cors import setup as cors_setup, ResourceOptions
 
-
+import aiohttp_cors
 import aiohttp_jinja2
 import jinja2
 import yaml
@@ -95,17 +94,12 @@ class AppService(AppServiceInterface, BaseService):
             self.loop.create_task(op.run(self.get_services()))
 
     async def enable_cors(self):
-        cors = cors_setup(self.application, defaults={
-            "*": ResourceOptions(
-                allow_credentials=True, expose_headers="*", allow_headers="*",
-            )
+        cors = aiohttp_cors.setup(self.application, defaults={
+            "http://localhost:3000": aiohttp_cors.ResourceOptions()
         })
         for route in list(self.application.router.routes()):
-            if (route._method != '*'):
+            if route._method != '*':
                 cors.add(route)
-                print('added' + str(route))
-            else:
-                print('Not added' + str(route))
 
 
     async def load_plugins(self, plugins):
