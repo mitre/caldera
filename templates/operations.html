@@ -463,6 +463,7 @@
                             <template x-if="!isLinkEditable(selectedLink)">
                                 <div>
                                     <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkPlaintextCommand"></pre>
                                 </div>
                             </template>
                         </section>
@@ -1566,6 +1567,7 @@
                             this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score);
                         }
                         this.selectedLinkCommand = b64DecodeUnicode(res.command);
+                        this.selectedLinkPlaintextCommand = b64DecodeUnicode(res.plaintext_command);
                         this.editableCommand = b64DecodeUnicode(res.command);
                     })
                     .catch(() => {
