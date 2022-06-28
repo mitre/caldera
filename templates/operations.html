@@ -1109,6 +1109,7 @@
             selectedLink: null,
             selectedLinkResults: null,
             selectedLinkFacts: null,
+            selectedLinkPlaintextCommand: null,
             selectedLinkCommand: null,
             selectedReportType: 'full-report',
             isAgentOutputSelected: false,
@@ -1585,6 +1586,7 @@
                         this.selectedLinkResults = null;
                         this.selectedLinkFacts = null;
                         this.selectedLinkCommand = null;
+                        this.selectedLinkPlaintextCommand = null;
                         toast('Error getting link results.');
                     });
             },
