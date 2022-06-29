@@ -517,10 +517,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
     class Reason(Enum):
         PLATFORM = 0
         EXECUTOR = 1
-        FACT_DEPENDENCY = 2
-        PRIVILEGE = 3
-        OP_RUNNING = 4
+        PRIVILEGE = 2
+        FACT_DEPENDENCY = 3
+        LINK_IGNORED = 4
         UNTRUSTED = 5
+        OP_RUNNING = 6
+        OTHER = 7
 
     class States(Enum):
         RUNNING = 'running'
