@@ -95,7 +95,11 @@ class AppService(AppServiceInterface, BaseService):
 
     async def enable_cors(self):
         cors = aiohttp_cors.setup(self.application, defaults={
-            "http://localhost:3000": aiohttp_cors.ResourceOptions()
+            "http://localhost:3000": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
         })
         for route in list(self.application.router.routes()):
             if route._method != '*':

@@ -31,9 +31,9 @@ class RestApi(BaseWorld):
     async def enable(self):
         self.app_svc.application.router.add_static('/assets', 'magma/dist/assets/', append_version=True)
         # unauthorized GUI endpoints
-        self.app_svc.application.router.add_route('*', '/', self.landing)
+        self.app_svc.application.router.add_route('GET', '/', self.landing)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
-        self.app_svc.application.router.add_route('*', '/logout', self.logout)
+        self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
         self.app_svc.application.router.add_route('POST', '/login', self.login)
         # unauthorized API endpoints
