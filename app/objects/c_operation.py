@@ -449,6 +449,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             if not facts or all(fact in op_facts for fact in facts):
                 fact_dependency_fulfilled = True
         untrusted_agent = agent.paw in self.untrusted_agents
+        # links = set([link for link in self.chain if link.paw == agent.paw and link.ability == ability])
 
         if agent.platform == 'unknown':
             reason_description = 'Untrusted' if untrusted_agent else 'No platform specified'
@@ -478,6 +479,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
             reason_description = 'Untrusted' if untrusted_agent else 'Other'
             return dict(reason=reason_description, reason_id=self.Reason.OTHER.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
+        '''
+        elif link_ignored:  # link.can_ignore() or if link.id in ignored_links
+            reason_description = 'Untrusted' if untrusted_agent else 'Link was ignored'
+            return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
+        '''
 
     def _get_operation_metadata_for_event_log(self):
         return dict(operation_name=self.name,
