@@ -472,3 +472,50 @@ class TestOperation:
             await op.wait_for_links_completion([test_link.id])
         assert not op.ignored_links
         assert test_link in op.chain
+
+    def test_check_reason_skipped_platform(self, test_agent, test_ability):
+        test_agent.platform = 'unknown'
+        op = Operation(name='test', agents=[test_agent], state='running')
+        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=test_agent.executors, agent_ran={})
+        assert reason['reason'] == 'No platform specified'
+        assert reason['reason_id'] == Operation.Reason.PLATFORM.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
+
+    async def test_check_reason_skipped_executor(self, test_agent, test_ability):
+        test_agent.platform = 'darwin'
+        op = Operation(name='test', agents=[test_agent], state='running')
+        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=[], agent_ran={})
+        assert reason['reason'] == 'Executor is unavailable'
+        assert reason['reason_id'] == Operation.Reason.EXECUTOR.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
+
+    async def test_check_reason_skipped_privilege(self, test_agent, test_ability, mocker, test_executor):
+        test_agent.platform = 'linux'
+        test_agent.executors = [test_executor.name]
+        test_ability.privilege = True
+        op = Operation(name='test', agents=[test_agent], state='running')
+        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=test_agent.executors, agent_ran={})
+        assert reason['reason'] == 'Ability privilege not fulfilled'
+        assert reason['reason_id'] == Operation.Reason.PRIVILEGE.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
+
+    async def test_check_reason_skipped_fact_dependency(self):
+        pass
+
+    async def test_check_reason_skipped_link_ignored(self):
+        pass
+
+    async def test_check_reason_skipped_untrusted(self):
+        pass
+
+    async def test_check_reason_skipped_op_running(self):
+        pass
+
+    async def test_check_reason_skipped_other(self):
+        pass

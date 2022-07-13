@@ -449,14 +449,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
             if not facts or all(fact in op_facts for fact in facts):
                 fact_dependency_fulfilled = True
         untrusted_agent = agent.paw in self.untrusted_agents
-        associated_link = agent_ran[ability.ability_id]
+        associated_link = agent_ran.get(ability.ability_id)
 
         if agent.platform == 'unknown':
             reason_description = 'Untrusted' if untrusted_agent else 'No platform specified'
             return dict(reason=reason_description, reason_id=self.Reason.PLATFORM.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not valid_executors:
-            reason_description = 'Untrusted' if untrusted_agent else 'Executor not available'
+            reason_description = 'Untrusted' if untrusted_agent else 'Executor is unavailable'
             return dict(reason=reason_description, reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
