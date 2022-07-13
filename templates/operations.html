@@ -37,25 +37,20 @@
 
         <template x-if="selectedOperation && selectedOperationID">
             <div class="section p-2 pb-2">
-                <div class="is-flex-direction-row p-2 mb-2">
-                    <span x-text="selectedOperation.name" ></span>
-                    <button class="button is-small"
-                        x-on:click="openModal='showOperationDetails'"
-                        title="view operation details">More Details
-                    </button>
-
-                </div>
                 <div class="control-buttons is-flex is-flex-direction-row is-justify-content-space-between">
-                    <div class="is-flex is-flex-direction-row">
-                        <button title="download reports" class="button is-primary is-small mr-2"
-                                x-on:click="openModal = 'showDownloadMenu'"><em class="pr-1 fas fa-arrow-down"></em>
-                            Download
+                    <div class="buttons">
+                        <button class="button is-small" x-on:click="openModal='showOperationDetails'" title="view operation details">Operation Details</button>
+                        <button title="download reports" class="button is-primary is-small" x-on:click="openModal = 'showDownloadMenu'">
+                            <span class="icon">
+                                <em class="fas fa-arrow-down"></em>
+                            </span>
+                            <span>Download</span>
                         </button>
-                        <button type="button" title="delete operation"
-                                class="button is-danger is-outlined is-small"
-                                x-on:click="openModal = 'deleteOperationModal'"><em
-                                class="pr-1 fas fa-trash"></em>
-                            Delete
+                        <button type="button" title="delete operation" class="button is-danger is-outlined is-small" x-on:click="openModal = 'deleteOperationModal'">
+                            <span class="icon">
+                                <em class="fas fa-trash"></em>
+                            </span>
+                            <span>Delete</span>
                         </button>
                         <div class="vr"></div>
                         <span>Current state: <span class="level-item tag is-medium m-0"><span
@@ -746,7 +741,6 @@
                     <div class="modal-card">
                         <header class="modal-card-head">
                             <p class="modal-card-title">Operation Details</p>
-                            <span x-text="selectedOperation.name" ></span>
                         </header>
                         <section class="modal-card-body">
                             <table>
@@ -755,11 +749,15 @@
                                 <tbody>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">adversary: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Operation Name</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Adversary</label>
                                         </td>
                                         <td>
                                             <span x-text="selectedOperation.adversary.name"></span>
@@ -767,11 +765,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">fact source: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Fact Source</label>
                                         </td>
                                         <td>
                                             <span x-text="selectedOperation.source.name"></span>
@@ -779,11 +773,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">group: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Group</label>
                                         </td>
                                         <td>
                                             <span x-text="(selectedOperation.group ? selectedOperation.group : 'all')"></span>
@@ -791,11 +781,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">planner: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Planner</label>
                                         </td>
                                         <td>
                                             <span x-text="selectedOperation.planner.name"></span>
@@ -803,11 +789,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">obfuscator: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Obfuscator</label>
                                         </td>
                                         <td>
                                             <span x-text="selectedOperation.obfuscator"></span>
@@ -815,11 +797,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">autonomous: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Autonomous</label>
                                         </td>
                                         <td>
                                             <span x-text="(selectedOperation.autonomous === 0 ? 'manual' : 'autonomous')"></span>
@@ -827,11 +805,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">parser: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Parser</label>
                                         </td>
                                         <td>
                                             <span x-text="selectedOperation.use_learning_parsers"></span>
@@ -839,11 +813,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">auto_close: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Auto Close</label>
                                         </td>
                                         <td>
                                             <span x-text="selectedOperation.auto_close"></span>
@@ -851,11 +821,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <div class="is-align-items-center is-flex is-align-items-center">
-                                                <span class="top-right-anchor">
-                                                    <label class="label">jitter: </label>
-                                                </span>
-                                            </div>
+                                            <label class="label">Jitter</label>
                                         </td>
                                         <td>
                                             <span x-text="selectedOperation.jitter"></span>
@@ -864,12 +830,17 @@
                                 </tbody>
                                 
                             </table>
-                            <div class="level-right">
-                                <div class="level-item">
-                                    <button class="button is-small" @click="openModal = null">Close</button>
-                                </div>
-                            </div>
                         </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left"></div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
                     </div>
                 </template>
                 
