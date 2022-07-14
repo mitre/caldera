@@ -450,25 +450,31 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 fact_dependency_fulfilled = True
         untrusted_agent = agent.paw in self.untrusted_agents
         associated_link = agent_ran.get(ability.ability_id)
+        reason_description = 'Untrusted'
 
         if agent.platform == 'unknown':
-            reason_description = 'Untrusted' if untrusted_agent else 'No platform specified'
+            if not untrusted_agent:
+                reason_description = 'No platform specified'
             return dict(reason=reason_description, reason_id=self.Reason.PLATFORM.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not valid_executors:
-            reason_description = 'Untrusted' if untrusted_agent else 'Executor is unavailable'
+            if not untrusted_agent:
+                reason_description = 'Executor is unavailable'
             return dict(reason=reason_description, reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
-            reason_description = 'Untrusted' if untrusted_agent else 'Ability privilege not fulfilled'
+            if not untrusted_agent:
+                reason_description = 'Ability privilege not fulfilled'
             return dict(reason=reason_description, reason_id=self.Reason.PRIVILEGE.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not fact_dependency_fulfilled:
-            reason_description = 'Fact dependency not fulfilled'
+            if not untrusted_agent:
+                reason_description = 'Fact dependency not fulfilled'
             return dict(reason=reason_description, reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif associated_link.id in self.ignored_links:
-            reason_description = 'Untrusted' if untrusted_agent else 'Link was ignored'
+            if not untrusted_agent:
+                reason_description = 'Link was ignored'
             return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
@@ -476,11 +482,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
             return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif state != 'finished':
-            reason_description = 'Untrusted' if untrusted_agent else 'Operation not completed'
+            if not untrusted_agent:
+                reason_description = 'Operation not completed'
             return dict(reason=reason_description, reason_id=self.Reason.OP_RUNNING.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         else:
-            reason_description = 'Untrusted' if untrusted_agent else 'Other'
+            if not untrusted_agent:
+                reason_description = 'Other'
             return dict(reason=reason_description, reason_id=self.Reason.OTHER.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
 
