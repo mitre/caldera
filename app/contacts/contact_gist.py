@@ -67,9 +67,9 @@ class Contact(BaseWorld):
                 self.log.debug('Github Gist personal API token provided. Starting Gist C2 contact.')
                 self._start_operation_loop()
             else:
-                self.log.error('Invalid Github Gist personal API token provided. Gist C2 contact will not be started.')
+                self.log.info('Invalid Github Gist personal API token provided. Gist C2 contact will not be started.')
         else:
-            self.log.warn('No Github Gist personal API token provided. Gist C2 contact will not be started.')
+            self.log.info('No Github Gist personal API token provided. Gist C2 contact will not be started.')
 
     def _start_operation_loop(self):
         loop = asyncio.get_event_loop()

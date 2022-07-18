@@ -120,6 +120,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.name = name
         self.group = group
         self.agents = agents if agents else []
+        self.untrusted_agents = set()
         self.adversary = adversary
         self.jitter = jitter
         self.source = source
@@ -156,6 +157,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def has_link(self, link_id):
         return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
+
+    def update_untrusted_agents(self, agent):
+        if not agent.trusted and agent in self.agents:
+            self.untrusted_agents.add(agent.paw)
 
     async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
