@@ -17,7 +17,7 @@ class DefaultLoginHandler(LoginHandlerInterface):
         self._ldap_config = self.get_config('ldap')
 
     async def handle_login(self, request, **kwargs):
-        data = await request.json()
+        data = await request.post()
         username = data.get('username')
         password = data.get('password')
         if username and password:
@@ -32,7 +32,7 @@ class DefaultLoginHandler(LoginHandlerInterface):
                     raise Exception('Auth service not available.')
                 await auth_svc.handle_successful_login(request, username)
             self.log.debug('%s failed login attempt: ', username)
-        raise web.HTTPUnauthorized
+        raise web.HTTPFound('/')
 
     async def handle_login_redirect(self, request, **kwargs):
         """Handle login redirect.

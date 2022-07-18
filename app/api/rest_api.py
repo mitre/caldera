@@ -34,8 +34,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/', self.landing)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('POST', '/logout', self.logout)
-        self.app_svc.application.router.add_route('GET', '/login', self.login)
-        self.app_svc.application.router.add_route('POST', '/login', self.login)
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
@@ -43,10 +41,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
-
-    @template('login.html', status=401)
-    async def login(self, request):
-        return dict()
 
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
