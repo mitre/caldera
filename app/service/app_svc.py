@@ -9,6 +9,7 @@ from collections import namedtuple
 from datetime import datetime, timezone
 from importlib import import_module
 
+import aiohttp_cors
 import aiohttp_jinja2
 import jinja2
 import yaml
@@ -99,6 +100,19 @@ class AppService(AppServiceInterface, BaseService):
         for op in await self.get_service('data_svc').locate('operations', match=dict(finish=None)):
             self.loop.create_task(op.run(self.get_services()))
 
+    async def enable_cors(self):
+        cors = aiohttp_cors.setup(self.application, defaults={
+            "http://localhost:3000": aiohttp_cors.ResourceOptions(
+            allow_credentials=True,
+            expose_headers="*",
+            allow_headers="*",
+        )
+        })
+        for route in list(self.application.router.routes()):
+            if route._method != '*':
+                cors.add(route)
+
+
     async def load_plugins(self, plugins):
         def trim(p):
             if p.startswith('.'):
@@ -122,7 +136,7 @@ class AppService(AppServiceInterface, BaseService):
             asyncio.get_event_loop().create_task(load(plug))
 
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
-        templates.append('magma/dist')
+        templates.append('front_end')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform, location=''):

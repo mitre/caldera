@@ -85,7 +85,7 @@ class AuthService(AuthServiceInterface, BaseService):
     @staticmethod
     async def logout_user(request):
         await forget(request, web.Response())
-        raise web.HTTPFound('/login')
+        raise web.HTTPFound('/')
 
     async def login_user(self, request):
         """Log a user in and save the session

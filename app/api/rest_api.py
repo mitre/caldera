@@ -29,12 +29,13 @@ class RestApi(BaseWorld):
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
-        self.app_svc.application.router.add_static('/assets', 'magma/dist/assets/', append_version=True)
+        self.app_svc.application.router.add_static('/assets', 'front_end/assets/', append_version=True)
         # unauthorized GUI endpoints
-        self.app_svc.application.router.add_route('*', '/', self.landing)
-        self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
-        self.app_svc.application.router.add_route('*', '/logout', self.logout)
+        self.app_svc.application.router.add_route('GET', '/', self.landing)
+        self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
+        self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         self.app_svc.application.router.add_route('GET', '/login', self.login)
+        self.app_svc.application.router.add_route('POST', '/login', self.login)
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
@@ -50,7 +51,6 @@ class RestApi(BaseWorld):
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
 
-    @template('login.html')
     async def logout(self, request):
         await self.auth_svc.logout_user(request)
 
