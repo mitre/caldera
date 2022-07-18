@@ -52,7 +52,7 @@ async def start_server():
     await web.TCPSite(runner, BaseWorld.get_config('host'), BaseWorld.get_config('port')).start()
 
 
-def run_tasks(services, start_vue_server=False):
+def run_tasks(services, run_vue_server=False):
     loop = asyncio.get_event_loop()
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
@@ -60,6 +60,8 @@ def run_tasks(services, start_vue_server=False):
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins(args.plugins))
+    if run_vue_server:
+        loop.run_until_complete(app_svc.enable_cors())
     loop.run_until_complete(data_svc.load_data(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
     loop.run_until_complete(app_svc.load_plugin_expansions(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
     loop.run_until_complete(auth_svc.set_login_handlers(services))
@@ -70,7 +72,7 @@ def run_tasks(services, start_vue_server=False):
     loop.create_task(app_svc.watch_ability_files())
     loop.run_until_complete(start_server())
     loop.run_until_complete(event_svc.fire_event(exchange='system', queue='ready'))
-    if start_vue_server:
+    if run_vue_server:
         loop.run_until_complete(start_vue_dev_server())
     try:
         logging.info('All systems ready.')
@@ -164,4 +166,4 @@ if __name__ == '__main__':
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
         asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
 
-    run_tasks(services=app_svc.get_services(), start_vue_server=args.uidev)
+    run_tasks(services=app_svc.get_services(), run_vue_server=args.uidev)
