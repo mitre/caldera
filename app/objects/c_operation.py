@@ -476,10 +476,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
         elif not set(associated_links).isdisjoint(self.ignored_links):
             if not untrusted_agent:
                 reason_description = 'Link was ignored'
-            return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
+            return dict(reason=reason_description, reason_id=self.Reason.LINK_IGNORED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
-            reason_description = 'Untrusted' if untrusted_agent else 'Agent untrusted'
+            if not untrusted_agent:
+                reason_description = 'Agent untrusted'
             return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif state != 'finished':
