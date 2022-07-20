@@ -483,7 +483,7 @@ class TestOperation:
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_executor(self, test_agent, test_ability):
+    async def test_check_reason_skipped_valid_executor(self, test_agent, test_ability):
         test_agent.platform = 'darwin'
         op = Operation(name='test', agents=[test_agent], state='running')
         reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
@@ -494,9 +494,10 @@ class TestOperation:
         assert reason['ability_name'] == test_ability.name
 
     async def test_check_reason_skipped_privilege(self, test_agent, test_ability, mocker, test_executor):
-        test_agent.platform = 'linux'
+        test_agent.platform = 'windows'
+        test_executor.name = 'psh'
         test_agent.executors = [test_executor.name]
-        test_ability.privilege = True
+        test_ability.privilege = 'Elevated'
         op = Operation(name='test', agents=[test_agent], state='running')
         reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=test_agent.executors, agent_ran={})
@@ -505,17 +506,72 @@ class TestOperation:
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_fact_dependency(self):
-        pass
+    async def test_check_reason_skipped_fact_dependency(self, test_agent, test_ability, mocker, test_executor, fact):
+        test_agent.platform = 'windows'
+        test_executor.name = 'psh'
+        test_executor.command = 'whoami'
+        test_agent.executors = [test_executor.name]
+        op = Operation(name='test', agents=[test_agent], state='running')
+        with mocker.patch('app.objects.c_ability.Ability.find_executors') as mock_find_executors:
+            mock_find_executors.return_value = [test_executor]
+            with mocker.patch('re.findall') as mock_findall:
+                mock_findall.return_value = [fact('test.fact.attribute')]
+                reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                                  agent_executors=test_agent.executors, agent_ran={})
+        assert reason['reason'] == 'Fact dependency not fulfilled'
+        assert reason['reason_id'] == Operation.Reason.FACT_DEPENDENCY.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_link_ignored(self):
-        pass
+    async def test_check_reason_skipped_link_ignored(self, test_agent, test_ability, mocker, test_executor,
+                                                     active_link):
+        test_agent.platform = 'windows'
+        test_executor.name = 'psh'
+        test_agent.executors = [test_executor.name]
+        op = Operation(name='test', agents=[test_agent], state='running')
+        test_link = Link.load(active_link)
+        op.chain = [test_link]
+        op.ignored_links = [test_link.id]
+        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=test_agent.executors, agent_ran={})
+        assert reason['reason'] == 'Link was ignored'
+        assert reason['reason_id'] == Operation.Reason.LINK_IGNORED.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_untrusted(self):
-        pass
+    async def test_check_reason_skipped_untrusted(self, test_agent, test_ability, mocker, test_executor):
+        test_agent.platform = 'windows'
+        test_executor.name = 'psh'
+        test_agent.executors = [test_executor.name]
+        test_agent.trusted = False
+        op = Operation(name='test', agents=[test_agent], state='running')
+        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=test_agent.executors, agent_ran={})
+        assert reason['reason'] == 'Agent untrusted'
+        assert reason['reason_id'] == Operation.Reason.UNTRUSTED.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_op_running(self):
-        pass
+    async def test_check_reason_skipped_op_running(self, test_agent, test_ability, mocker, test_executor):
+        test_agent.platform = 'windows'
+        test_executor.name = 'psh'
+        test_agent.executors = [test_executor.name]
+        op = Operation(name='test', agents=[test_agent], state='running')
+        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=test_agent.executors, agent_ran={})
+        assert reason['reason'] == 'Operation not completed'
+        assert reason['reason_id'] == Operation.Reason.OP_RUNNING.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_other(self):
-        pass
+    async def test_check_reason_skipped_other(self, test_agent, test_ability, mocker, test_executor):
+        test_agent.platform = 'windows'
+        test_executor.name = 'psh'
+        test_agent.executors = [test_executor.name]
+        op = Operation(name='test', agents=[test_agent], state='finished')
+        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=test_agent.executors, agent_ran={})
+        assert reason['reason'] == 'Other'
+        assert reason['reason_id'] == Operation.Reason.OTHER.value
+        assert reason['ability_id'] == test_ability.ability_id
+        assert reason['ability_name'] == test_ability.name
