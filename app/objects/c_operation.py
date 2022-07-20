@@ -271,14 +271,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for agent in self.agents:
             agent_skipped = defaultdict(dict)
             agent_executors = agent.executors
-            agent_ran = {link.ability.ability_id: link for link in self.chain if link.paw == agent.paw}
+            agent_ran = set([link.ability.ability_id for link in self.chain if link.paw == agent.paw])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
                                                      op_facts=[f.trait for f in await self.all_facts()],
                                                      state=self.state, agent_ran=agent_ran)
                 if skipped:
                     if agent_skipped[skipped['ability_id']]:
-                        if agent_skipped[skipped['ability_id']]['reason_id'] < skipped['reason_id']:
+                        if agent_skipped[skipped['ability_id']]['reason_id'] > skipped['reason_id']:
                             agent_skipped[skipped['ability_id']] = skipped
                     else:
                         agent_skipped[skipped['ability_id']] = skipped
@@ -449,7 +449,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
             if not facts or all(fact in op_facts for fact in facts):
                 fact_dependency_fulfilled = True
         untrusted_agent = agent.paw in self.untrusted_agents
-        associated_link = agent_ran.get(ability.ability_id)
+        associated_links = set([link.id for link in self.chain if link.paw == agent.paw
+                                and link.ability.ability_id == ability.ability_id])
         reason_description = 'Untrusted'
 
         if agent.platform == 'unknown':
@@ -472,7 +473,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 reason_description = 'Fact dependency not fulfilled'
             return dict(reason=reason_description, reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
-        elif associated_link.id in self.ignored_links:
+        elif not set(associated_links).isdisjoint(self.ignored_links):
             if not untrusted_agent:
                 reason_description = 'Link was ignored'
             return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
