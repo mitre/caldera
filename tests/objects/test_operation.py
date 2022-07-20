@@ -171,10 +171,11 @@ def op_without_learning_parser(ability, adversary):
 
 
 @pytest.fixture
-def custom_agent(test_agent):
-    def _make_agent(executors, platform='windows', trusted=True):
+def custom_agent(test_agent, test_executor):
+    def _make_agent(platform='windows', trusted=True, executor_name='psh'):
+        test_executor.name = executor_name
         test_agent.platform = platform
-        test_agent.executors = executors
+        test_agent.executors = [test_executor.name]
         test_agent.trusted = trusted
         return test_agent
     return _make_agent
@@ -505,7 +506,7 @@ class TestOperation:
 
     async def test_check_reason_skipped_privilege(self, custom_agent, test_ability, mocker, test_executor):
         test_executor.name = 'psh'
-        agent = custom_agent(executors=[test_executor.name])
+        agent = custom_agent()
         test_ability.privilege = 'Elevated'
         op = Operation(name='test', agents=[agent], state='running')
         reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
@@ -517,8 +518,7 @@ class TestOperation:
 
     async def test_check_reason_skipped_fact_dependency(self, custom_agent, test_ability, mocker, test_executor, fact):
         test_executor.name = 'psh'
-        test_executor.command = 'whoami'
-        agent = custom_agent(executors=[test_executor.name])
+        agent = custom_agent()
         op = Operation(name='test', agents=[agent], state='running')
         with mocker.patch('app.objects.c_ability.Ability.find_executors') as mock_find_executors:
             mock_find_executors.return_value = [test_executor]
@@ -531,10 +531,8 @@ class TestOperation:
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_link_ignored(self, custom_agent, test_ability, mocker, test_executor,
-                                                     active_link):
-        test_executor.name = 'psh'
-        agent = custom_agent(executors=[test_executor.name])
+    async def test_check_reason_skipped_link_ignored(self, custom_agent, test_ability, mocker, active_link):
+        agent = custom_agent()
         op = Operation(name='test', agents=[agent], state='running')
         test_link = Link.load(active_link)
         op.chain = [test_link]
@@ -546,9 +544,8 @@ class TestOperation:
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_untrusted(self, custom_agent, test_ability, mocker, test_executor):
-        test_executor.name = 'psh'
-        agent = custom_agent(executors=[test_executor.name], trusted=False)
+    async def test_check_reason_skipped_untrusted(self, custom_agent, test_ability, mocker):
+        agent = custom_agent(trusted=False)
         op = Operation(name='test', agents=[agent], state='running')
         reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=agent.executors, agent_ran={})
@@ -557,9 +554,8 @@ class TestOperation:
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_op_running(self, custom_agent, test_ability, mocker, test_executor):
-        test_executor.name = 'psh'
-        agent = custom_agent(executors=[test_executor.name])
+    async def test_check_reason_skipped_op_running(self, custom_agent, test_ability, mocker):
+        agent = custom_agent()
         op = Operation(name='test', agents=[agent], state='running')
         reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=agent.executors, agent_ran={})
@@ -568,9 +564,8 @@ class TestOperation:
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_other(self, custom_agent, test_ability, mocker, test_executor):
-        test_executor.name = 'psh'
-        agent = custom_agent(executors=[test_executor.name])
+    async def test_check_reason_skipped_other(self, custom_agent, test_ability, mocker):
+        agent = custom_agent()
         op = Operation(name='test', agents=[agent], state='finished')
         reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=agent.executors, agent_ran={})
