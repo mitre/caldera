@@ -171,6 +171,16 @@ def op_without_learning_parser(ability, adversary):
 
 
 @pytest.fixture
+def custom_agent(test_agent):
+    def _make_agent(executors, platform='windows', trusted=True):
+        test_agent.platform = platform
+        test_agent.executors = executors
+        test_agent.trusted = trusted
+        return test_agent
+    return _make_agent
+
+
+@pytest.fixture
 def op_with_learning_and_seeded(ability, adversary, operation_agent, parse_datestring):
     sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
     op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
@@ -493,84 +503,77 @@ class TestOperation:
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_privilege(self, test_agent, test_ability, mocker, test_executor):
-        test_agent.platform = 'windows'
+    async def test_check_reason_skipped_privilege(self, custom_agent, test_ability, mocker, test_executor):
         test_executor.name = 'psh'
-        test_agent.executors = [test_executor.name]
+        agent = custom_agent(executors=[test_executor.name])
         test_ability.privilege = 'Elevated'
-        op = Operation(name='test', agents=[test_agent], state='running')
-        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
-                                          agent_executors=test_agent.executors, agent_ran={})
+        op = Operation(name='test', agents=[agent], state='running')
+        reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=agent.executors, agent_ran={})
         assert reason['reason'] == 'Ability privilege not fulfilled'
         assert reason['reason_id'] == Operation.Reason.PRIVILEGE.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_fact_dependency(self, test_agent, test_ability, mocker, test_executor, fact):
-        test_agent.platform = 'windows'
+    async def test_check_reason_skipped_fact_dependency(self, custom_agent, test_ability, mocker, test_executor, fact):
         test_executor.name = 'psh'
         test_executor.command = 'whoami'
-        test_agent.executors = [test_executor.name]
-        op = Operation(name='test', agents=[test_agent], state='running')
+        agent = custom_agent(executors=[test_executor.name])
+        op = Operation(name='test', agents=[agent], state='running')
         with mocker.patch('app.objects.c_ability.Ability.find_executors') as mock_find_executors:
             mock_find_executors.return_value = [test_executor]
             with mocker.patch('re.findall') as mock_findall:
                 mock_findall.return_value = [fact('test.fact.attribute')]
-                reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
-                                                  agent_executors=test_agent.executors, agent_ran={})
+                reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
+                                                  agent_executors=agent.executors, agent_ran={})
         assert reason['reason'] == 'Fact dependency not fulfilled'
         assert reason['reason_id'] == Operation.Reason.FACT_DEPENDENCY.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_link_ignored(self, test_agent, test_ability, mocker, test_executor,
+    async def test_check_reason_skipped_link_ignored(self, custom_agent, test_ability, mocker, test_executor,
                                                      active_link):
-        test_agent.platform = 'windows'
         test_executor.name = 'psh'
-        test_agent.executors = [test_executor.name]
-        op = Operation(name='test', agents=[test_agent], state='running')
+        agent = custom_agent(executors=[test_executor.name])
+        op = Operation(name='test', agents=[agent], state='running')
         test_link = Link.load(active_link)
         op.chain = [test_link]
         op.ignored_links = [test_link.id]
-        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
-                                          agent_executors=test_agent.executors, agent_ran={})
+        reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=agent.executors, agent_ran={})
         assert reason['reason'] == 'Link was ignored'
         assert reason['reason_id'] == Operation.Reason.LINK_IGNORED.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_untrusted(self, test_agent, test_ability, mocker, test_executor):
-        test_agent.platform = 'windows'
+    async def test_check_reason_skipped_untrusted(self, custom_agent, test_ability, mocker, test_executor):
         test_executor.name = 'psh'
-        test_agent.executors = [test_executor.name]
-        test_agent.trusted = False
-        op = Operation(name='test', agents=[test_agent], state='running')
-        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
-                                          agent_executors=test_agent.executors, agent_ran={})
+        agent = custom_agent(executors=[test_executor.name], trusted=False)
+        op = Operation(name='test', agents=[agent], state='running')
+        reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=agent.executors, agent_ran={})
         assert reason['reason'] == 'Agent untrusted'
         assert reason['reason_id'] == Operation.Reason.UNTRUSTED.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_op_running(self, test_agent, test_ability, mocker, test_executor):
-        test_agent.platform = 'windows'
+    async def test_check_reason_skipped_op_running(self, custom_agent, test_ability, mocker, test_executor):
         test_executor.name = 'psh'
-        test_agent.executors = [test_executor.name]
-        op = Operation(name='test', agents=[test_agent], state='running')
-        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
-                                          agent_executors=test_agent.executors, agent_ran={})
+        agent = custom_agent(executors=[test_executor.name])
+        op = Operation(name='test', agents=[agent], state='running')
+        reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=agent.executors, agent_ran={})
         assert reason['reason'] == 'Operation not completed'
         assert reason['reason_id'] == Operation.Reason.OP_RUNNING.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
 
-    async def test_check_reason_skipped_other(self, test_agent, test_ability, mocker, test_executor):
-        test_agent.platform = 'windows'
+    async def test_check_reason_skipped_other(self, custom_agent, test_ability, mocker, test_executor):
         test_executor.name = 'psh'
-        test_agent.executors = [test_executor.name]
-        op = Operation(name='test', agents=[test_agent], state='finished')
-        reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
-                                          agent_executors=test_agent.executors, agent_ran={})
+        agent = custom_agent(executors=[test_executor.name])
+        op = Operation(name='test', agents=[agent], state='finished')
+        reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
+                                          agent_executors=agent.executors, agent_ran={})
         assert reason['reason'] == 'Other'
         assert reason['reason_id'] == Operation.Reason.OTHER.value
         assert reason['ability_id'] == test_ability.ability_id
