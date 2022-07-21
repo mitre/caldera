@@ -549,7 +549,7 @@ class TestOperation:
         op = Operation(name='test', agents=[agent], state='running')
         reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=agent.executors, agent_ran={})
-        assert reason['reason'] == 'Agent untrusted'
+        assert reason['reason'] == 'Untrusted'
         assert reason['reason_id'] == Operation.Reason.UNTRUSTED.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name

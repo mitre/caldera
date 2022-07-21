@@ -479,8 +479,6 @@ class Operation(FirstClassObjectInterface, BaseObject):
             return dict(reason=reason_description, reason_id=self.Reason.LINK_IGNORED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
-            if not untrusted_agent:
-                reason_description = 'Agent untrusted'
             return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif state != 'finished':
