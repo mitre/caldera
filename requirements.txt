@@ -26,4 +26,4 @@ dnspython==2.1.0
 asyncssh==2.11.0
 aioftp~=0.20.0; python_version >= '3.7'
 aioftp==0.16.1; python_version < '3.7'
-pyminizip==0.2.4
+pyminizip==0.2.6
