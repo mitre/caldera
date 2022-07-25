@@ -1680,7 +1680,14 @@
                             if (link.pid) agentDetails += `\nPid: ${link.pid}`;
                             rowItems.push(`"${agentDetails}"`);
                         } else if (col.className.includes('commandDetails')) {
-                            rowItems.push(`"${b64DecodeUnicode(link.command)}"`);
+                            if(link.plaintext_command && (link.command !== link.plaintext_command)) {
+                                rowItems.push(`Obfuscated: "${b64DecodeUnicode(link.command)}" | Plaintext: "${b64DecodeUnicode(link.plaintext_command)}"`);
+                            } else { 
+                                rowItems.push(`"${b64DecodeUnicode(link.command)}"`);
+                            }
+
+
+
                         } else if (col.className.includes('outputDetails')) {
                             rowItems.push(`"${link.facts}"`);
                         } else {
