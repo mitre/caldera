@@ -434,6 +434,32 @@ class TestOperation:
         report = event_loop.run_until_complete(op_with_learning_and_seeded.report(file_svc, data_svc))
         assert len(report['facts']) == 2
 
+    async def test_wait_for_links_completion_ignorable_link(self, make_test_link, operation_agent):
+        test_agent = operation_agent
+        test_link = make_test_link(9876, test_agent.paw, Link().states['DISCARD'])
+        op = Operation(name='test', agents=[test_agent], state='running')
+        op.add_link(test_link)
+        assert not op.ignored_links
+        assert test_link in op.chain
+        await op.wait_for_links_completion([test_link.id])
+        assert test_link.id in op.ignored_links
+        assert len(op.ignored_links) == 1
+        assert test_link in op.chain
+
+    async def test_wait_for_links_completion_non_ignorable_link(self, make_test_link, untrusted_operation_agent, mocker,
+                                                                async_return):
+        test_agent = untrusted_operation_agent
+        test_link = make_test_link(9876, test_agent.paw)
+        op = Operation(name='test', agents=[test_agent], state='running')
+        op.add_link(test_link)
+        assert not op.ignored_links
+        assert test_link in op.chain
+        with mocker.patch('asyncio.sleep') as mock_sleep:
+            mock_sleep.return_value = async_return(None)
+            await op.wait_for_links_completion([test_link.id])
+        assert not op.ignored_links
+        assert test_link in op.chain
+
     def test_update_untrusted_agents_with_trusted(self, operation_agent, ability, adversary):
         operation_agent.trusted = True
         op = Operation(name='test', agents=[operation_agent], adversary=adversary)
