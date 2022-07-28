@@ -65,29 +65,30 @@
                     </div>
                 </div>
             </form>
-            <div class="control-buttons is-flex is-flex-direction-row">
-                <button class="button is-small" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
-                    <span class="icon"><em class="fas fa-plus"></em></span>
-                    <span>Add Ability</span>
-                </button>
-                <button class="button is-small" @click="showAddAdversaryModal = true">
-                    <span class="icon"><em class="fas fa-plus"></em></span>
-                    <span>Add Adversary</span>
-                </button>
-                <button class="button is-small" @click="showFactBreakdownModal = true">
+            <div>
+                <div class="row is-4 buttons m-0 is-flex">
+                    <button class="button is-small level-item" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
+                        <span class="icon"><em class="fas fa-plus"></em></span>
+                        <span>Add Ability</span>
+                    </button>
+                    <button class="button is-primary is-small level-item" @click="showAddAdversaryModal = true">
+                        <span class="icon"><em class="fas fa-plus"></em></span>
+                        <span>Add Adversary</span>
+                    </button>
+                <button type="button" class="button is-small is-expanded auto-complete" @click="showFactBreakdownModal = true">
                     <span class="icon"><em class="fas fa-unlock-alt"></em></span>
                     <span>Fact Breakdown</span>
                 </button>
-                <div class="vr"></div>
+                <div class="vr is-expanded auto-complete"></div>
                 <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
-                <button class="button is-small" @click="showObjectiveModal = true">Change</button>
+                <button type="button" class="button is-small" @click="showObjectiveModal = true">Change</button>
                 <div class="vr"></div>
-                <button class="button is-small" @click="exportProfile()">
+                <button type="button" class="button is-small" @click="exportProfile()">
                     <span class="icon"><em class="fas fa-file-export"></em></span>
                     <span>Export</span>
                 </button>
-                <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
-                <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
+                <button type="button" class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
+                <button type="button" class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
             </div>
 
             <div class="tactic-breakdown pt-4 pb-4" @click="isTacticBreakdownActive = !isTacticBreakdownActive" title="Click to expand/collapse">
