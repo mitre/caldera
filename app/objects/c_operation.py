@@ -120,6 +120,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.name = name
         self.group = group
         self.agents = agents if agents else []
+        self.untrusted_agents = set()
         self.adversary = adversary
         self.jitter = jitter
         self.source = source
@@ -132,6 +133,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.visibility = visibility
         self.objective = None
         self.chain, self.potential_links, self.rules = [], [], []
+        self.ignored_links = set()
         self.access = access if access else self.Access.APP
         self.use_learning_parsers = use_learning_parsers
         if source:
@@ -156,6 +158,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     def has_link(self, link_id):
         return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
+
+    def update_untrusted_agents(self, agent):
+        if not agent.trusted and agent in self.agents:
+            self.untrusted_agents.add(agent.paw)
 
     async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
@@ -226,6 +232,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
         """
         for link_id in link_ids:
             link = [link for link in self.chain if link.id == link_id][0]
+            if link.can_ignore():
+                self.ignored_links.add(link.id)
             member = [member for member in self.agents if member.paw == link.paw][0]
             while not (link.finish or link.can_ignore()):
                 await asyncio.sleep(5)

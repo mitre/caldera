@@ -21,6 +21,7 @@ class AbilityApiManager(BaseApiManager):
         file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
         allowed = self._get_allowed_from_access(access)
         await self._save_and_reload_object(file_path, data, obj_class, allowed)
+        await self._data_svc.create_or_update_everything_adversary()
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
@@ -32,6 +33,10 @@ class AbilityApiManager(BaseApiManager):
             file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
         await self._save_and_reload_object(file_path, data, type(obj), obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
+
+    async def remove_object_from_disk_by_id(self, identifier: str, ram_key: str):
+        await super().remove_object_from_disk_by_id(identifier, ram_key)
+        await self._data_svc.create_or_update_everything_adversary()
 
     async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
         obj_id = getattr(obj, id_property)

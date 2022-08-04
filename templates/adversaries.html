@@ -12,7 +12,7 @@
     <hr>
 
     <!-- ADVERSARY SELECTION -->
-    <form>
+    <form autocomplete="off">
         <div id="select-adversary" class="field has-addons">
             <label class="label" for="profile-search">Select a profile &nbsp;&nbsp;&nbsp;</label>
             <div class="control is-expanded auto-complete" x-data="{focusSearchResults: false}" @click.outside="focusSearchResults = false; searchResults = []">
@@ -65,29 +65,30 @@
                     </div>
                 </div>
             </form>
-            <div class="control-buttons is-flex is-flex-direction-row">
-                <button class="button is-small" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
-                    <span class="icon"><em class="fas fa-plus"></em></span>
-                    <span>Add Ability</span>
-                </button>
-                <button class="button is-small" @click="showAddAdversaryModal = true">
-                    <span class="icon"><em class="fas fa-plus"></em></span>
-                    <span>Add Adversary</span>
-                </button>
-                <button class="button is-small" @click="showFactBreakdownModal = true">
+            <div>
+                <div class="row is-4 buttons m-0 is-flex">
+                    <button class="button is-small level-item" @click="selectedAbilityId = ''; showAbilityChoiceModal = true;">
+                        <span class="icon"><em class="fas fa-plus"></em></span>
+                        <span>Add Ability</span>
+                    </button>
+                    <button class="button is-primary is-small level-item" @click="showAddAdversaryModal = true">
+                        <span class="icon"><em class="fas fa-plus"></em></span>
+                        <span>Add Adversary</span>
+                    </button>
+                <button type="button" class="button is-small is-expanded auto-complete" @click="showFactBreakdownModal = true">
                     <span class="icon"><em class="fas fa-unlock-alt"></em></span>
                     <span>Fact Breakdown</span>
                 </button>
-                <div class="vr"></div>
+                <div class="vr is-expanded auto-complete"></div>
                 <span>Objective: <b x-text="getObjectiveName()"></b>&nbsp;&nbsp;&nbsp;</span>
-                <button class="button is-small" @click="showObjectiveModal = true">Change</button>
+                <button type="button" class="button is-small" @click="showObjectiveModal = true">Change</button>
                 <div class="vr"></div>
-                <button class="button is-small" @click="exportProfile()">
+                <button type="button" class="button is-small" @click="exportProfile()">
                     <span class="icon"><em class="fas fa-file-export"></em></span>
                     <span>Export</span>
                 </button>
-                <button class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
-                <button class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
+                <button type="button" class="button is-success is-small" x-bind:disabled="!unsavedChanges" @click="saveProfile()">Save Profile</button>
+                <button type="button" class="button is-danger is-outlined is-small" @click="deleteProfile()">Delete Profile</button>
             </div>
 
             <div class="tactic-breakdown pt-4 pb-4" @click="isTacticBreakdownActive = !isTacticBreakdownActive" title="Click to expand/collapse">
@@ -113,7 +114,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <template x-for="(ability, index) of selectedProfileAbilities">
+                    <template x-for="(ability, index) of selectedProfileAbilities" :key="ability.ability_id">
                         <tr @click="selectAbility(ability.ability_id)" class="ability-row" 
                             x-bind:class="{ 'orange-row': needsParser.indexOf(ability.name) > -1 ,
                                             'row-hover': ability.ability_id === abilityTableDragHoverId && abilityTableDragHoverId != undefined, 
@@ -1067,6 +1068,7 @@
                     adversary.tactics = [...new Set(tactics)];
                 });
                 this.adversarySearchResults = this.adversaries;
+                this.searchForAdversary()
             },
 
             linkObjective() {
@@ -1400,14 +1402,14 @@
                 const children = Array.from(event.target.parentNode.parentNode.children);
 
                 if (children.indexOf(event.target.parentNode) > children.indexOf(this.abilityTableDragTarget)) {
-                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].children[0].children[0].innerHTML, 10);
                 } else {
-                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].innerHTML, 10);
+                    this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].children[0].children[0].innerHTML, 10);
                 }
             },
 
             swapAbilities(event) {
-                const fromIndex = parseInt(this.abilityTableDragTarget.children[1].innerHTML, 10) - 1;
+                const fromIndex = parseInt(this.abilityTableDragTarget.children[1].children[0].children[0].innerHTML, 10) - 1;
                 const toIndex = this.abilityTableDragEndIndex - 1;
                 const temp = this.selectedProfileAbilities[fromIndex];
                 this.selectedProfileAbilities[fromIndex] = this.selectedProfileAbilities[toIndex];
