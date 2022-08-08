@@ -258,6 +258,25 @@ class DataService(DataServiceInterface, BaseService):
             obj.plugin = self._get_plugin_name(filename)
             await self.store(obj)
 
+    async def create_or_update_everything_adversary(self):
+        everything = {
+            'id': '785baa02-df5d-450a-ab3a-1a863f22b4b0',
+            'name': 'Everything Bagel',
+            'description': 'An adversary with all adversary abilities',
+            'atomic_ordering': [
+                ability.ability_id
+                for ability in await self.locate('abilities')
+                if (
+                    ability.access == self.Access.RED
+                    or ability.access == self.Access.APP
+                )
+                and ability.plugin != 'training'
+            ],
+        }
+        obj = Adversary.load(everything)
+        obj.access = self.Access.RED
+        await self.store(obj)
+
     async def _load(self, plugins=()):
         try:
             async_tasks = []
@@ -277,6 +296,7 @@ class DataService(DataServiceInterface, BaseService):
                 await task
             await self._load_extensions()
             await self._load_data_encoders(plugins)
+            await self.create_or_update_everything_adversary()
             await self._verify_data_sets()
         except Exception as e:
             self.log.debug(repr(e), exc_info=True)
