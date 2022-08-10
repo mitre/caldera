@@ -1286,7 +1286,6 @@
                     payloads: [],
                     parsers: [],
                     cleanup: [],
-                    requirements: [],
                     platform: 'linux'
                 };
 
@@ -1375,8 +1374,8 @@
                     toast('Saved ability!', true);
 
                     // Replace ability in list with updated info
-                    const index = this.abilities.findIndex((ability) => ability.ability_id === this.selectedAbilityId);
-                    this.abilities[index] = response;
+                    const index = this.selectedProfileAbilities.findIndex((ability) => ability.ability_id === this.selectedAbilityId);
+                    this.selectedProfileAbilities[index] = response;
 
                     if (addToAdversary) {
                         this.selectedProfileAbilities.push(response);
