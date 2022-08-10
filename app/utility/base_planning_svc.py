@@ -267,13 +267,14 @@ class BasePlanningService(BaseService):
         """
         for req_inst in link.ability.requirements:
             if req_inst.module not in operation.planner.ignore_enforcement_modules:
-                requirements_info = dict(module=req_inst.module, enforcements=req_inst.relationship_match[0])
-                cache_key = str(requirements_info)
-                if cache_key not in self._cached_requirement_modules:
-                    self._cached_requirement_modules[cache_key] = await self.load_module('Requirement', requirements_info)
-                requirement = self._cached_requirement_modules[cache_key]
-                if not await requirement.enforce(link, operation):
-                    return False
+                for rel_match in req_inst.relationship_match:
+                    requirements_info = dict(module=req_inst.module, enforcements=rel_match)
+                    cache_key = str(requirements_info)
+                    if cache_key not in self._cached_requirement_modules:
+                        self._cached_requirement_modules[cache_key] = await self.load_module('Requirement', requirements_info)
+                    requirement = self._cached_requirement_modules[cache_key]
+                    if not await requirement.enforce(link, operation):
+                        return False
         return True
 
     async def _trim_by_limit(self, decoded_test, facts):
