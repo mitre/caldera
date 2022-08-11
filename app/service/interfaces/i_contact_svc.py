@@ -5,11 +5,11 @@ class ContactServiceInterface(abc.ABC):
 
     @abc.abstractmethod
     def register_contact(self, contact):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def register_tunnel(self, tunnel):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def handle_heartbeat(self):
@@ -17,8 +17,8 @@ class ContactServiceInterface(abc.ABC):
         Accept all components of an agent profile and save a new agent or register an updated heartbeat.
         :return: the agent object, instructions to execute
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def build_filename(self):
-        pass
+        raise NotImplementedError

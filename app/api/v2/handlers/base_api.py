@@ -21,7 +21,7 @@ class BaseApi(abc.ABC):
 
     @abc.abstractmethod
     def add_routes(self, app: web.Application):
-        pass
+        raise NotImplementedError
 
     async def get_request_permissions(self, request: web.Request):
         return dict(access=tuple(await self._auth_svc.get_permissions(request)))

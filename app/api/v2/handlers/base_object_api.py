@@ -21,7 +21,7 @@ class BaseObjectApi(BaseApi):
 
     @abc.abstractmethod
     def add_routes(self, app: web.Application):
-        pass
+        raise NotImplementedError
 
     async def get_all_objects(self, request: web.Request):
         access = await self.get_request_permissions(request)
