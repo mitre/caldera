@@ -10,7 +10,7 @@ class ObjectServiceInterface(abc.ABC):
         Clear out all data
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def save_state(self):
@@ -18,7 +18,7 @@ class ObjectServiceInterface(abc.ABC):
         Save stored data to disk
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def restore_state(self):
@@ -26,4 +26,4 @@ class ObjectServiceInterface(abc.ABC):
         Load data from disk
         :return:
         """
-        pass
+        raise NotImplementedError
