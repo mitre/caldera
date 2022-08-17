@@ -8,7 +8,6 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from enum import Enum
 from importlib import import_module
-from base64 import b64decode
 
 import marshmallow as ma
 
