@@ -12,7 +12,7 @@ class DataServiceInterface(ObjectServiceInterface):
         :param collection:
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def load_data(self, plugins):
@@ -21,7 +21,7 @@ class DataServiceInterface(ObjectServiceInterface):
 
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def reload_data(self, plugins):
@@ -30,7 +30,7 @@ class DataServiceInterface(ObjectServiceInterface):
 
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def store(self, c_object):
@@ -40,7 +40,7 @@ class DataServiceInterface(ObjectServiceInterface):
         :param c_object:
         :return: a single c_object
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def locate(self, object_name, match):
@@ -51,7 +51,7 @@ class DataServiceInterface(ObjectServiceInterface):
         :param match: dict()
         :return: a list of c_object types
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def remove(self, object_name, match):
@@ -62,4 +62,4 @@ class DataServiceInterface(ObjectServiceInterface):
         :param match: dict()
         :return:
         """
-        pass
+        raise NotImplementedError
