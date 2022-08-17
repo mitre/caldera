@@ -123,19 +123,21 @@ class ContactService(ContactServiceInterface, BaseService):
                     link.output = True
                     result.output = await self._postprocess_link_result(result.output, link)
                     self.get_service('file_svc').write_result_file(result.id, result.output)
-                    operation = await self.get_service('app_svc').find_op_with_link(result.id)
-                    if not operation and not link.executor.parsers:
-                        agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
-                        loop.create_task(self.get_service('learning_svc').learn(await agent[0].all_facts(), link,
-                                                                                result.output))
-                    elif not operation:
-                        loop.create_task(link.parse(None, result.output))
-                    elif link.executor.parsers:
-                        loop.create_task(link.parse(operation, result.output))
-                    elif operation.use_learning_parsers:
-                        all_facts = await operation.all_facts()
-                        loop.create_task(self.get_service('learning_svc').learn(all_facts, link, result.output,
-                                                                                operation))
+                else:
+                    result.output = ""
+                operation = await self.get_service('app_svc').find_op_with_link(result.id)
+                if not operation and not link.executor.parsers:
+                    agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
+                    loop.create_task(self.get_service('learning_svc').learn(await agent[0].all_facts(), link,
+                                                                            result.output))
+                elif not operation:
+                    loop.create_task(link.parse(None, result.output))
+                elif link.executor.parsers:
+                    loop.create_task(link.parse(operation, result.output))
+                elif operation.use_learning_parsers:
+                    all_facts = await operation.all_facts()
+                    loop.create_task(self.get_service('learning_svc').learn(all_facts, link, result.output,
+                                                                            operation))
             else:
                 self.get_service('file_svc').write_result_file(result.id, result.output)
         except Exception as e:
