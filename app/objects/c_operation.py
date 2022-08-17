@@ -295,13 +295,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           facts=[f.display for f in await self.all_facts()])
             agents_steps = {a.paw: {'steps': []} for a in self.agents}
             for step in self.chain:
-                plainTextCommand = ''
-                if(step.plaintext_command):
-                    plainTextCommand = b64decode(step.plaintext_command).decode('utf-8')
                 step_report = dict(link_id=step.id,
                                    ability_id=step.ability.ability_id,
                                    command=step.command,
-                                   plaintext_command=plainTextCommand,
+                                   plaintext_command=step.plaintext_command,
                                    delegated=step.decide.strftime(self.TIME_FORMAT),
                                    run=step.finish,
                                    status=step.status,
@@ -365,11 +362,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.objective = deepcopy(obj[0])
 
     async def _convert_link_to_event_log(self, link, file_svc, data_svc, output=False):
-        plainTextCommand = ''
-        if(link.plaintext_command):
-            plainTextCommand = b64decode(link.plaintext_command).decode('utf-8')
         event_dict = dict(command=link.command,
-                          plaintext_command=plainTextCommand,
+                          plaintext_command=link.plaintext_command,
                           delegated_timestamp=link.decide.strftime(self.TIME_FORMAT),
                           collected_timestamp=link.collect.strftime(self.TIME_FORMAT) if link.collect else None,
                           finished_timestamp=link.finish,
