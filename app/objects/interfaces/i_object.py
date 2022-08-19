@@ -6,8 +6,8 @@ class FirstClassObjectInterface(abc.ABC):
     @property
     @abc.abstractmethod
     def unique(self):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def store(self, ram):
-        pass
+        raise NotImplementedError
