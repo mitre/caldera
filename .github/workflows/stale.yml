@@ -4,13 +4,20 @@ on:
   schedule:
   - cron: "0 0 * * *"
 
+permissions:
+  contents: read
+
 jobs:
   stale:
 
     runs-on: ubuntu-latest
 
+    permissions:
+      issues: write
+      pull-requests: write
+
     steps:
-    - uses: actions/stale@v1
+    - uses: actions/stale@9c1b1c6e115ca2af09755448e0dbba24e5061cc8
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-label: 'no-issue-activity'
