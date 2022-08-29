@@ -1448,6 +1448,7 @@
                 } else if (!this.isJitterValid()) {
                     toast('Jitter values are invalid', false);
                 } else {
+                    this.operationToStart.name = sanitize(this.operationToStart.name);
                     this.operationToStart.autonomous = Number(this.operationToStart.autonomous);
                     this.operationToStart.use_learning_parsers = parseInt(this.operationToStart.use_learning_parsers, 10) === 1;
                     this.operationToStart.auto_close = parseInt(this.operationToStart.auto_close, 10) === 1;
@@ -1471,7 +1472,8 @@
                 let stringToReplace = (dateMatches && dateMatches.length) ? dateMatches[dateMatches.length - 1] : '';
                 let date = `(${new Date().toLocaleString()})`;
                 newOp.name = stringToReplace ? (newOp.name.replace(stringToReplace, date)) : (`${newOp.name} ${date}`);
-                
+                newOp.name = sanitize(newOp.name);
+
                 apiV2('POST', this.ENDPOINT, newOp).then((newOperation) => {
                     toast(`Started operation ${newOperation.name}!`, true);
                     this.operations.push(newOperation);
