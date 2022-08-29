@@ -114,6 +114,7 @@
             },
 
             enablePlugin(pluginName) {
+                pluginName = sanitize(pluginName);
                 let requestBody = {
                     value: pluginName,
                     prop: 'plugin'

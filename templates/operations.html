@@ -36,21 +36,21 @@
         </form>
 
         <template x-if="selectedOperation && selectedOperationID">
-            <div class="section p-0 pb-2">
-                <div>
-                    <h3 x-text="selectedOperation.name"></h3>
-                </div>
+            <div class="section p-2 pb-2">
                 <div class="control-buttons is-flex is-flex-direction-row is-justify-content-space-between">
-                    <div class="is-flex is-flex-direction-row">
-                        <button title="download reports" class="button is-primary is-small mr-2"
-                                x-on:click="openModal = 'showDownloadMenu'"><em class="pr-1 fas fa-arrow-down"></em>
-                            Download
+                    <div class="buttons">
+                        <button class="button is-small" x-on:click="openModal='showOperationDetails'" title="view operation details">Operation Details</button>
+                        <button title="download reports" class="button is-primary is-small" x-on:click="openModal = 'showDownloadMenu'">
+                            <span class="icon">
+                                <em class="fas fa-arrow-down"></em>
+                            </span>
+                            <span>Download</span>
                         </button>
-                        <button type="button" title="delete operation"
-                                class="button is-danger is-outlined is-small"
-                                x-on:click="openModal = 'deleteOperationModal'"><em
-                                class="pr-1 fas fa-trash"></em>
-                            Delete
+                        <button type="button" title="delete operation" class="button is-danger is-outlined is-small" x-on:click="openModal = 'deleteOperationModal'">
+                            <span class="icon">
+                                <em class="fas fa-trash"></em>
+                            </span>
+                            <span>Delete</span>
                         </button>
                         <div class="vr"></div>
                         <span>Current state: <span class="level-item tag is-medium m-0"><span
@@ -737,6 +737,113 @@
                     </div>
                 </template>
 
+                <template x-if="openModal === 'showOperationDetails'">
+                    <div class="modal-card">
+                        <header class="modal-card-head">
+                            <p class="modal-card-title">Operation Details</p>
+                        </header>
+                        <section class="modal-card-body">
+                            <table>
+                                <col width="35%">
+                                <col width="65%">
+                                <tbody>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Operation Name</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Adversary</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.adversary.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Fact Source</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.source.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Group</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="(selectedOperation.group ? selectedOperation.group : 'all')"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Planner</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.planner.name"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Obfuscator</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.obfuscator"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Autonomous</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="(selectedOperation.autonomous === 0 ? 'manual' : 'autonomous')"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Parser</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.use_learning_parsers"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Auto Close</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.auto_close"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <label class="label">Jitter</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="selectedOperation.jitter"></span>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                                
+                            </table>
+                        </section>
+                        <footer class="modal-card-foot">
+                            <nav class="level">
+                                <div class="level-left"></div>
+                                <div class="level-right">
+                                    <div class="level-item">
+                                        <button class="button is-small" @click="openModal = null">Close</button>
+                                    </div>
+                                </div>
+                            </nav>
+                        </footer>
+                    </div>
+                </template>
+                
                 <template x-if="openModal === 'addLink'">
                     <div class="modal-card wide" x-init="getAbilities()">
                         <header class="modal-card-head">
@@ -1328,6 +1435,7 @@
                 } else if (!this.isJitterValid()) {
                     toast('Jitter values are invalid', false);
                 } else {
+                    this.operationToStart.name = sanitize(this.operationToStart.name);
                     this.operationToStart.autonomous = Number(this.operationToStart.autonomous);
                     this.operationToStart.use_learning_parsers = parseInt(this.operationToStart.use_learning_parsers, 10) === 1;
                     this.operationToStart.auto_close = parseInt(this.operationToStart.auto_close, 10) === 1;
@@ -1351,7 +1459,8 @@
                 let stringToReplace = (dateMatches && dateMatches.length) ? dateMatches[dateMatches.length - 1] : '';
                 let date = `(${new Date().toLocaleString()})`;
                 newOp.name = stringToReplace ? (newOp.name.replace(stringToReplace, date)) : (`${newOp.name} ${date}`);
-                
+                newOp.name = sanitize(newOp.name);
+
                 apiV2('POST', this.ENDPOINT, newOp).then((newOperation) => {
                     toast(`Started operation ${newOperation.name}!`, true);
                     this.operations.push(newOperation);

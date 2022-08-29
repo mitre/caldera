@@ -2,6 +2,9 @@ name: Security Checks
 
 on: [push]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -19,11 +22,11 @@ jobs:
             toxenv: safety
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e
         with:
           submodules: recursive
       - name: Setup python
-        uses: actions/setup-python@v2
+        uses: actions/setup-python@b55428b1882923874294fa556849718a1d7f2ca5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies

@@ -14,7 +14,7 @@ class PlanningServiceInterface(abc.ABC):
         :param trim: call trim_links() on list of links before returning
         :return: a list of links
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_cleanup_links(self, operation, agent):
@@ -25,11 +25,11 @@ class PlanningServiceInterface(abc.ABC):
         :param agent:
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def generate_and_trim_links(self, agent, operation, abilities, trim):
-        pass
+        raise NotImplementedError
 
     @staticmethod
     @abc.abstractmethod
@@ -37,4 +37,4 @@ class PlanningServiceInterface(abc.ABC):
         """
         Sort links by their score then by the order they are defined in an adversary profile
         """
-        pass
+        raise NotImplementedError

@@ -11,7 +11,7 @@ class AuthServiceInterface(abc.ABC):
         :param users:
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @staticmethod
     @abc.abstractmethod
@@ -21,7 +21,7 @@ class AuthServiceInterface(abc.ABC):
         :param request:
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def login_user(self, request):
@@ -29,7 +29,7 @@ class AuthServiceInterface(abc.ABC):
         Kick off all scheduled jobs, as their schedule determines
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def check_permissions(self, group, request):
@@ -39,8 +39,8 @@ class AuthServiceInterface(abc.ABC):
         :param request:
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_permissions(self, request):
-        pass
+        raise NotImplementedError
