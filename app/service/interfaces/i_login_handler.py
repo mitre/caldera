@@ -16,7 +16,7 @@ class LoginHandlerInterface(abc.ABC, BaseObject):
         :return: the response/location of where the user is trying to navigate
         :raises: HTTP exception, such as HTTPFound for redirect, or HTTPUnauthorized
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def handle_login_redirect(self, request, **kwargs):
@@ -26,7 +26,7 @@ class LoginHandlerInterface(abc.ABC, BaseObject):
         :return: the response/location of where the user is trying to navigate
         :raises: HTTP exception, such as HTTPFound for redirect, or HTTPUnauthorized
         """
-        pass
+        raise NotImplementedError
 
     @property
     def name(self):
