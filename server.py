@@ -104,7 +104,7 @@ async def start_vue_dev_server():
         'npm run dev',
         stdout=sys.stdout,
         stderr=sys.stderr,
-        cwd='./magma/')
+        cwd='./plugins/magma/')
     logging.info('VueJS development server is live.')
 
 if __name__ == '__main__':

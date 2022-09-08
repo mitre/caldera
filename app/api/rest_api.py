@@ -29,7 +29,7 @@ class RestApi(BaseWorld):
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
-        self.app_svc.application.router.add_static('/assets', 'front_end/assets/', append_version=True)
+        self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('GET', '/', self.landing)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
