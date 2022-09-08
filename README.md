@@ -6,8 +6,6 @@
 
 # CALDERA&trade;
 
-*Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/).*
-
 CALDERA&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
@@ -18,6 +16,11 @@ The framework consists of two components:
 an asynchronous command-and-control (C2) server with a REST API and a web interface.
 2) **Plugins**. These repositories expand the core framework capabilities and providing additional functionality. Examples include agents, reporting, collections of TTPs and more.
 
+## Resources and Socials
+* 📜 [Documentation, training, and use-cases](https://caldera.readthedocs.io/en/latest/)
+* ✍️ [CALDERA's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
+* 🌐 [Homepage](https://caldera.mitre.org)
+
 ## Plugins
 
 :star: Create your own plugin! Plugin generator: **[Skeleton](https://github.com/mitre/skeleton)** :star:
@@ -26,7 +29,6 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Red Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
-- **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
 - **[Debrief](https://github.com/mitre/debrief)** (operations insights)
 - **[Emu](https://github.com/mitre/emu)** (CTID emulation plans)
@@ -45,6 +47,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 These plugins are ready to use but are not included by default:
 - **[Pathfinder](https://github.com/center-for-threat-informed-defense/caldera_pathfinder)** (vulnerability scanning)
 - **[SAML](https://github.com/mitre/saml)** (SAML authentication)
+- **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 
 ## Requirements
 

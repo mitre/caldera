@@ -192,9 +192,15 @@ function sortAlphabetically(list) {
     })
 }
 
+function sanitize(unsafeMsg) {
+    const parser = new DOMParser();
+    let doc = parser.parseFromString(unsafeMsg, 'text/html');
+    return doc.body.innerText;
+}
+
 function toast(message, success) {
     bulmaToast.toast({
-        message: `<span class="icon"><i class="fas fa-${success ? 'check' : 'exclamation'}"></i></span> ${message}`,
+        message: `<span class="icon"><i class="fas fa-${success ? 'check' : 'exclamation'}"></i></span> ${sanitize(message)}`,
         type: `toast ${success ? 'is-success' : 'is-danger'}`,
         position: 'bottom-right',
         duration: '3000',
@@ -250,41 +256,6 @@ function uuidv4() {
     });
 }
 
-// TODO: JQuery functions
-
-function showHide(show, hide) {
-    $(show).each(function () {
-        $(this).prop('disabled', false).css('opacity', 1.0)
-    });
-    $(hide).each(function () {
-        $(this).prop('disabled', true).css('opacity', 0.5)
-    });
-}
-
-function validateFormState(conditions, selector) {
-    (conditions) ?
-        updateButtonState(selector, 'valid') :
-        updateButtonState(selector, 'invalid');
-}
-
-function updateButtonState(selector, state) {
-    (state === 'valid') ?
-        $(selector).attr('class', 'button-success atomic-button') :
-        $(selector).attr('class', 'button-notready atomic-button');
-}
-
-function stream(msg, speak = false) {
-    let streamer = $('#streamer');
-    if (streamer.text() != msg) {
-        streamer.fadeOut(function () {
-            if (speak) {
-                window.speechSynthesis.speak(new SpeechSynthesisUtterance(msg));
-            }
-            $(this).text(msg).fadeIn(1000);
-        });
-    }
-}
-
 /* SECTIONS */
 
 // Alternative to JQuery parseHTML(keepScripts=true)
@@ -306,33 +277,6 @@ function setInnerHTML(elem, html) {
 // TODO: remove this from all individual plugins in future, as close (x) will be in the tab rather than inside the plugins itself
 function removeSection(identifier) {
     $('#' + identifier).remove();
-}
-
-/* AUTOMATIC functions for all pages */
-
-$(document).ready(function () {
-    $(document).find("select").each(function () {
-        if (!$(this).hasClass('avoid-alphabetizing')) {
-            alphabetize_dropdown($(this));
-            let observer = new MutationObserver(function (mutations, obs) {
-                obs.disconnect();
-                alphabetize_dropdown($(mutations[0].target));
-                obs.observe(mutations[0].target, {childList: true});
-            });
-            observer.observe(this, {childList: true});
-        }
-    });
-});
-
-function alphabetize_dropdown(obj) {
-    let selected_val = $(obj).children("option:selected").val();
-    let disabled = $(obj).find('option:disabled');
-    let opts_list = $(obj).find('option:enabled').clone(true);
-    opts_list.sort(function (a, b) {
-        return a.text.toLowerCase() == b.text.toLowerCase() ? 0 : a.text.toLowerCase() < b.text.toLowerCase() ? -1 : 1;
-    });
-    $(obj).empty().append(opts_list).prepend(disabled);
-    obj.val(selected_val);
 }
 
 function b64DecodeUnicode(str) { //https://stackoverflow.com/a/30106551
