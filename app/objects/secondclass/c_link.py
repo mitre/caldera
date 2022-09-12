@@ -28,6 +28,7 @@ class LinkSchema(ma.Schema):
     id = ma.fields.String(missing='')
     paw = ma.fields.String()
     command = ma.fields.String()
+    plaintext_command = ma.fields.String()
     status = ma.fields.Integer(missing=-3)
     score = ma.fields.Integer(missing=0)
     jitter = ma.fields.Integer(missing=0)
@@ -151,11 +152,12 @@ class Link(BaseObject):
     def is_global_variable(cls, variable):
         return variable in cls.RESERVED
 
-    def __init__(self, command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
+    def __init__(self, command='', plaintext_command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
                  pin=0, host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
         self.id = str(id)
         self.command = command
+        self.plaintext_command = plaintext_command
         self.command_hash = None
         self.paw = paw
         self.host = host
@@ -222,6 +224,7 @@ class Link(BaseObject):
     def replace_origin_link_id(self):
         decoded_cmd = self.decode_bytes(self.command)
         self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
+        self.plaintext_command = decoded_cmd
 
     def _emit_status_change_event(self, from_status, to_status):
         event_svc = BaseService.get_service('event_svc')
