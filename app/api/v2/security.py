@@ -63,6 +63,8 @@ def authentication_required_middleware_factory(auth_svc):
     async def authentication_required_middleware(request, handler):
         if is_handler_authentication_exempt(handler):
             return await handler(request)
+        if request.method == 'OPTIONS':
+            raise web.HTTPOk()
         if not await auth_svc.is_request_authenticated(request):
             raise web.HTTPUnauthorized()
         return await handler(request)

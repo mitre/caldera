@@ -60,8 +60,6 @@ def run_tasks(services, run_vue_server=False):
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(app_svc.register_contacts())
     loop.run_until_complete(app_svc.load_plugins(args.plugins))
-    if run_vue_server:
-        loop.run_until_complete(app_svc.enable_cors())
     loop.run_until_complete(data_svc.load_data(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
     loop.run_until_complete(app_svc.load_plugin_expansions(loop.run_until_complete(data_svc.locate('plugins', dict(enabled=True)))))
     loop.run_until_complete(auth_svc.set_login_handlers(services))
@@ -99,6 +97,12 @@ def init_swagger_documentation(app):
     )
     app.middlewares.append(apispec_request_validation_middleware)
     app.middlewares.append(validation_middleware)
+
+async def enable_cors(request, response):
+    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+    response.headers['Access-Control-Allow-Credentials'] = 'true'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD'
+    response.headers['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers'
 
 async def start_vue_dev_server():
     await asyncio.create_subprocess_shell(
@@ -160,6 +164,8 @@ if __name__ == '__main__':
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
     init_swagger_documentation(app_svc.application)
+    if (args.uidev):    
+        app_svc.application.on_response_prepare.append(enable_cors)
 
     if args.fresh:
         logging.info("Fresh startup: resetting server data. See %s directory for data backups.", DATA_BACKUP_DIR)
