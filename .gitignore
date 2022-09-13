@@ -19,6 +19,7 @@ calderaenv/
 conf/*.yml
 !conf/default.yml
 data/object_store
+data/fact_store
 data/results/*
 !data/results/.gitkeep
 data/payloads/*
