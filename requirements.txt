@@ -8,10 +8,10 @@ pyyaml>=5.1
 cryptography>=3.2,<37.0.0; python_version <= '3.7'
 cryptography>=3.2; python_version > '3.7'
 websockets>=10.3
-Sphinx==3.0.4
+Sphinx==5.1.1
 docutils==0.16 # Broken bullet lists in sphinx_rtd_theme https://github.com/readthedocs/sphinx_rtd_theme/issues/1115
 sphinx_rtd_theme==0.4.3
-recommonmark==0.6.0
+myst-parser==0.18.0
 marshmallow==3.5.1
 dirhash==0.2.0
 docker==4.2.0
