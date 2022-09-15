@@ -312,16 +312,15 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                                technique_id=step.ability.technique_id))
                 if output and step.output:
                     results_dict = self.decode_bytes(file_svc.read_result_file(step.unique, return_dict=True))
-                    try:  # Added for backwards compatibility (old result files)
-                        step_report['output'] = json.loads(results_dict)
-                    except: # old result files / incorrectly formatted json
+                    try:
+                        step_report['output'] = json.loads(results_dict.replace('\\r\\n', '').replace('\\n', ''))
+                    except:  # old result files / incorrectly formatted json
                         step_report['output'] = results_dict
                 if step.agent_reported_time:
                     step_report['agent_reported_time'] = step.agent_reported_time.strftime(self.TIME_FORMAT)
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
-
             return report
         except Exception:
             logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
@@ -381,8 +380,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           attack_metadata=self._get_attack_metadata_for_event_log(link.ability))
         if output and link.output:
             results_dict = self.decode_bytes(file_svc.read_result_file(link.unique, return_dict=True))
-            try:  # Added for backwards compatibility (old result files)
-                event_dict['output'] = json.loads(results_dict)
+            try:
+                event_dict['output'] = json.loads(results_dict.replace('\\r\\n', '').replace('\\n', ''))
             except:  # old result files / incorrectly formatted json
                 event_dict['output'] = results_dict
         if link.agent_reported_time:
