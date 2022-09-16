@@ -117,19 +117,16 @@ class FileSvc(FileServiceInterface, BaseService):
             return name, self._read(file_name)
         raise FileNotFoundError
 
-    def read_result_file(self, link_id, location='data/results', return_dict=False):
+    def read_result_file(self, link_id, location='data/results'):
         buf = self._read(os.path.join(location, link_id))
         decoded_buf = buf.decode('utf-8')
-        if return_dict:
+        try: # Check if results file is valid dictionary
+            json.loads(self.decode_bytes(decoded_buf))
             return decoded_buf
-        try: # Added for backwards compatibility (readers not expecting a dict)
-            results_dict_as_string = BaseService.decode_bytes(decoded_buf)
-            results_dict = json.loads(results_dict_as_string)
-            if results_dict["stderr"] != "": # Backwards compatibility: imitates old functionality (stderr or stdout)
-                return BaseService.encode_string(results_dict["stderr"])
-            return BaseService.encode_string(results_dict["stdout"])
-        except: # Exception occurs on non-dict result files (legacy)
-            return decoded_buf
+        except json.JSONDecodeError: # Exception occurs on non-dict result files (legacy)
+            results_dict = json.dumps(
+                {'stdout' : self.decode_bytes(decoded_buf, strip_newlines=False), 'stderr': ''})
+            return self.encode_string(str(results_dict))
 
     def write_result_file(self, link_id, output, location='data/results'):
         output = bytes(output, encoding='utf-8')
