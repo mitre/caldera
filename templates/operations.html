@@ -462,7 +462,19 @@
                             </template>
                             <template x-if="!isLinkEditable(selectedLink)">
                                 <div>
-                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">      
+                                    <div>
+                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                    </div>
+                                </template>
+                                <template x-if="selectedLinkPlaintextCommand && selectedLinkPlaintextCommand !== selectedLinkCommand">
+                                    <div>
+                                        <p class="mt-3 mb-2">Obfuscated:</p>
+                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                        <p class="mt-3 mb-2">Plaintext:</p>
+                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkPlaintextCommand"></pre>
+                                    </div>
+                                </template>
                                 </div>
                             </template>
                         </section>
@@ -1204,6 +1216,7 @@
             selectedLink: null,
             selectedLinkResults: null,
             selectedLinkFacts: null,
+            selectedLinkPlaintextCommand: null,
             selectedLinkCommand: null,
             selectedReportType: 'full-report',
             isAgentOutputSelected: false,
@@ -1675,12 +1688,14 @@
                             this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score);
                         }
                         this.selectedLinkCommand = b64DecodeUnicode(res.command);
+                        this.selectedLinkPlaintextCommand = b64DecodeUnicode(res.plaintext_command);
                         this.editableCommand = b64DecodeUnicode(res.command);
                     })
                     .catch(() => {
                         this.selectedLinkResults = null;
                         this.selectedLinkFacts = null;
                         this.selectedLinkCommand = null;
+                        this.selectedLinkPlaintextCommand = null;
                         toast('Error getting link results.');
                     });
             },
@@ -1760,27 +1775,17 @@
             },
 
             downloadCSV() {
-                const csv = [];
-                const rows = document.querySelector('#operationsPage').querySelectorAll('table tr:not(.csv-exclude)');
+                let csv = [ 'Decide,Link/Ability Name,Agent #paw,Host,pid,Command,Plaintext Command' ];
 
-                rows.forEach((row, i) => {
-                    const cols = row.querySelectorAll('td:not(.csv-exclude), th:not(.csv-exclude)');
+                this.selectedOperation.chain.forEach(async (link) => {
                     const rowItems = [];
-                    cols.forEach((col) => {
-                        const link = this.selectedOperation.chain[i - 1];
-                        if (col.className.includes('agentDetails')) {
-                            let agentDetails = `Agent #${link.paw}`;
-                            if (link.host) agentDetails += `\nHost: ${link.host}`;
-                            if (link.pid) agentDetails += `\nPid: ${link.pid}`;
-                            rowItems.push(`"${agentDetails}"`);
-                        } else if (col.className.includes('commandDetails')) {
-                            rowItems.push(`"${b64DecodeUnicode(link.command)}"`);
-                        } else if (col.className.includes('outputDetails')) {
-                            rowItems.push(`"${link.facts}"`);
-                        } else {
-                            rowItems.push(`"${col.innerText}"`);
-                        }
-                    });
+                    rowItems.push(link.decide);
+                    rowItems.push(link.ability.name);
+                    rowItems.push(link.paw);
+                    rowItems.push(link.host);
+                    rowItems.push(link.pid);
+                    rowItems.push(b64DecodeUnicode(link.command));
+                    rowItems.push(b64DecodeUnicode(link.plaintext_command));
                     csv.push(rowItems.join(','));
                 });
                 this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
