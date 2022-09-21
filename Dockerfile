@@ -18,6 +18,20 @@ RUN apt-get update && \
 ARG WIN_BUILD=false
 RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y install mingw-w64; fi
 
+# haproxy is needed for the ssl plugin
+RUN apt-get install haproxy -y
+
+# Generate self signed certificate
+RUN openssl req -x509 -newkey rsa:4096  -out conf/certificate.pem -keyout conf/certificate.pem -subj "/C=US/ST=VA/L=McLean/O=Mitre/OU=IT/CN=mycaldera.caldera" -nodes
+RUN mv conf/certificate.pem plugins/ssl/conf/certificate.pem
+
+# Enable Self Signed Certificate within haproxy
+RUN cp plugins/ssl/templates/haproxy.conf conf/
+RUN sed -i 's#bind\ \*\:8443\ ssl\ crt\ plugins/ssl/conf/insecure_certificate.pem#bind\ \*\:8443\ ssl\ crt\ plugins/ssl/conf/certificate.pem#g' conf/haproxy.conf
+
+# Enable ssl plugin
+RUN sed -i '/^\-\ manx/a \-\ ssl' conf/default.yml
+
 # Install pip requirements
 RUN pip3 install --no-cache-dir -r requirements.txt
 
