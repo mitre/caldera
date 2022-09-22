@@ -426,18 +426,18 @@
                                     </pre>
                                 </div>
                             </template>
-                            <template x-if="selectedLinkResults != null && selectedLinkResults.stdout !== ''">
                                 <div>
-                                    <p class="mt-3 mb-2">Standard Output:</p>
-                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults.stdout"></pre>
+                                    <p class="mt-3 mb-2" x-text="`Standard Output: ${selectedLinkResults.stdout ? '' : 'Nothing to show'}`"></p>
+                                    <template x-if="selectedLinkResults != null && selectedLinkResults.stdout !== ''">
+                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults.stdout"></pre>
+                                    </template>
                                 </div>
-                            </template>
-                            <template x-if="selectedLinkResults != null && selectedLinkResults.stderr !== ''">
                                 <div>
-                                    <p class="mt-3 mb-2">Standard Error:</p>
-                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults.stderr"></pre>
+                                    <p class="mt-3 mb-2" x-text="`Standard Error: ${selectedLinkResults.stderr ? '' : 'Nothing to show'}`"></p>
+                                    <template x-if="selectedLinkResults != null && selectedLinkResults.stderr !== ''">
+                                        <pre class="has-text-left white-space-pre-line has-text-danger" x-text="selectedLinkResults.stderr"></pre>
+                                    </template>
                                 </div>
-                            </template>
                         </section>
                         <footer class="modal-card-foot">
                             <nav class="level">
