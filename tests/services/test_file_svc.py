@@ -1,3 +1,5 @@
+import base64
+import json
 import os
 import pytest
 import yaml
@@ -51,12 +53,18 @@ class TestFileService:
     def test_read_write_result_file(self, tmpdir, file_svc):
         link_id = '12345'
         output = 'output testing unit'
+        output_encoded = str(b64encode(output.encode()), 'utf-8')
+
         # write output data
-        file_svc.write_result_file(link_id=link_id, output=output, location=tmpdir)
+        file_svc.write_result_file(link_id=link_id, output=output_encoded, location=tmpdir)
+
+        # construct expected output
+        output_dict = {'stdout': output, 'stderr': ''}
 
         # read output data
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
-        assert output_data == output
+        decoded_output_data = json.loads(base64.b64decode(output_data))
+        assert decoded_output_data == output_dict
 
     def test_upload_decode_plaintext(self, event_loop, file_svc, data_svc):
         content = b'this will be encoded and decoded as plaintext'

@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import pytest
 
@@ -53,7 +54,8 @@ class TestContactSvc:
         )
         await contact_svc._save(Result(**result))
         result = await rest_svc.display_result(dict(link_id=link.id))
-        assert base64.b64decode(result['output']) == test_string
+        result_dict = json.loads(base64.b64decode(result['output']))
+        assert result_dict['stdout'] == test_string.decode()
 
         # cleanup test
         try:

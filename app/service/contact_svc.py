@@ -124,9 +124,9 @@ class ContactService(ContactServiceInterface, BaseService):
                     link.output = True
                     result.output = await self._postprocess_link_result(result.output, link)
                     command_results = json.dumps(
-                        {'stdout' : self.decode_bytes(result.output, strip_newlines=False),
+                        {'stdout': self.decode_bytes(result.output, strip_newlines=False),
                          'stderr': self.decode_bytes(result.stderr, strip_newlines=False)})
-                    encoded_command_results = self.encode_string(str(command_results))
+                    encoded_command_results = self.encode_string(command_results)
                     self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.executor.parsers:
@@ -145,7 +145,7 @@ class ContactService(ContactServiceInterface, BaseService):
                 command_results = json.dumps(
                     {'stdout': self.decode_bytes(result.output, strip_newlines=False),
                      'stderr': self.decode_bytes(result.stderr, strip_newlines=False)})
-                encoded_command_results = self.encode_string(str(command_results))
+                encoded_command_results = self.encode_string(command_results)
                 self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
         except Exception as e:
             self.log.exception(f'Unexpected error occurred while saving link - {e}')

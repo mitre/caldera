@@ -1,3 +1,5 @@
+import json
+
 import pytest
 
 from http import HTTPStatus
@@ -70,7 +72,8 @@ class TestOperationsApi:
         with mocker.patch('app.objects.c_operation.Operation.all_facts') as mock_all_facts:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_operation.Operation.decode_bytes') as mock_decode:
-                mock_decode.return_value = expected_link_output
+                expected_link_output_dict = json.dumps({"stdout": expected_link_output, "stderr": ""})
+                mock_decode.return_value = expected_link_output_dict
                 with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
                     mock_readfile.return_value = ''
                     payload = {'enable_agent_output': True}
@@ -114,7 +117,8 @@ class TestOperationsApi:
                                                                  test_operation, finished_link, test_agent,
                                                                  expected_link_output):
         with mocker.patch('app.objects.c_operation.Operation.decode_bytes') as mock_decode:
-            mock_decode.return_value = expected_link_output
+            expected_link_output_dict = {"stdout": expected_link_output, "stderr": ""}
+            mock_decode.return_value = json.dumps(expected_link_output_dict)
             with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
                 mock_readfile.return_value = ''
                 payload = {'enable_agent_output': True}
@@ -123,7 +127,7 @@ class TestOperationsApi:
                 assert event_logs[1]['command'] == finished_link['command']
                 assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
                 assert event_logs[1]['operation_metadata']['operation_name'] == test_operation['name']
-                assert event_logs[1]['output'] == expected_link_output
+                assert event_logs[1]['output'] == expected_link_output_dict
                 assert not event_logs[0].get('output')
 
     async def test_unauthorized_get_operation_event_logs(self, api_v2_client):

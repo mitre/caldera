@@ -1,5 +1,6 @@
 import asyncio
 import base64
+import binascii
 import copy
 import json
 import os
@@ -120,12 +121,16 @@ class FileSvc(FileServiceInterface, BaseService):
     def read_result_file(self, link_id, location='data/results'):
         buf = self._read(os.path.join(location, link_id))
         decoded_buf = buf.decode('utf-8')
-        try: # Check if results file is valid dictionary
+        try:  # Check if results file is valid dictionary
             json.loads(self.decode_bytes(decoded_buf))
             return decoded_buf
-        except json.JSONDecodeError: # Exception occurs on non-dict result files (legacy)
+        except json.JSONDecodeError:  # Exception occurs on non-dict result files (legacy)
             results_dict = json.dumps(
-                {'stdout' : self.decode_bytes(decoded_buf, strip_newlines=False), 'stderr': ''})
+                {'stdout': self.decode_bytes(decoded_buf, strip_newlines=False), 'stderr': ''})
+            return self.encode_string(str(results_dict))
+        except binascii.Error:  # Exception occurs on non base64 result files (irregular)
+            results_dict = json.dumps(
+                {'stdout': decoded_buf, 'stderr': ''})
             return self.encode_string(str(results_dict))
 
     def write_result_file(self, link_id, output, location='data/results'):
