@@ -8,6 +8,7 @@ class CalderaInfoSchema(schema.Schema):
     application = fields.String()
     version = fields.String()
     plugins = fields.List(fields.Nested(Plugin.display_schema))
+    defang = fields.Bool()
 
     class Meta:
         ordered = True

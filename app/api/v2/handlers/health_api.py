@@ -7,6 +7,7 @@ import app
 from app.api.v2 import security
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.schemas.caldera_info_schemas import CalderaInfoSchema
+from app.utility.base_world import BaseWorld
 
 
 class HealthApi(BaseApi):
@@ -28,7 +29,8 @@ class HealthApi(BaseApi):
         mapping = {
             'application': 'CALDERA',
             'version': app.get_version(),
-            'plugins': loaded_plugins_sorted
+            'plugins': loaded_plugins_sorted,
+            'defang': BaseWorld.get_config('defang')
         }
 
         return web.json_response(CalderaInfoSchema().dump(mapping))

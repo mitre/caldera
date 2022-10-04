@@ -7,6 +7,7 @@ function alpineCore() {
         errors: startupErrors,
         showErrors: false,
         version: '0.0.0',
+        defang: false,
         isFirstVisit: false,
         scrollTop: window.scrollY,
 
@@ -17,6 +18,7 @@ function alpineCore() {
 
             apiV2('GET', '/api/v2/health').then((response) => {
                 this.version = response.version;
+                this.defang = response.defang;
                 this.checkIfFirstVisit();
             }).catch((error) => {
                 console.error(error);
@@ -44,7 +46,7 @@ function alpineCore() {
         async addTab(tabName, address, queryString = '') {
             // Field manual does not create a tab
             if (tabName === 'fieldmanual') {
-                restRequest('GET', null, (data) => { this.setTabContent({ name: tabName, contentID: `tab-${tabName}`, address: address }, data); }, address);
+                window.open('/docs/index.html', '_blank');
                 return;
             }
 

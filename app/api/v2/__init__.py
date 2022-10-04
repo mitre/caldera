@@ -1,7 +1,6 @@
 from aiohttp import web
 
-
-def make_app(services):
+def make_app(services, defang):
     from .responses import json_request_validation_middleware
     from .security import authentication_required_middleware_factory
 
@@ -36,14 +35,8 @@ def make_app(services):
     from .handlers.adversary_api import AdversaryApi
     AdversaryApi(services).add_routes(app)
 
-    from .handlers.agent_api import AgentApi
-    AgentApi(services).add_routes(app)
-
     from .handlers.schedule_api import ScheduleApi
     ScheduleApi(services).add_routes(app)
-
-    from .handlers.operation_api import OperationApi
-    OperationApi(services).add_routes(app)
 
     from .handlers.obfuscator_api import ObfuscatorApi
     ObfuscatorApi(services).add_routes(app)
@@ -53,5 +46,12 @@ def make_app(services):
 
     from .handlers.contact_api import ContactApi
     ContactApi(services).add_routes(app)
+
+    if (not defang):
+        from .handlers.agent_api import AgentApi
+        AgentApi(services).add_routes(app)
+
+        from .handlers.operation_api import OperationApi
+        OperationApi(services).add_routes(app)
 
     return app

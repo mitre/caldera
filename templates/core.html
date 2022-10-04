@@ -32,7 +32,7 @@
                 <div class="is-flex is-justify-content-center">
                     <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><em class="fas fa-user pr-3"></em>{{ user_name }}</span>
                 </div>
-                <template x-if="errors.length > 0">
+                <template x-if="errors.length > 0 && !defang">
                     <div class="is-flex is-justify-content-center">
                         <a id="startup-errors-warning" class="has-text-info">
                             <em class="fas fa-comment-alt pr-1"></em>
@@ -40,13 +40,25 @@
                         </a>
                     </div>
                 </template>
+                <template x-if="defang">
+                    <div class="is-flex is-justify-content-center mt-3 mb-3">
+                        <a class="has-text-info" @click="showErrors = true">
+                            <em class="fas fa-shield-alt pr-1"></em>
+                            Defanged
+                        </a>
+                    </div>
+                </template>
                 <aside id="nav-menu" class="menu">
                     <p class="menu-label nav-header"><em class="fas fa-flag pr-2"></em>Campaigns</p>
                     <ul class="menu-list">
-                        <li><a href="#home" class="nav-item" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
+                        <template x-if="!defang">
+                            <li><a href="#home" class="nav-item" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
+                        </template>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('abilities', '/campaign/abilities')">abilities</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('adversaries', '/campaign/adversaries')">{{ team_name }}</a></li>
-                        <li><a href="#home" class="nav-item" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
+                        <template x-if="!defang">
+                            <li><a href="#home" class="nav-item" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
+                        </template>
                     </ul>
                     <p class="menu-label nav-header"><em class="fas fa-puzzle-piece pr-2"></em>Plugins</p>
                     <ul class="menu-list">
@@ -66,10 +78,12 @@
                         <li><a href="#home" class="nav-item" x-on:click="addTab('fact sources', '/advanced/sources')">fact sources</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('objectives', '/advanced/objectives')">objectives</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('planners', '/advanced/planners')">planners</a></li>
-                        <li><a href="#home" class="nav-item" x-on:click="addTab('contacts', '/advanced/contacts')">contacts</a></li>
                         <li><a href="#home" class="nav-item" x-on:click="addTab('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
-                        <li><a href="#home" class="nav-item" x-on:click="addTab('configuration', '/advanced/configurations')">configuration</a></li>
-                        <li><a href="#home" class="nav-item" x-on:click="addTab('exfilled files', '/advanced/exfills')">exfilled files</a></li>
+                        <template x-if="!defang">
+                            <li><a href="#home" class="nav-item" x-on:click="addTab('contacts', '/advanced/contacts')">contacts</a></li>
+                            <li><a href="#home" class="nav-item" x-on:click="addTab('configuration', '/advanced/configurations')">configuration</a></li>
+                            <li><a href="#home" class="nav-item" x-on:click="addTab('exfilled files', '/advanced/exfills')">exfilled files</a></li>
+                        </template>
                         <li><a href="./api/docs" target="_blank">
                             api docs
                             <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup></a>
@@ -118,10 +132,10 @@
                 <div class="modal-card">
                     <div>
                         <header class="modal-card-head">
-                            <h2>Startup Messages</h2>
+                            <h2 x-text="defang ? 'Defanged CALDERA' : 'Startup Messages'"></h2>
                         </header>
                         <section class="modal-card-body">
-                            <div class="modal-form">
+                            <div class="modal-form" x-show="!defang">
                                 <template x-if="!errors || errors.length < 1">
                                     <div class="is-flex is-justify-content-center">
                                         <em>No startup messages.</em>
@@ -142,6 +156,12 @@
                                         </div>
                                     </article>
                                 </template>
+                            </div>
+                            <div x-show="defang">
+                                <p>
+                                    This instance of CALDERA has been defanged. You will not be able to deploy agents or run operations.
+                                    Some default plugins have also been disabled if they would depend on Caldera being executable.
+                                </p>
                             </div>
                         </section>
                     </div>

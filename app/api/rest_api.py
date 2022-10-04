@@ -39,7 +39,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         # authorized API endpoints
-        self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
+        #self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
 

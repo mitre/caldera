@@ -109,6 +109,8 @@ if __name__ == '__main__':
                         help='Start up with a single plugin', type=list_str)
     parser.add_argument('--insecure', action='store_true', required=False, default=False,
                         help='Start caldera with insecure default config values. Equivalent to "-E default".')
+    parser.add_argument('--defang', action='store_true', required=False, default=False,
+                        help='Run Caldera without the ability to deploy agents or run operations. Useful for sharing and building out adversaries, abilities, or emulation plans.')
 
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
@@ -124,6 +126,7 @@ if __name__ == '__main__':
     logging.info('Using main config from %s' % main_config_path)
     BaseWorld.apply_config('agents', BaseWorld.strip_yml('conf/agents.yml')[0])
     BaseWorld.apply_config('payloads', BaseWorld.strip_yml('conf/payloads.yml')[0])
+    BaseWorld.set_config('main', 'defang', args.defang)
 
     data_svc = DataService()
     knowledge_svc = KnowledgeService()
@@ -143,7 +146,7 @@ if __name__ == '__main__':
     event_svc = EventService()
 
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
-    app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
+    app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services(), args.defang))
     init_swagger_documentation(app_svc.application)
 
     if args.fresh:
