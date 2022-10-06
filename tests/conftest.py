@@ -178,7 +178,7 @@ def ability():
     def _generate_ability(ability_id=None, *args, **kwargs):
         if not ability_id:
             ability_id = random.randint(0, 999999)
-        return Ability(ability_id=ability_id, *args, **kwargs)
+        return Ability(*args, ability_id=ability_id, **kwargs)
 
     return _generate_ability
 
@@ -186,7 +186,7 @@ def ability():
 @pytest.fixture
 def operation():
     def _generate_operation(name, agents, adversary, *args, **kwargs):
-        return Operation(name=name, agents=agents, adversary=adversary, *args, **kwargs)
+        return Operation(*args, name=name, agents=agents, adversary=adversary, **kwargs)
 
     return _generate_operation
 
@@ -210,7 +210,7 @@ def obfuscator(event_loop, data_svc):
 @pytest.fixture
 def agent():
     def _generate_agent(sleep_min, sleep_max, watchdog, *args, **kwargs):
-        return Agent(sleep_min=sleep_min, sleep_max=sleep_max, watchdog=watchdog, *args, **kwargs)
+        return Agent(*args, sleep_min=sleep_min, sleep_max=sleep_max, watchdog=watchdog, **kwargs)
 
     return _generate_agent
 
@@ -218,7 +218,7 @@ def agent():
 @pytest.fixture
 def link():
     def _generate_link(command, paw, ability, executor, *args, **kwargs):
-        return Link.load(dict(ability=ability, executor=executor, command=command, paw=paw, *args, **kwargs))
+        return Link.load(dict(*args, ability=ability, executor=executor, command=command, paw=paw, **kwargs))
 
     return _generate_link
 
@@ -226,7 +226,7 @@ def link():
 @pytest.fixture
 def fact():
     def _generate_fact(trait, *args, **kwargs):
-        return Fact(trait=trait, *args, **kwargs)
+        return Fact(*args, trait=trait, **kwargs)
 
     return _generate_fact
 
@@ -234,7 +234,7 @@ def fact():
 @pytest.fixture
 def rule():
     def _generate_rule(action, trait, *args, **kwargs):
-        return Rule(action=action, trait=trait, *args, **kwargs)
+        return Rule(*args, action=action, trait=trait, **kwargs)
 
     return _generate_rule
 
@@ -242,7 +242,7 @@ def rule():
 @pytest.fixture
 def relationship():
     def _generate_relationship(source, edge, target, *args, **kwargs):
-        return Relationship(source=source, edge=edge, target=target, *args, **kwargs)
+        return Relationship(*args, source=source, edge=edge, target=target, **kwargs)
 
     return _generate_relationship
 
