@@ -43,8 +43,16 @@
     <template x-if="selectedProfileId && !isCreatingProfile">
         <div class="section" x-init="$watch('selectedProfileAbilities', val => findAbilityDependencies())">
             <div x-show="!isEditingProfile">
-                <h3 x-text="selectedProfileName" class="pointer tooltip has-tooltip-arrow" data-tooltip="Click to edit" @click="isEditingProfile = true"></h3>
-                <p x-text="selectedProfileDescription" class="pointer" @click="isEditingProfile = true"></p> <br>
+                <div class="is-flex is-justify-content-space-between">
+                    <div>
+                        <h3 x-text="selectedProfileName" class="pointer tooltip has-tooltip-arrow" data-tooltip="Click to edit" @click="isEditingProfile = true"></h3>
+                        <p x-text="selectedProfileDescription" class="pointer" @click="isEditingProfile = true"></p> <br>
+                    </div>
+                    <p>
+                        Adversary ID:
+                        <span x-text="selectedProfileId"></span>
+                    </p>
+                </div>
             </div>
             <form x-show="isEditingProfile">
                 <div class="field">
@@ -61,7 +69,7 @@
                 </div>
                 <div class="field">
                     <div class="control">
-                        <a class="button is-small is-primary" @click="isEditingProfile = false">Done</a>
+                        <a class="button is-small is-primary mb-5" @click="isEditingProfile = false">Done</a>
                     </div>
                 </div>
             </form>
