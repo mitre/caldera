@@ -72,7 +72,7 @@ class TestOperationsApi:
         with mocker.patch('app.objects.c_operation.Operation.all_facts') as mock_all_facts:
             mock_all_facts.return_value = async_return([])
             with mocker.patch('app.objects.c_operation.Operation.decode_bytes') as mock_decode:
-                expected_link_output_dict = json.dumps({"stdout": expected_link_output, "stderr": ""})
+                expected_link_output_dict = json.dumps(dict(stdout=expected_link_output, stderr=""))
                 mock_decode.return_value = expected_link_output_dict
                 with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
                     mock_readfile.return_value = ''
@@ -117,7 +117,7 @@ class TestOperationsApi:
                                                                  test_operation, finished_link, test_agent,
                                                                  expected_link_output):
         with mocker.patch('app.objects.c_operation.Operation.decode_bytes') as mock_decode:
-            expected_link_output_dict = {"stdout": expected_link_output, "stderr": ""}
+            expected_link_output_dict = dict(stdout=expected_link_output, stderr="")
             mock_decode.return_value = json.dumps(expected_link_output_dict)
             with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
                 mock_readfile.return_value = ''

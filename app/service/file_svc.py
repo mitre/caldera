@@ -121,17 +121,16 @@ class FileSvc(FileServiceInterface, BaseService):
     def read_result_file(self, link_id, location='data/results'):
         buf = self._read(os.path.join(location, link_id))
         decoded_buf = buf.decode('utf-8')
-        try:  # Check if results file is valid dictionary
+        try:
             json.loads(self.decode_bytes(decoded_buf))
             return decoded_buf
-        except json.JSONDecodeError:  # Exception occurs on non-dict result files (legacy)
-            results_dict = json.dumps(
-                {'stdout': self.decode_bytes(decoded_buf, strip_newlines=False), 'stderr': ''})
-            return self.encode_string(str(results_dict))
-        except binascii.Error:  # Exception occurs on non base64 result files (irregular)
-            results_dict = json.dumps(
-                {'stdout': decoded_buf, 'stderr': ''})
-            return self.encode_string(str(results_dict))
+        except json.JSONDecodeError:
+            results = json.dumps(dict(
+                stdout=self.decode_bytes(decoded_buf, strip_newlines=False), stderr=''))
+            return self.encode_string(str(results))
+        except binascii.Error:
+            results = json.dumps(dict(stdout=decoded_buf, stderr=''))
+            return self.encode_string(str(results))
 
     def write_result_file(self, link_id, output, location='data/results'):
         output = bytes(output, encoding='utf-8')

@@ -123,9 +123,9 @@ class ContactService(ContactServiceInterface, BaseService):
                 if result.output or result.stderr:
                     link.output = True
                     result.output = await self._postprocess_link_result(result.output, link)
-                    command_results = json.dumps(
-                        {'stdout': self.decode_bytes(result.output, strip_newlines=False),
-                         'stderr': self.decode_bytes(result.stderr, strip_newlines=False)})
+                    command_results = json.dumps(dict(
+                        stdout=self.decode_bytes(result.output, strip_newlines=False),
+                        stderr=self.decode_bytes(result.stderr, strip_newlines=False)))
                     encoded_command_results = self.encode_string(command_results)
                     self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
@@ -142,9 +142,9 @@ class ContactService(ContactServiceInterface, BaseService):
                         loop.create_task(self.get_service('learning_svc').learn(all_facts, link, result.output,
                                                                                 operation))
             else:
-                command_results = json.dumps(
-                    {'stdout': self.decode_bytes(result.output, strip_newlines=False),
-                     'stderr': self.decode_bytes(result.stderr, strip_newlines=False)})
+                command_results = json.dumps(dict(
+                    stdout=self.decode_bytes(result.output, strip_newlines=False),
+                    stderr=self.decode_bytes(result.stderr, strip_newlines=False)))
                 encoded_command_results = self.encode_string(command_results)
                 self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
         except Exception as e:

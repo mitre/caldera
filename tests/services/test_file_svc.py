@@ -54,49 +54,34 @@ class TestFileService:
         link_id = '12345'
         output = 'output testing unit'
         error = 'error testing unit'
-        output_encoded = str(b64encode(json.dumps({'stdout': output, 'stderr': error}).encode()), 'utf-8')
-
-        # write output data
+        output_encoded = str(b64encode(json.dumps(dict(stdout=output, stderr=error)).encode()), 'utf-8')
         file_svc.write_result_file(link_id=link_id, output=output_encoded, location=tmpdir)
 
-        # construct expected output
-        output_dict = {'stdout': output, 'stderr': error}
-
-        # read output data
+        expected_output = dict(stdout=output, stderr=error)
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         decoded_output_data = json.loads(base64.b64decode(output_data))
-        assert decoded_output_data == output_dict
+        assert decoded_output_data == expected_output
 
     def test_read_write_result_file_no_dict(self, tmpdir, file_svc):
         link_id = '12345'
         output = 'output testing unit'
         output_encoded = str(b64encode(output.encode()), 'utf-8')
-
-        # write output data
         file_svc.write_result_file(link_id=link_id, output=output_encoded, location=tmpdir)
 
-        # construct expected output
-        output_dict = {'stdout': output, 'stderr': ''}
-
-        # read output data
+        expected_output = {'stdout': output, 'stderr': ''}
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         decoded_output_data = json.loads(base64.b64decode(output_data))
-        assert decoded_output_data == output_dict
+        assert decoded_output_data == expected_output
 
     def test_read_write_result_file_no_base64(self, tmpdir, file_svc):
         link_id = '12345'
         output = 'output testing unit'
-
-        # write output data
         file_svc.write_result_file(link_id=link_id, output=output, location=tmpdir)
 
-        # construct expected output
-        output_dict = {'stdout': output, 'stderr': ''}
-
-        # read output data
+        expected_output = {'stdout': output, 'stderr': ''}
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         decoded_output_data = json.loads(base64.b64decode(output_data))
-        assert decoded_output_data == output_dict
+        assert decoded_output_data == expected_output
 
     def test_upload_decode_plaintext(self, event_loop, file_svc, data_svc):
         content = b'this will be encoded and decoded as plaintext'

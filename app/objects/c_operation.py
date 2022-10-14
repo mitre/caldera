@@ -310,8 +310,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                                technique_name=step.ability.technique_name,
                                                technique_id=step.ability.technique_id))
                 if output and step.output:
-                    results_dict = self.decode_bytes(file_svc.read_result_file(step.unique))
-                    step_report['output'] = json.loads(results_dict.replace('\\r\\n', '').replace('\\n', ''))
+                    results = self.decode_bytes(file_svc.read_result_file(step.unique))
+                    step_report['output'] = json.loads(results.replace('\\r\\n', '').replace('\\n', ''))
                 if step.agent_reported_time:
                     step_report['agent_reported_time'] = step.agent_reported_time.strftime(self.TIME_FORMAT)
                 agents_steps[step.paw]['steps'].append(step_report)
@@ -375,8 +375,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           operation_metadata=self._get_operation_metadata_for_event_log(),
                           attack_metadata=self._get_attack_metadata_for_event_log(link.ability))
         if output and link.output:
-            results_dict = self.decode_bytes(file_svc.read_result_file(link.unique))
-            event_dict['output'] = json.loads(results_dict.replace('\\r\\n', '').replace('\\n', ''))
+            results = self.decode_bytes(file_svc.read_result_file(link.unique))
+            event_dict['output'] = json.loads(results.replace('\\r\\n', '').replace('\\n', ''))
         if link.agent_reported_time:
             event_dict['agent_reported_time'] = link.agent_reported_time.strftime(self.TIME_FORMAT)
         return event_dict
