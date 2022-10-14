@@ -208,7 +208,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve the result of a link',
-                          description='Retrieve the results of one link from memory based on the operation id (String '
+                          description='Retrieve the results (as a dictionary) of one link from memory based on the operation id (String '
                                       'UUID) and link id (String UUID).  Use fields from the `BaseGetOneQuerySchema` in the '
                                       'request body to add `include` and `exclude` filters.',
                           parameters=[{
@@ -227,7 +227,7 @@ class OperationApi(BaseObjectApi):
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
     @aiohttp_apispec.response_schema(LinkSchema(partial=True),
-                                     description='Contains a result string for the link requested.')
+                                     description='Contains a result dictionary as a string for the link requested.')
     async def get_operation_link_result(self, request: web.Request):
         operation_id = request.match_info.get('id')
         link_id = request.match_info.get('link_id')

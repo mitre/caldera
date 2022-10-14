@@ -55,7 +55,7 @@ class FileServiceInterface(abc.ABC):
     def read_result_file(self, link_id, location):
         """
         Read a result file. If file encryption is enabled, this method will return the plaintext
-        content.
+        content.  Returns contents as a base64 encoded dictionary.
         :param link_id: The id of the link to return results from.
         :param location: The path to results directory.
         :return:
