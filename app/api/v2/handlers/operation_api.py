@@ -7,6 +7,7 @@ from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.operation_api_manager import OperationApiManager
 from app.api.v2.responses import JsonHttpNotFound
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
+from app.api.v2.schemas.link_result_schema import LinkResultSchema
 from app.objects.c_operation import Operation, OperationSchema, OperationOutputRequestSchema
 from app.objects.secondclass.c_link import LinkSchema
 
@@ -208,7 +209,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve the result of a link',
-                          description='Retrieve the results (as a dictionary) of one link from memory based on the operation id (String '
+                          description='Retrieve a dictionary containing a link and its results dictionary based on the operation id (String '
                                       'UUID) and link id (String UUID).  Use fields from the `BaseGetOneQuerySchema` in the '
                                       'request body to add `include` and `exclude` filters.',
                           parameters=[{
@@ -226,8 +227,8 @@ class OperationApi(BaseObjectApi):
                               'description': 'UUID of the link object to retrieve results of.'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(LinkSchema(partial=True),
-                                     description='Contains a result dictionary as a string for the link requested.')
+    @aiohttp_apispec.response_schema(LinkResultSchema(partial=True),
+                                     description='Contains a dictionary with the requested link and its results dictionary.')
     async def get_operation_link_result(self, request: web.Request):
         operation_id = request.match_info.get('id')
         link_id = request.match_info.get('link_id')
