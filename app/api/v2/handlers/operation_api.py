@@ -227,7 +227,7 @@ class OperationApi(BaseObjectApi):
                               'description': 'UUID of the link object to retrieve results of.'
                           }])
     @aiohttp_apispec.querystring_schema(BaseGetOneQuerySchema)
-    @aiohttp_apispec.response_schema(LinkResultSchema(partial=True),
+    @aiohttp_apispec.response_schema(LinkResultSchema(),
                                      description='Contains a dictionary with the requested link and its results dictionary.')
     async def get_operation_link_result(self, request: web.Request):
         operation_id = request.match_info.get('id')

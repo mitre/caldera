@@ -6,5 +6,5 @@ from marshmallow import fields
 
 
 class LinkResultSchema(ma.Schema):
-    link = fields.Nested(LinkSchema)
+    link = fields.Nested(LinkSchema(partial=True))
     result = fields.String()
