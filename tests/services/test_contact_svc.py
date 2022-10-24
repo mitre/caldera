@@ -1,4 +1,5 @@
 import base64
+import json
 import os
 import pytest
 
@@ -43,20 +44,50 @@ def setup_contact_service(event_loop, data_svc, agent, ability, operation, link,
 class TestContactSvc:
     async def test_save_ability_hooks(self, setup_contact_service, contact_svc, event_svc):
         test_string = b'test_string'
+        err_string = b'err_string'
         link = setup_contact_service
         rest_svc = RestService()
         result = dict(
             id=link.id,
             output=str(base64.b64encode(base64.b64encode(test_string)), 'utf-8'),
+            stderr=str(base64.b64encode(err_string), 'utf-8'),
             pid=0,
             status=0
         )
         await contact_svc._save(Result(**result))
         result = await rest_svc.display_result(dict(link_id=link.id))
-        assert base64.b64decode(result['output']) == test_string
+        result_dict = json.loads(base64.b64decode(result['output']))
+
+        assert result_dict['stdout'] == test_string.decode()
+        assert result_dict['stderr'] == err_string.decode()
 
         # cleanup test
         try:
             os.remove(os.path.join('data', 'results', link.id))
         except FileNotFoundError:
             print('Unable to cleanup test_save_ability_hooks result file')
+
+    async def test_save_ability_hooks_with_no_link(self, setup_contact_service, contact_svc, event_svc, file_svc):
+        test_string = b'test_string'
+        err_string = b'err_string'
+        # Send version with link for comparison
+        result = dict(
+            id="12345",
+            output=str(base64.b64encode(test_string), 'utf-8'),
+            stderr=str(base64.b64encode(err_string), 'utf-8'),
+            pid=0,
+            status=0
+        )
+
+        await contact_svc._save(Result(**result))
+
+        result = file_svc.read_result_file("12345")
+        result_dict = json.loads(base64.b64decode(result))
+        assert result_dict['stdout'] == test_string.decode()
+        assert result_dict['stderr'] == err_string.decode()
+
+        # cleanup test
+        try:
+            os.remove(os.path.join('data', 'results', '12345'))
+        except FileNotFoundError:
+            print('Unable to cleanup test_save_ability_hooks_with_no_link result files')

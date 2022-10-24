@@ -427,7 +427,16 @@
                                 </div>
                             </template>
                             <div>
-                                <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults"></pre>
+                                <p class="mt-3 mb-2" x-text="`Standard Output: ${selectedLinkResults.stdout ? '' : 'Nothing to show'}`"></p>
+                                <template x-if="selectedLinkResults != null && selectedLinkResults.stdout !== ''">
+                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults.stdout"></pre>
+                                </template>
+                            </div>
+                            <div>
+                                <p class="mt-3 mb-2" x-text="`Standard Error: ${selectedLinkResults.stderr ? '' : 'Nothing to show'}`"></p>
+                                <template x-if="selectedLinkResults != null && selectedLinkResults.stderr !== ''">
+                                    <pre class="has-text-left white-space-pre-line has-text-danger" x-text="selectedLinkResults.stderr"></pre>
+                                </template>
                             </div>
                         </section>
                         <footer class="modal-card-foot">
@@ -1303,7 +1312,7 @@
             },
 
             init() {
-                this.selectedOperation = { chain: [] };
+                this.selectedOperation = { chain: [], host_group: [] };
                 this.agentGroups = [];
                 this.selectedOperationID = '';
                 this.selectedAgentIndex = 0;
@@ -1705,7 +1714,7 @@
                     this.selectedLinkResults = null;
                 } else {
                     apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}/links/${link.id}/result`).then((res) => {
-                        this.selectedLinkResults = b64DecodeUnicode(res.result);
+                        this.selectedLinkResults = JSON.parse(b64DecodeUnicode(res.result));
                     }).catch(() => console.error('Error getting link results.'));
                 }
             },
