@@ -136,3 +136,7 @@ Refer to our [contributor documentation](CONTRIBUTING.md).
 In addition to CALDERA&trade;'s open source capabilities, MITRE maintains several in-house CALDERA&trade; plugins that offer
 more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to
 caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
+
+## Philanthropic Support
+
+If you are interested in providing philanthropic support to sustain and evolve CALDERA&trade;'s open source capabilities, please contact us at caldera@mitre.org.

@@ -1,6 +1,8 @@
 import asyncio
 import base64
+import binascii
 import copy
+import json
 import os
 import subprocess
 
@@ -118,7 +120,17 @@ class FileSvc(FileServiceInterface, BaseService):
 
     def read_result_file(self, link_id, location='data/results'):
         buf = self._read(os.path.join(location, link_id))
-        return buf.decode('utf-8')
+        decoded_buf = buf.decode('utf-8')
+        try:
+            json.loads(self.decode_bytes(decoded_buf))
+            return decoded_buf
+        except json.JSONDecodeError:
+            results = json.dumps(dict(
+                stdout=self.decode_bytes(decoded_buf, strip_newlines=False), stderr=''))
+            return self.encode_string(str(results))
+        except binascii.Error:
+            results = json.dumps(dict(stdout=decoded_buf, stderr=''))
+            return self.encode_string(str(results))
 
     def write_result_file(self, link_id, output, location='data/results'):
         output = bytes(output, encoding='utf-8')
