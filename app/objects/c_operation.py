@@ -451,48 +451,33 @@ class Operation(FirstClassObjectInterface, BaseObject):
             facts = re.findall(BasePlanningService.re_variable, executor.test) if executor.command else []
             if not facts or all(fact in op_facts for fact in facts):
                 fact_dependency_fulfilled = True
-        untrusted_agent = agent.paw in self.untrusted_agents
         associated_links = set([link.id for link in self.chain if link.paw == agent.paw
                                 and link.ability.ability_id == ability.ability_id])
-        reason_description = 'Untrusted'
+        ability_supports_platform = ability.find_executors(agent.executors, agent.platform)
 
-        if agent.platform == 'unknown':
-            if not untrusted_agent:
-                reason_description = 'No platform specified'
-            return dict(reason=reason_description, reason_id=self.Reason.PLATFORM.value,
+        if agent.platform == 'unknown' or not ability_supports_platform:
+            return dict(reason='No platform specified', reason_id=self.Reason.PLATFORM.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not valid_executors:
-            if not untrusted_agent:
-                reason_description = 'Executor is unavailable'
-            return dict(reason=reason_description, reason_id=self.Reason.EXECUTOR.value,
+            return dict(reason='Executor is unavailable', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
-            if not untrusted_agent:
-                reason_description = 'Ability privilege not fulfilled'
-            return dict(reason=reason_description, reason_id=self.Reason.PRIVILEGE.value,
+            return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not fact_dependency_fulfilled:
-            if not untrusted_agent:
-                reason_description = 'Fact dependency not fulfilled'
-            return dict(reason=reason_description, reason_id=self.Reason.FACT_DEPENDENCY.value,
+            return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not set(associated_links).isdisjoint(self.ignored_links):
-            if not untrusted_agent:
-                reason_description = 'Link was ignored'
-            return dict(reason=reason_description, reason_id=self.Reason.LINK_IGNORED.value,
+            return dict(reason='Link was ignored', reason_id=self.Reason.LINK_IGNORED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
-            return dict(reason=reason_description, reason_id=self.Reason.UNTRUSTED.value,
+            return dict(reason='Untrusted', reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif state != 'finished':
-            if not untrusted_agent:
-                reason_description = 'Operation not completed'
-            return dict(reason=reason_description, reason_id=self.Reason.OP_RUNNING.value,
+            return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         else:
-            if not untrusted_agent:
-                reason_description = 'Other'
-            return dict(reason=reason_description, reason_id=self.Reason.OTHER.value,
+            return dict(reason='Other', reason_id=self.Reason.OTHER.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
 
     def _get_operation_metadata_for_event_log(self):
