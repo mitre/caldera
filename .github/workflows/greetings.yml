@@ -2,11 +2,17 @@ name: Greetings
 
 on: [pull_request, issues]
 
+permissions:
+  contents: read
+
 jobs:
   greeting:
     runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
     steps:
-    - uses: actions/first-interaction@v1
+    - uses: actions/first-interaction@1d8459ca65b335265f1285568221e229d45a995e
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         issue-message: 'Looks like your first issue -- we aim to respond to issues as quickly as possible. In the meantime, check out our documentation here: http://caldera.readthedocs.io/'

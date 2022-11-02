@@ -12,7 +12,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param fact: Fact to add
         :param constraints: any potential constraints
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def update_fact(self, criteria, updates):
@@ -22,7 +22,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param criteria: dictionary containing fields to match on
         :param updates: dictionary containing fields to replace
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def get_facts(self, criteria, restrictions=None):
@@ -32,7 +32,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param criteria: dictionary containing fields to match on
         :return: list of facts matching the criteria
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def delete_fact(self, criteria):
@@ -41,12 +41,12 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
 
         :param criteria: dictionary containing fields to match on
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def get_meta_facts(self, meta_fact=None, agent=None, group=None):
         """Returns the complete set of facts associated with a meta-fact construct [In Development]"""
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def get_fact_origin(self, fact):
@@ -55,7 +55,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
 
         :param fact: Fact to get origin for (can be either a trait string or a full blown fact)
         :return: tuple - (String of either origin source id or origin link id, fact origin type)"""
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def check_fact_exists(self, fact, listing=None):
@@ -66,7 +66,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param listing: Optional specific listing to examine
         :return: Bool indicating whether or not the fact is already present
         """
-        pass
+        raise NotImplementedError
 
     # -- Relationships API --
     @abc.abstractmethod
@@ -77,7 +77,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param criteria: dictionary containing fields to match on
         :return: list of matching relationships
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def add_relationship(self, relationship, constraints=None):
@@ -87,7 +87,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param relationship: Relationship object to add
         :param constraints: optional constraints on the use of the relationship
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def update_relationship(self, criteria, updates):
@@ -97,7 +97,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param criteria: dictionary containing fields to match on
         :param updates: dictionary containing fields to modify
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def delete_relationship(self, criteria):
@@ -106,7 +106,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
 
         :param criteria: dictionary containing fields to match on
         """
-        pass
+        raise NotImplementedError
 
     # --- Rule API ---
     @abc.abstractmethod
@@ -117,7 +117,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param rule: Rule object to add
         :param constraints: dictionary containing fields to match on
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def get_rules(self, criteria, restrictions=None):
@@ -127,7 +127,7 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
         :param criteria: dictionary containing fields to match on
         :return: list of matching rules
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     async def delete_rule(self, criteria):
@@ -136,4 +136,4 @@ class KnowledgeServiceInterface(ObjectServiceInterface):
 
         :param criteria: dictionary containing fields to match on
         """
-        pass
+        raise NotImplementedError

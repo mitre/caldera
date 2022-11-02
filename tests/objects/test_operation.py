@@ -54,8 +54,8 @@ def operation_adversary(adversary):
 
 @pytest.fixture
 def operation_link():
-    def _generate_link(command, paw, ability, executor, pid=0, decide=None, collect=None, finish=None, **kwargs):
-        generated_link = Link(command, paw, ability, executor, **kwargs)
+    def _generate_link(command, plaintext_command, paw, ability, executor, pid=0, decide=None, collect=None, finish=None, **kwargs):
+        generated_link = Link(command, plaintext_command, paw, ability, executor, **kwargs)
         generated_link.pid = pid
         if decide:
             generated_link.decide = decide
@@ -88,17 +88,17 @@ def op_for_event_logs(operation_agent, operation_adversary, executor, ability, o
     ability_2 = ability(ability_id='456', tactic='test tactic', technique_id='T0000', technique_name='test technique',
                         name='test ability 2', description='test ability 2 desc', executors=[executor_2])
     link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
-                            command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
+                            command=encoded_command(command_1), plaintext_command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
                             decide=parse_datestring(LINK1_DECIDE_TIME),
                             collect=parse_datestring(LINK1_COLLECT_TIME),
                             finish=LINK1_FINISH_TIME)
     link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
-                            command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
+                            command=encoded_command(command_2), plaintext_command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
                             decide=parse_datestring(LINK2_DECIDE_TIME),
                             collect=parse_datestring(LINK2_COLLECT_TIME),
                             finish=LINK2_FINISH_TIME)
     discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
-                                    command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
+                                    command=encoded_command(command_2), plaintext_command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
                                     decide=parse_datestring('2021-01-01T10:00:00Z'))
     op.chain = [link_1, link_2, discarded_link]
     return op
@@ -234,6 +234,7 @@ class TestOperation:
         want = [
             dict(
                 command='d2hvYW1p',
+                plaintext_command='d2hvYW1p',
                 delegated_timestamp=LINK1_DECIDE_TIME,
                 collected_timestamp=LINK1_COLLECT_TIME,
                 finished_timestamp=LINK1_FINISH_TIME,
@@ -252,6 +253,7 @@ class TestOperation:
             ),
             dict(
                 command='aG9zdG5hbWU=',
+                plaintext_command='aG9zdG5hbWU=',
                 delegated_timestamp=LINK2_DECIDE_TIME,
                 collected_timestamp=LINK2_COLLECT_TIME,
                 finished_timestamp=LINK2_FINISH_TIME,
@@ -303,6 +305,7 @@ class TestOperation:
         want = [
             dict(
                 command='d2hvYW1p',
+                plaintext_command='d2hvYW1p',
                 delegated_timestamp=LINK1_DECIDE_TIME,
                 collected_timestamp=LINK1_COLLECT_TIME,
                 finished_timestamp=LINK1_FINISH_TIME,
@@ -321,6 +324,7 @@ class TestOperation:
             ),
             dict(
                 command='aG9zdG5hbWU=',
+                plaintext_command='aG9zdG5hbWU=',
                 delegated_timestamp=LINK2_DECIDE_TIME,
                 collected_timestamp=LINK2_COLLECT_TIME,
                 finished_timestamp=LINK2_FINISH_TIME,

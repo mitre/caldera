@@ -12,15 +12,15 @@ class FileServiceInterface(abc.ABC):
         :return: File contents and optionally a display_name if the payload is a special payload
         :raises: KeyError if file key is not provided, FileNotFoundError if file cannot be found
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def save_file(self, filename, payload, target_dir):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def create_exfil_sub_directory(self, dir_name):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def save_multipart_file_upload(self, request, target_dir):
@@ -29,7 +29,7 @@ class FileServiceInterface(abc.ABC):
         :param request:
         :param target_dir: The path of the directory to save the uploaded file to.
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def find_file_path(self, name, location):
@@ -39,7 +39,7 @@ class FileServiceInterface(abc.ABC):
         :param location:
         :return: a tuple: the plugin the file is found in & the relative file path
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def read_file(self, name, location):
@@ -49,18 +49,18 @@ class FileServiceInterface(abc.ABC):
         :param location:
         :return: a tuple (file_path, contents)
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def read_result_file(self, link_id, location):
         """
         Read a result file. If file encryption is enabled, this method will return the plaintext
-        content.
+        content.  Returns contents as a base64 encoded dictionary.
         :param link_id: The id of the link to return results from.
         :param location: The path to results directory.
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def write_result_file(self, link_id, output, location):
@@ -72,7 +72,7 @@ class FileServiceInterface(abc.ABC):
         :param location: The path to the results directory.
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def add_special_payload(self, name, func):
@@ -82,7 +82,7 @@ class FileServiceInterface(abc.ABC):
         :param func:
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def compile_go(self, platform, output, src_fle, arch, ldflags, cflags, buildmode, build_dir, loop):
@@ -98,8 +98,8 @@ class FileServiceInterface(abc.ABC):
         :param build_dir: The path to build should take place in
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def get_payload_name_from_uuid(self, payload):
-        pass
+        raise NotImplementedError

@@ -34,8 +34,8 @@ class DataEncoder(FirstClassObjectInterface, BaseObject):
 
     @abstractmethod
     def encode(self, data, **_):
-        pass
+        raise NotImplementedError
 
     @abstractmethod
     def decode(self, data, **_):
-        pass
+        raise NotImplementedError

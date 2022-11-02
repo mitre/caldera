@@ -169,7 +169,7 @@ class DataService(DataServiceInterface, BaseService):
                 ab.pop('plugin', plugin)
 
                 if tactic and tactic not in filename:
-                    self.log.error('Ability=%s has wrong tactic' % id)
+                    self.log.error('Ability=%s has wrong tactic' % ability_id)
 
                 await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                                            technique_id=technique_id, technique_name=technique_name,

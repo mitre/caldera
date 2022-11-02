@@ -297,6 +297,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 step_report = dict(link_id=step.id,
                                    ability_id=step.ability.ability_id,
                                    command=step.command,
+                                   plaintext_command=step.plaintext_command,
                                    delegated=step.decide.strftime(self.TIME_FORMAT),
                                    run=step.finish,
                                    status=step.status,
@@ -309,13 +310,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                                technique_name=step.ability.technique_name,
                                                technique_id=step.ability.technique_id))
                 if output and step.output:
-                    step_report['output'] = self.decode_bytes(file_svc.read_result_file(step.unique))
+                    results = self.decode_bytes(file_svc.read_result_file(step.unique))
+                    step_report['output'] = json.loads(results.replace('\\r\\n', '').replace('\\n', ''))
                 if step.agent_reported_time:
                     step_report['agent_reported_time'] = step.agent_reported_time.strftime(self.TIME_FORMAT)
                 agents_steps[step.paw]['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
-
             return report
         except Exception:
             logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
@@ -361,6 +362,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def _convert_link_to_event_log(self, link, file_svc, data_svc, output=False):
         event_dict = dict(command=link.command,
+                          plaintext_command=link.plaintext_command,
                           delegated_timestamp=link.decide.strftime(self.TIME_FORMAT),
                           collected_timestamp=link.collect.strftime(self.TIME_FORMAT) if link.collect else None,
                           finished_timestamp=link.finish,
@@ -373,7 +375,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                           operation_metadata=self._get_operation_metadata_for_event_log(),
                           attack_metadata=self._get_attack_metadata_for_event_log(link.ability))
         if output and link.output:
-            event_dict['output'] = self.decode_bytes(file_svc.read_result_file(link.unique))
+            results = self.decode_bytes(file_svc.read_result_file(link.unique))
+            event_dict['output'] = json.loads(results.replace('\\r\\n', '').replace('\\n', ''))
         if link.agent_reported_time:
             event_dict['agent_reported_time'] = link.agent_reported_time.strftime(self.TIME_FORMAT)
         return event_dict
