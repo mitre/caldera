@@ -453,9 +453,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 fact_dependency_fulfilled = True
         associated_links = set([link.id for link in self.chain if link.paw == agent.paw
                                 and link.ability.ability_id == ability.ability_id])
-        ability_supports_platform = ability.find_executors(agent.executors, agent.platform)
 
-        if agent.platform == 'unknown' or not ability_supports_platform:
+        if agent.platform == 'unknown':
             return dict(reason='No platform specified', reason_id=self.Reason.PLATFORM.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not valid_executors:
