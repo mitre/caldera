@@ -488,33 +488,7 @@ class TestOperation:
         op.update_untrusted_agents(operation_agent)
         assert not op.untrusted_agents
 
-    async def test_wait_for_links_completion_ignorable_link(self, make_test_link, operation_agent):
-        test_agent = operation_agent
-        test_link = make_test_link(9876, test_agent.paw, Link().states['DISCARD'])
-        op = Operation(name='test', agents=[test_agent], state='running')
-        op.add_link(test_link)
-        assert not op.ignored_links
-        assert test_link in op.chain
-        await op.wait_for_links_completion([test_link.id])
-        assert test_link.id in op.ignored_links
-        assert len(op.ignored_links) == 1
-        assert test_link in op.chain
-
-    async def test_wait_for_links_completion_non_ignorable_link(self, make_test_link, untrusted_operation_agent, mocker,
-                                                                async_return):
-        test_agent = untrusted_operation_agent
-        test_link = make_test_link(9876, test_agent.paw)
-        op = Operation(name='test', agents=[test_agent], state='running')
-        op.add_link(test_link)
-        assert not op.ignored_links
-        assert test_link in op.chain
-        with mocker.patch('asyncio.sleep') as mock_sleep:
-            mock_sleep.return_value = async_return(None)
-            await op.wait_for_links_completion([test_link.id])
-        assert not op.ignored_links
-        assert test_link in op.chain
-
-    def test_check_reason_skipped_platform(self, test_agent, test_ability):
+    def test_check_reason_skipped_unknown_platform(self, test_agent, test_ability):
         test_agent.platform = 'unknown'
         op = Operation(name='test', agents=[test_agent], state='running')
         reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
