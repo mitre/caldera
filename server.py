@@ -98,7 +98,7 @@ def init_swagger_documentation(app):
     app.middlewares.append(validation_middleware)
 
 async def enable_cors(request, response):
-    response.headers['Access-Control-Allow-Origin'] = 'http://localhost:3000'
+    response.headers['Access-Control-Allow-Origin'] = 'http://' + args.uiDevHost + ':3000'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD'
     response.headers['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers'
@@ -125,8 +125,7 @@ if __name__ == '__main__':
                         help='Start up with a single plugin', type=list_str)
     parser.add_argument('--insecure', action='store_true', required=False, default=False,
                         help='Start caldera with insecure default config values. Equivalent to "-E default".')
-    parser.add_argument('--uidev', action='store_true', required=False, default=False,
-                        help='Start VueJS dev server for front-end alongside the caldera server')
+    parser.add_argument('--uidev', dest='uiDevHost', help='Start VueJS dev server for front-end alongside the caldera server. Provide hostname, i.e. localhost.')
 
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
@@ -163,7 +162,7 @@ if __name__ == '__main__':
     app_svc = AppService(application=web.Application(client_max_size=5120**2))
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
     init_swagger_documentation(app_svc.application)
-    if (args.uidev):    
+    if (args.uiDevHost):    
         app_svc.application.on_response_prepare.append(enable_cors)
 
     if args.fresh:
@@ -171,4 +170,4 @@ if __name__ == '__main__':
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
         asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
 
-    run_tasks(services=app_svc.get_services(), run_vue_server=args.uidev)
+    run_tasks(services=app_svc.get_services(), run_vue_server=args.uiDevHost)
