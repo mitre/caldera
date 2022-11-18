@@ -21,9 +21,11 @@ class KnowledgeService(KnowledgeServiceInterface, BaseService):
 
     async def add_fact(self, fact, constraints=None):
         if isinstance(fact, Fact):
+            await self.get_service('event_svc').fire_event(exchange='fact', queue='added', fact=fact.display, constraints=constraints)
             return await self.__loaded_knowledge_module._add_fact(fact, constraints)
 
     async def update_fact(self, criteria, updates):
+        await self.get_service('event_svc').fire_event(exchange='fact', queue='updated', criteria=criteria, updates=updates)
         return await self.__loaded_knowledge_module._update_fact(criteria, updates)
 
     async def get_facts(self, criteria, restrictions=None):
