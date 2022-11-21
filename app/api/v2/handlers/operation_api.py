@@ -69,7 +69,7 @@ class OperationApi(BaseObjectApi):
                           summary='Create a new CALDERA operation record',
                           description='Create a new CALDERA operation using the format provided in the '
                                       '`OperationSchema`. Required schema fields are as follows: "name", '
-                                      '"adversary.adversary_id", "planner.planner_id", and "source.id"')
+                                      '"adversary.adversary_id", "planner.id", and "source.id"')
     @aiohttp_apispec.request_schema(OperationSchema)
     @aiohttp_apispec.response_schema(OperationSchema,
                                      description='The response is the newly-created operation report.')
