@@ -99,7 +99,7 @@ class OperationApiManager(BaseApiManager):
                                               file_svc=self.services['file_svc']))
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
-        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
+        link = Link.load(dict(command=encoded_command, plaintext_command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
                               cleanup=data.get('cleanup', 0), pin=data.get('pin', 0),
                               host=agent.host, deadman=data.get('deadman', False), used=data.get('used', []),
