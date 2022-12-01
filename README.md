@@ -131,6 +131,10 @@ docker kill --signal=SIGINT [container ID]
 
 Refer to our [contributor documentation](CONTRIBUTING.md).
 
+## Vulnerability Disclosures
+
+Refer to our [vulnerability discolosure documentation](SECURITY.md) for submitting bugs.
+
 ## Licensing
 
 In addition to CALDERA&trade;'s open source capabilities, MITRE maintains several in-house CALDERA&trade; plugins that offer
