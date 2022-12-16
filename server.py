@@ -14,6 +14,7 @@ import app.api.v2
 from app import version
 from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
+from app.api.v2.security import pass_option_middleware
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
@@ -159,7 +160,7 @@ if __name__ == '__main__':
     learning_svc = LearningService()
     event_svc = EventService()
 
-    app_svc = AppService(application=web.Application(client_max_size=5120**2))
+    app_svc = AppService(application=web.Application(client_max_size=5120**2, middlewares=[pass_option_middleware]))
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
     init_swagger_documentation(app_svc.application)
     if (args.uiDevHost):    

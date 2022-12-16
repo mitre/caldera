@@ -3,10 +3,11 @@ from aiohttp import web
 
 def make_app(services):
     from .responses import json_request_validation_middleware
-    from .security import authentication_required_middleware_factory
+    from .security import authentication_required_middleware_factory, pass_option_middleware
 
     app = web.Application(
         middlewares=[
+            pass_option_middleware,
             authentication_required_middleware_factory(services['auth_svc']),
             json_request_validation_middleware
         ]
