@@ -131,6 +131,13 @@ class Link(BaseObject):
     def status(self):
         return self._status
 
+    @property
+    def display(self):
+        dump = LinkSchema(exclude=['jitter']).dump(self)
+        dump['command'] = self.decode_bytes(dump['command'])
+        dump['plaintext_command'] = self.decode_bytes(dump['plaintext_command'])
+        return dump
+
     @status.setter
     def status(self, value):
         previous_status = getattr(self, '_status', NO_STATUS_SET)
