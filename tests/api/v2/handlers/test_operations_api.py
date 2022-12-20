@@ -97,7 +97,7 @@ class TestOperationsApi:
                                                        test_operation, finished_link, test_agent):
         resp = await api_v2_client.post('/api/v2/operations/123/event-logs', cookies=api_cookies)
         event_logs = await resp.json()
-        assert event_logs[1]['command'] == finished_link['command']
+        assert event_logs[1]['command'] == str(b64decode(finished_link['command']), 'utf-8')
         assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
         assert event_logs[1]['operation_metadata']['operation_name'] == test_operation['name']
         assert not event_logs[1].get('output')
@@ -108,7 +108,7 @@ class TestOperationsApi:
         payload = {'enable_agent_output': False}
         resp = await api_v2_client.post('/api/v2/operations/123/event-logs', cookies=api_cookies, json=payload)
         event_logs = await resp.json()
-        assert event_logs[1]['command'] == finished_link['command']
+        assert event_logs[1]['command'] == str(b64decode(finished_link['command']), 'utf-8')
         assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
         assert event_logs[1]['operation_metadata']['operation_name'] == test_operation['name']
         assert not event_logs[1].get('output')
@@ -116,19 +116,17 @@ class TestOperationsApi:
     async def test_get_operation_event_logs_agent_output_enabled(self, api_v2_client, api_cookies, mocker, async_return,
                                                                  test_operation, finished_link, test_agent,
                                                                  expected_link_output):
-        with mocker.patch('app.objects.c_operation.Operation.decode_bytes') as mock_decode:
-            expected_link_output_dict = dict(stdout=expected_link_output, stderr="")
-            mock_decode.return_value = json.dumps(expected_link_output_dict)
-            with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
-                mock_readfile.return_value = ''
-                payload = {'enable_agent_output': True}
-                resp = await api_v2_client.post('/api/v2/operations/123/event-logs', cookies=api_cookies, json=payload)
-                event_logs = await resp.json()
-                assert event_logs[1]['command'] == finished_link['command']
-                assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
-                assert event_logs[1]['operation_metadata']['operation_name'] == test_operation['name']
-                assert event_logs[1]['output'] == expected_link_output_dict
-                assert not event_logs[0].get('output')
+        expected_link_output_dict = dict(stdout=expected_link_output, stderr="")
+        with mocker.patch('app.service.file_svc.FileSvc.read_result_file') as mock_readfile:
+            mock_readfile.return_value = b64encode(json.dumps(expected_link_output_dict).encode())
+            payload = {'enable_agent_output': True}
+            resp = await api_v2_client.post('/api/v2/operations/123/event-logs', cookies=api_cookies, json=payload)
+            event_logs = await resp.json()
+            assert event_logs[1]['command'] == str(b64decode(finished_link['command']), 'utf-8')
+            assert event_logs[1]['agent_metadata']['paw'] == test_agent.schema.dump(test_agent)['paw']
+            assert event_logs[1]['operation_metadata']['operation_name'] == test_operation['name']
+            assert event_logs[1]['output'] == expected_link_output_dict
+            assert not event_logs[0].get('output')
 
     async def test_unauthorized_get_operation_event_logs(self, api_v2_client):
         resp = await api_v2_client.post('/api/v2/operations/123/event-logs')
@@ -234,7 +232,7 @@ class TestOperationsApi:
         assert len(links) == 2
         assert links[0]['id'] == active_link['id']
         assert links[0]['paw'] == active_link['paw']
-        assert links[0]['command'] == active_link['command']
+        assert links[0]['command'] == str(b64decode(active_link['command']), 'utf-8')
 
     async def test_unauthorized_get_links(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/operations/123/links')
@@ -246,7 +244,7 @@ class TestOperationsApi:
         link = await resp.json()
         assert link['id'] == active_link['id']
         assert link['paw'] == active_link['paw']
-        assert link['command'] == active_link['command']
+        assert link['command'] == str(b64decode(active_link['command']), 'utf-8')
 
     async def test_unauthorized_get_operation_link(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/operations/123/links/456')
@@ -261,7 +259,7 @@ class TestOperationsApi:
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_update_operation_link(self, api_v2_client, api_cookies, active_link):
-        original_command = active_link['command']
+        original_command = str(b64decode(active_link['command']), 'utf-8')
         payload = dict(command='whoami')
         resp = await api_v2_client.patch('/api/v2/operations/123/links/456', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.OK
@@ -272,29 +270,29 @@ class TestOperationsApi:
         assert op.chain[0].paw == active_link['paw']
 
     async def test_unauthorized_update_operation_link(self, api_v2_client):
-        payload = dict(command='bHM=')
+        payload = dict(command='ls')
         resp = await api_v2_client.patch('/api/v2/operations/123/links/456', json=payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
 
     async def test_nonexistent_operation_update_operation_link(self, api_v2_client, api_cookies):
-        payload = dict(command='bHM=')
+        payload = dict(command='ls')
         resp = await api_v2_client.patch('/api/v2/operations/999/links/123', json=payload, cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_nonexistent_link_update_operation_link(self, api_v2_client, api_cookies):
-        payload = dict(command='bHM=')
+        payload = dict(command='ls')
         resp = await api_v2_client.patch('/api/v2/operations/123/links/999', json=payload, cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_update_finished_operation_link(self, api_v2_client, api_cookies):
-        payload = dict(command='bHM=', status=-1)
+        payload = dict(command='ls', status=-1)
         resp = await api_v2_client.patch('/api/v2/operations/123/links/789', json=payload, cookies=api_cookies)
         assert resp.status == HTTPStatus.FORBIDDEN
 
     async def test_get_potential_links(self, api_v2_client, api_cookies, mocker, async_return):
         BaseService.get_service('rest_svc').build_potential_abilities = mocker.Mock()
         BaseService.get_service('rest_svc').build_potential_abilities.return_value = async_return([])
-        expected_link = Link(command='whoami', paw='123456', id='789')
+        expected_link = Link(command='d2hvYW1p', paw='123456', id='789')
         BaseService.get_service('rest_svc').build_potential_links = mocker.Mock()
         BaseService.get_service('rest_svc').build_potential_links.return_value = async_return([expected_link])
         resp = await api_v2_client.get('/api/v2/operations/123/potential-links', cookies=api_cookies)
@@ -302,7 +300,7 @@ class TestOperationsApi:
         assert len(result) == 1
         assert result[0]['id'] == expected_link.id
         assert result[0]['paw'] == expected_link.paw
-        assert result[0]['command'] == expected_link.command
+        assert result[0]['command'] == str(b64decode(expected_link.command), 'utf-8')
 
     async def test_unauthorized_get_potential_links(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/operations/123/potential-links')
@@ -315,7 +313,7 @@ class TestOperationsApi:
     async def test_get_potential_links_by_paw(self, api_v2_client, api_cookies, mocker, async_return, ability, executor):
         BaseService.get_service('rest_svc').build_potential_abilities = mocker.Mock()
         BaseService.get_service('rest_svc').build_potential_abilities.return_value = async_return([])
-        expected_link = Link(command='whoami', paw='123', id='789')
+        expected_link = Link(command='d2hvYW1p', paw='123', id='789')
         BaseService.get_service('rest_svc').build_potential_links = mocker.Mock()
         BaseService.get_service('rest_svc').build_potential_links.return_value = async_return([expected_link])
         resp = await api_v2_client.get('/api/v2/operations/123/potential-links/123', cookies=api_cookies)
@@ -323,7 +321,7 @@ class TestOperationsApi:
         assert len(result) == 1
         assert result[0]['id'] == expected_link.id
         assert result[0]['paw'] == expected_link.paw
-        assert result[0]['command'] == expected_link.command
+        assert result[0]['command'] == str(b64decode(expected_link.command), 'utf-8')
 
     async def test_unauthorized_get_potential_links_by_paw(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/operations/123/potential-links/123')
@@ -354,7 +352,7 @@ class TestOperationsApi:
             assert result['paw'] == payload['paw']
             assert result['id']
             assert result['ability']['name'] == 'Manual Command'
-            assert b64decode(result['command']).decode('ascii') == "://None:None 123"
+            assert result['command'] == "://None:None 123"
 
     async def test_create_potential_link(self, api_v2_client, api_cookies, mocker, async_return):
         with mocker.patch('app.objects.c_operation.Operation.apply') as mock_apply:
@@ -410,7 +408,7 @@ class TestOperationsApi:
             output = await resp.json()
             assert output['link']['id'] == finished_link['id']
             assert output['link']['paw'] == finished_link['paw']
-            assert output['link']['command'] == finished_link['command']
+            assert output['link']['command'] == str(b64decode(finished_link['command']), 'utf-8')
             assert output['result'] == encoded_result
 
     async def test_unauthorized_get_operation_link_result(self, api_v2_client, finished_link):
@@ -424,7 +422,7 @@ class TestOperationsApi:
         assert output['result'] == ''
         assert output['link']['paw'] == active_link['paw']
         assert output['link']['id'] == active_link['id']
-        assert output['link']['command'] == active_link['command']
+        assert output['link']['command'] == str(b64decode(active_link['command']), 'utf-8')
 
     async def test_nonexistent_get_operation_link_result(self, api_v2_client, api_cookies):
         resp = await api_v2_client.get('/api/v2/operations/123/links/999/result', cookies=api_cookies)

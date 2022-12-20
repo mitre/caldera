@@ -30,6 +30,7 @@ body {
 #active-tab-display {
   color: white;
   max-width: initial;
+  margin-top: 62px;
 }
 
 [data-tooltip]::before {
@@ -144,9 +145,13 @@ main.main {
   flex-direction: column;
   justify-content: center;
   align-items: center;
+  margin-top: 62px;
 }
 
 .nav.tabs {
+  position: fixed;
+  width: 100%;
+  z-index: 10;
   display: block !important;
   margin-bottom: 0 !important;
   padding: 10px 10px 0 10px;

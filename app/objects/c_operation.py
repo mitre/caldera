@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import uuid
 from collections import defaultdict
@@ -296,8 +297,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
             for step in self.chain:
                 step_report = dict(link_id=step.id,
                                    ability_id=step.ability.ability_id,
-                                   command=step.command,
-                                   plaintext_command=step.plaintext_command,
+                                   command=self.decode_bytes(step.command),
+                                   plaintext_command=self.decode_bytes(step.plaintext_command),
                                    delegated=step.decide.strftime(self.TIME_FORMAT),
                                    run=step.finish,
                                    status=step.status,
@@ -351,7 +352,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         logging.debug('Wrote event logs for operation %s to disk at %s/%s' % (self.name, event_logs_dir, file_name))
 
     async def _write_logs_to_disk(self, logs, file_name, dest_dir, file_svc):
-        logs_dumps = json.dumps(logs)
+        logs_dumps = json.dumps(logs) + os.linesep
         await file_svc.save_file(file_name, logs_dumps.encode(), dest_dir, encrypt=False)
 
     async def _load_objective(self, data_svc):
@@ -361,8 +362,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.objective = deepcopy(obj[0])
 
     async def _convert_link_to_event_log(self, link, file_svc, data_svc, output=False):
-        event_dict = dict(command=link.command,
-                          plaintext_command=link.plaintext_command,
+        event_dict = dict(command=self.decode_bytes(link.command),
+                          plaintext_command=self.decode_bytes(link.plaintext_command),
                           delegated_timestamp=link.decide.strftime(self.TIME_FORMAT),
                           collected_timestamp=link.collect.strftime(self.TIME_FORMAT) if link.collect else None,
                           finished_timestamp=link.finish,
