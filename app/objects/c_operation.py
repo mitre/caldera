@@ -1,6 +1,7 @@
 import asyncio
 import json
 import logging
+import os
 import re
 import uuid
 from collections import defaultdict
@@ -351,7 +352,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         logging.debug('Wrote event logs for operation %s to disk at %s/%s' % (self.name, event_logs_dir, file_name))
 
     async def _write_logs_to_disk(self, logs, file_name, dest_dir, file_svc):
-        logs_dumps = json.dumps(logs)
+        logs_dumps = json.dumps(logs) + os.linesep
         await file_svc.save_file(file_name, logs_dumps.encode(), dest_dir, encrypt=False)
 
     async def _load_objective(self, data_svc):
