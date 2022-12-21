@@ -17,14 +17,10 @@ function alpineCore() {
                 this.scrollTop = window.scrollY;
             };
 
-            fetch("https://api.github.com/repos/mitre/caldera/releases")
-                .then(response => response.json())
-                .then(data => {
-                    this.newestVersion = data[0].name;
-                })
-                .catch(error => console.error(error));
-
-            apiV2('GET', '/api/v2/health').then((response) => {
+            apiV2('GET', 'https://api.github.com/repos/mitre/caldera/releases').then((response) => {
+                this.newestVersion = response[0].name;
+                return apiV2('GET', '/api/v2/health');
+            }).then((response) => {
                 this.version = response.version;
                 this.checkIfFirstVisit();
                 if (response.version < this.newestVersion) {
