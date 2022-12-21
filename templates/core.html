@@ -83,6 +83,17 @@
                                 <span>Log out</span>
                             </a>
                         </li>
+                        <li class="is-size-7">
+                            <span>version </span>
+                            <span x-text="version"></span>
+                        </li>
+                        <template x-if="newVersionAvailable">
+                            <li>
+                                <a href="https://github.com/mitre/caldera/releases">
+                                    <span class="is-size-7">New Version Available!</span>
+                                </a>
+                            </li>
+                        </template>
                     </ul>
                 </aside>
             </div>

@@ -9,15 +9,27 @@ function alpineCore() {
         version: '0.0.0',
         isFirstVisit: false,
         scrollTop: window.scrollY,
+        newestVersion: '0.0.0',
+        newVersionAvailable: false,
 
         initPage() {
             window.onscroll = () => {
                 this.scrollTop = window.scrollY;
             };
 
+            fetch("https://api.github.com/repos/mitre/caldera/releases")
+                .then(response => response.json())
+                .then(data => {
+                    this.newestVersion = data[0].name;
+                })
+                .catch(error => console.error(error));
+
             apiV2('GET', '/api/v2/health').then((response) => {
                 this.version = response.version;
                 this.checkIfFirstVisit();
+                if (response.version < this.newestVersion) {
+                    this.newVersionAvailable = true;
+                }
             }).catch((error) => {
                 console.error(error);
                 toast('Error loading page', false);
