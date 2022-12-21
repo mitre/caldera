@@ -89,6 +89,7 @@ class ContactService(ContactServiceInterface, BaseService):
             self.log.debug("Agent %s can accept deadman abilities. Will return any available deadman abilities." %
                            agent.paw)
             await agent.deadman(data_svc)
+        await self.get_service('event_svc').fire_event(exchange='agent', queue='added', agent=agent.display)
         return agent, await self._get_instructions(agent)
 
     async def build_filename(self):
