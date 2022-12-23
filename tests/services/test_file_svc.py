@@ -54,10 +54,11 @@ class TestFileService:
         link_id = '12345'
         output = 'output testing unit'
         error = 'error testing unit'
-        output_encoded = str(b64encode(json.dumps(dict(stdout=output, stderr=error)).encode()), 'utf-8')
+        test_exit_code = '0'
+        output_encoded = str(b64encode(json.dumps(dict(stdout=output, stderr=error, exit_code=test_exit_code)).encode()), 'utf-8')
         file_svc.write_result_file(link_id=link_id, output=output_encoded, location=tmpdir)
 
-        expected_output = dict(stdout=output, stderr=error)
+        expected_output = dict(stdout=output, stderr=error, exit_code=test_exit_code)
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         decoded_output_data = json.loads(base64.b64decode(output_data))
         assert decoded_output_data == expected_output
@@ -68,7 +69,7 @@ class TestFileService:
         output_encoded = str(b64encode(output.encode()), 'utf-8')
         file_svc.write_result_file(link_id=link_id, output=output_encoded, location=tmpdir)
 
-        expected_output = {'stdout': output, 'stderr': ''}
+        expected_output = {'stdout': output, 'stderr': '', 'exit_code': ''}
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         decoded_output_data = json.loads(base64.b64decode(output_data))
         assert decoded_output_data == expected_output
@@ -78,7 +79,7 @@ class TestFileService:
         output = 'output testing unit'
         file_svc.write_result_file(link_id=link_id, output=output, location=tmpdir)
 
-        expected_output = {'stdout': output, 'stderr': ''}
+        expected_output = {'stdout': output, 'stderr': '', 'exit_code': ''}
         output_data = file_svc.read_result_file(link_id=link_id, location=tmpdir)
         decoded_output_data = json.loads(base64.b64decode(output_data))
         assert decoded_output_data == expected_output

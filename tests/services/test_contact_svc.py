@@ -45,12 +45,14 @@ class TestContactSvc:
     async def test_save_ability_hooks(self, setup_contact_service, contact_svc, event_svc):
         test_string = b'test_string'
         err_string = b'err_string'
+        test_exit_code = "-1"
         link = setup_contact_service
         rest_svc = RestService()
         result = dict(
             id=link.id,
             output=str(base64.b64encode(base64.b64encode(test_string)), 'utf-8'),
             stderr=str(base64.b64encode(err_string), 'utf-8'),
+            exit_code=test_exit_code,
             pid=0,
             status=0
         )
@@ -60,6 +62,7 @@ class TestContactSvc:
 
         assert result_dict['stdout'] == test_string.decode()
         assert result_dict['stderr'] == err_string.decode()
+        assert result_dict['exit_code'] == test_exit_code
 
         # cleanup test
         try:
@@ -70,11 +73,13 @@ class TestContactSvc:
     async def test_save_ability_hooks_with_no_link(self, setup_contact_service, contact_svc, event_svc, file_svc):
         test_string = b'test_string'
         err_string = b'err_string'
+        test_exit_code = "0"
         # Send version with link for comparison
         result = dict(
             id="12345",
             output=str(base64.b64encode(test_string), 'utf-8'),
             stderr=str(base64.b64encode(err_string), 'utf-8'),
+            exit_code=test_exit_code,
             pid=0,
             status=0
         )
@@ -85,6 +90,7 @@ class TestContactSvc:
         result_dict = json.loads(base64.b64decode(result))
         assert result_dict['stdout'] == test_string.decode()
         assert result_dict['stderr'] == err_string.decode()
+        assert result_dict['exit_code'] == test_exit_code
 
         # cleanup test
         try:
