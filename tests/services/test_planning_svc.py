@@ -331,9 +331,8 @@ class TestPlanningService:
         f3 = Fact(trait='a.b.e', value='3')
 
         gen = await planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3])
-
         assert len(gen) == 2
-        assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+        assert gen[1].display['command'] == target_string
 
     async def test_trim_links(self, setup_planning_test, planning_svc):
         """
@@ -364,7 +363,7 @@ class TestPlanningService:
         trimmed_links = await planning_svc.trim_links(operation, [link], agent)
 
         assert len(trimmed_links) == 1
-        assert BaseWorld.decode_bytes(trimmed_links[0].display['command']) == target_string
+        assert trimmed_links[0].display['command'] == target_string
 
     async def test_filter_bs(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
@@ -382,7 +381,7 @@ class TestPlanningService:
         gen = await planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3, f4, f5, f6])
 
         assert len(gen) == 4
-        assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+        assert gen[1].display['command'] == target_string
 
     async def test_duplicate_lateral_filter(self, setup_planning_test, planning_svc, link, fact):
         ability, agent, operation, sability = setup_planning_test

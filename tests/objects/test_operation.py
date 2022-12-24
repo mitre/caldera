@@ -233,8 +233,8 @@ class TestOperation:
         )
         want = [
             dict(
-                command='d2hvYW1p',
-                plaintext_command='d2hvYW1p',
+                command='whoami',
+                plaintext_command='whoami',
                 delegated_timestamp=LINK1_DECIDE_TIME,
                 collected_timestamp=LINK1_COLLECT_TIME,
                 finished_timestamp=LINK1_FINISH_TIME,
@@ -252,8 +252,8 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
             dict(
-                command='aG9zdG5hbWU=',
-                plaintext_command='aG9zdG5hbWU=',
+                command='hostname',
+                plaintext_command='hostname',
                 delegated_timestamp=LINK2_DECIDE_TIME,
                 collected_timestamp=LINK2_COLLECT_TIME,
                 finished_timestamp=LINK2_FINISH_TIME,
@@ -304,8 +304,8 @@ class TestOperation:
         )
         want = [
             dict(
-                command='d2hvYW1p',
-                plaintext_command='d2hvYW1p',
+                command='whoami',
+                plaintext_command='whoami',
                 delegated_timestamp=LINK1_DECIDE_TIME,
                 collected_timestamp=LINK1_COLLECT_TIME,
                 finished_timestamp=LINK1_FINISH_TIME,
@@ -323,8 +323,8 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
             dict(
-                command='aG9zdG5hbWU=',
-                plaintext_command='aG9zdG5hbWU=',
+                command='hostname',
+                plaintext_command='hostname',
                 delegated_timestamp=LINK2_DECIDE_TIME,
                 collected_timestamp=LINK2_COLLECT_TIME,
                 finished_timestamp=LINK2_FINISH_TIME,

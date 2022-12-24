@@ -1696,9 +1696,9 @@
                         if (res.facts) {
                             this.selectedLinkFacts = Array.from(new Set(res.facts)).sort((a, b) => b.score - a.score);
                         }
-                        this.selectedLinkCommand = b64DecodeUnicode(res.command);
-                        this.selectedLinkPlaintextCommand = b64DecodeUnicode(res.plaintext_command);
-                        this.editableCommand = b64DecodeUnicode(res.command);
+                        this.selectedLinkCommand = res.command;
+                        this.selectedLinkPlaintextCommand = res.plaintext_command;
+                        this.editableCommand = res.command;
                     })
                     .catch(() => {
                         this.selectedLinkResults = null;
@@ -1722,7 +1722,7 @@
             updateLink(status, command = null) {
                 const updateLink = {
                     ...this.selectedLink,
-                    command: b64DecodeUnicode(this.selectedLink.command)
+                    command: this.selectedLink.command
                 };
                 if (command) {
                     updateLink.command = command;
@@ -1793,8 +1793,8 @@
                     rowItems.push(link.paw);
                     rowItems.push(link.host);
                     rowItems.push(link.pid);
-                    rowItems.push(b64DecodeUnicode(link.command));
-                    rowItems.push(b64DecodeUnicode(link.plaintext_command));
+                    rowItems.push(link.command);
+                    rowItems.push(link.plaintext_command);
                     csv.push(rowItems.join(','));
                 });
                 this.createDownloadReport(new Blob([csv.join('\n')], { type: 'text/csv' }), this.selectedOperation.name, true);
