@@ -1,7 +1,6 @@
 import pytest
 import asyncio
 import base64
-
 from unittest.mock import MagicMock
 
 from app.objects.c_adversary import Adversary

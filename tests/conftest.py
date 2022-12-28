@@ -2,7 +2,7 @@ import asyncio
 import os.path
 
 import pytest
-import pytest_asyncio
+from unittest.mock import AsyncMock
 import random
 import string
 import uuid
@@ -600,11 +600,10 @@ def setup_empty_operation(event_loop, test_operation):
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
 
 
-from unittest.mock import AsyncMock
 @pytest.fixture()
 def fire_event_mock(event_svc):
-    """A mock for event_svc.fire_event() 
-    
+    """A mock for event_svc.fire_event()
+
     fire_event()  wont work in tests as underlying Application
     is a stub so mock call here
     """
