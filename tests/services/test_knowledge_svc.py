@@ -1,5 +1,3 @@
-from unittest.mock import AsyncMock
-
 from app.objects.secondclass.c_fact import Fact, OriginType
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
