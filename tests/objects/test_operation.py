@@ -404,7 +404,7 @@ class TestOperation:
         event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 0
 
-    def test_facts(self, event_loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, event_svc,
+    def test_facts(self, event_loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, fire_event_mock,
                    op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc):
         test_link = make_test_link(9876)
         op_with_learning_and_seeded.add_link(test_link)

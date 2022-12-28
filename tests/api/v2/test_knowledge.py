@@ -40,7 +40,7 @@ def base_world():
 
 
 @pytest.fixture
-def knowledge_webapp(event_loop, app_svc, base_world, data_svc):
+def knowledge_webapp(event_loop, app_svc, base_world, data_svc, event_svc):
     app_svc.add_service('auth_svc', AuthService())
     app_svc.add_service('knowledge_svc', KnowledgeService())
     app_svc.add_service('data_svc', DataService())

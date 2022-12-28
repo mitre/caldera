@@ -1,3 +1,5 @@
+from unittest.mock import AsyncMock
+
 from app.objects.secondclass.c_fact import Fact, OriginType
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
@@ -6,7 +8,7 @@ from app.objects.secondclass.c_link import Link
 
 class TestKnowledgeService:
 
-    async def test_no_duplicate_fact(self, knowledge_svc):
+    async def test_no_duplicate_fact(self, knowledge_svc, fire_event_mock):
         await knowledge_svc.add_fact(Fact(trait='test', value='demo', score=1,
                                      collected_by=['thin_air'], technique_id='T1234'))
         await knowledge_svc.add_fact(Fact(trait='test', value='demo', score=1,
@@ -27,7 +29,7 @@ class TestKnowledgeService:
         relationships = await knowledge_svc.get_relationships(dict(edge='potato'))
         assert len(relationships) == 1
 
-    async def test_remove_fact(self, knowledge_svc):
+    async def test_remove_fact(self, knowledge_svc, event_svc, fire_event_mock):
         await knowledge_svc.add_fact(Fact(trait='rtest', value='rdemo', score=1,
                                      collected_by=['thin_air'], technique_id='T1234'),
                                      constraints=dict(test_field='test_value'))
@@ -55,7 +57,7 @@ class TestKnowledgeService:
         assert len(relationships) == 0
         assert len(knowledge_svc._KnowledgeService__loaded_knowledge_module.fact_ram['constraints']) == 0
 
-    async def test_update_fact(self, knowledge_svc):
+    async def test_update_fact(self, knowledge_svc, fire_event_mock):
         await knowledge_svc.add_fact(Fact(trait='utest', value='udemo', score=1,
                                      collected_by=['thin_air'], technique_id='T1234'))
         await knowledge_svc.update_fact(criteria=dict(trait='utest'),
@@ -74,7 +76,7 @@ class TestKnowledgeService:
         assert len(relationships) == 1
         assert relationships[0].source == dummy2
 
-    async def test_retrieve_fact(self, knowledge_svc):
+    async def test_retrieve_fact(self, knowledge_svc, fire_event_mock):
         await knowledge_svc.add_fact(Fact(trait='ttestA', value='tdemoB', score=24,
                                      collected_by=['thin_airA'], technique_id='T1234'))
         await knowledge_svc.add_fact(Fact(trait='ttestB', value='tdemoA', score=42,
