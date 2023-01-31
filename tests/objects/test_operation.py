@@ -194,7 +194,7 @@ class TestOperation:
         assert op.ran_ability_id('123')
 
     def test_event_logs(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc, event_log_op_start_time,
-                        op_agent_creation_time):
+                        op_agent_creation_time, fire_event_mock):
         event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         event_loop.run_until_complete(data_svc.store(operation_agent))
         want_agent_metadata = dict(
@@ -263,8 +263,8 @@ class TestOperation:
         event_logs = event_loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
         assert event_logs == want
 
-    def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc,
-                                        event_log_op_start_time, op_agent_creation_time):
+    def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc, app_svc,
+                                        event_log_op_start_time, op_agent_creation_time, fire_event_mock):
         event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         event_loop.run_until_complete(data_svc.store(operation_agent))
 
@@ -379,8 +379,8 @@ class TestOperation:
         assert event_kwargs['from_state'] == 'running'
         assert event_kwargs['to_state'] == 'finished'
 
-    def test_with_learning_parser(self, event_loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
-                                  make_test_link, make_test_result, knowledge_svc):
+    def test_with_learning_parser(self, event_loop, file_svc, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
+                                  make_test_link, make_test_result, knowledge_svc, fire_event_mock):
         test_link = make_test_link(1234)
         op_with_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)

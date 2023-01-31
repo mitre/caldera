@@ -26,6 +26,7 @@ from app.api.v2.handlers.contact_api import ContactApi
 from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
 from app.api.v2.handlers.plugins_api import PluginApi
 from app.api.v2.handlers.fact_source_api import FactSourceApi
+from app.api.v2.handlers.fact_api import FactApi
 from app.api.v2.handlers.planner_api import PlannerApi
 from app.api.v2.handlers.health_api import HealthApi
 from app.api.v2.handlers.schedule_api import ScheduleApi
@@ -329,7 +330,7 @@ def agent_config():
 
 
 @pytest.fixture
-async def api_v2_client(event_loop, aiohttp_client, contact_svc):
+async def api_v2_client(event_loop, aiohttp_client):
     def make_app(svcs):
         warnings.filterwarnings(
             "ignore",
@@ -350,10 +351,12 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         ObjectiveApi(svcs).add_routes(app)
         ObfuscatorApi(svcs).add_routes(app)
         PluginApi(svcs).add_routes(app)
+        FactApi(svcs).add_routes(app)
         FactSourceApi(svcs).add_routes(app)
         PlannerApi(svcs).add_routes(app)
         HealthApi(svcs).add_routes(app)
         ScheduleApi(svcs).add_routes(app)
+
         return app
 
     async def initialize():
@@ -370,11 +373,12 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         auth_svc = AuthService()
         _ = FileSvc()
         _ = EventService()
+        _ = KnowledgeService()
+        _ = ContactService()
         services = app_svc.get_services()
         os.chdir(str(Path(__file__).parents[1]))
 
         _ = await RestApi(services).enable()
-        await app_svc.register_contacts()
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
         await auth_svc.set_login_handlers(services)
 
@@ -387,9 +391,11 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
             url='/api/docs/swagger.json',
             static_path='/static/swagger'
         )
+
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
 
+        await app_svc.register_contacts()
         return app_svc
 
     app_svc = await initialize()

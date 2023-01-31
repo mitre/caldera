@@ -1,13 +1,17 @@
 import pytest
 from aiohttp import web
 
+from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService, CONFIG_API_KEY_RED
 from app.service.file_svc import FileSvc
 from app.service.data_svc import DataService
 from app.service.event_svc import EventService
+from app.service.contact_svc import ContactService
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 from app.api.v2.handlers.fact_api import FactApi
+from app.api.v2.handlers.contact_api import ContactApi
+from app.api.v2.handlers.fact_source_api import FactSourceApi
 from app.api.v2.responses import json_request_validation_middleware
 from app.api.v2.security import authentication_required_middleware_factory
 from app.objects.secondclass.c_fact import WILDCARD_STRING
@@ -31,7 +35,8 @@ def base_world():
             },
 
             'crypt_salt': 'thisisdefinitelynotkosher',  # Salt for file service instantiation
-            'encryption_key': 'andneitheristhis'  # fake encryption key for file service instantiation
+            'encryption_key': 'andneitheristhis',  # fake encryption key for file service instantiation
+            'app.contact.websocket': '0.0.0.0:7012',
         }
     )
 
@@ -39,12 +44,14 @@ def base_world():
     BaseWorld.clear_config()
 
 
-@pytest.fixture
-def knowledge_webapp(event_loop, app_svc, base_world, data_svc, event_svc):
+@pytest.fixture(scope="function")
+async def knowledge_webapp(event_loop, base_world, data_svc):
+    app_svc = AppService(web.Application())
     app_svc.add_service('auth_svc', AuthService())
     app_svc.add_service('knowledge_svc', KnowledgeService())
     app_svc.add_service('data_svc', DataService())
     app_svc.add_service('event_svc', EventService())
+    app_svc.add_service('contact_svc', ContactService())
     app_svc.add_service('file_svc', FileSvc())  # This needs to be done this way, or it we won't have a valid BaseWorld
     services = app_svc.get_services()
     app = web.Application(
@@ -55,13 +62,16 @@ def knowledge_webapp(event_loop, app_svc, base_world, data_svc, event_svc):
     )
 
     FactApi(services).add_routes(app)
+    ContactApi(services).add_routes(app)
+    FactSourceApi(services).add_routes(app)
+
+    await app_svc.register_contacts()
 
     return app
 
 
-async def test_display_facts(knowledge_webapp, aiohttp_client):
+async def test_display_facts(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
-
     fact_data = {
         'trait': 'demo',
         'value': 'test'
@@ -77,7 +87,7 @@ async def test_display_facts(knowledge_webapp, aiohttp_client):
     assert response[0]['source'] == WILDCARD_STRING
 
 
-async def test_display_operation_facts(knowledge_webapp, aiohttp_client):
+async def test_display_operation_facts(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     op_id_test = 'this_is_a_valid_operation_id'
 
@@ -97,7 +107,7 @@ async def test_display_operation_facts(knowledge_webapp, aiohttp_client):
     assert response[0]['source'] == op_id_test
 
 
-async def test_display_relationships(knowledge_webapp, aiohttp_client):
+async def test_display_relationships(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     op_id_test = 'this_is_a_valid_operation_id'
     fact_data_a = {
@@ -127,7 +137,7 @@ async def test_display_relationships(knowledge_webapp, aiohttp_client):
     assert response[0]['source']['source'] == 'this_is_a_valid_operation_id'
 
 
-async def test_display_operation_relationships(knowledge_webapp, aiohttp_client):
+async def test_display_operation_relationships(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     op_id_test = 'this_is_a_valid_operation_id'
     fact_data_a = {
@@ -162,7 +172,7 @@ async def test_display_operation_relationships(knowledge_webapp, aiohttp_client)
     assert response[0]['target']['source'] == op_id_test
 
 
-async def test_remove_fact(knowledge_webapp, aiohttp_client):
+async def test_remove_fact(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     fact_data = {
         'trait': 'demo',
@@ -183,7 +193,7 @@ async def test_remove_fact(knowledge_webapp, aiohttp_client):
     assert start == end
 
 
-async def test_remove_relationship(knowledge_webapp, aiohttp_client):
+async def test_remove_relationship(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     op_id_test = 'this_is_a_valid_operation_id'
     fact_data_a = {
@@ -215,7 +225,7 @@ async def test_remove_relationship(knowledge_webapp, aiohttp_client):
     assert start == end
 
 
-async def test_add_fact(knowledge_webapp, aiohttp_client):
+async def test_add_fact(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
 
     fact_data = {
@@ -235,7 +245,7 @@ async def test_add_fact(knowledge_webapp, aiohttp_client):
     assert current == response
 
 
-async def test_add_fact_to_operation(knowledge_webapp, aiohttp_client, test_operation, setup_empty_operation):
+async def test_add_fact_to_operation(knowledge_webapp, aiohttp_client, test_operation, setup_empty_operation, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
 
     fact_data = {
@@ -263,7 +273,7 @@ async def test_add_fact_to_operation(knowledge_webapp, aiohttp_client, test_oper
 
 
 async def test_add_fact_to_finished_operation(knowledge_webapp, aiohttp_client, setup_finished_operation,
-                                              finished_operation_payload):
+                                              finished_operation_payload, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     op_id = finished_operation_payload['id']
     matched_operations = await BaseService.get_service('data_svc').locate('operations', {'id': op_id})
@@ -280,7 +290,7 @@ async def test_add_fact_to_finished_operation(knowledge_webapp, aiohttp_client, 
     assert 'Cannot add fact to finished operation.' in data['error']
 
 
-async def test_add_relationship(knowledge_webapp, aiohttp_client):
+async def test_add_relationship(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     fact_data_a = {
         'trait': 'a',
@@ -313,7 +323,7 @@ async def test_add_relationship(knowledge_webapp, aiohttp_client):
     assert current == response
 
 
-async def test_patch_fact(knowledge_webapp, aiohttp_client):
+async def test_patch_fact(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     fact_data = {
         'trait': 'domain.user.name',
@@ -341,7 +351,7 @@ async def test_patch_fact(knowledge_webapp, aiohttp_client):
     assert patched == current
 
 
-async def test_patch_relationship(knowledge_webapp, aiohttp_client):
+async def test_patch_relationship(knowledge_webapp, aiohttp_client, fire_event_mock):
     client = await aiohttp_client(knowledge_webapp)
     relationship_data = {
         "source": {
