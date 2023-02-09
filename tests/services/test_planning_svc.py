@@ -146,7 +146,7 @@ class TestPlanningService:
             timeout = True
         assert timeout is True
 
-    async def test_get_links(self, setup_planning_test, planning_svc, data_svc, knowledge_svc):
+    async def test_get_links(self, setup_planning_test, planning_svc, data_svc, knowledge_svc, fire_event_mock):
         # PART A: Don't fill in facts for "cability" so only "tability"
         #   is returned in "links"
         tability, agent, operation, cability = setup_planning_test
@@ -212,7 +212,7 @@ class TestPlanningService:
         facts.append(stopping_condition)
         assert await planning_svc._stopping_condition_met(facts, stopping_condition) is True
 
-    async def test_check_stopping_conditions(self, fact, link, setup_planning_test, planning_svc):
+    async def test_check_stopping_conditions(self, fact, link, setup_planning_test, planning_svc, fire_event_mock):
         ability, agent, operation, _ = setup_planning_test
         executor = next(ability.executors)
         operation.source.facts = []
@@ -229,7 +229,7 @@ class TestPlanningService:
         # now verify stopping condition is met since we directly inserted fact that matches stopping condition
         assert await planning_svc.check_stopping_conditions(stopping_conditions, operation) is True
 
-    async def test_update_stopping_condition_met(self, fact, link, setup_planning_test, planning_svc):
+    async def test_update_stopping_condition_met(self, fact, link, setup_planning_test, planning_svc, fire_event_mock):
         ability, agent, operation, _ = setup_planning_test
         stopping_condition = fact(trait='t.c.t', value='boss')
 
