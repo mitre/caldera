@@ -26,6 +26,7 @@ def contact_report_data(contact_svc):
     contact_svc.report = CONTACTS_REPORT
     return contact_svc.report
 
+
 class TestContactsApi:
     async def test_get_uppercase_contact_report(self, api_v2_client, api_cookies, contact_report_data):
         resp = await api_v2_client.get('/api/v2/contacts/HTTP', cookies=api_cookies)

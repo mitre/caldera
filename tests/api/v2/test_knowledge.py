@@ -10,8 +10,6 @@ from app.service.contact_svc import ContactService
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 from app.api.v2.handlers.fact_api import FactApi
-from app.api.v2.handlers.contact_api import ContactApi
-from app.api.v2.handlers.fact_source_api import FactSourceApi
 from app.api.v2.responses import json_request_validation_middleware
 from app.api.v2.security import authentication_required_middleware_factory
 from app.objects.secondclass.c_fact import WILDCARD_STRING
