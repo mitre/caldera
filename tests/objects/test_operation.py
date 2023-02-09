@@ -194,7 +194,7 @@ class TestOperation:
         assert op.ran_ability_id('123')
 
     def test_event_logs(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc, event_log_op_start_time,
-                        op_agent_creation_time):
+                        op_agent_creation_time, fire_event_mock):
         event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         event_loop.run_until_complete(data_svc.store(operation_agent))
         want_agent_metadata = dict(
@@ -264,7 +264,7 @@ class TestOperation:
         assert event_logs == want
 
     def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc,
-                                        event_log_op_start_time, op_agent_creation_time):
+                                        event_log_op_start_time, op_agent_creation_time, fire_event_mock):
         event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         event_loop.run_until_complete(data_svc.store(operation_agent))
 
@@ -332,7 +332,7 @@ class TestOperation:
             ),
         ]
         event_loop.run_until_complete(op_for_event_logs.write_event_logs_to_disk(file_svc, data_svc))
-        target_path = '/tmp/event_logs/operation_%s.json' % op_for_event_logs.id
+        target_path = f'/tmp/event_logs/operation_{op_for_event_logs.id}.json'
         assert os.path.isfile(target_path)
         try:
             with open(target_path, 'rb') as log_file:
@@ -379,8 +379,8 @@ class TestOperation:
         assert event_kwargs['from_state'] == 'running'
         assert event_kwargs['to_state'] == 'finished'
 
-    def test_with_learning_parser(self, event_loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
-                                  make_test_link, make_test_result, knowledge_svc):
+    def test_with_learning_parser(self, event_loop, app_svc, file_svc, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
+                                  make_test_link, make_test_result, knowledge_svc, fire_event_mock):
         test_link = make_test_link(1234)
         op_with_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)
@@ -404,7 +404,7 @@ class TestOperation:
         event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 0
 
-    def test_facts(self, event_loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, event_svc,
+    def test_facts(self, event_loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, fire_event_mock,
                    op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc):
         test_link = make_test_link(9876)
         op_with_learning_and_seeded.add_link(test_link)

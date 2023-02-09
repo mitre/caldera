@@ -22,12 +22,11 @@ class TestAgent:
         event_loop.run_until_complete(agent.task([ability], obfuscator='plain-text'))
         assert 0 == len(agent.links)
 
-    def test_task_with_facts(self, event_loop, obfuscator, init_base_world, knowledge_svc):
+    def test_task_with_facts(self, event_loop, obfuscator, init_base_world, knowledge_svc, fire_event_mock):
         executor = Executor(name='psh', platform='windows', command='net user #{domain.user.name} /domain')
         ability = Ability(ability_id='123', executors=[executor])
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['pwsh', 'psh'], platform='windows')
         fact = Fact(trait='domain.user.name', value='bob')
-
         event_loop.run_until_complete(agent.task([ability], 'plain-text', [fact]))
         assert 1 == len(agent.links)
 

@@ -167,7 +167,7 @@ class TestContactDns:
         self._assert_successful_ivp4(response_msg)
         self._assert_even_ipv4(response_msg)
 
-    async def test_completed_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id):
+    async def test_completed_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id, event_svc, fire_event_mock):
         qnames = get_beacon_profile_qnames(message_id)
         final_index = len(qnames) - 1
         for index, qname in enumerate(qnames):
