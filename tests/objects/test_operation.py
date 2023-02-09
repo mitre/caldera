@@ -263,7 +263,7 @@ class TestOperation:
         event_logs = event_loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
         assert event_logs == want
 
-    def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc, app_svc,
+    def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc,
                                         event_log_op_start_time, op_agent_creation_time, fire_event_mock):
         event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
         event_loop.run_until_complete(data_svc.store(operation_agent))
@@ -332,7 +332,7 @@ class TestOperation:
             ),
         ]
         event_loop.run_until_complete(op_for_event_logs.write_event_logs_to_disk(file_svc, data_svc))
-        target_path = '/tmp/event_logs/operation_%s.json' % op_for_event_logs.id
+        target_path = f'/tmp/event_logs/operation_{op_for_event_logs.id}.json'
         assert os.path.isfile(target_path)
         try:
             with open(target_path, 'rb') as log_file:
@@ -379,7 +379,7 @@ class TestOperation:
         assert event_kwargs['from_state'] == 'running'
         assert event_kwargs['to_state'] == 'finished'
 
-    def test_with_learning_parser(self, event_loop, file_svc, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
+    def test_with_learning_parser(self, event_loop, app_svc, file_svc, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
                                   make_test_link, make_test_result, knowledge_svc, fire_event_mock):
         test_link = make_test_link(1234)
         op_with_learning_parser.add_link(test_link)

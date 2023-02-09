@@ -44,7 +44,7 @@ def base_world():
     BaseWorld.clear_config()
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def knowledge_webapp(event_loop, base_world, data_svc):
     app_svc = AppService(web.Application())
     app_svc.add_service('auth_svc', AuthService())
@@ -60,13 +60,8 @@ async def knowledge_webapp(event_loop, base_world, data_svc):
             json_request_validation_middleware
         ]
     )
-
     FactApi(services).add_routes(app)
-    ContactApi(services).add_routes(app)
-    FactSourceApi(services).add_routes(app)
-
     await app_svc.register_contacts()
-
     return app
 
 

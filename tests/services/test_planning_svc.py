@@ -116,7 +116,7 @@ def stop_bucket_exhaustion_setup(request, setup_planning_test):
 
 
 class TestPlanningService:
-    async def test_wait_for_links_and_monitor(self, planning_svc, knowledge_svc,  fact, setup_planning_test):
+    async def test_wait_for_links_and_monitor(self, planning_svc, fact, setup_planning_test):
         # PART A:
         ability, agent, operation, _ = setup_planning_test
         # Add a link to operation.chain
