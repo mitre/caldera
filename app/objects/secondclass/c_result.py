@@ -27,7 +27,7 @@ class Result(BaseObject):
 
     schema = ResultSchema()
 
-    def __init__(self, id, output, stderr="", exit_code="", pid=0, status=0, agent_reported_time=None):
+    def __init__(self, id, output, stderr='', exit_code='', pid=0, status=0, agent_reported_time=None):
         super().__init__()
         self.id = id
         self.output = output
