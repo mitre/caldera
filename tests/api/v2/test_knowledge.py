@@ -34,7 +34,6 @@ def base_world():
 
             'crypt_salt': 'thisisdefinitelynotkosher',  # Salt for file service instantiation
             'encryption_key': 'andneitheristhis',  # fake encryption key for file service instantiation
-            'app.contact.websocket': '0.0.0.0:7012',
         }
     )
 
