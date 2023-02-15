@@ -126,10 +126,10 @@ class FileSvc(FileServiceInterface, BaseService):
             return decoded_buf
         except json.JSONDecodeError:
             results = json.dumps(dict(
-                stdout=self.decode_bytes(decoded_buf, strip_newlines=False), stderr=''))
+                stdout=self.decode_bytes(decoded_buf, strip_newlines=False), stderr='', exit_code=''))
             return self.encode_string(str(results))
         except binascii.Error:
-            results = json.dumps(dict(stdout=decoded_buf, stderr=''))
+            results = json.dumps(dict(stdout=decoded_buf, stderr='', exit_code=''))
             return self.encode_string(str(results))
 
     def write_result_file(self, link_id, output, location='data/results'):

@@ -120,7 +120,7 @@ class TestLink:
         assert serialized_link['agent_reported_time'] == agent_reported_time
         assert loaded_link.agent_reported_time == BaseService.get_timestamp_from_string(agent_reported_time)
 
-    def test_link_knowledge_svc_synchronization(self, event_loop, executor, ability, knowledge_svc):
+    def test_link_knowledge_svc_synchronization(self, event_loop, executor, ability, knowledge_svc, fire_event_mock):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact = Fact(trait='remote.host.fqdn', value='dc')
@@ -128,7 +128,6 @@ class TestLink:
         relationship = Relationship(source=fact, edge='has_admin', target=fact2)
         test_link = Link(command='echo "this was a triumph"',
                          paw='123456', ability=test_ability, id=111111, executor=test_executor)
-
         event_loop.run_until_complete(test_link.create_relationships([relationship], None))
         checkable = [(x.trait, x.value) for x in test_link.facts]
         assert (fact.trait, fact.value) in checkable
@@ -139,7 +138,7 @@ class TestLink:
         knowledge_base_r = event_loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='has_admin')))
         assert len(knowledge_base_r) == 1
 
-    def test_create_relationship_source_fact(self, event_loop, ability, executor, operation, knowledge_svc):
+    def test_create_relationship_source_fact(self, event_loop, ability, executor, operation, knowledge_svc, fire_event_mock):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
@@ -162,7 +161,7 @@ class TestLink:
         assert len(fact_store_operation) == 1
         assert len(fact_store_operation_source[0].collected_by) == 2
 
-    def test_save_discover_seeded_fact_not_in_command(self, event_loop, ability, executor, operation, knowledge_svc):
+    def test_save_discover_seeded_fact_not_in_command(self, event_loop, ability, executor, operation, knowledge_svc, fire_event_mock):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
