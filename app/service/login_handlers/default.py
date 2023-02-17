@@ -62,9 +62,10 @@ class DefaultLoginHandler(LoginHandlerInterface):
         try:
             with ldap3.Connection(server, user=user_string, password=password) as conn:
                 if conn.bind():
-                    if username not in self.user_map:
+                    auth_svc = self.services.get('auth_svc')
+                    if username not in auth_svc.user_map:
                         group = await self._ldap_get_group(conn, dn, username, user_attr)
-                        await self.create_user(username, None, group)
+                        await auth_svc.create_user(username, None, group)
                     return True
         except LDAPException:
             self.log.error('Unable to connect to LDAP server')
