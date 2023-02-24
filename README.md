@@ -128,4 +128,4 @@ caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://ww
 
 ## Caldera Partnership Program
 
-If you are interested in partnering to support to sustain and evolve CALDERA&trade;'s open source capabilities, please contact us at caldera@mitre.org.
+If you are interested in partnering to support, sustain, and evolve CALDERA&trade;'s open source capabilities, please contact us at caldera@mitre.org.
