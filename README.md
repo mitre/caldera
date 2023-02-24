@@ -5,6 +5,19 @@
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
 
 # CALDERA&trade;
+<a
+    href="https://opensourcesecurityindex.io/"
+    target="_blank"
+    rel="noopener"
+>
+    <img
+        style="width: 282px; height: 56px"
+        src="https://opensourcesecurityindex.io/badge.svg"
+        alt="Open Source Security Index - Fastest Growing Open Source Security Projects"
+        width="282"
+        height="56"
+    />
+</a>
 
 CALDERA&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
