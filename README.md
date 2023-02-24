@@ -5,6 +5,7 @@
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
 
 # CALDERA&trade;
+
 <a
     href="https://opensourcesecurityindex.io/"
     target="_blank"
