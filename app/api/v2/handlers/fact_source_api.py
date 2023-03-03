@@ -101,5 +101,5 @@ class FactSourceApi(BaseObjectApi):
                               }])
     @aiohttp_apispec.response_schema(SourceSchema, description='Returns DELETE status.')
     async def delete_source(self, request: web.Request):
-        await self.delete_object(request)
+        await self.delete_on_disk_object(request)
         return web.HTTPNoContent()
