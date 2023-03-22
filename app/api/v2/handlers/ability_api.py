@@ -49,7 +49,7 @@ class AbilityApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Creates a new ability.',
                           description='Creates a new adversary based on the `AbilitySchema`. '
-                                      '"name", "tactic", and "executors" are all required fields.')
+                                      '"name", "tactic", "technique_name", "technique_id" and "executors" are all required fields.')
     @aiohttp_apispec.request_schema(AbilitySchema)
     @aiohttp_apispec.response_schema(AbilitySchema,
                                      description='JSON dictionary representation of the created Ability.')
