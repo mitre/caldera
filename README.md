@@ -126,6 +126,6 @@ In addition to CALDERA&trade;'s open source capabilities, MITRE maintains severa
 more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to
 caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
 
-## Caldera Partnership Program
+## Caldera Benefactor Program
 
 If you are interested in partnering to support, sustain, and evolve CALDERA&trade;'s open source capabilities, please contact us at caldera@mitre.org.
