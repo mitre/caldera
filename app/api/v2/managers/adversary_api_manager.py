@@ -10,3 +10,7 @@ class AdversaryApiManager(BaseApiManager):
         adversary.verify(log=self.log, abilities=self._data_svc.ram['abilities'],
                          objectives=self._data_svc.ram['objectives'])
         return adversary
+
+    async def fact_analysis(self, data: dict):
+        fact_reqs = await self._planning_svc.adversary_fact_requirements(**data)
+        # TODO: ability/ATT&CK suggestions for missing facts

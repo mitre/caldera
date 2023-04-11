@@ -1,3 +1,5 @@
+import re
+
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
@@ -262,6 +264,45 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         if planner.stopping_conditions:
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   operation)
+
+    async def adversary_fact_requirements(self, adversary_id=None, atomic_ordering=None):
+        """ """
+        fr = dict(errors=[])
+        facts_produced = []
+        required_facts = []
+        if atomic_ordering is None:
+            adversary = await self.get_service('data_svc') \
+                .locate('adversary', match=dict(adversary_id=adversary_id))
+            if not adversary:
+                fr['errors'].append(f'Adversary (ID: {adversary_id}) not found')
+                return fr
+            atomic_ordering = adversary.atomic_ordering
+
+        for ability_id in atomic_ordering:
+            ability = await self.get_service('data_svc') \
+                .locate('ability', match=dict(ability_id=ability_id))
+            if ability is None:
+                fr['errors'].append('Ability (ID: {ability_id}) not found')
+                continue
+
+            # record produced and required facts
+            executors = ability.get_exectuors()
+            for _platform, name_executor in executors.items():
+                for _name, executor in name_executor.items():
+                    # record produced facts
+                    for parser in executor.parsers:
+                        for parserconfig in parser.parserconfigs:
+                            for fact_type in ['source', 'target', 'edge']:
+                                fact_ = getattr(parserconfig, fact_type, False)
+                                if fact_:
+                                    facts_produced.append(fact_)
+                    # record required facts
+                    for fact_ in re.findall(BasePlanningService.re_variable, executor.test):
+                        required_facts.append(fact_)
+
+            # Required facts gap
+            # HERE
+        return None
 
     @staticmethod
     async def sort_links(links):

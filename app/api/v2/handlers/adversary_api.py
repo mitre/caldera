@@ -118,6 +118,15 @@ class AdversaryApi(BaseObjectApi):
         await self.delete_on_disk_object(request)
         return web.HTTPNoContent()
 
+    @aiohttp_apispec.docs(tags=['adversaries'], summary='Gets fact analysis for an adversary.',
+                          description='Gets fact analysis for an adversary.')
+    @aiohttp_apispec.request_schema(AdversarySchema(partial=True))
+    @aiohttp_apispec.response_schema(description='The response is the fact and requirement analysis for the adversary')
+    async def get_adversary_fact_analysis(self, request: web.Request):
+        data = await request.json()
+        analysis = await self._api_manager.fact_analysis(data)
+        return web.json_response(analysis)
+
     async def create_on_disk_object(self, request: web.Request):
         data = await request.json()
         data.pop('id', None)
@@ -127,7 +136,7 @@ class AdversaryApi(BaseObjectApi):
                                                             self.obj_class)
         return obj
 
-    async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
+    async def _parse_common_data_from_request(self, request) -> tuple(dict, dict, str, dict, dict):
         data = {}
         raw_body = await request.read()
         if raw_body:

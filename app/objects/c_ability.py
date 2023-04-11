@@ -118,6 +118,17 @@ class Ability(FirstClassObjectInterface, BaseObject):
     async def which_plugin(self):
         return self.plugin
 
+    def get_executors(self):
+        """Retrieve all executors defined for the ability"""
+        executors_ = dict()
+        for key, executor in self._executor_map.items():
+            name, platform = key
+            if platform not in executors_:
+                executors_[platform] = {}
+            if name not in executors_[platform]:
+                executors_[platform][name] = executor
+        return executors_
+
     def find_executor(self, name, platform):
         return self._executor_map.get(self._make_executor_map_key(name, platform))
 
