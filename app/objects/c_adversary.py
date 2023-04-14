@@ -9,6 +9,17 @@ from app.utility.base_object import BaseObject
 DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
 
 
+class AdversaryFactAnalysisRequestSchema(ma.Schema):
+
+    adversary_id = ma.fields.String(required=False)
+    atomic_ordering = ma.fields.List(ma.fields.String(), required=False)
+
+
+class AdversaryFactAnalysisResponseSchema(AdversaryFactAnalysisRequestSchema):
+    missing_requirements = ma.fields.List(ma.fields.Dict)
+    errors = ma.fields.List(ma.fields.String)
+
+
 class AdversarySchema(ma.Schema):
 
     adversary_id = ma.fields.String()

@@ -12,8 +12,9 @@ from app.utility.base_world import BaseWorld
 
 
 class AbilityApiManager(BaseApiManager):
-    def __init__(self, data_svc, file_svc):
+    def __init__(self, data_svc, file_svc, planning_svc):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
+        self._planning_svc = planning_svc
 
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         self._validate_ability_data(create=True, data=data)
@@ -49,6 +50,9 @@ class AbilityApiManager(BaseApiManager):
             file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
         await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
+
+    async def get_abilities_by_facts(self, required: list[str] = None, produced: list[str] = None):
+        return await self._planning_svc.get_abilities_by_facts(required_facts=required, produced_facts=produced)
 
     def _validate_ability_data(self, create: bool, data: dict):
         # Correct ability_id key for ability file saving.

@@ -4,19 +4,20 @@ from aiohttp import web
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.ability_api_manager import AbilityApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
-from app.objects.c_ability import Ability, AbilitySchema
+from app.objects.c_ability import Ability, AbilitySchema, GetAbilityByFactSchema
 
 
 class AbilityApi(BaseObjectApi):
     def __init__(self, services):
         super().__init__(description='ability', obj_class=Ability, schema=AbilitySchema, ram_key='abilities',
                          id_property='ability_id', auth_svc=services['auth_svc'])
-        self._api_manager = AbilityApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
+        self._api_manager = AbilityApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'], planning_svc=services['planning_svc'])
 
     def add_routes(self, app: web.Application):
         router = app.router
         router.add_get('/abilities', self.get_abilities)
         router.add_get('/abilities/{ability_id}', self.get_ability_by_id)
+        router.add_post('/abilities/search/facts', self.get_abilities_by_facts)
         router.add_post('/abilities', self.create_ability)
         router.add_put('/abilities/{ability_id}', self.create_or_update_ability)
         router.add_patch('/abilities/{ability_id}', self.update_ability)
@@ -46,6 +47,16 @@ class AbilityApi(BaseObjectApi):
     async def get_ability_by_id(self, request: web.Request):
         ability = await self.get_object(request)
         return web.json_response(ability)
+
+    @aiohttp_apispec.docs(tags=['abilities'], summary='Get abilities by required/produced facts.',
+                          description='Searches for abilities that require or produce the supplied fact names.')
+    @aiohttp_apispec.querystring_schema(GetAbilityByFactSchema)
+    @aiohttp_apispec.response_schema(AbilitySchema(many=True, partial=True),
+                                     description='Returns a list of abilities.')
+    async def get_abilities_by_facts(self, request: web.Request):
+        fact_names = await request.json()
+        abilities = await self._api_manager.get_abilities_by_facts(**fact_names)
+        return web.json_response(abilities)
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Creates a new ability.',
                           description='Creates a new adversary based on the `AbilitySchema`. '

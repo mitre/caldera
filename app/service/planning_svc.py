@@ -265,44 +265,100 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             planner.stopping_condition_met = await self.check_stopping_conditions(planner.stopping_conditions,
                                                                                   operation)
 
-    async def adversary_fact_requirements(self, adversary_id=None, atomic_ordering=None):
+    async def adversary_fact_requirements(self, adversary):
         """ """
-        fr = dict(errors=[])
-        facts_produced = []
-        required_facts = []
-        if atomic_ordering is None:
-            adversary = await self.get_service('data_svc') \
-                .locate('adversary', match=dict(adversary_id=adversary_id))
-            if not adversary:
-                fr['errors'].append(f'Adversary (ID: {adversary_id}) not found')
-                return fr
-            atomic_ordering = adversary.atomic_ordering
+        missing_fact_reqs = dict(missing_requirements=[], errors=[])
+        all_produced_facts = []
+        fullfillment_abilities = []
+        all_missing_facts = set([])
+        NON_FACT_VARS = set(['server', 'group', ])
 
-        for ability_id in atomic_ordering:
+        for i, ability_id in enumerate(adversary.atomic_ordering):
             ability = await self.get_service('data_svc') \
-                .locate('ability', match=dict(ability_id=ability_id))
+                .locate('abilities', match=dict(ability_id=ability_id))
             if ability is None:
-                fr['errors'].append('Ability (ID: {ability_id}) not found')
+                missing_fact_reqs['errors'].append('Ability (ID: {ability_id}) not found')
                 continue
 
+            self.log.error(f'-----Ability: {ability[0].name}')
+
             # record produced and required facts
-            executors = ability.get_exectuors()
+            executors = ability[0].get_executors()
             for _platform, name_executor in executors.items():
                 for _name, executor in name_executor.items():
+                    required_facts = set([])
+
+                    # record required facts
+                    for fact_ in re.findall(BasePlanningService.re_variable, executor.test):
+                        required_facts.add(fact_)
+                        self.log.error(f'--------Required Fact: {fact_}')
+
                     # record produced facts
                     for parser in executor.parsers:
                         for parserconfig in parser.parserconfigs:
                             for fact_type in ['source', 'target', 'edge']:
                                 fact_ = getattr(parserconfig, fact_type, False)
                                 if fact_:
-                                    facts_produced.append(fact_)
-                    # record required facts
-                    for fact_ in re.findall(BasePlanningService.re_variable, executor.test):
-                        required_facts.append(fact_)
+                                    all_produced_facts.add(fact_)
+                                    self.log.error(f'--------Produced Fact: {fact_}')
 
-            # Required facts gap
-            # HERE
-        return None
+                    required_fact_diff = (required_facts - all_produced_facts) - NON_FACT_VARS
+                    if required_fact_diff:
+                        all_missing_facts.update(required_fact_diff)
+                        missing_fact_reqs['detailed_missing_requirements'].append(dict(
+                            step=i,
+                            ability=ability.display,
+                            missing_required_facts=required_fact_diff,
+                            fullfillment_abilities=set([]),
+                            fullfillment_tactics=set([])
+                        ))
+
+        fullfillment_abilities = await self.get_abilities_by_facts(produced_facts=all_missing_facts)
+        for fa in fullfillment_abilities:
+            fact, ability = fa
+            for missing_req in missing_fact_reqs['detailed_missing_requirements']:
+                if fact in missing_req['missing_required_facts']:
+                    missing_req['fulfillment_abilities'].add(ability.display),
+                    missing_req['fulfillment_tactics'].add(dict(tactic=ability['tactic'], technique=ability['technique'], technique_id=ability['technique_id']))
+
+        return missing_fact_reqs
+
+    async def get_abilities_by_facts(self, required_facts: list[str] = None, produced_facts: list[str] = None) -> list[tuple]:
+        """
+        Args:
+            required_facts: required fact names (NOTE: Not Fact objects but names, i.e. Fact.name)
+            produced_facts: produced fact names (NOTE: Not Fact objects but names, i.e. Fact.name)
+        """
+        abilities = dict(required={}, produced={})
+        if required_facts is None:
+            required_facts = []
+        if produced_facts is None:
+            produced_facts = []
+        if not (required_facts or produced_facts):
+            return abilities
+
+        for ability_ in await self.get_service('data_svc').locate('abilities', match=dict()):
+            executors = ability_.get_executors()
+            for _platform, name_executor in executors.items():
+                for _name, executor in name_executor.items():
+                    # required facts
+                    if getattr(executor.test, False):
+                        for fact_ in re.findall(BasePlanningService.re_variable, executor.test):
+                            if fact_ in required_facts:
+                                if fact_ not in abilities['required']:
+                                    abilities['required'][fact_] = set([])
+                                abilities['required'][fact_].add(ability_)
+
+                    # produced facts
+                    for parser in executor.parsers:
+                        for parserconfig in parser.parserconfigs:
+                            for fact_type in ['source', 'target', 'edge']:
+                                fact_ = getattr(parserconfig, fact_type, False)
+                                if fact_ in produced_facts:
+                                    if fact_ not in abilities['produced']:
+                                        abilities['produced'][fact_] = set([])
+                                    abilities['produced'][fact_].add(ability_)
+        return abilities
 
     @staticmethod
     async def sort_links(links):

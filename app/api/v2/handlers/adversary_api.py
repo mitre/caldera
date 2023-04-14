@@ -6,14 +6,14 @@ from aiohttp import web
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.adversary_api_manager import AdversaryApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
-from app.objects.c_adversary import Adversary, AdversarySchema
+from app.objects.c_adversary import Adversary, AdversarySchema, AdversaryFactAnalysisRequestSchema, AdversaryFactAnalysisResponseSchema
 
 
 class AdversaryApi(BaseObjectApi):
     def __init__(self, services):
         super().__init__(description='adversary', obj_class=Adversary, schema=AdversarySchema, ram_key='adversaries',
                          id_property='adversary_id', auth_svc=services['auth_svc'])
-        self._api_manager = AdversaryApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
+        self._api_manager = AdversaryApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'], planning_svc=services['planning_svc'])
 
     def add_routes(self, app: web.Application):
         router = app.router
@@ -24,6 +24,7 @@ class AdversaryApi(BaseObjectApi):
         router.add_patch(adversaries_by_id_path, self.update_adversary)
         router.add_put(adversaries_by_id_path, self.create_or_update_adversary)
         router.add_delete(adversaries_by_id_path, self.delete_adversary)
+        router.add_post('/adveraries/fact_analysis', self.get_adversary_fact_analysis)
 
     @aiohttp_apispec.docs(tags=['adversaries'],
                           summary='Retrieve all adversaries',
@@ -120,11 +121,11 @@ class AdversaryApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['adversaries'], summary='Gets fact analysis for an adversary.',
                           description='Gets fact analysis for an adversary.')
-    @aiohttp_apispec.request_schema(AdversarySchema(partial=True))
-    @aiohttp_apispec.response_schema(description='The response is the fact and requirement analysis for the adversary')
+    @aiohttp_apispec.request_schema(AdversaryFactAnalysisRequestSchema())
+    @aiohttp_apispec.response_schema(AdversaryFactAnalysisResponseSchema())
     async def get_adversary_fact_analysis(self, request: web.Request):
         data = await request.json()
-        analysis = await self._api_manager.fact_analysis(data)
+        analysis = await self._api_manager.fact_analysis(self.ram_key, **data)
         return web.json_response(analysis)
 
     async def create_on_disk_object(self, request: web.Request):
@@ -136,7 +137,7 @@ class AdversaryApi(BaseObjectApi):
                                                             self.obj_class)
         return obj
 
-    async def _parse_common_data_from_request(self, request) -> tuple(dict, dict, str, dict, dict):
+    async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
         data = {}
         raw_body = await request.read()
         if raw_body:

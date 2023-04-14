@@ -11,7 +11,14 @@ from app.utility.base_object import BaseObject
 from app.utility.base_world import AccessSchema
 
 
+class GetAbilityByFactSchema(ma.Schema):
+
+    required = ma.fields.List(ma.fields.String(), required=False)
+    produced = ma.fields.List(ma.fields.String(), required=False)
+
+
 class AbilitySchema(ma.Schema):
+
     ability_id = ma.fields.String()
     tactic = ma.fields.String(missing=None)
     technique_name = ma.fields.String(missing=None)
