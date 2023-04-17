@@ -21,4 +21,4 @@ class AdversaryApiManager(BaseApiManager):
         else:
             fa['errors'].append('Could not find adversary, or "atomic_ordering" field not supplied.')
             return
-        return await self._planning_svc.adversary_fact_requirements(adversary)
+        return await self._planning_svc.adversary_fact_requirements(adversary, dump=True)
