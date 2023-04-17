@@ -51,8 +51,8 @@ class AbilityApiManager(BaseApiManager):
         await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
-    async def get_abilities_by_facts(self, required: list[str] = None, produced: list[str] = None):
-        return await self._planning_svc.get_abilities_by_facts(required_facts=required, produced_facts=produced)
+    async def get_abilities_by_facts(self, requires: list[str] = None, produces: list[str] = None):
+        return await self._planning_svc.get_abilities_by_facts(required_facts=requires, produced_facts=produces, dump=True)
 
     def _validate_ability_data(self, create: bool, data: dict):
         # Correct ability_id key for ability file saving.

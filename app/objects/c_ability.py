@@ -11,12 +11,6 @@ from app.utility.base_object import BaseObject
 from app.utility.base_world import AccessSchema
 
 
-class GetAbilityByFactSchema(ma.Schema):
-
-    required = ma.fields.List(ma.fields.String(), required=False)
-    produced = ma.fields.List(ma.fields.String(), required=False)
-
-
 class AbilitySchema(ma.Schema):
 
     ability_id = ma.fields.String()
@@ -47,6 +41,18 @@ class AbilitySchema(ma.Schema):
         if 'technique' in data:
             data['technique_name'] = data.pop('technique')
         return None if kwargs.get('partial') is True else Ability(**data)
+
+
+class GetAbilityByFactSchema(ma.Schema):
+
+    requires = ma.fields.List(ma.fields.String(), required=False)
+    produces = ma.fields.List(ma.fields.String(), required=False)
+
+
+class GetAbilityByFactResponseSchema(ma.Schema):
+
+    requires = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.List(ma.fields.Nested(AbilitySchema)))
+    produces = ma.fields.Dict(ma.fields.Dict)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):

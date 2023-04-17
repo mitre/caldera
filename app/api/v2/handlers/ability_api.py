@@ -4,7 +4,7 @@ from aiohttp import web
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.ability_api_manager import AbilityApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
-from app.objects.c_ability import Ability, AbilitySchema, GetAbilityByFactSchema
+from app.objects.c_ability import Ability, AbilitySchema, GetAbilityByFactSchema, GetAbilityByFactResponseSchema
 
 
 class AbilityApi(BaseObjectApi):
@@ -51,7 +51,7 @@ class AbilityApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['abilities'], summary='Get abilities by required/produced facts.',
                           description='Searches for abilities that require or produce the supplied fact names.')
     @aiohttp_apispec.querystring_schema(GetAbilityByFactSchema)
-    @aiohttp_apispec.response_schema(AbilitySchema(many=True, partial=True),
+    @aiohttp_apispec.response_schema(GetAbilityByFactResponseSchema,
                                      description='Returns a list of abilities.')
     async def get_abilities_by_facts(self, request: web.Request):
         fact_names = await request.json()

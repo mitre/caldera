@@ -323,13 +323,14 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
         return missing_fact_reqs
 
-    async def get_abilities_by_facts(self, required_facts: list[str] = None, produced_facts: list[str] = None) -> list[tuple]:
+    async def get_abilities_by_facts(self, required_facts: list[str] = None, produced_facts: list[str] = None, dump: bool = False) -> list[tuple]:
         """
         Args:
-            required_facts: required fact names (NOTE: Not Fact objects but names, i.e. Fact.name)
-            produced_facts: produced fact names (NOTE: Not Fact objects but names, i.e. Fact.name)
+            required_facts (list): required fact names (NOTE: Not Fact objects but names, i.e. Fact.name)
+            produced_facts (list): produced fact names (NOTE: Not Fact objects but names, i.e. Fact.name)
+            dump (bool): return Abilites as dict/json, not Ability objects
         """
-        abilities = dict(required={}, produced={})
+        abilities = dict(requires={}, produces={})
         if required_facts is None:
             required_facts = []
         if produced_facts is None:
@@ -342,22 +343,23 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             for _platform, name_executor in executors.items():
                 for _name, executor in name_executor.items():
                     # required facts
-                    if getattr(executor.test, False):
+                    if getattr(executor, 'test', False):
                         for fact_ in re.findall(BasePlanningService.re_variable, executor.test):
                             if fact_ in required_facts:
-                                if fact_ not in abilities['required']:
-                                    abilities['required'][fact_] = set([])
-                                abilities['required'][fact_].add(ability_)
-
+                                if fact_ not in abilities['requires']:
+                                    abilities['requires'][fact_] = []
+                                a = ability_.diplay if dump else ability_
+                                abilities['requires'][fact_].append(a)
                     # produced facts
                     for parser in executor.parsers:
                         for parserconfig in parser.parserconfigs:
                             for fact_type in ['source', 'target', 'edge']:
                                 fact_ = getattr(parserconfig, fact_type, False)
                                 if fact_ in produced_facts:
-                                    if fact_ not in abilities['produced']:
-                                        abilities['produced'][fact_] = set([])
-                                    abilities['produced'][fact_].add(ability_)
+                                    if fact_ not in abilities['produces']:
+                                        abilities['produces'][fact_] = []
+                                    a = ability_.diplay if dump else ability_
+                                    abilities['produces'][fact_].append(a)
         return abilities
 
     @staticmethod
