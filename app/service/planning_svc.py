@@ -269,7 +269,22 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """ """
         missing_fact_reqs = dict(missing_requirements=[], errors=[])
         all_missing_facts = set([])
-        NON_FACT_VARS = set(['server', 'group', ])
+        all_produced_facts = set([])
+        NON_FACT_VARS = set(['server', 'group', 'paw'])
+        FACT_FILTER_RE = '[filters('
+        PAYLOAD_FACT_RE = 'payload:'
+
+        def _clean_fact(fact):
+            if fact is None:
+                return fact
+            if fact in NON_FACT_VARS:
+                return None
+            elif FACT_FILTER_RE in fact:
+                return fact.split(FACT_FILTER_RE)[0]
+            elif PAYLOAD_FACT_RE in fact:
+                return None
+            else:
+                return fact
 
         for i, ability_id in enumerate(adversary.atomic_ordering):
             ability = await self.get_service('data_svc') \
@@ -286,21 +301,23 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             for _platform, name_executor in executors.items():
                 for _name, executor in name_executor.items():
                     required_facts = set([])
-                    produced_facts = set([])
                     # record required facts
                     for fact_ in re.findall(BasePlanningService.re_variable, executor.test):
-                        required_facts.add(fact_)
-                        #self.log.error(f'--------Required Fact: {fact_}')
+                        fact_ = _clean_fact(fact_)
+                        if fact_:
+                            required_facts.add(fact_)
+                            #self.log.error(f'--------Required Fact: {fact_}')
                     # record produced facts
                     for parser in executor.parsers:
                         for parserconfig in parser.parserconfigs:
                             for fact_type in ['source', 'target', 'edge']:
                                 fact_ = getattr(parserconfig, fact_type, False)
+                                fact_ = _clean_fact(fact_)
                                 if fact_:
-                                    produced_facts.add(fact_)
+                                    all_produced_facts.add(fact_)
                                     #self.log.error(f'--------Produced Fact: {fact_}')
 
-                    required_fact_diff = (required_facts - produced_facts) - NON_FACT_VARS
+                    required_fact_diff = (required_facts - all_produced_facts)
                     if required_fact_diff:
                         all_missing_facts.update(required_fact_diff)
                         missing_fact_reqs['missing_requirements'].append(dict(
@@ -359,7 +376,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                             if fact_ in required_facts:
                                 if fact_ not in abilities['requires']:
                                     abilities['requires'][fact_] = []
-                                a = ability_.diplay if dump else ability_
+                                a = ability_.display if dump else ability_
                                 abilities['requires'][fact_].append(a)
                     # produced facts
                     for parser in executor.parsers:
@@ -369,7 +386,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                                 if fact_ in produced_facts:
                                     if fact_ not in abilities['produces']:
                                         abilities['produces'][fact_] = []
-                                    a = ability_.diplay if dump else ability_
+                                    a = ability_.display if dump else ability_
                                     abilities['produces'][fact_].append(a)
         return abilities
 
