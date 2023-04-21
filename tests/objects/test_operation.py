@@ -17,6 +17,7 @@ from app.objects.c_objective import Objective
 from app.objects.secondclass.c_result import Result
 from app.objects.secondclass.c_fact import Fact
 from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 
 LINK1_DECIDE_TIME = MOCK_LINK_FINISH_TIME = '2021-01-01T08:00:00Z'
 LINK1_COLLECT_TIME = '2021-01-01T08:01:00Z'
@@ -72,6 +73,12 @@ def encoded_command():
     def _encode_command(command_str):
         return b64encode(command_str.encode('utf-8')).decode()
     return _encode_command
+
+
+@pytest.fixture
+def setup_op_config():
+    BaseWorld.apply_config(name='main', config={'exfil_dir': '/tmp/caldera',
+                                                'reports_dir': '/tmp'})
 
 
 @pytest.fixture
@@ -263,6 +270,9 @@ class TestOperation:
         event_logs = event_loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
         assert event_logs == want
 
+    @pytest.mark.usefixtures(
+        "setup_op_config"
+    )
     def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc,
                                         event_log_op_start_time, op_agent_creation_time, fire_event_mock):
         event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
