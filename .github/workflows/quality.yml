@@ -29,6 +29,8 @@ jobs:
             toxenv: py39,style,coverage-ci
           - python-version: 3.10.9
             toxenv: py310,style,coverage-ci
+          - python-version: 3.11
+            toxenv: py311,style,coverage-ci
 
     steps:
       - uses: actions/checkout@7884fcad6b5d53d10323aee724dc68d8b9096a2e
@@ -50,7 +52,7 @@ jobs:
       - name: Override Coverage Source Path for Sonar
         run: sed -i "s/<source>\/home\/runner\/work\/caldera\/caldera/<source>\/github\/workspace/g" /home/runner/work/caldera/caldera/coverage.xml
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@156db6fef3e168e4972abb76de0b32bbce8ec77a
+        uses: SonarSource/sonarcloud-github-action@5875562561d22a34be0c657405578705a169af6c
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
