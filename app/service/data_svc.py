@@ -41,6 +41,8 @@ PAYLOADS_CONFIG_STANDARD_KEY = 'standard_payloads'
 PAYLOADS_CONFIG_SPECIAL_KEY = 'special_payloads'
 PAYLOADS_CONFIG_EXTENSIONS_KEY = 'extensions'
 
+DEPRECATION_WARNING_LOAD = "Function deprecated and will be removed in a future update. Use load_yaml_file"
+
 
 class DataService(DataServiceInterface, BaseService):
 
@@ -240,15 +242,15 @@ class DataService(DataServiceInterface, BaseService):
         return [RequirementSchema().load(entry) for entry in requirements]
 
     async def load_adversary_file(self, filename, access):
-        warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning, stacklevel=2)
+        warnings.warn(DEPRECATION_WARNING_LOAD)
         await self.load_yaml_file(Adversary, filename, access)
 
     async def load_source_file(self, filename, access):
-        warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning, stacklevel=2)
+        warnings.warn(DEPRECATION_WARNING_LOAD)
         await self.load_yaml_file(Source, filename, access)
 
     async def load_objective_file(self, filename, access):
-        warnings.warn("Function deprecated and will be removed in a future update. Use load_yaml_file", DeprecationWarning, stacklevel=2)
+        warnings.warn(DEPRECATION_WARNING_LOAD)
         await self.load_yaml_file(Objective, filename, access)
 
     async def load_yaml_file(self, object_class, filename, access):
