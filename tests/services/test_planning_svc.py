@@ -11,6 +11,7 @@ from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_world import BaseWorld
+from tests import AsyncMock
 
 
 stop_bucket_exhaustion_params = [
@@ -67,13 +68,6 @@ def planner_stub(**kwargs):
             for k, v in kwargs.items():
                 setattr(self, k, v)
     return PlannerStub(**kwargs)
-
-
-def async_wrapper(return_value):
-    """Creates an async method that returns a constant value for mocking purposes."""
-    async def wrap(*args, **kwargs):
-        return return_value
-    return wrap
 
 
 @pytest.fixture
@@ -355,9 +349,9 @@ class TestPlanningService:
             Fact(trait='a.b.e', value='3'),
         ]
 
-        operation.all_facts = async_wrapper(facts)
+        operation.all_facts = AsyncMock(return_value=facts)
         operation.planner = MagicMock()
-        planning_svc.load_module = async_wrapper(RequirementFake())
+        planning_svc.load_module = AsyncMock(return_value=RequirementFake())
         link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
 
         trimmed_links = await planning_svc.trim_links(operation, [link], agent)
