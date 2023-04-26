@@ -242,15 +242,15 @@ class DataService(DataServiceInterface, BaseService):
         return [RequirementSchema().load(entry) for entry in requirements]
 
     async def load_adversary_file(self, filename, access):
-        warnings.warn(DEPRECATION_WARNING_LOAD)
+        warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
         await self.load_yaml_file(Adversary, filename, access)
 
     async def load_source_file(self, filename, access):
-        warnings.warn(DEPRECATION_WARNING_LOAD)
+        warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
         await self.load_yaml_file(Source, filename, access)
 
     async def load_objective_file(self, filename, access):
-        warnings.warn(DEPRECATION_WARNING_LOAD)
+        warnings.warn(DEPRECATION_WARNING_LOAD, DeprecationWarning, stacklevel=2)
         await self.load_yaml_file(Objective, filename, access)
 
     async def load_yaml_file(self, object_class, filename, access):
