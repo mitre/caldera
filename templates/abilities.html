@@ -103,7 +103,7 @@
                     <p class="platforms">
                         <template x-for="platform of getAbilityPlatforms(ability)">
                             <span class="has-tooltip-arrow has-tooltip-left no-underline" x-bind:data-tooltip="platform">
-                                <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></i></span>
+                                <span class="icon is-small"><i class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'; else if (platform.includes('freebsd')) return 'fa-freebsd'"></i></span>
                             </span>
                         </template>
                     </p>

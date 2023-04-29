@@ -143,6 +143,10 @@
                                 <span class="icon is-large"><i class="fab fa-2x fa-apple"></i></span>
                                 <br> darwin
                             </div>
+                            <div class="has-text-centered platform" x-bind:class="{ 'selected': selectedPlatform === 'freebsd' }" x-show="platforms.includes('freebsd')" @click="changePlatform('freebsd')">
+                                <span class="icon is-large"><i class="fab fa-2x fa-freebsd"></i></span>
+                                <br> freebsd
+                            </div>
                         </div>
                     </div>
                 </form>
@@ -174,7 +178,7 @@
                             <div class="tags are-medium has-addons">
                                 <span class="tag is-black">
                                     <span class="icon">
-                                        <i class="fab" x-bind:class="{ 'fa-windows': command.platform === 'windows', 'fa-linux': command.platform === 'linux', 'fa-apple': command.platform === 'darwin' }"></i>
+                                        <i class="fab" x-bind:class="{ 'fa-windows': command.platform === 'windows', 'fa-linux': command.platform === 'linux', 'fa-apple': command.platform === 'darwin', 'fa-freebsd': command.platform === 'freebsd' }"></i>
                                     </span>
                                 </span>
                                 <span class="tag is-dark" x-text="command.executor"></span>
@@ -193,7 +197,7 @@
                                     <div class="tags are-medium has-addons">
                                         <span class="tag is-black">
                                             <span class="icon">
-                                                <i class="fab" x-bind:class="{ 'fa-windows': command.platform === 'windows', 'fa-linux': command.platform === 'linux', 'fa-apple': command.platform === 'darwin' }"></i>
+                                                <i class="fab" x-bind:class="{ 'fa-windows': command.platform === 'windows', 'fa-linux': command.platform === 'linux', 'fa-apple': command.platform === 'darwin', 'fa-freebsd': command.platform === 'freebsd' }"></i>
                                             </span>
                                         </span>
                                         <span class="tag is-dark" x-text="command.executor"></span>

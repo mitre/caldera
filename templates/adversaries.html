@@ -151,7 +151,7 @@
                                 <td x-show="undefinedAbilities.indexOf(ability.ability_id)">
                                     <template x-for="platform of getExecutorDetail('platforms', ability)">
                                         <span class="has-tooltip-arrow no-underline" x-bind:data-tooltip="platform">
-                                            <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
+                                            <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'; else if (platform.includes('freebsd')) return 'fa-freebsd'"></em></span>
                                         </span>
                                     </template>
                                 </td>
@@ -270,7 +270,7 @@
                                     <b x-text="ability.name"></b> |
                                     <span x-text="ability.tactic"></span> |
                                     <template x-for="platform of getExecutorDetail('platforms', ability)">
-                                        <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'"></em></span>
+                                        <span class="icon is-small"><em class="fab" x-bind:class="if (platform.includes('windows')) return 'fa-windows'; else if (platform.includes('darwin')) return 'fa-apple'; else if (platform.includes('linux')) return 'fa-linux'; else if (platform.includes('freebsd')) return 'fa-freebsd'"></em></span>
                                     </template> |
                                     <span class="icon is-small" x-show="getExecutorDetail('requirements', ability)"><em class="fas fa-lock"></em></span>
                                     <span class="icon is-small" x-show="getExecutorDetail('cleanup', ability)"><em class="fas fa-trash"></em></span>
