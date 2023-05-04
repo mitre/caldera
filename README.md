@@ -122,9 +122,7 @@ Refer to our [vulnerability discolosure documentation](SECURITY.md) for submitti
 
 ## Licensing
 
-In addition to CALDERA&trade;'s open source capabilities, MITRE maintains several in-house CALDERA&trade; plugins that offer
-more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to
-caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
+To discuss licensing opportunities, please reach out to caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
 
 ## Caldera Benefactor Program
 
