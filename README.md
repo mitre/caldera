@@ -26,7 +26,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 :star: Create your own plugin! Plugin generator: **[Skeleton](https://github.com/mitre/skeleton)** :star:
 
 ### Default
-These pluguns are supported and maintained by the Caldera team.
+These plugins are supported and maintained by the Caldera team.
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Red Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
