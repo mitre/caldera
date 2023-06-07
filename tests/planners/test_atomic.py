@@ -21,9 +21,10 @@ class OperationStub():
 class PlanningSvcStub():
     def __init__(self):
         self.get_links = AsyncMock()
-    
+
     def set_link_return(self, links):
         self.get_links = AsyncMock(return_value=links)
+
 
 class AbilityStub():
     def __init__(self, ability_id):
@@ -48,7 +49,7 @@ def atomic_planner():
 class TestAtomic():
 
     def test_atomic_0(self, event_loop, atomic_planner):
-        
+
         atomic_planner.planning_svc.set_link_return(
             links=[
                 LinkStub('ability_c'),
@@ -64,7 +65,7 @@ class TestAtomic():
         assert atomic_planner.operation.apply.called_with([LinkStub('ability_b')])
 
     def test_atomic_1(self, event_loop, atomic_planner):
-        
+
         atomic_planner.planning_svc.set_link_return(
             links=[]
         )
