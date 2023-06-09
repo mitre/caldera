@@ -26,6 +26,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 :star: Create your own plugin! Plugin generator: **[Skeleton](https://github.com/mitre/skeleton)** :star:
 
 ### Default
+These plugins are supported and maintained by the Caldera team.
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Red Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
@@ -44,7 +45,8 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 - **[Training](https://github.com/mitre/training)** (certification and training course)
 
 ### More
-These plugins are ready to use but are not included by default:
+These plugins are ready to use but are not included by default and are not maintained by the Caldera team.
+- **[Arsenal](https://github.com/mitre-atlas/arsenal)** (MITRE ATLAS techniques and profiles) 
 - **[Pathfinder](https://github.com/center-for-threat-informed-defense/caldera_pathfinder)** (vulnerability scanning)
 - **[SAML](https://github.com/mitre/saml)** (SAML authentication)
 - **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
@@ -122,10 +124,8 @@ Refer to our [vulnerability discolosure documentation](SECURITY.md) for submitti
 
 ## Licensing
 
-In addition to CALDERA&trade;'s open source capabilities, MITRE maintains several in-house CALDERA&trade; plugins that offer
-more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to
-caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
+To discuss licensing opportunities, please reach out to caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
 
-## Caldera Partnership Program
+## Caldera Benefactor Program
 
 If you are interested in partnering to support, sustain, and evolve CALDERA&trade;'s open source capabilities, please contact us at caldera@mitre.org.
