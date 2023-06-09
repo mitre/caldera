@@ -48,7 +48,23 @@ def atomic_planner():
 
 class TestAtomic():
 
-    def test_atomic_0(self, event_loop, atomic_planner):
+    def test_atomic_with_links_in_order(self, event_loop, atomic_planner):
+
+        atomic_planner.planning_svc.set_link_return(
+            links=[
+                LinkStub('ability_b'),
+                LinkStub('ability_c')
+            ]
+        )
+
+        event_loop.run_until_complete(atomic_planner.atomic())
+
+        assert atomic_planner.operation.apply.call_count == 1
+        assert atomic_planner.operation.wait_for_links_completion.call_count == 1
+        assert atomic_planner.operation.apply.called_with(LinkStub('ability_b'))
+        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b'),])
+
+    def test_atomic_with_links_out_of_order(self, event_loop, atomic_planner):
 
         atomic_planner.planning_svc.set_link_return(
             links=[
@@ -62,9 +78,9 @@ class TestAtomic():
         assert atomic_planner.operation.apply.call_count == 1
         assert atomic_planner.operation.wait_for_links_completion.call_count == 1
         assert atomic_planner.operation.apply.called_with(LinkStub('ability_b'))
-        assert atomic_planner.operation.apply.called_with([LinkStub('ability_b')])
+        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b'),])
 
-    def test_atomic_1(self, event_loop, atomic_planner):
+    def test_atomic_no_links(self, event_loop, atomic_planner):
 
         atomic_planner.planning_svc.set_link_return(
             links=[]
