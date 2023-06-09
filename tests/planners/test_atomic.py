@@ -2,6 +2,7 @@
 from tests import AsyncMock
 
 import pytest
+from unittest.mock import call
 
 from app.planners.atomic import LogicalPlanner
 
@@ -62,7 +63,7 @@ class TestAtomic():
         assert atomic_planner.operation.apply.call_count == 1
         assert atomic_planner.operation.wait_for_links_completion.call_count == 1
         assert atomic_planner.operation.apply.called_with(LinkStub('ability_b'))
-        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b'),])
+        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b')])
 
     def test_atomic_with_links_out_of_order(self, event_loop, atomic_planner):
 
@@ -78,7 +79,7 @@ class TestAtomic():
         assert atomic_planner.operation.apply.call_count == 1
         assert atomic_planner.operation.wait_for_links_completion.call_count == 1
         assert atomic_planner.operation.apply.called_with(LinkStub('ability_b'))
-        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b'),])
+        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b')])
 
     def test_atomic_no_links(self, event_loop, atomic_planner):
 
