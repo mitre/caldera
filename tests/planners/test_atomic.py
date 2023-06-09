@@ -2,7 +2,6 @@
 from tests import AsyncMock
 
 import pytest
-from unittest.mock import call
 
 from app.planners.atomic import LogicalPlanner
 
