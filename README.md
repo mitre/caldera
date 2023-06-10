@@ -37,7 +37,6 @@ These plugins are supported and maintained by the Caldera team.
 - **[GameBoard](https://github.com/mitre/gameboard)** (visualize joint red and blue operations)
 - **[Human](https://github.com/mitre/human)** (create simulated noise on an endpoint)
 - **[Manx](https://github.com/mitre/manx)** (shell functionality and reverse shell payloads)
-- **[Mock](https://github.com/mitre/mock)** (simulate agents in operations)
 - **[Response](https://github.com/mitre/response)** (incident response)
 - **[Sandcat](https://github.com/mitre/sandcat)** (default agent)
 - **[SSL](https://github.com/mitre/SSL)** (enable https for caldera)
@@ -46,10 +45,10 @@ These plugins are supported and maintained by the Caldera team.
 
 ### More
 These plugins are ready to use but are not included by default and are not maintained by the Caldera team.
-- **[Arsenal](https://github.com/mitre-atlas/arsenal)** (MITRE ATLAS techniques and profiles) 
+- **[Arsenal](https://github.com/mitre-atlas/arsenal)** (MITRE ATLAS techniques and profiles)
+- **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 - **[Pathfinder](https://github.com/center-for-threat-informed-defense/caldera_pathfinder)** (vulnerability scanning)
 - **[SAML](https://github.com/mitre/saml)** (SAML authentication)
-- **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 
 ## Requirements
 
