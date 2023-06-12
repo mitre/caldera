@@ -4,9 +4,9 @@
 [![codecov](https://codecov.io/gh/mitre/caldera/branch/master/graph/badge.svg)](https://codecov.io/gh/mitre/caldera)
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
 
-# CALDERA&trade;
+# MITRE Caldera&trade;
 
-CALDERA&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
+MITRE Caldera&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
 
@@ -18,7 +18,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 
 ## Resources and Socials
 * 📜 [Documentation, training, and use-cases](https://caldera.readthedocs.io/en/latest/)
-* ✍️ [CALDERA's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
+* ✍️ [Caldera's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
 * 🌐 [Homepage](https://caldera.mitre.org)
 
 ## Plugins
@@ -79,23 +79,23 @@ Next, install the PIP requirements:
 ```Bash
 pip3 install -r requirements.txt
 ```
-**Super-power your CALDERA server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
+**Super-power your Caldea server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
 
 Finally, start the server.
 ```Bash
 python3 server.py --insecure
 ```
 
-Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use CALDERA.
+Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
 
 ## Docker Deployment
-To build a CALDERA docker image, ensure you have docker installed and perform the following actions:
+To build a Caldera docker image, ensure you have docker installed and perform the following actions:
 ```Bash
-# Recursively clone the CALDERA repository if you have not done so
+# Recursively clone the Caldera repository if you have not done so
 git clone https://github.com/mitre/caldera.git --recursive
 
 # Build the docker image. Change image tagging as desired.
-# WIN_BUILD is set to true to allow CALDERA installation to compile windows-based agents.
+# WIN_BUILD is set to true to allow Caldera installation to compile windows-based agents.
 # Alternatively, you can use the docker compose YML file via "docker-compose build"
 cd caldera
 docker build . --build-arg WIN_BUILD=true -t caldera:latest
@@ -106,7 +106,7 @@ docker run -p 8888:8888 caldera:latest
 
 To gracefully terminate your docker container, do the following:
 ```Bash
-# Find the container ID for your docker container running CALDERA
+# Find the container ID for your docker container running Caldera
 docker ps
 
 # Send interrupt signal, e.g. "docker kill --signal=SIGINT 5b9220dd9c0f"
@@ -127,4 +127,4 @@ To discuss licensing opportunities, please reach out to caldera@mitre.org or dir
 
 ## Caldera Benefactor Program
 
-If you are interested in partnering to support, sustain, and evolve CALDERA&trade;'s open source capabilities, please contact us at caldera@mitre.org.
+If you are interested in partnering to support, sustain, and evolve Caldera&trade;'s open source capabilities, please contact us at caldera@mitre.org.
