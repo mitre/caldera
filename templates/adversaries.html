@@ -1431,9 +1431,9 @@
             dragAbility(event){
                 const fromIndex = this.abilityTableDragTargetIndex - 1;
                 const toIndex = this.abilityTableDragEndIndex - 1;
-                const temp = this.selectedProfileAbilities[fromIndex]; 
-                this.selectedProfileAbilities.splice(fromIndex, 1); 
-                this.selectedProfileAbilities.splice(toIndex, 0, temp); 
+                const temp = this.selectedProfileAbilities[fromIndex];
+                this.selectedProfileAbilities.splice(fromIndex, 1);
+                this.selectedProfileAbilities.splice(toIndex, 0, temp);
 
                 this.unsavedChanges = true;
                 this.abilityTableDragHoverId = undefined;
