@@ -62,6 +62,13 @@ fi
 
 WORKDIR /usr/src/app
 
+#RUN if [ grep "\- emu" /usr/src/app/conf/local.yml ]; then \
+#    apt-get install zlib1g; \
+#    ./usr/src/app/plugins/emu/download_payloads.sh; \
+#fi
+RUN apt-get -y install zlib1g unzip;
+RUN ./plugins/emu/download_payloads.sh;
+
 # Default HTTP port for web interface and agent beacons over HTTP
 EXPOSE 8888
 
