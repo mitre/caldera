@@ -60,6 +60,11 @@
                     <span class="icon"><em class="fas fa-copy"></em></span>
                     <span>Duplicate Source</span>
                 </button>
+                <button class="button is-primary is-small mb-2" @click="downloadSource()"
+                        x-bind:disabled="!selectedSourceId">
+                    <span class="icon"><em class="fas fa-arrow-down"></em></span>
+                    <span>Download Source</span>
+                </button>
                 <div class="hr"></div>
                 <button class="button is-small mb-2 is-danger is-outlined"
                         @click="openModal = { isOpen: true, name: 'Delete Source' }">
@@ -1258,6 +1263,22 @@
                     toast('Error loading page', false);
                     console.error(error);
                 });
+            },
+
+            downloadSource() {
+                apiV2('GET', `/api/v2/sources/${this.selectedSourceId}`)
+                    .then((res) => {
+                      const dataURL = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(res, null, 2))}`
+                      const fileName = `${this.selectedSource.name}.json`
+                      const elem = document.createElement('a');
+                      elem.setAttribute('href', dataURL);
+                      elem.setAttribute('download', fileName);
+                      elem.click();
+                      elem.remove();
+                    }).catch((error) => {
+                      toast('Error downloading source');
+                      console.error(error)
+                    });
             },
 
             resetSearch() {
