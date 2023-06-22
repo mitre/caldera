@@ -33,12 +33,12 @@ jobs:
             toxenv: py311,style,coverage-ci
 
     steps:
-      - uses: actions/checkout@8e5e7e5ab8b370d6c329ec480221332ada57f0ab
+      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9
         with:
           submodules: recursive
           fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
       - name: Setup python
-        uses: actions/setup-python@57ded4d7d5e986d7296eab16560982c6dd7c923b
+        uses: actions/setup-python@3542bca2639a428e1796aaa6a2ffef0c0f575566
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
