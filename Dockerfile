@@ -67,6 +67,7 @@ WORKDIR /usr/src/app
 #    ./usr/src/app/plugins/emu/download_payloads.sh; \
 #fi
 RUN apt-get -y install zlib1g unzip;
+RUN pip3 install pyminizip;
 RUN ./plugins/emu/download_payloads.sh;
 
 # Default HTTP port for web interface and agent beacons over HTTP
