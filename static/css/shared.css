@@ -73,7 +73,6 @@
 /* toggle buttons */
 .toggleContainer {
   display: flex;
-  align-items: center;
 }
 
 .toggleContainer label {
