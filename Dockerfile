@@ -22,7 +22,8 @@ RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y install mingw-w64; fi
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Set up config file and disable atomic by default
-RUN grep -v "\- atomic" conf/default.yml > conf/local.yml
+RUN sed -i '/\- atomic/d' conf/default.yml
+RUN if [ -f "conf/local.yml" ]; then sed -i '/\- atomic/d' conf/local.yml; fi
 
 # Install golang
 RUN curl -L https://go.dev/dl/go1.17.6.linux-amd64.tar.gz -o go1.17.6.linux-amd64.tar.gz
@@ -63,7 +64,7 @@ fi
 WORKDIR /usr/src/app
 
 # If emu is enabled, complete necessary installation steps
-RUN if [ $(grep -c "\- emu" conf/local.yml) ]; then \
+RUN if [ $(grep -c "\- emu" conf/default.yml) ]; then \
     apt-get -y install zlib1g unzip; \
     pip3 install -r ./plugins/emu/requirements.txt; \
     ./plugins/emu/download_payloads.sh; \
