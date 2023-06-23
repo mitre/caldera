@@ -62,6 +62,7 @@ fi
 
 WORKDIR /usr/src/app
 
+# If emu is enabled, complete necessary installation steps
 RUN if [ $(grep -c "\- emu" conf/local.yml) ]; then \
     apt-get -y install zlib1g unzip; \
     pip3 install -r ./plugins/emu/requirements.txt; \
