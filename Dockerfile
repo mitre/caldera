@@ -62,13 +62,11 @@ fi
 
 WORKDIR /usr/src/app
 
-#RUN if [ grep "\- emu" /usr/src/app/conf/local.yml ]; then \
-#    apt-get install zlib1g; \
-#    ./usr/src/app/plugins/emu/download_payloads.sh; \
-#fi
-RUN apt-get -y install zlib1g unzip;
-RUN pip3 install pyminizip;
-RUN ./plugins/emu/download_payloads.sh;
+RUN if [ $(grep -c "\- emu" conf/local.yml) ]; then \
+    apt-get -y install zlib1g unzip; \
+    pip3 install -r ./plugins/emu/requirements.txt; \
+    ./plugins/emu/download_payloads.sh; \
+fi
 
 # Default HTTP port for web interface and agent beacons over HTTP
 EXPOSE 8888
