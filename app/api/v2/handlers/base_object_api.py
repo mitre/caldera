@@ -6,6 +6,7 @@ from aiohttp import web
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.responses import JsonHttpBadRequest, JsonHttpForbidden, JsonHttpNotFound
 
+from typing import Dict, List, Tuple
 
 class BaseObjectApi(BaseApi):
     def __init__(self, description, obj_class, schema, ram_key, id_property, auth_svc, logger=None):
@@ -130,9 +131,9 @@ class BaseObjectApi(BaseApi):
 
         obj_id = request.match_info.get(self.id_property)
         await self._api_manager.remove_object_from_disk_by_id(identifier=obj_id, ram_key=self.ram_key)
-
-    async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
-        data = {}
+# Test function to see if I can get the neo4j database to work --actually no tried to fix Tuple below error
+    async def _parse_common_data_from_request(self, request) -> Tuple[dict, dict, str, dict, dict]:
+        data: Dict = {}
         raw_body = await request.read()
         if raw_body:
             data = json.loads(raw_body)

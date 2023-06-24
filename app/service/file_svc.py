@@ -136,16 +136,49 @@ class FileSvc(FileServiceInterface, BaseService):
         output = bytes(output, encoding='utf-8')
         self._save(os.path.join(location, link_id), output)
 
+    # async def add_special_payload(self, name, func):
+    #     """
+    #     Call a special function when specific payloads are downloaded
+
+    #     :param name:
+    #     :param func:
+    #     :return:
+    #     """
+    #     if callable(func):  # Check to see if the passed function is already a callable function
+    #         self.special_payloads[name] = func
+
+# The following is a test function to see if I can get the neo4j database to work
     async def add_special_payload(self, name, func):
         """
         Call a special function when specific payloads are downloaded
 
-        :param name:
-        :param func:
-        :return:
+        :param name: Name of the payload
+        :param func: Function to be associated with the payload
         """
         if callable(func):  # Check to see if the passed function is already a callable function
             self.special_payloads[name] = func
+
+            try:
+                async with self.driver.session() as session:
+                    await session.write_transaction(self._create_special_payload, name)
+            except Exception as e:
+                # Handle database connection error
+                print(f"An error occurred while connecting to the database: {e}")
+            finally:
+                self.driver.close()
+
+    async def _create_special_payload(self, tx, name):
+        """
+        Create a special payload node in the Neo4j database
+
+        :param tx: Transaction object
+        :param name: Name of the payload
+        """
+        create_query = """
+        CREATE (p:SpecialPayload {name: $name})
+        """
+        tx.run(create_query, name=name)
+# End of test function
 
     async def compile_go(self, platform, output, src_fle, arch='amd64', ldflags='-s -w', cflags='', buildmode='',
                          build_dir='.', loop=None):

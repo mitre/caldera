@@ -54,6 +54,7 @@ class AgentApi(BaseObjectApi):
 
     async def get_agent_names_from_database(self):
         agent_names = []
+        session = None
         print("get_agent_names_from_database")
         try:
             session = self.driver.session()
