@@ -611,16 +611,23 @@
             fieldErrorsAgent: [],
 
             initPage() {
+                console.log("Initializing page")
                 apiV2('GET', '/api/v2/agents').then((agents) => {
+                    console.log(" These are the agents found")
+                    console.log(agents)
                     this.agents = agents;
                     this.sortAgents();
                     return apiV2('GET', '/api/v2/config/agents');
                 }).then((agentConfig) => {
+                    console.log(" These are the agent configs found")
+                    console.log(agentConfig)
                     this.agentConfig = agentConfig;
                     this.bootstrapAbilities = this.agentConfig.bootstrap_abilities || [];
                     this.deadmanAbilities = this.agentConfig.deadman_abilities || [];
                     return apiV2('GET', '/api/v2/abilities');
                 }).then(async (allAbilities) => {
+                    console.log(" These are the abilities found")
+                    console.log(allAbilities)
                     this.abilities = allAbilities;
                     this.agentConfig.deployments.forEach((abilityId) => {
                         let match = allAbilities.find((ability) => ability.ability_id === abilityId);
@@ -639,6 +646,7 @@
             },
 
             refreshAgents() {
+                console.log("Refreshing agents")
                 apiV2('GET', '/api/v2/agents').then((agents) => {
                     this.agents = agents;
                     this.sortAgents();

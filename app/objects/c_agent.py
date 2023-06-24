@@ -11,7 +11,7 @@ from app.objects.secondclass.c_fact import OriginType
 from app.utility.base_object import BaseObject
 from app.utility.base_planning_svc import BasePlanningService
 from app.utility.base_service import BaseService
-
+from neo4j import GraphDatabase, basic_auth
 
 class AgentFieldsSchema(ma.Schema):
 
@@ -69,37 +69,31 @@ class AgentSchema(AgentFieldsSchema):
 
 
 class Agent(FirstClassObjectInterface, BaseObject):
-
     schema = AgentSchema()
     load_schema = AgentSchema(partial=['paw', 'origin_link_id'])
 
-    RESERVED = dict(server='#{server}', group='#{group}', agent_paw='#{paw}', location='#{location}',
-                    exe_name='#{exe_name}', upstream_dest='#{upstream_dest}',
-                    payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL))
-
-    @property
-    def unique(self):
-        return self.hash(self.paw)
-
-    @property
-    def display_name(self):
-        return '{}${}'.format(self.host, self.username)
-
-    @classmethod
-    def is_global_variable(cls, variable):
-        if variable.startswith('payload:'):
-            return True
-        if variable == 'payload':
-            return False
-        if variable in cls.RESERVED:
-            return True
-        return False
+    RESERVED = dict(
+        server='#{server}',
+        group='#{group}',
+        agent_paw='#{paw}',
+        location='#{location}',
+        exe_name='#{exe_name}',
+        upstream_dest='#{upstream_dest}',
+        payload=re.compile('#{payload:(.*?)}', flags=re.DOTALL)
+    )
 
     def __init__(self, sleep_min=30, sleep_max=60, watchdog=0, platform='unknown', server='unknown', host='unknown',
                  username='unknown', architecture='unknown', group='red', location='unknown', pid=0, ppid=0,
                  trusted=True, executors=(), privilege='User', exe_name='unknown', contact='unknown', paw=None,
                  proxy_receivers=None, proxy_chain=None, origin_link_id='', deadman_enabled=False,
                  available_contacts=None, host_ip_addrs=None, upstream_dest=None, pending_contact=None):
+        
+        neo4j_uri = "bolt://localhost:7687"  # Update with your Neo4j URI
+        neo4j_user = "calderaadmin"  # Update with your Neo4j username
+        neo4j_password = "calderaadmin"  # Update with your Neo4j password
+
+        self.driver = GraphDatabase.driver(neo4j_uri, auth=basic_auth(neo4j_user, neo4j_password))
+
         super().__init__()
         self.paw = paw if paw else self.generate_name(size=6)
         self.host = host
@@ -140,18 +134,106 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self._executor_change_to_assign = None
         self.log = self.create_logger('agent')
 
-    def store(self, ram):
-        existing = self.retrieve(ram['agents'], self.unique)
-        if not existing:
-            ram['agents'].append(self)
-            return self.retrieve(ram['agents'], self.unique)
-        existing.update('group', self.group)
-        existing.update('trusted', self.trusted)
-        existing.update('sleep_min', self.sleep_min)
-        existing.update('sleep_max', self.sleep_max)
-        existing.update('watchdog', self.watchdog)
-        existing.update('pending_contact', self.pending_contact)
-        return existing
+        with self.driver.session() as session:
+            session.write_transaction(self._create_agent, self.paw, self.host, self.username, self.group,
+                                      self.architecture, self.platform, self.server, self.location, self.pid, self.ppid,
+                                      self.trusted, self.created, self.last_seen, self.last_trusted_seen,
+                                      self.executors, self.privilege, self.exe_name, self.sleep_min, self.sleep_max,
+                                      self.watchdog, self.contact, self.links, self.access, self.proxy_receivers,
+                                      self.proxy_chain, self.origin_link_id, self.deadman_enabled,
+                                      self.available_contacts, self.host_ip_addrs, self.upstream_dest)
+
+    @staticmethod
+    def _create_agent(tx, paw, host, username, group, architecture, platform, server, location, pid, ppid, trusted,
+                      created, last_seen, last_trusted_seen, executors, privilege, exe_name, sleep_min, sleep_max,
+                      watchdog, contact, links, access, proxy_receivers, proxy_chain, origin_link_id,
+                      deadman_enabled, available_contacts, host_ip_addrs, upstream_dest):
+        create_query = """
+        CREATE (a:Agent {
+            paw: $paw,
+            host: $host,
+            username: $username,
+            group: $group,
+            architecture: $architecture,
+            platform: $platform,
+            server: $server,
+            location: $location,
+            pid: $pid,
+            ppid: $ppid,
+            trusted: $trusted,
+            created: $created,
+            last_seen: $last_seen,
+            last_trusted_seen: $last_trusted_seen,
+            executors: $executors,
+            privilege: $privilege,
+            exe_name: $exe_name,
+            sleep_min: $sleep_min,
+            sleep_max: $sleep_max,
+            watchdog: $watchdog,
+            contact: $contact,
+            links: $links,
+            access: $access,
+            proxy_receivers: $proxy_receivers,
+            proxy_chain: $proxy_chain,
+            origin_link_id: $origin_link_id,
+            deadman_enabled: $deadman_enabled,
+            available_contacts: $available_contacts,
+            host_ip_addrs: $host_ip_addrs,
+            upstream_dest: $upstream_dest
+        })
+        """
+        tx.run(create_query, paw=paw, host=host, username=username, group=group, architecture=architecture,
+               platform=platform, server=server, location=location, pid=pid, ppid=ppid, trusted=trusted,
+               created=created, last_seen=last_seen, last_trusted_seen=last_trusted_seen, executors=executors,
+               privilege=privilege, exe_name=exe_name, sleep_min=sleep_min, sleep_max=sleep_max, watchdog=watchdog,
+               contact=contact, links=links, access=access, proxy_receivers=proxy_receivers,
+               proxy_chain=proxy_chain, origin_link_id=origin_link_id, deadman_enabled=deadman_enabled,
+               available_contacts=available_contacts, host_ip_addrs=host_ip_addrs, upstream_dest=upstream_dest)
+
+
+    async def update_properties(self, **kwargs):
+        with self.driver.session() as session:
+            update_query = """
+            MATCH (a:Agent {paw: $paw})
+            SET a += $props
+            """
+            session.run(update_query, paw=self.paw, props=kwargs)
+
+    @property
+    def unique(self):
+        return self.hash(self.paw)
+
+    @property
+    def display_name(self):
+        return '{}${}'.format(self.host, self.username)
+
+    @classmethod
+    def is_global_variable(cls, variable):
+        if variable.startswith('payload:'):
+            return True
+        if variable == 'payload':
+            return False
+        if variable in cls.RESERVED:
+            return True
+        return False
+
+    def store(self):
+        with self.driver.session() as session:
+            return session.write_transaction(self._store_agent)
+
+    @staticmethod
+    def _store_agent(tx, agent):
+        query = """
+        MERGE (a:Agent {paw: $paw})
+        ON CREATE SET a = $props
+        ON MATCH SET a.group = $group, a.trusted = $trusted, a.sleep_min = $sleep_min,
+                    a.sleep_max = $sleep_max, a.watchdog = $watchdog, a.pending_contact = $pending_contact
+        RETURN a
+        """
+        return tx.run(query, paw=agent.paw, props=agent.serialize(), group=agent.group,
+                    trusted=agent.trusted, sleep_min=agent.sleep_min, sleep_max=agent.sleep_max,
+                    watchdog=agent.watchdog, pending_contact=agent.pending_contact).single()[0]
+
 
     async def calculate_sleep(self):
         return self.jitter('%d/%d' % (self.sleep_min, self.sleep_max))
@@ -187,6 +269,26 @@ class Agent(FirstClassObjectInterface, BaseObject):
             if executor.name == preferred_executor_name:
                 return executor
         return potential_executors[0]
+
+# This is normally inherited by the BaseObject class, but we need to override it to use the Neo4j driver.
+    async def update(self, field, value):
+        """
+        Updates the given field to the given value as long as the value is not None and the new value is different from
+        the current value. Ignoring None prevents current property values from being overwritten to None if the given
+        property is not intentionally passed back to be updated (example: Agent heartbeat)
+
+        :param field: object property to update
+        :param value: value to update to
+        """
+        if value is not None:
+            cypher_query = f"""
+            MATCH (a:Agent {{paw: $paw}})
+            SET a.{field} = $value
+            """
+            async with self.driver.session() as session:
+                await session.run(cypher_query, paw=self.paw, value=value)
+            self.__setattr__(field, value)
+# End of override
 
     async def heartbeat_modification(self, **kwargs):
         now = datetime.now(timezone.utc)
@@ -243,6 +345,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
         abilities = []
         for i in self.get_config(name='agents', prop='bootstrap_abilities'):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
+                print("getting bootstrap abilities")
+                print(a)
                 abilities.append(a)
         await self.task(abilities, obfuscator='plain-text')
 

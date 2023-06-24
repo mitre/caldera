@@ -7,12 +7,19 @@ from app.api.v2.schemas.deploy_command_schemas import DeployCommandsSchema
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_agent import Agent, AgentSchema
 
+from neo4j import GraphDatabase
 
 class AgentApi(BaseObjectApi):
     def __init__(self, services):
         super().__init__(description='agent', obj_class=Agent, schema=AgentSchema, ram_key='agents',
                          id_property='paw', auth_svc=services['auth_svc'])
         self._api_manager = AgentApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
+        # Connect to Neo4j Database
+        neo4j_uri = "bolt://localhost:7687"
+        neo4j_user = "neo4j"
+        neo4j_password = "calderaadmin"
+        self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
+
 
     def add_routes(self, app: web.Application):
         router = app.router
@@ -32,9 +39,39 @@ class AgentApi(BaseObjectApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True),
                                      description="Returns a list of all agents.")
+    
+    # async def get_agents(self, request: web.Request):
+    #     print("get_agents")
+    #     agents = await self.get_all_objects(request)
+    #     return web.json_response(agents)
+
+# The following is a test function to see if I can get the neo4j database to work
     async def get_agents(self, request: web.Request):
-        agents = await self.get_all_objects(request)
-        return web.json_response(agents)
+        print("get_agents")
+        agent_names = await self.get_agent_names_from_database()
+        print("names: %s"%agent_names)
+        return web.json_response(agent_names)
+
+    async def get_agent_names_from_database(self):
+        agent_names = []
+        print("get_agent_names_from_database")
+        try:
+            session = self.driver.session()
+            result = session.run("MATCH (a:Agent) RETURN a.paw AS paw")
+
+            print("result: %s"%result)
+            for record in result:
+                agent_names.append(record["paw"])
+            print("returning agent_names: %s"%agent_names)
+            return agent_names
+        except Exception as e:
+            # Handle the error
+            print(f"An error occurred while connecting to the database: {e}")
+        finally:
+            if 'session' in locals():
+                session.close()
+            
+# End of test function
 
     @aiohttp_apispec.docs(tags=['agents'],
                           summary="Retrieve Agent by paw",

@@ -23,6 +23,8 @@ from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
+from neo4j import GraphDatabase
+
 MIN_MODULE_LEN = 1
 
 DATA_BACKUP_DIR = "data/backup"
@@ -48,12 +50,63 @@ class DataService(DataServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
-        self.ram = copy.deepcopy(self.schema)
+        # self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
+        #                    schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
+        # self.ram = copy.deepcopy(self.schema)
+        # Connect to Neo4j Database
+        neo4j_uri = "bolt://localhost:7687"
+        neo4j_user = "neo4j"
+        neo4j_password = "calderaadmin"
+        self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
+
+    async def store(self, c_object):
+        """
+        Store the object in Neo4j database.
+        Assumes c_object has properties like unique, trait, name, value, etc.
+        """
+
+        # The query to create a fact node in Neo4j
+        query = """
+        CREATE (f:Fact {
+            unique: $unique,
+            trait: $trait,
+            name: $name,
+            value: $value,
+            created: $created,
+            score: $score,
+            source: $source,
+            origin_type: $origin_type,
+            links: $links,
+            relationships: $relationships,
+            limit_count: $limit_count,
+            collected_by: $collected_by,
+            technique_id: $technique_id
+        })
+        """
+
+        # Parameters to be passed to the query
+        params = {
+            'unique': getattr(c_object, 'unique', None),
+            'trait': getattr(c_object, 'trait', None),
+            'name': getattr(c_object, 'name', None),
+            'value': getattr(c_object, 'value', None),
+            'created': getattr(c_object, 'created', None),
+            'score': getattr(c_object, 'score', None),
+            'source': getattr(c_object, 'source', None),
+            'origin_type': getattr(c_object, 'origin_type', None),
+            'links': getattr(c_object, 'links', []),
+            'relationships': getattr(c_object, 'relationships', []),
+            'limit_count': getattr(c_object, 'limit_count', None),
+            'collected_by': getattr(c_object, 'collected_by', []),
+            'technique_id': getattr(c_object, 'technique_id', None)
+        }
+
+        # Execute the query
+        with self.driver.session() as session:
+            session.run(query, params)
 
     @staticmethod
-    def _iter_data_files():
+    def _iter_data_files(self):
         """Yield paths to data files managed by caldera.
 
         The files paths are relative to the root caldera folder, so they
@@ -65,6 +118,31 @@ class DataService(DataServiceInterface, BaseService):
         for data_glob in DATA_FILE_GLOBS:
             for f in glob.glob(data_glob):
                 yield f
+
+        with self.driver.session() as session:
+            # Create empty abilities node
+            session.run("CREATE (:Abilities)")
+
+            # Create empty adversaries node
+            session.run("CREATE (:Adversaries)")
+
+            # Create empty facts node
+            session.run("CREATE (:Facts)")
+
+            # Create empty objectives node
+            session.run("CREATE (:Objectives)")
+
+            # Create empty payloads node
+            session.run("CREATE (:Payloads)")
+
+            # Create empty results node
+            session.run("CREATE (:Results)")
+
+            # Create empty sources node
+            session.run("CREATE (:Sources)")
+
+            # Create empty object_store node
+            session.run("CREATE (:ObjectStore)")
 
     @staticmethod
     def _delete_file(path):
@@ -98,23 +176,56 @@ class DataService(DataServiceInterface, BaseService):
         await self._prune_non_critical_data()
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
-    async def restore_state(self):
-        """
-        Restore the object database
+    # async def restore_state(self):
+        # """
+        # Restore the object database
 
+        # :return:
+        # """
+        # if os.path.exists('data/object_store'):
+        #     _, store = await self.get_service('file_svc').read_file('object_store', 'data')
+        #     # Pickle is only used to load a local file that caldera creates. Pickled data is not
+        #     # received over the network.
+        #     ram = pickle.loads(store)  # nosec
+        #     for key in ram.keys():
+        #         self.ram[key] = []
+        #         for c_object in ram[key]:
+        #             await self.store(c_object)
+        #     self.log.debug('Restored data from persistent storage')
+        # self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
+
+    async def restore_state(self, profile_id=None):
+        """
+        Restore the object database from the Neo4j database for a particular profile
+
+        :param profile_id: The unique identifier of the profile to restore
         :return:
         """
-        if os.path.exists('data/object_store'):
-            _, store = await self.get_service('file_svc').read_file('object_store', 'data')
-            # Pickle is only used to load a local file that caldera creates. Pickled data is not
-            # received over the network.
-            ram = pickle.loads(store)  # nosec
-            for key in ram.keys():
-                self.ram[key] = []
-                for c_object in ram[key]:
-                    await self.store(c_object)
-            self.log.debug('Restored data from persistent storage')
-        self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
+        try:
+            with self.driver.session() as session:
+
+                # Query to check if the profile with a specific id exists in Neo4j.
+                # Modify this query according to your data model in Neo4j
+                query = "MATCH (p:Profile) WHERE p.id = $profile_id RETURN p"
+
+                # Running the query
+                result = session.run(query, profile_id=profile_id)
+
+                # Check if profile exists
+                profile = result.single()
+                if profile is None:
+                    self.log.debug(f'No profile found with id {profile_id}')
+                    return
+                
+                # If profile exists, restore the state (continue with your logic)
+                # ...
+
+                # Log success message
+                self.log.debug(f'Restored data for profile {profile_id} from Neo4j database')
+
+        except Exception as e:
+            self.log.error(f'[!] RESTORE_STATE: {e}')
+
 
     async def apply(self, collection):
         if collection not in self.ram:
@@ -127,17 +238,42 @@ class DataService(DataServiceInterface, BaseService):
     async def reload_data(self, plugins=()):
         await self._load(plugins)
 
-    async def store(self, c_object):
-        try:
-            return c_object.store(self.ram)
-        except Exception as e:
-            self.log.error('[!] can only store first-class objects: %s' % e)
+    # async def store(self, c_object):
+    #     try:
+    #         return c_object.store(self.ram)
+    #     except Exception as e:
+    #         self.log.error('[!] can only store first-class objects: %s' % e)
+
+    # async def locate(self, object_name, match=None):
+    #     try:
+    #         return [obj for obj in self.ram[object_name] if obj.match(match)]
+    #     except Exception as e:
+    #         self.log.error('[!] LOCATE: %s' % e)
 
     async def locate(self, object_name, match=None):
+        print("object_name: %s"%object_name)
+        print("object type: %s"%type(object_name))
+        
         try:
-            return [obj for obj in self.ram[object_name] if obj.match(match)]
+            with self.driver.session() as session:
+                # Check if the node type exists
+                exists = session.run(f"MATCH (n:{object_name}) RETURN count(n)>0 as exists").single()['exists']
+                if not exists:
+                    return []
+
+                # Write the Cypher query to locate the object
+                query = f"MATCH (n:{object_name}) WHERE n.name = $name RETURN n"
+                
+                # Execute the query
+                results = session.run(query, name=match)
+                
+                # Process the results
+                objects = [record['n'] for record in results]
+                return objects
         except Exception as e:
-            self.log.error('[!] LOCATE: %s' % e)
+            self.log.error(f'[!] LOCATE: {e}')
+
+
 
     async def search(self, value, object_name):
         try:

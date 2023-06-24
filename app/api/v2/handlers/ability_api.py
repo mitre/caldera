@@ -6,12 +6,19 @@ from app.api.v2.managers.ability_api_manager import AbilityApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_ability import Ability, AbilitySchema
 
+from neo4j import GraphDatabase
 
 class AbilityApi(BaseObjectApi):
     def __init__(self, services):
         super().__init__(description='ability', obj_class=Ability, schema=AbilitySchema, ram_key='abilities',
                          id_property='ability_id', auth_svc=services['auth_svc'])
         self._api_manager = AbilityApiManager(data_svc=services['data_svc'], file_svc=services['file_svc'])
+
+        # Connect to Neo4j Database
+        neo4j_uri = "bolt://localhost:7687"
+        neo4j_user = "neo4j"
+        neo4j_password = "calderaadmin"
+        self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
 
     def add_routes(self, app: web.Application):
         router = app.router
@@ -27,9 +34,38 @@ class AbilityApi(BaseObjectApi):
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(AbilitySchema(many=True, partial=True),
                                      description='Returns a list of all abilities.')
+    
+    # async def get_abilities(self, request: web.Request):
+    #     abilities = await self.get_all_objects(request)
+    #     return web.json_response(abilities)
+
+# The following is a test function to see if I can get the neo4j database to work
     async def get_abilities(self, request: web.Request):
-        abilities = await self.get_all_objects(request)
+        print("get_ability_names")
+        abilities = await self.get_ability_names_from_database()
+        print("names: %s"%abilities)
         return web.json_response(abilities)
+
+    async def get_ability_names_from_database(self):
+        ability_names = []
+        print("get_ability_names_from_database")
+        try:
+            session = self.driver.session()
+            result = session.run("MATCH (a:Agent) RETURN a.paw AS paw")
+
+            print("result: %s"%result)
+            for record in result:
+                ability_names.append(record["paw"])
+            print("returning aability_names: %s"%ability_names)
+            return ability_names
+        except Exception as e:
+            # Handle the error
+            print(f"An error occurred while connecting to the database: {e}")
+        finally:
+            if 'session' in locals():
+                session.close()
+        
+# End of test function
 
     @aiohttp_apispec.docs(tags=['abilities'], summary='Get an ability.',
                           description='Provides one ability based on its ability id.',
