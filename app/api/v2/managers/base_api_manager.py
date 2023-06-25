@@ -56,22 +56,40 @@ class BaseApiManager(BaseWorld):
                           exclude: List[str] = None):
         try:
             with self.driver.session() as session:
-                query = f"MATCH (n:{ram_key})"
-                if search:
-                    conditions = [f"n.{key} = '{value}'" for key, value in search.items()]
-                    query += " WHERE " + " AND ".join(conditions)
-                query += " RETURN n"
+                # Example query: abilities
+                # MATCH (abilities:Abilities)<-[:BELONGS_TO]-(ability:Ability)
+                # RETURN ability.name
 
+                #  build query
+                query = f"MATCH ({ram_key}:{ram_key.capitalize()})<-[:BELONGS_TO]-(node)"
+
+                # Account for things like '(<Access.RED: 1>, <Access.APP: 0>)'
+                # Example: "MATCH (abilities:Abilities)<-[:BELONGS_TO]-(node) WHERE a.access = '(<Access.RED: 1>, <Access.APP: 0>)' RETURN node.name"
+
+                # if search:
+                    # conditions = [f"ram_key.{key} = '{value}'" for key, value in search.items()]
+                    # query += " WHERE " + " AND ".join(conditions)
+                query += " RETURN node.name"
+
+                print(" find_and_dump_objects: query: %s"%query)
+
+                # execute query
                 result = session.run(query)
-                matched_objs = [record['n'] for record in result]
+                # Retrieve the values from the result
+                values = [record["node.name"] for record in result]
+                print("result: %s"%result)
+                print("values: %s"%values)
+                result = session.run(query)
 
-                dumped_objs = [self.dump_object_with_filters(obj, include, exclude) for obj in matched_objs]
-                sorted_objs = sorted(dumped_objs, key=lambda p: p.get(sort, 0))
+                # Needs to be updated to work with neo4j
+                # matched_objs = [record['n'] for record in result]
+                # dumped_objs = [self.dump_object_with_filters(obj, include, exclude) for obj in matched_objs]
+                # sorted_objs = sorted(dumped_objs, key=lambda p: p.get(sort, 0))
+                # default_value = self._data_svc.get_config(f"objects.{ram_key}.default")
+                # sorted_objs.sort(key=lambda x: 0 if x.get(sort) == default_value else 1)
 
-                default_value = self._data_svc.get_config(f"objects.{ram_key}.default")
-                sorted_objs.sort(key=lambda x: 0 if x.get(sort) == default_value else 1)
-
-                return sorted_objs
+                # return sorted_objs
+                return values
         except Exception as e:
             self.log.error('[!] Error finding and dumping objects: %s' % e)
             return []

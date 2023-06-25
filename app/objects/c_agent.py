@@ -224,11 +224,14 @@ class Agent(FirstClassObjectInterface, BaseObject):
     @staticmethod
     def _store_agent(tx, agent):
         query = """
-        MERGE (a:Agent {paw: $paw})
-        ON CREATE SET a = $props
-        ON MATCH SET a.group = $group, a.trusted = $trusted, a.sleep_min = $sleep_min,
-                    a.sleep_max = $sleep_max, a.watchdog = $watchdog, a.pending_contact = $pending_contact
-        RETURN a
+        MERGE (agents:Agents)
+        WITH agents
+        MERGE (agent:Agent {paw: $paw})
+        ON CREATE SET agent = $props
+        ON MATCH SET agent.group = $group, agent.trusted = $trusted, agent.sleep_min = $sleep_min,
+                    agent.sleep_max = $sleep_max, agent.watchdog = $watchdog, agent.pending_contact = $pending_contact
+        MERGE (agent)-[:BELONGS_TO]->(agents)
+        RETURN agent
         """
         return tx.run(query, paw=agent.paw, props=agent.serialize(), group=agent.group,
                     trusted=agent.trusted, sleep_min=agent.sleep_min, sleep_max=agent.sleep_max,
@@ -346,7 +349,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         for i in self.get_config(name='agents', prop='bootstrap_abilities'):
             for a in await data_svc.locate('abilities', match=dict(ability_id=i)):
                 print("getting bootstrap abilities")
-                print(a)
+                print("ability: %s"%a)
                 abilities.append(a)
         await self.task(abilities, obfuscator='plain-text')
 
