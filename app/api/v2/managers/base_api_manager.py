@@ -101,8 +101,10 @@ class BaseApiManager(BaseWorld):
                         "repeatable": node.get("repeatable", False),
                         "access": node.get("access", {})
                     }
+                    
                     json_data = json.dumps(formatted_node)
-                    formatted_nodes.append(json_data)
+                    objct = json.loads(json_data)
+                    formatted_nodes.append(objct)
             
 
                 # Needs to be updated to work with neo4j
