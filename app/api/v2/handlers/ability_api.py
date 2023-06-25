@@ -60,7 +60,9 @@ class AbilityApi(BaseObjectApi):
             return ability_names
         except Exception as e:
             # Handle the error
+            print("ERRRO IN get_ability_names_from_database")
             print(f"An error occurred while connecting to the database: {e}")
+
         finally:
             if 'session' in locals():
                 session.close()

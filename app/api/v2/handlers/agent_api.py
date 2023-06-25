@@ -67,6 +67,7 @@ class AgentApi(BaseObjectApi):
             return agent_names
         except Exception as e:
             # Handle the error
+            print(" ERROR in get_agent_names_from_database")
             print(f"An error occurred while connecting to the database: {e}")
         finally:
             if 'session' in locals():

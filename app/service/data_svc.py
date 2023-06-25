@@ -24,6 +24,10 @@ from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
 from neo4j import GraphDatabase
+from enum import Enum
+import enum
+import json
+
 
 MIN_MODULE_LEN = 1
 
@@ -50,99 +54,153 @@ class DataService(DataServiceInterface, BaseService):
 
     def __init__(self):
         self.log = self.add_service('data_svc', self)
-        # self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-        #                    schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
-        # self.ram = copy.deepcopy(self.schema)
+        self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
+                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
+        self.ram = copy.deepcopy(self.schema)
         # Connect to Neo4j Database
         neo4j_uri = "bolt://localhost:7687"
         neo4j_user = "neo4j"
         neo4j_password = "calderaadmin"
         self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
 
+
+    # async def store(self, c_object):
+    #     try:
+    #         print(" ")
+    #         # print(dir(c_object))
+    #         print(self.ram)
+    #         return c_object.store(self.ram)
+    #     except Exception as e:
+    #         self.log.error('[!] can only store first-class objects: %s' % e)
+
+
+#  # The following is a test function to see if I can get the neo4j database to work   
     async def store(self, c_object):
-        """
-        Store the object in Neo4j database.
-        Assumes c_object has properties like unique, trait, name, value, etc.
-        """
+        def convert_values(obj):
+            """
+            Convert object values to Neo4j-compatible format.
+            """
+            converted_props = {}
+            for key, value in obj.__dict__.items():
+                print(key, value)
+                if isinstance(value, dict):
+                    # Convert dictionary to JSON string
+                    converted_props[key] = json.dumps(value)
+                elif isinstance(value, enum.Enum):
+                    # Convert Enum to its string representation
+                    converted_props[key] = str(value)
+                elif isinstance(value, set):
+                    # Convert set to list
+                    converted_props[key] = list(value)
+                elif key == 'name' and isinstance(value, str):
+                    # Convert name attribute to string
+                    converted_props[key] = value
+                elif key == 'goals':
+                    # Handle goals attribute separately
+                    converted_props[key] = [goal.name for goal in value]
+                else:
+                    # No conversion needed for other types
+                    converted_props[key] = value
+            return converted_props
 
-        # The query to create a fact node in Neo4j
-        query = """
-        CREATE (f:Fact {
-            unique: $unique,
-            trait: $trait,
-            name: $name,
-            value: $value,
-            created: $created,
-            score: $score,
-            source: $source,
-            origin_type: $origin_type,
-            links: $links,
-            relationships: $relationships,
-            limit_count: $limit_count,
-            collected_by: $collected_by,
-            technique_id: $technique_id
-        })
-        """
+        try:
+            with self.driver.session() as session:
+                # Determine the node label and name from the c_object
+                label = c_object.__class__.__name__
+                name = getattr(c_object, 'name', None)
 
-        # Parameters to be passed to the query
-        params = {
-            'unique': getattr(c_object, 'unique', None),
-            'trait': getattr(c_object, 'trait', None),
-            'name': getattr(c_object, 'name', None),
-            'value': getattr(c_object, 'value', None),
-            'created': getattr(c_object, 'created', None),
-            'score': getattr(c_object, 'score', None),
-            'source': getattr(c_object, 'source', None),
-            'origin_type': getattr(c_object, 'origin_type', None),
-            'links': getattr(c_object, 'links', []),
-            'relationships': getattr(c_object, 'relationships', []),
-            'limit_count': getattr(c_object, 'limit_count', None),
-            'collected_by': getattr(c_object, 'collected_by', []),
-            'technique_id': getattr(c_object, 'technique_id', None)
-        }
+                if name:
+                    # Check if a node with the same name already exists
+                    query = f"MATCH (:{label} {{name: $name}}) RETURN COUNT(*) AS count"
+                    result = session.run(query, name=name)
+                    count = result.single()['count']
 
-        # Execute the query
-        with self.driver.session() as session:
-            session.run(query, params)
+                    if count > 0:
+                        # Append the object to the existing node
+                        query = f"MATCH (n:{label} {{name: $name}}) SET n += $props"
+                        session.run(query, name=name, props=convert_values(c_object))
+                    else:
+                        # Create a new node with the object
+                        query = f"CREATE (:{label} $props)"
+                        session.run(query, props=convert_values(c_object))
+                else:
+                    self.log.error("[!] 'name' attribute not found in the c_object")
 
+            # Return the stored object
+            return c_object
+        except Exception as e:
+            self.log.error('[!] Error storing object: %s' % e)
+        finally:
+            # Perform any necessary cleanup or closing operations
+            print("Closing Neo4j session")
+            if 'session' in locals():
+                session.close()
+
+
+    # @staticmethod
+    # def _iter_data_files(self):
+    #     """Yield paths to data files managed by caldera.
+
+    #     The files paths are relative to the root caldera folder, so they
+    #     will begin with "data/".
+
+    #     Note:
+    #         This will skip any files starting with '.' (e.g., '.gitkeep').
+    #     """
+    #     for data_glob in DATA_FILE_GLOBS:
+    #         for f in glob.glob(data_glob):
+    #             yield f
+
+# The following is a test function to see if I can get the neo4j database to work
+# NEED TO LOK AT THIS FUNCTION FURTHER NOT QUITE RIGHT
     @staticmethod
-    def _iter_data_files(self):
-        """Yield paths to data files managed by caldera.
+    def _iter_data_files():
+        """Yield paths to data files managed by caldera and store them in the Neo4j database.
 
         The files paths are relative to the root caldera folder, so they
         will begin with "data/".
 
         Note:
-            This will skip any files starting with '.' (e.g., '.gitkeep').
+            This will skip any files starting with '.' (e.g., '.gitkeep).
+
+        Args:
+            driver (GraphDatabase.driver): Neo4j driver instance for database connection.
+
         """
-        for data_glob in DATA_FILE_GLOBS:
-            for f in glob.glob(data_glob):
-                yield f
+        # NEED TO RETHINK THIS
+        # Connect to Neo4j Database
+        neo4j_uri = "bolt://localhost:7687"
+        neo4j_user = "neo4j"
+        neo4j_password = "calderaadmin"
+        driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
 
-        with self.driver.session() as session:
-            # Create empty abilities node
-            session.run("CREATE (:Abilities)")
 
-            # Create empty adversaries node
-            session.run("CREATE (:Adversaries)")
+        try:
+            with driver.session() as session:
+                for data_glob in DATA_FILE_GLOBS:
+                    for file_path in glob.glob(data_glob):
+                        print(" adding filepath: %s"%file_path)
+                        try:
+                            # Create a node for each file path in the database
+                            session.run("CREATE (:File {path: $path})", path=file_path)
 
-            # Create empty facts node
-            session.run("CREATE (:Facts)")
+                            # Yield the file path for further processing
+                            yield file_path
 
-            # Create empty objectives node
-            session.run("CREATE (:Objectives)")
+                        except Exception as e:
+                            # Handle any specific exceptions raised during node creation
+                            print(f"Error creating node for file path: {file_path}. Error: {str(e)}")
+                        
+        except Exception as e:
+            # Handle any specific exceptions raised during the session creation or execution
+            print(f"Error in Neo4j session: {str(e)}")
 
-            # Create empty payloads node
-            session.run("CREATE (:Payloads)")
-
-            # Create empty results node
-            session.run("CREATE (:Results)")
-
-            # Create empty sources node
-            session.run("CREATE (:Sources)")
-
-            # Create empty object_store node
-            session.run("CREATE (:ObjectStore)")
+        finally:
+            # Perform any necessary cleanup or closing operations
+            print("Closing Neo4j session")
+            if 'session' in locals():
+                session.close()
+# End of test function
 
     @staticmethod
     def _delete_file(path):
@@ -194,6 +252,7 @@ class DataService(DataServiceInterface, BaseService):
         #     self.log.debug('Restored data from persistent storage')
         # self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
+# The following is a test function to see if I can get the neo4j database to work
     async def restore_state(self, profile_id=None):
         """
         Restore the object database from the Neo4j database for a particular profile
@@ -226,6 +285,7 @@ class DataService(DataServiceInterface, BaseService):
         except Exception as e:
             self.log.error(f'[!] RESTORE_STATE: {e}')
 
+# End of test function
 
     async def apply(self, collection):
         if collection not in self.ram:
@@ -238,11 +298,7 @@ class DataService(DataServiceInterface, BaseService):
     async def reload_data(self, plugins=()):
         await self._load(plugins)
 
-    # async def store(self, c_object):
-    #     try:
-    #         return c_object.store(self.ram)
-    #     except Exception as e:
-    #         self.log.error('[!] can only store first-class objects: %s' % e)
+   
 
     # async def locate(self, object_name, match=None):
     #     try:
@@ -251,6 +307,7 @@ class DataService(DataServiceInterface, BaseService):
     #         self.log.error('[!] LOCATE: %s' % e)
 
     async def locate(self, object_name, match=None):
+        print("in locate")
         print("object_name: %s"%object_name)
         print("object type: %s"%type(object_name))
         

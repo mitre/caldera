@@ -17,6 +17,8 @@ from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
+from neo4j import GraphDatabase
+
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 
 
@@ -29,6 +31,11 @@ class FileSvc(FileServiceInterface, BaseService):
         self.encryptor = self._get_encryptor()
         self.encrypt_output = False if self.get_config('encrypt_files') is False else True
         self.packers = dict()
+        # Connect to Neo4j Database
+        neo4j_uri = "bolt://localhost:7687"
+        neo4j_user = "neo4j"
+        neo4j_password = "calderaadmin"
+        self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
 
     async def get_file(self, headers):
         headers = CIMultiDict(headers)
@@ -159,15 +166,16 @@ class FileSvc(FileServiceInterface, BaseService):
             self.special_payloads[name] = func
 
             try:
-                async with self.driver.session() as session:
-                    await session.write_transaction(self._create_special_payload, name)
+                session = self.driver.session()
+                session.write_transaction(self._create_special_payload, name)
             except Exception as e:
                 # Handle database connection error
+                print(" ERROR in add_special_payload")
                 print(f"An error occurred while connecting to the database: {e}")
             finally:
                 self.driver.close()
 
-    async def _create_special_payload(self, tx, name):
+    def _create_special_payload(self, tx, name):
         """
         Create a special payload node in the Neo4j database
 
