@@ -53,6 +53,7 @@ class BaseApiManager(BaseWorld):
     #                       key=lambda x: 0 if x[sort] == self._data_svc.get_config(f"objects.{ram_key}.default") else 1)
     #     return sorted_objs
 
+# The following is a test function to see if I can get the neo4j database to work
     def find_and_dump_objects(self, ram_key: str, search: dict = None, sort: str = None, include: List[str] = None,
                           exclude: List[str] = None):
         try:
@@ -181,6 +182,7 @@ class BaseApiManager(BaseWorld):
         finally:
             if session is not None:
                 session.close()
+# End of test function
 
     @staticmethod
     def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None) -> dict:
