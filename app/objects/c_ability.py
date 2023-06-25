@@ -10,6 +10,7 @@ from app.objects.secondclass.c_requirement import RequirementSchema
 from app.utility.base_object import BaseObject
 from app.utility.base_world import AccessSchema
 
+from neo4j import GraphDatabase
 
 class AbilitySchema(ma.Schema):
     ability_id = ma.fields.String()
@@ -84,36 +85,106 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.plugin = plugin
         self.delete_payload = delete_payload
 
+        # Connect to Neo4j Database
+        neo4j_uri = "bolt://localhost:7687"
+        neo4j_user = "neo4j"
+        neo4j_password = "calderaadmin"
+        self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
+
     def __getattr__(self, item):
         try:
             return super().__getattribute__('additional_info')[item]
         except KeyError:
             raise AttributeError(item)
 
-    def store(self, ram):
-        existing = self.retrieve(ram['abilities'], self.unique)
-        if not existing:
-            name_match = [x for x in ram['abilities'] if x.name == self.name]
-            if name_match:
-                self.name = self.name + " (2)"
-                logging.debug(f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
-                              f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
-            ram['abilities'].append(self)
-            return self.retrieve(ram['abilities'], self.unique)
-        existing.update('tactic', self.tactic)
-        existing.update('technique_name', self.technique_name)
-        existing.update('technique_id', self.technique_id)
-        existing.update('name', self.name)
-        existing.update('description', self.description)
-        existing.update('_executor_map', self._executor_map)
-        existing.update('privilege', self.privilege)
-        existing.update('repeatable', self.repeatable)
-        existing.update('buckets', self.buckets)
-        existing.update('tags', self.tags)
-        existing.update('singleton', self.singleton)
-        existing.update('plugin', self.plugin)
-        existing.update('delete_payload', self.delete_payload)
-        return existing
+    # def store(self, ram):
+    #     existing = self.retrieve(ram['abilities'], self.unique)
+    #     if not existing:
+    #         name_match = [x for x in ram['abilities'] if x.name == self.name]
+    #         if name_match:
+    #             self.name = self.name + " (2)"
+    #             logging.debug(f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
+    #                           f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
+    #         ram['abilities'].append(self)
+    #         return self.retrieve(ram['abilities'], self.unique)
+    #     existing.update('tactic', self.tactic)
+    #     existing.update('technique_name', self.technique_name)
+    #     existing.update('technique_id', self.technique_id)
+    #     existing.update('name', self.name)
+    #     existing.update('description', self.description)
+    #     existing.update('_executor_map', self._executor_map)
+    #     existing.update('privilege', self.privilege)
+    #     existing.update('repeatable', self.repeatable)
+    #     existing.update('buckets', self.buckets)
+    #     existing.update('tags', self.tags)
+    #     existing.update('singleton', self.singleton)
+    #     existing.update('plugin', self.plugin)
+    #     existing.update('delete_payload', self.delete_payload)
+    #     return existing
+
+# The following is a test function to see if I can get the neo4j database to work
+    async def store(self):
+        try:
+            session = self.driver.session()
+            existing = await self.retrieve(session, 'abilities', self.unique)
+            if not existing:
+                name_match = await session.run(
+                    "MATCH (a:Ability) WHERE a.name = $name RETURN a",
+                    name=self.name
+                )
+                if name_match.single() is not None:
+                    self.name = self.name + " (2)"
+                    logging.debug(f"Collision in ability name detected. Modifying name to {self.name}...")
+                await session.run(
+                    "CREATE (a:Ability {tactic: $tactic, technique_name: $technique_name, technique_id: $technique_id, "
+                    "name: $name, description: $description, _executor_map: $executor_map, privilege: $privilege, "
+                    "repeatable: $repeatable, buckets: $buckets, tags: $tags, singleton: $singleton, "
+                    "plugin: $plugin, delete_payload: $delete_payload})",
+                    tactic=self.tactic,
+                    technique_name=self.technique_name,
+                    technique_id=self.technique_id,
+                    name=self.name,
+                    description=self.description,
+                    executor_map=self._executor_map,
+                    privilege=self.privilege,
+                    repeatable=self.repeatable,
+                    buckets=self.buckets,
+                    tags=self.tags,
+                    singleton=self.singleton,
+                    plugin=self.plugin,
+                    delete_payload=self.delete_payload
+                )
+            else:
+                await session.run(
+                    "MATCH (a:Ability) WHERE ID(a) = $id SET "
+                    "a.tactic = $tactic, a.technique_name = $technique_name, a.technique_id = $technique_id, "
+                    "a.name = $name, a.description = $description, a._executor_map = $executor_map, "
+                    "a.privilege = $privilege, a.repeatable = $repeatable, a.buckets = $buckets, a.tags = $tags, "
+                    "a.singleton = $singleton, a.plugin = $plugin, a.delete_payload = $delete_payload",
+                    id=existing['id'],
+                    tactic=self.tactic,
+                    technique_name=self.technique_name,
+                    technique_id=self.technique_id,
+                    name=self.name,
+                    description=self.description,
+                    executor_map=self._executor_map,
+                    privilege=self.privilege,
+                    repeatable=self.repeatable,
+                    buckets=self.buckets,
+                    tags=self.tags,
+                    singleton=self.singleton,
+                    plugin=self.plugin,
+                    delete_payload=self.delete_payload
+                )
+            return self
+        except Exception as e:
+            self.log.error('[!] Error storing object: %s' % e)
+        finally:
+            # Perform any necessary cleanup or closing operations
+            print("Closing Neo4j session")
+            if session is not None:
+                session.close()
+# End of test function
 
     async def which_plugin(self):
         return self.plugin
