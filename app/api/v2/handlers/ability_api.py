@@ -35,37 +35,37 @@ class AbilityApi(BaseObjectApi):
     @aiohttp_apispec.response_schema(AbilitySchema(many=True, partial=True),
                                      description='Returns a list of all abilities.')
     
-    # async def get_abilities(self, request: web.Request):
-    #     abilities = await self.get_all_objects(request)
-    #     return web.json_response(abilities)
-
-# The following is a test function to see if I can get the neo4j database to work
     async def get_abilities(self, request: web.Request):
-        print("get_ability_names")
-        abilities = await self.get_ability_names_from_database()
-        print("names: %s"%abilities)
+        abilities = await self.get_all_objects(request)
         return web.json_response(abilities)
 
-    async def get_ability_names_from_database(self):
-        ability_names = []
-        print("get_ability_names_from_database")
-        try:
-            session = self.driver.session()
-            result = session.run("MATCH (a:Agent) RETURN a.paw AS paw")
+# The following is a test function to see if I can get the neo4j database to work
+    # async def get_abilities(self, request: web.Request):
+    #     print("get_ability_names")
+    #     abilities = await self.get_ability_names_from_database()
+    #     print("names: %s"%abilities)
+    #     return web.json_response(abilities)
 
-            print("result: %s"%result)
-            for record in result:
-                ability_names.append(record["paw"])
-            print("returning aability_names: %s"%ability_names)
-            return ability_names
-        except Exception as e:
-            # Handle the error
-            print("ERRRO IN get_ability_names_from_database")
-            print(f"An error occurred while connecting to the database: {e}")
+    # async def get_ability_names_from_database(self):
+    #     ability_names = []
+    #     print("get_ability_names_from_database")
+    #     try:
+    #         session = self.driver.session()
+    #         result = session.run("MATCH (a:abilities) RETURN a.paw AS paw")
 
-        finally:
-            if 'session' in locals():
-                session.close()
+    #         print("result: %s"%result)
+    #         for record in result:
+    #             ability_names.append(record["paw"])
+    #         print("returning ability_names: %s"%ability_names)
+    #         return ability_names
+    #     except Exception as e:
+    #         # Handle the error
+    #         print("ERRRO IN get_ability_names_from_database")
+    #         print(f"An error occurred while connecting to the database: {e}")
+
+    #     finally:
+    #         if 'session' in locals():
+    #             session.close()
         
 # End of test function
 

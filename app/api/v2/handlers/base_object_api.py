@@ -30,8 +30,24 @@ class BaseObjectApi(BaseApi):
         sort = request['querystring'].get('sort', 'name')
         include = request['querystring'].get('include')
         exclude = request['querystring'].get('exclude')
-
+        print( " ")
+        print("base_object_api.py: get_all_objects")
+        print("ram: %s"%self.ram_key)
         return self._api_manager.find_and_dump_objects(self.ram_key, access, sort, include, exclude)
+
+        # try:
+        #     with self.driver.session() as session:
+        #         query = (
+        #             f"MATCH (n:{self.ram_key}) "
+        #             f"RETURN n ORDER BY n.{sort}"
+        #         )
+        #         result = session.run(query)
+        #         objects = [record['n'] for record in result]
+
+        #         return objects
+        # except Exception as e:
+        #     self.log.error('[!] Error retrieving objects: %s' % e)
+        #     return None
 
     async def get_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)

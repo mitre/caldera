@@ -40,38 +40,38 @@ class AgentApi(BaseObjectApi):
     @aiohttp_apispec.response_schema(AgentSchema(many=True, partial=True),
                                      description="Returns a list of all agents.")
     
-    # async def get_agents(self, request: web.Request):
-    #     print("get_agents")
-    #     agents = await self.get_all_objects(request)
-    #     return web.json_response(agents)
-
-# The following is a test function to see if I can get the neo4j database to work
     async def get_agents(self, request: web.Request):
         print("get_agents")
-        agent_names = await self.get_agent_names_from_database()
-        print("names: %s"%agent_names)
-        return web.json_response(agent_names)
+        agents = await self.get_all_objects(request)
+        return web.json_response(agents)
 
-    async def get_agent_names_from_database(self):
-        agent_names = []
-        session = None
-        print("get_agent_names_from_database")
-        try:
-            session = self.driver.session()
-            result = session.run("MATCH (a:Agent) RETURN a.paw AS paw")
+# The following is a test function to see if I can get the neo4j database to work
+    # async def get_agents(self, request: web.Request):
+    #     print("get_agents")
+    #     agent_names = await self.get_agent_names_from_database()
+    #     print("names: %s"%agent_names)
+    #     return web.json_response(agent_names)
 
-            print("result: %s"%result)
-            for record in result:
-                agent_names.append(record["paw"])
-            print("returning agent_names: %s"%agent_names)
-            return agent_names
-        except Exception as e:
-            # Handle the error
-            print(" ERROR in get_agent_names_from_database")
-            print(f"An error occurred while connecting to the database: {e}")
-        finally:
-            if 'session' in locals():
-                session.close()
+    # async def get_agent_names_from_database(self):
+    #     agent_names = []
+    #     session = None
+    #     print("get_agent_names_from_database")
+    #     try:
+    #         session = self.driver.session()
+    #         result = session.run("MATCH (a:Agent) RETURN a.paw AS paw")
+
+    #         print("result: %s"%result)
+    #         for record in result:
+    #             agent_names.append(record["paw"])
+    #         print("returning agent_names: %s"%agent_names)
+    #         return agent_names
+    #     except Exception as e:
+    #         # Handle the error
+    #         print(" ERROR in get_agent_names_from_database")
+    #         print(f"An error occurred while connecting to the database: {e}")
+    #     finally:
+    #         if 'session' in locals():
+    #             session.close()
             
 # End of test function
 

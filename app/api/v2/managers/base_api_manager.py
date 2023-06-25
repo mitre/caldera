@@ -9,6 +9,7 @@ from base64 import b64encode, b64decode
 
 from app.utility.base_world import BaseWorld
 
+from neo4j import GraphDatabase
 
 DEFAULT_LOGGER_NAME = 'rest_api_manager'
 
@@ -18,6 +19,12 @@ class BaseApiManager(BaseWorld):
         self._data_svc = data_svc
         self._file_svc = file_svc
         self._log = logger or self._create_default_logger()
+
+        # Connect to Neo4j Database
+        neo4j_uri = "bolt://localhost:7687"
+        neo4j_user = "neo4j"
+        neo4j_password = "calderaadmin"
+        self.driver = GraphDatabase.driver(neo4j_uri, auth=(neo4j_user, neo4j_password))
 
     @property
     def log(self):
@@ -33,17 +40,41 @@ class BaseApiManager(BaseWorld):
         for obj in self.find_objects(ram_key, search):
             return obj
 
+    # def find_and_dump_objects(self, ram_key: str, search: dict = None, sort: str = None, include: List[str] = None,
+    #                           exclude: List[str] = None):
+    #     matched_objs = []
+    #     for obj in self.find_objects(ram_key, search):
+    #         dumped_obj = self.dump_object_with_filters(obj, include, exclude)
+    #         matched_objs.append(dumped_obj)
+    #     sorted_objs = sorted(matched_objs, key=lambda p: p.get(sort, 0))
+    #     if sorted_objs and sort in sorted_objs[0]:
+    #         return sorted(sorted_objs,
+    #                       key=lambda x: 0 if x[sort] == self._data_svc.get_config(f"objects.{ram_key}.default") else 1)
+    #     return sorted_objs
+
     def find_and_dump_objects(self, ram_key: str, search: dict = None, sort: str = None, include: List[str] = None,
-                              exclude: List[str] = None):
-        matched_objs = []
-        for obj in self.find_objects(ram_key, search):
-            dumped_obj = self.dump_object_with_filters(obj, include, exclude)
-            matched_objs.append(dumped_obj)
-        sorted_objs = sorted(matched_objs, key=lambda p: p.get(sort, 0))
-        if sorted_objs and sort in sorted_objs[0]:
-            return sorted(sorted_objs,
-                          key=lambda x: 0 if x[sort] == self._data_svc.get_config(f"objects.{ram_key}.default") else 1)
-        return sorted_objs
+                          exclude: List[str] = None):
+        try:
+            with self.driver.session() as session:
+                query = f"MATCH (n:{ram_key})"
+                if search:
+                    conditions = [f"n.{key} = '{value}'" for key, value in search.items()]
+                    query += " WHERE " + " AND ".join(conditions)
+                query += " RETURN n"
+
+                result = session.run(query)
+                matched_objs = [record['n'] for record in result]
+
+                dumped_objs = [self.dump_object_with_filters(obj, include, exclude) for obj in matched_objs]
+                sorted_objs = sorted(dumped_objs, key=lambda p: p.get(sort, 0))
+
+                default_value = self._data_svc.get_config(f"objects.{ram_key}.default")
+                sorted_objs.sort(key=lambda x: 0 if x.get(sort) == default_value else 1)
+
+                return sorted_objs
+        except Exception as e:
+            self.log.error('[!] Error finding and dumping objects: %s' % e)
+            return []
 
     @staticmethod
     def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None) -> dict:

@@ -124,7 +124,10 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
 # The following is a test function to see if I can get the neo4j database to work
     async def store(self):
-        
+        print(" ")
+        print("c_ability.py: Ability.store()")
+        print(self.unique)
+        print(self.name)
         async def retrieve(session, label, unique):
             query = f"MATCH (n:{label} {{unique: $unique}}) RETURN n"
             result = await session.run(query, unique=unique)

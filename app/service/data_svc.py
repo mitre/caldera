@@ -82,7 +82,7 @@ class DataService(DataServiceInterface, BaseService):
             """
             converted_props = {}
             for key, value in obj.__dict__.items():
-                print(key, value)
+                # print(key, value)
                 if isinstance(value, dict):
                     # Convert dictionary to JSON string
                     converted_props[key] = json.dumps(value)
