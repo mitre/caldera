@@ -124,9 +124,17 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
 # The following is a test function to see if I can get the neo4j database to work
     async def store(self):
+        
+        async def retrieve(session, label, unique):
+            query = f"MATCH (n:{label} {{unique: $unique}}) RETURN n"
+            result = await session.run(query, unique=unique)
+            record = result.single()
+            if record:
+                return record['n']
+            return None
         try:
             session = self.driver.session()
-            existing = await self.retrieve(session, 'abilities', self.unique)
+            existing = await retrieve(session, 'abilities', self.unique)
             if not existing:
                 name_match = await session.run(
                     "MATCH (a:Ability) WHERE a.name = $name RETURN a",
