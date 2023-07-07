@@ -9,7 +9,7 @@
     "eslint-plugin-html": "^6.2.0",
     "eslint-plugin-import": "^2.25.4",
     "eslint-plugin-jinja2": "^0.1.0",
-    "stylelint": "^14.3.0",
+    "stylelint": "^15.10.1",
     "stylelint-config-standard": "^24.0.0"
   },
   "scripts": {
