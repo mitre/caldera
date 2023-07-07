@@ -69,7 +69,7 @@ WORKDIR /usr/src/app
 RUN if [ $(grep -c "\- emu" conf/local.yml) ]; then \
     apt-get -y install zlib1g unzip; \
     pip3 install -r ./plugins/emu/requirements.txt; \
-    #./plugins/emu/download_payloads.sh; \
+    ./plugins/emu/download_payloads.sh; \
 fi
 
 # Default HTTP port for web interface and agent beacons over HTTP
