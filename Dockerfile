@@ -22,8 +22,7 @@ RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y install mingw-w64; fi
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Set up config file and disable atomic by default
-RUN sed -i '/\- atomic/d' conf/default.yml
-RUN if [! -f "conf/local.yml" ]; then sed -i '/\- atomic/d' conf/local.yml;      \
+RUN if [ -f "conf/local.yml" ]; then sed -i '/\- atomic/d' conf/local.yml;      \
     else grep -v "\- atomic" conf/default.yml > conf/local.yml;                 \
     fi
 
