@@ -844,6 +844,14 @@
                                     </tr>
                                     <tr>
                                         <td>
+                                            <label class="label">subcommand</label>
+                                        </td>
+                                        <td>
+                                            <span x-text="(selectedOperation.subcommand === 0 ? '1' : '2')"></span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>selectedOperation.autonomous
                                             <label class="label">Parser</label>
                                         </td>
                                         <td>
@@ -997,11 +1005,35 @@
                             </template>
                             <em x-show="showNotRepeatableText" class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not available for this operation</em>
                         </section>
-                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
+                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id" > 
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
                             <p x-text="selectedPotentialLink.description" style="white-space: pre-line;"></p>
                             <hr>
+                            
+                            <div class="toggleContainer flex is-flex-direction-column is-align-items-left"  >
+                                <div style="visibility:hidden" id="subcommandToggle">
+                                  <label id="command_label" for="toggleSubcommand">Command1</label>
+                                  <div class="toggleSwitch mx-2" >
+                                      <input type="checkbox"
+                                             id="subcommandToggle"
+                                             x-model="selectedOperation.subcommand"
+                                             x-bind:checked="Boolean(selectedOperation.subcommand) ? 'checked' : null"/>
+                                      <span class="toggleSlider toggleSliderRound"
+                                            title="Toggle chosen command for this ability"
+                                            x-on:click="selectedOperation.subcommand = (selectedOperation.subcommand === 0) ? 1 : 0; switchSubcommand()"
+                                            x-bind:class="Boolean(selectedOperation.subcommand) ? 'toggle-on' : 'toggle-off'">
+                                          <span x-bind:class="Boolean(selectedOperation.subcommand) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                      </span>
+                                  </div>
+                                  <label id="alt_command_label" for="toggleSubcommand">Command2</label>
+                            </div>
+                        <!--     
+                            <input type="button" onclick="switchSubcommand(selectedPotentialLink)" value="subcommand1" id="subcommandToggleMaybe">
+                            <div id = "subcommandToggle" style='visibility:hidden'>
+                                <input type="text" >
+                            </div>
+                        -->
                             <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
                             <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
                                 This link needs facts in order to run properly. Select one value for each fact to add one potential link, otherwise, select multiple
@@ -1266,6 +1298,7 @@
             potentialLinkSearchQuery: '',
             isAddingBlankPotentialLink: false,
             potentialLinkCommand: '',
+            otherPotentialLinkCommand: '',
             potentialLink: {
                 agent: '',
                 executor: '',
@@ -1619,13 +1652,31 @@
                 this.selectedPotentialLinkFacts = {};
                 this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
+                //subcommand support
+
 
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
-                const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
+                if (executor.alt_command)
+                {
+                    document.getElementById("subcommandToggle").style.visibility="visible";
+                    document.getElementById("command_label").innerHTML = executor.labels[0];
+                    document.getElementById("alt_command_label").innerHTML = executor.labels[1];
+                    if (this.potentialLinkCommand != executor.command) {
+                        var chosen_command = executor.command;
+                    }
+                    else {
+                        var chosen_command = executor.alt_command;
+                    }
+                }
+                else {
+                    document.getElementById("subcommandToggle").style.visibility="hidden";
+                    var chosen_command = executor.command;
+                }
+                const fields = [...new Set([...chosen_command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
                 const opSource = this.SOURCES.find((s) => s.id === this.selectedOperation.source.id);
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
                 const facts = (opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : [])).concat(this.facts);
-                this.potentialLinkCommand = executor.command;
+                this.potentialLinkCommand = chosen_command;
 
                 fields.filter((field) => facts.find((fact) => fact.name === field)).forEach((field) => {
                     this.selectedPotentialLinkFacts[field] = []
@@ -1884,6 +1935,24 @@
                     return matchAgent && matchTactic && matchTechnique && matchQuery;
                 });
             },
+
+            //
+            // Subcommand Support
+            //
+            checkSubcommand(ability) {
+                if (subcommand in ability) {
+                    //Display Toggle and 
+                    document.getElementById("subcommandToggle").style.visibility="visibule";
+                }
+
+
+            },
+            
+            switchSubcommand() {
+                // Return the other ability
+                //this.selectedPotentialLink.o
+                this.selectPotentialLink(this.selectedPotentialLink)
+            }
         };
     }
 </script>

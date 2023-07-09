@@ -152,7 +152,9 @@ class DataService(DataServiceInterface, BaseService):
             self.log.error('[!] REMOVE: %s' % e)
 
     async def load_ability_file(self, filename, access):
+        
         for entries in self.strip_yml(filename):
+
             for ab in entries:
                 ability_id = ab.pop('id', None)
                 name = ab.pop('name', '')
@@ -169,10 +171,9 @@ class DataService(DataServiceInterface, BaseService):
                 ab.pop('access', None)
                 plugin = self._get_plugin_name(filename)
                 ab.pop('plugin', plugin)
-
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % ability_id)
-
+                
                 await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                                            technique_id=technique_id, technique_name=technique_name,
                                            executors=executors, requirements=requirements, privilege=privilege,
@@ -209,6 +210,8 @@ class DataService(DataServiceInterface, BaseService):
             for executor_names, executor in platform_executors.items():
 
                 command = executor['command'].strip() if executor.get('command') else None
+                alt_command = executor['alt_command'].strip() if executor.get('alt_command') else None
+                
                 cleanup = executor['cleanup'].strip() if executor.get('cleanup') else None
 
                 code = executor['code'].strip() if executor.get('code') else None
@@ -221,6 +224,7 @@ class DataService(DataServiceInterface, BaseService):
                 language = executor.get('language')
                 build_target = executor.get('build_target')
                 payloads = executor.get('payloads')
+                labels = executor.get('labels')
                 uploads = executor.get('uploads')
                 timeout = executor.get('timeout', 60)
                 variations = executor.get('variations', [])
@@ -232,7 +236,7 @@ class DataService(DataServiceInterface, BaseService):
                         executors.append(Executor(name=executor_name, platform=platform_name, command=command,
                                                   code=code, language=language, build_target=build_target,
                                                   payloads=payloads, uploads=uploads, timeout=timeout,
-                                                  parsers=parsers, cleanup=cleanup, variations=variations))
+                                                  parsers=parsers, cleanup=cleanup, variations=variations, alt_command=alt_command, labels=labels))
         return executors
 
     async def load_executors_from_list(self, executors: list):
@@ -413,10 +417,12 @@ class DataService(DataServiceInterface, BaseService):
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
                               repeatable=False, buckets=None, access=None, singleton=False, plugin='', **kwargs):
+        #print(**kwargs)
         ability = Ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
                           access=access, singleton=singleton, plugin=plugin, **kwargs)
+        #print(ability.additional_info["style"])
         return await self.store(ability)
 
     async def _prune_non_critical_data(self):
