@@ -847,7 +847,7 @@
                                             <label class="label">subcommand</label>
                                         </td>
                                         <td>
-                                            <span x-text="(selectedOperation.subcommand === 0 ? '1' : '2')"></span>
+                                            <span x-text="(selectedOperation.subcommand === 0 ? 1 : 0)"></span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -1012,7 +1012,7 @@
                             <hr>
                             
                             <div class="toggleContainer flex is-flex-direction-column is-align-items-left"  >
-                                <div style="visibility:hidden" id="subcommandToggle">
+                                <div style="display:none" id="subcommandToggle">
                                   <label id="command_label" for="toggleSubcommand">Command1</label>
                                   <div class="toggleSwitch mx-2" >
                                       <input type="checkbox"
@@ -1658,7 +1658,7 @@
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
                 if (executor.alt_command)
                 {
-                    document.getElementById("subcommandToggle").style.visibility="visible";
+                    document.getElementById("subcommandToggle").style.display="block";
                     document.getElementById("command_label").innerHTML = executor.labels[0];
                     document.getElementById("alt_command_label").innerHTML = executor.labels[1];
                     if (this.potentialLinkCommand != executor.command) {
@@ -1669,7 +1669,7 @@
                     }
                 }
                 else {
-                    document.getElementById("subcommandToggle").style.visibility="hidden";
+                    document.getElementById("subcommandToggle").style.display="none";
                     var chosen_command = executor.command;
                 }
                 const fields = [...new Set([...chosen_command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
