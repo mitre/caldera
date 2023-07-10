@@ -62,14 +62,16 @@ RUN if [ ! -d "/usr/src/app/plugins/atomic/data/atomic-red-team" ]; then   \
         /usr/src/app/plugins/atomic/data/atomic-red-team;                  \
 fi
 
-WORKDIR /usr/src/app
+WORKDIR /usr/src/app/plugins/emu
 
 # If emu is enabled, complete necessary installation steps
 RUN if [ $(grep -c "\- emu" conf/local.yml) ]; then \
-    apt-get -y install zlib1g unzip; \
-    pip3 install -r ./plugins/emu/requirements.txt; \
-    ./plugins/emu/download_payloads.sh; \
+    apt-get -y install zlib1g unzip;                \
+    pip3 install -r ./requirements.txt;             \
+    ./download_payloads.sh;                         \
 fi
+
+WORKDIR /usr/src/app
 
 # Default HTTP port for web interface and agent beacons over HTTP
 EXPOSE 8888
