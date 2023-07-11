@@ -1,36 +1,69 @@
-<head>
-    <title>Login | Access</title>
-	<link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
-	<link rel="stylesheet" href="/gui/css/shared.css" type="text/css">
-	<link rel="stylesheet" href="/gui/css/basic.css" type="text/css">
-	<link rel="stylesheet" href="/gui/css/login.css" type="text/css">
-</head>
-<body style="background-color: var(--primary-background)">
-	<form action="/enter" method="POST">
-		<div class="login">
-			<div class="login-screen">
-				<br>
-				<div class="login-form">
-					<div class="control-group">
-					<input type="text" class="login-field" value="" placeholder="username" name="username" autocomplete="username">
-					<label class="login-field-icon fui-user" for="login-name"></label>
+<html>
+	<head>
+		<title>Login | CALDERA</title>
+		<link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+		<link rel="stylesheet" href="/gui/css/lib/custom-bulma.css">
+		<link rel="stylesheet" href="/gui/css/core.css">
+		<link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
+	</head>
+	<body>
+		<div class="container content is-flex is-flex-direction-column is-align-items-center is-justify-content-center">
+			<img src="/gui/img/caldera-logo.png">
+			<div class="wrapper">
+				<form action="/enter" method="POST">
+					<div class="field">
+						<label class="label">Username</label>
+						<div class="control has-icons-left">
+							<input class="input" type="text" placeholder="username" name="username">
+							<span class="icon is-small is-left">
+								<i class="fas fa-user"></i>
+							</span>
+						</div>
 					</div>
-
-					<div class="control-group">
-					<input type="password" class="login-field" value="" placeholder="password" name="password" autocomplete="current-password">
-					<label class="login-field-icon fui-lock" for="login-pass"></label>
+					<div class="field">
+						<label class="label">Password</label>
+						<div class="control has-icons-left">
+							<input class="input" type="password" placeholder="password" name="password">
+							<span class="icon is-small is-left">
+								<i class="fas fa-lock"></i>
+							</span>
+						</div>
 					</div>
-
-					<input type="submit" value="Log in" class="button-success" >
-				</div>
+					<button type="submit" class="button fancy-button is-fullwidth">Log In</button>
+				</form>
 			</div>
 		</div>
-	</form>
-	<script src="/gui/jquery/jquery.js"></script>
-	<script src="/gui/js/shared.js"></script>
-</body>
-<script>
-    document.cookie.split(";").forEach(function(c) { document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); });
+	</body>
 
-    //# sourceURL=login.js
-</script>
+	<style>
+		html,body,.container {
+			height: 100%;
+			background: #161616;
+		}
+
+		img {
+			width: 250px;
+			margin: 16px;
+		}
+
+		input:active, input:focus {
+			border-color: white !important;
+		}
+		input:focus {
+			box-shadow: 0 0 0 0.125em #FFFFFF50 !important;
+		}
+
+		.wrapper {
+			padding: 20px;
+		}
+
+	</style>
+
+	<script>
+        document.cookie.split(';').forEach((c) => {
+            document.cookie = c.replace(/^ +/, '').replace(/=.*/, `=;expires=${new Date().toUTCString()};path=/`);
+        });
+
+        // # sourceURL=login.js
+	</script>
+</html>

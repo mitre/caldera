@@ -5,15 +5,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args: 
+      args:
         TZ: "UTC" #TZ sets timezone for ubuntu setup
-        WIN_BUILD: "false" #WIN_BUILD is used to enable windows build in sandcat plugin
+        WIN_BUILD: "true" #WIN_BUILD is used to enable windows build in sandcat plugin
     image: caldera:latest
     ports:
       - "8888:8888"
+      - "8443:8443"
       - "7010:7010"
       - "7011:7011/udp"
       - "7012:7012"
+      - "8853:8853"
+      - "8022:8022"
+      - "2222:2222"
     volumes:
       - ./:/usr/src/app
-    command: --fresh --insecure
+    command: --log DEBUG

@@ -1,32 +1,69 @@
-<div id="contacts" class="section-profile">
-  <div class="advanced row">
-    <div class="topleft duk-icon"><img onclick="removeSection('contacts')" src="/gui/img/x.png"></div>
-    <div class="column planner-header" style="flex:100%;text-align: left">
-        <h4>Contacts are touch-points for agents</h4>
-        <p style="width:33%">
-            A contact is a connection point on the server for agents to communicate through. Agents can be
+<div x-data="alpineContacts()" x-init="initPage()">
+    <div x-ref="contactsHeader">
+        <h2>Contacts</h2>
+        <p>
+            <b>Contacts are touch points for agents.</b> A contact is a connection point on the server for agents to communicate through. Agents can be
             custom written against one (or multiple) contacts. Each contact logs all agent connections - and
             all commands it hands out. Download a report for any contact below.
         </p>
-        <hr><br>
-        <table class="obfuscation-table" border=1 frame=void rules=rows>
-            {% for c in contacts %}
-                <tr>
-                    <td><img src="/gui/img/contact.png"/></td>
-                    <td><h4>{{ c.name }}</h4></td>
-                    <td>{{ c.description }}</td>
-                    <td><button class="button-row" onclick="downloadContactReport('{{ c.name }}')">download report</button></td>
-                </tr>
-            {% endfor %}
+    </div>
+    <hr>
+    <div>
+        <table class="table is-striped">
+            <tbody>
+                <template x-for="contact of contacts" :key="contact.name">
+                    <tr>
+                        <th x-text="contact.name"></th>
+                        <td x-text="contact.description"></td>
+                        <td>
+                            <template x-if="!availableContacts.includes(contact.name.toUpperCase())">
+                                <button class="button is-small" disabled>No report available</button>
+                            </template>
+                            <template x-if="availableContacts.includes(contact.name.toUpperCase())">
+                                <button class="button is-small is-primary" @click="downloadContactReport(contact.name)">
+                                    <span class="icon"><i class="fas fa-file-download"></i></span>
+                                    <span>Download Report</span>
+                                </button>
+                            </template>
+                        </td>
+                    </tr>
+                </template>
+            </tbody>
         </table>
     </div>
-  </div>
 </div>
 
 <script>
-    function downloadContactReport(contact) {
-        downloadReport('/api/rest', contact + '_report', {"index":"contact", "contact":contact});
+    function alpineContacts() {
+        return {
+            contacts: JSON.parse('{{ contacts | tojson }}'),
+            availableContacts: [],
+
+            async initPage() {
+                do {
+                    this.getAvailableReports();
+                    await sleep(2000);
+                } while (this.$refs.contactsHeader)
+            },
+
+            getAvailableReports() {
+                apiV2('GET', '/api/v2/contacts').then((reports) => {
+                    this.availableContacts = reports
+                }).catch((error) => {
+                    toast('Error getting available contacts', false)
+                })
+            },
+
+            downloadContactReport(contactName) {
+                apiV2('GET', `/api/v2/contacts/${contactName}`).then((contact) => {
+                    downloadJson(`${contactName}_contact_report`, contact);
+                }).catch((error) => {
+                    toast('Error downloading contact report', false);
+                    console.error(error);
+                });
+            }
+        };
     }
 
-    //# sourceURL=contacts.js
+    // # sourceURL=contacts.js
 </script>

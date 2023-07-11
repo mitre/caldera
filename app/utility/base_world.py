@@ -6,7 +6,7 @@ import logging
 import subprocess
 import distutils.version
 from base64 import b64encode, b64decode
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import import_module
 from random import randint, choice
 from enum import Enum
@@ -23,6 +23,7 @@ class BaseWorld:
     _app_configuration = dict()
 
     re_base64 = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL)
+    TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
     @staticmethod
     def apply_config(name, config):
@@ -78,11 +79,11 @@ class BaseWorld:
             f.write(line.rstrip('\r\n') + '\n' + content)
 
     @staticmethod
-    def get_current_timestamp(date_format='%Y-%m-%d %H:%M:%S'):
-        return datetime.now().strftime(date_format)
+    def get_current_timestamp(date_format=TIME_FORMAT):
+        return datetime.now(timezone.utc).strftime(date_format)
 
     @staticmethod
-    def get_timestamp_from_string(datetime_str, date_format='%Y-%m-%d %H:%M:%S'):
+    def get_timestamp_from_string(datetime_str, date_format=TIME_FORMAT):
         return datetime.strptime(datetime_str, date_format)
 
     @staticmethod

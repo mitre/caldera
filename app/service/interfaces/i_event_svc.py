@@ -12,7 +12,7 @@ class EventServiceInterface(abc.ABC):
         :param callback: The function that will handle the event
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def fire_event(self, event, **callback_kwargs):
@@ -22,4 +22,4 @@ class EventServiceInterface(abc.ABC):
         :param callback_kwargs: Any additional parameters to pass to the event handler
         :return: None
         """
-        pass
+        raise NotImplementedError

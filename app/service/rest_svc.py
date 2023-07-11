@@ -7,6 +7,7 @@ import pathlib
 import uuid
 from datetime import time
 import re
+import logging
 
 import yaml
 from aiohttp import web
@@ -27,6 +28,7 @@ from app.utility.base_service import BaseService
 class RestService(RestServiceInterface, BaseService):
 
     def __init__(self):
+        logging.getLogger('asyncio').setLevel(logging.WARNING)
         self.log = self.add_service('rest_svc', self)
         self.loop = asyncio.get_event_loop()
 
@@ -171,14 +173,14 @@ class RestService(RestServiceInterface, BaseService):
 
     async def create_schedule(self, access, data):
         operation = await self._build_operation_object(access, data['operation'])
-        schedules = await self.get_service('data_svc').locate('schedules', match=dict(name=operation.name))
+        schedule_id = str(uuid.uuid4())
+        schedules = await self.get_service('data_svc').locate('schedules', match=dict(id=schedule_id))
         if schedules:
-            self.log.debug('A scheduled operation with the name "%s" already exists, skipping' % operation.name)
+            self.log.debug('A Schedule with the id "%s" already exists, skipping' % schedule_id)
         else:
             scheduled = await self.get_service('data_svc').store(
-                Schedule(name=operation.name,
-                         schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
-                         task=operation)
+                Schedule(schedule=time(data['schedule']['hour'], data['schedule']['minute'], 0),
+                         task=operation, id=schedule_id)
             )
             self.log.debug('Scheduled new operation (%s) for %s' % (operation.name, scheduled.schedule))
 
@@ -341,8 +343,6 @@ class RestService(RestServiceInterface, BaseService):
                 potential_links.append(pl)
         return await self.get_service('planning_svc').sort_links(potential_links)
 
-    """ PRIVATE """
-
     async def _build_operation_object(self, access, data):
         name = data.pop('name')
         group = data.pop('group', '')
@@ -436,7 +436,8 @@ class RestService(RestServiceInterface, BaseService):
         :type prop_name: str
         """
         abilities = []
-        for ability_id in [ability_id.strip() for ability_id in abilities_str.split(',') if ability_id.strip()]:
+        ability_id_list = [ability_id.strip() for ability_id in abilities_str.split(',') if ability_id.strip()]
+        for ability_id in ability_id_list:
             if await self.get_service('data_svc').locate('abilities', dict(ability_id=ability_id.strip())):
                 abilities.append(ability_id)
             else:
@@ -617,7 +618,7 @@ class RestService(RestServiceInterface, BaseService):
         Return ability (minus parsers) and parsers as seperate dict
         """
         parsers = {}
-        for platform, executors in ability['platforms'].items():
+        for platform, executors in ability.get('platforms', {}).items():
             parsers[platform] = {}
             for executor, d in executors.items():
                 if d.get('parsers', False):
@@ -630,7 +631,7 @@ class RestService(RestServiceInterface, BaseService):
         not an ability object but just the loaded dict from yaml
         ability file)
         """
-        for platform, executors in ability['platforms'].items():
+        for platform, executors in ability.get('platforms', {}).items():
             if parsers.get(platform, False):
                 for executor, _ in executors.items():
                     if parsers[platform].get(executor, False):

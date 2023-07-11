@@ -6,7 +6,7 @@ import json
 import os
 import time
 from collections import namedtuple
-from datetime import datetime, date
+from datetime import datetime, timezone
 from importlib import import_module
 
 import aiohttp_jinja2
@@ -18,7 +18,7 @@ from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
 from app.utility.base_service import BaseService
 
-Error = namedtuple('Error', ['name', 'msg'])
+Error = namedtuple('Error', ['name', 'msg', 'optional'])
 
 
 class AppService(AppServiceInterface, BaseService):
@@ -42,10 +42,11 @@ class AppService(AppServiceInterface, BaseService):
                 trusted_agents = await self.get_service('data_svc').locate('agents', match=dict(trusted=1))
                 next_check = self.get_config(name='agents', prop='untrusted_timer')
                 for a in trusted_agents:
-                    silence_time = (datetime.now() - a.last_trusted_seen).total_seconds()
+                    silence_time = (datetime.now(timezone.utc) - a.last_trusted_seen).total_seconds()
                     if silence_time > (self.get_config(name='agents', prop='untrusted_timer') + int(a.sleep_max)):
                         self.log.debug('Agent (%s) now untrusted. Last seen %s sec ago' % (a.paw, int(silence_time)))
                         a.trusted = 0
+                        await self.update_operations_with_untrusted_agent(a)
                     else:
                         trust_time_left = self.get_config(name='agents', prop='untrusted_timer') - silence_time
                         if trust_time_left < next_check:
@@ -53,6 +54,12 @@ class AppService(AppServiceInterface, BaseService):
                 await asyncio.sleep(15)
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
+
+    async def update_operations_with_untrusted_agent(self, untrusted_agent):
+        all_operations = await self.get_service('data_svc').locate('operations')
+        for op in all_operations:
+            if (not await op.is_finished()) and any(untrusted_agent.paw == agent.paw for agent in op.agents):
+                op.update_untrusted_agents(untrusted_agent)
 
     async def find_link(self, unique):
         operations = await self.get_service('data_svc').locate('operations')
@@ -75,12 +82,14 @@ class AppService(AppServiceInterface, BaseService):
         while True:
             interval = 60
             for s in await self.get_service('data_svc').locate('schedules'):
-                now = datetime.now().time()
-                diff = datetime.combine(date.today(), now) - datetime.combine(date.today(), s.schedule)
+                now = datetime.now(timezone.utc).time()
+                today_utc = datetime.now(timezone.utc).date()
+                diff = datetime.combine(today_utc, now) - datetime.combine(today_utc, s.schedule)
                 if interval > diff.total_seconds() > 0:
-                    self.log.debug('Pulling %s off the scheduler' % s.name)
+                    self.log.debug('Pulling %s off the scheduler' % s.id)
                     sop = copy.deepcopy(s.task)
                     sop.set_start_details()
+                    await sop.update_operation_agents(self.get_services())
                     await self._services.get('data_svc').store(sop)
                     self.loop.create_task(sop.run(self.get_services()))
             await asyncio.sleep(interval)
@@ -116,8 +125,8 @@ class AppService(AppServiceInterface, BaseService):
         templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
-    async def retrieve_compiled_file(self, name, platform):
-        _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform))
+    async def retrieve_compiled_file(self, name, platform, location=''):
+        _, path = await self._services.get('file_svc').find_file_path('%s-%s' % (name, platform), location=location)
         signature = hashlib.sha256(open(path, 'rb').read()).hexdigest()
         display_name = await self._services.get('contact_svc').build_filename()
         self.log.debug('%s downloaded with hash=%s and name=%s' % (name, signature, display_name))
@@ -125,6 +134,7 @@ class AppService(AppServiceInterface, BaseService):
 
     async def teardown(self, main_config_file='default'):
         await self._destroy_plugins()
+        await self._deregister_contacts()
         await self._save_configurations(main_config_file=main_config_file)
         await self._services.get('data_svc').save_state()
         await self._services.get('knowledge_svc').save_state()
@@ -145,19 +155,23 @@ class AppService(AppServiceInterface, BaseService):
             tunnel_class = import_module(tunnel_module_name).Tunnel
             await contact_svc.register_tunnel(tunnel_class(self.get_services()))
 
+    async def _deregister_contacts(self):
+        contact_svc = self.get_service('contact_svc')
+        await contact_svc.deregister_contacts()
+
     async def validate_requirement(self, requirement, params):
         if not self.check_requirement(params):
             msg = '%s does not meet the minimum version of %s' % (requirement, params['version'])
             if params.get('optional', False):
                 msg = '. '.join([
                     msg,
-                    '%s is an optional dependency and its absence will not affect Caldera\'s core operation' % requirement.capitalize(),
+                    '%s is an optional dependency which adds more functionality' % requirement.capitalize(),
                     params.get('reason', '')
                 ])
                 self.log.warning(msg)
             else:
                 self.log.error(msg)
-            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version'])))
+            self._errors.append(Error('requirement', '%s version needs to be >= %s' % (requirement, params['version']), params.get('optional')))
             return False
         return True
 
@@ -191,8 +205,6 @@ class AppService(AppServiceInterface, BaseService):
 
     def get_loaded_plugins(self):
         return tuple(self._loaded_plugins)
-
-    """ PRIVATE """
 
     async def _save_configurations(self, main_config_file='default'):
         for cfg_name, cfg_file in [('main', main_config_file), ('agents', 'agents'), ('payloads', 'payloads')]:

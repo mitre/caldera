@@ -17,21 +17,21 @@ def base64_encoder():
 
 
 @pytest.fixture
-def setup_data_encoders(loop, data_svc):
-    loop.run_until_complete(data_svc._load_data_encoders([]))
+def setup_data_encoders(event_loop, data_svc):
+    event_loop.run_until_complete(data_svc._load_data_encoders([]))
 
 
 @pytest.mark.usefixtures(
     'setup_data_encoders'
 )
 class TestDataEncoders:
-    def test_retrieval(self, loop, data_svc):
-        results = loop.run_until_complete(data_svc.locate('data_encoders', match=dict(name='plain-text')))
+    def test_retrieval(self, event_loop, data_svc):
+        results = event_loop.run_until_complete(data_svc.locate('data_encoders', match=dict(name='plain-text')))
         assert len(results) == 1
         plaintext_encoder = results[0]
         assert plaintext_encoder and isinstance(plaintext_encoder, PlainTextEncoder)
 
-        results = loop.run_until_complete(data_svc.locate('data_encoders', match=dict(name='base64')))
+        results = event_loop.run_until_complete(data_svc.locate('data_encoders', match=dict(name='base64')))
         assert len(results) == 1
         base64_encoder = results[0]
         assert base64_encoder and isinstance(base64_encoder, Base64Encoder)

@@ -1,5 +1,5 @@
 import collections
-import os
+import logging
 import uuid
 
 import marshmallow as ma
@@ -8,7 +8,6 @@ from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.secondclass.c_executor import ExecutorSchema
 from app.objects.secondclass.c_requirement import RequirementSchema
 from app.utility.base_object import BaseObject
-from app.utility.base_service import BaseService
 from app.utility.base_world import AccessSchema
 
 
@@ -19,7 +18,7 @@ class AbilitySchema(ma.Schema):
     technique_id = ma.fields.String(missing=None)
     name = ma.fields.String(missing=None)
     description = ma.fields.String(missing=None)
-    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema), missing=None)
+    executors = ma.fields.List(ma.fields.Nested(ExecutorSchema))
     requirements = ma.fields.List(ma.fields.Nested(RequirementSchema), missing=None)
     privilege = ma.fields.String(missing=None)
     repeatable = ma.fields.Bool(missing=None)
@@ -27,12 +26,20 @@ class AbilitySchema(ma.Schema):
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
     access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
+    plugin = ma.fields.String(missing=None)
+    delete_payload = ma.fields.Bool(missing=None)
+
+    @ma.pre_load
+    def fix_id(self, data, **_):
+        if 'id' in data:
+            data['ability_id'] = data.pop('id')
+        return data
 
     @ma.post_load
-    def build_ability(self, data, **_):
+    def build_ability(self, data, **kwargs):
         if 'technique' in data:
             data['technique_name'] = data.pop('technique')
-        return Ability(**data)
+        return None if kwargs.get('partial') is True else Ability(**data)
 
 
 class Ability(FirstClassObjectInterface, BaseObject):
@@ -52,7 +59,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, ability_id='', name=None, description=None, tactic=None, technique_id=None, technique_name=None,
                  executors=(), requirements=None, privilege=None, repeatable=False, buckets=None, access=None,
-                 additional_info=None, tags=None, singleton=False, **kwargs):
+                 additional_info=None, tags=None, singleton=False, plugin='', delete_payload=True, **kwargs):
         super().__init__()
         self.ability_id = ability_id if ability_id else str(uuid.uuid4())
         self.tactic = tactic.lower() if tactic else None
@@ -74,6 +81,8 @@ class Ability(FirstClassObjectInterface, BaseObject):
         self.additional_info = additional_info or dict()
         self.additional_info.update(**kwargs)
         self.tags = set(tags) if tags else set()
+        self.plugin = plugin
+        self.delete_payload = delete_payload
 
     def __getattr__(self, item):
         try:
@@ -84,6 +93,11 @@ class Ability(FirstClassObjectInterface, BaseObject):
     def store(self, ram):
         existing = self.retrieve(ram['abilities'], self.unique)
         if not existing:
+            name_match = [x for x in ram['abilities'] if x.name == self.name]
+            if name_match:
+                self.name = self.name + " (2)"
+                logging.debug(f"Collision in ability name detected for {self.ability_id} and {name_match[0].ability_id} "
+                              f"({name_match[0].name}). Modifying name of the second ability to {self.name}...")
             ram['abilities'].append(self)
             return self.retrieve(ram['abilities'], self.unique)
         existing.update('tactic', self.tactic)
@@ -93,14 +107,16 @@ class Ability(FirstClassObjectInterface, BaseObject):
         existing.update('description', self.description)
         existing.update('_executor_map', self._executor_map)
         existing.update('privilege', self.privilege)
+        existing.update('repeatable', self.repeatable)
+        existing.update('buckets', self.buckets)
+        existing.update('tags', self.tags)
+        existing.update('singleton', self.singleton)
+        existing.update('plugin', self.plugin)
+        existing.update('delete_payload', self.delete_payload)
         return existing
 
     async def which_plugin(self):
-        file_svc = BaseService.get_service('file_svc')
-        for plugin in os.listdir('plugins'):
-            if await file_svc.walk_file_path(os.path.join('plugins', plugin, 'data', ''), '%s.yml' % self.ability_id):
-                return plugin
-        return None
+        return self.plugin
 
     def find_executor(self, name, platform):
         return self._executor_map.get(self._make_executor_map_key(name, platform))

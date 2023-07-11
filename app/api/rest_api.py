@@ -12,7 +12,6 @@ from aiohttp_jinja2 import template, render_template
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
 from app.objects.secondclass.c_link import Link
-from app.service.app_svc import Error
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld
 
@@ -44,8 +43,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
 
-    """ BOILERPLATE """
-
     @template('login.html', status=401)
     async def login(self, request):
         return dict()
@@ -64,9 +61,12 @@ class RestApi(BaseWorld):
             return await self.auth_svc.login_redirect(request)
         plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
         data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))
-        return render_template('%s.html' % access[0].name, request, data)
-
-    """ API ENDPOINTS """
+        template_name = access[0].name
+        if template_name == "RED":
+            template_name = "core_red"
+        elif template_name == "BLUE":
+            template_name = "core_blue"
+        return render_template(f"{template_name}.html", request, data)
 
     @check_authorization
     async def rest_core(self, request):
@@ -128,9 +128,11 @@ class RestApi(BaseWorld):
         dir_name = request.headers.get('Directory', None)
         if dir_name:
             return await self.file_svc.save_multipart_file_upload(request, 'data/payloads/')
-        created_dir = os.path.normpath('/' + request.headers.get('X-Request-ID', str(uuid.uuid4()))).lstrip('/')
+        agent = request.headers.get('X-Request-ID', str(uuid.uuid4()))
+        created_dir = os.path.normpath('/' + agent).lstrip('/')
         saveto_dir = await self.file_svc.create_exfil_sub_directory(dir_name=created_dir)
-        return await self.file_svc.save_multipart_file_upload(request, saveto_dir)
+        operation_dir = await self.file_svc.create_exfil_operation_directory(dir_name=saveto_dir, agent_name=agent[-6:])
+        return await self.file_svc.save_multipart_file_upload(request, operation_dir)
 
     async def download_file(self, request):
         try:
@@ -166,11 +168,7 @@ class RestApi(BaseWorld):
                 return web.HTTPNotFound(body=str(e))
         return web.HTTPBadRequest(body='A file needs to be specified for download')
 
-    """ PRIVATE """
-
     @staticmethod
     def _request_errors(request):
         errors = []
-        if 'Chrome' not in request.headers.get('User-Agent'):
-            errors.append(dict(Error('browser', 'chrome not being used')._asdict()))
         return errors

@@ -1,7 +1,8 @@
 import asyncio
+import json
 import re
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from base64 import b64decode
 
 from app.objects.c_agent import Agent
@@ -16,8 +17,8 @@ def report(func):
     async def wrapper(*args, **kwargs):
         agent, instructions = await func(*args, **kwargs)
         log = dict(paw=agent.paw, instructions=[BaseWorld.decode_bytes(i.command) for i in instructions],
-                   date=datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
-        args[0].report[agent.contact].append(log)
+                   date=BaseWorld.get_current_timestamp())
+        args[0].report[agent.contact.upper()].append(log)
         return agent, instructions
 
     return wrapper
@@ -37,6 +38,14 @@ class ContactService(ContactServiceInterface, BaseService):
             self.log.debug('Registered contact: %s' % contact.name)
         except Exception as e:
             self.log.error('Failed to start %s contact: %s' % (contact.name, e))
+
+    async def deregister_contacts(self):
+        try:
+            for contact in self.contacts:
+                await self._stop_c2_channel(contact=contact)
+                self.log.debug('Deregistered contact: %s' % contact.name)
+        except Exception as e:
+            self.log.error('Failed to stop %s contact: %s' % (contact.name, e))
 
     async def register_tunnel(self, tunnel):
         try:
@@ -80,6 +89,7 @@ class ContactService(ContactServiceInterface, BaseService):
             self.log.debug("Agent %s can accept deadman abilities. Will return any available deadman abilities." %
                            agent.paw)
             await agent.deadman(data_svc)
+        await self.get_service('event_svc').fire_event(exchange='agent', queue='added', agent=agent.display)
         return agent, await self._get_instructions(agent)
 
     async def build_filename(self):
@@ -92,8 +102,6 @@ class ContactService(ContactServiceInterface, BaseService):
     async def get_tunnel(self, name):
         tunnel = [t for t in self.tunnels if t.name == name]
         return tunnel[0] if len(tunnel) > 0 else None
-
-    """ PRIVATE """
 
     async def _sanitize_paw(self, input_paw):
         """
@@ -113,10 +121,15 @@ class ContactService(ContactServiceInterface, BaseService):
                 link.status = int(result.status)
                 if result.agent_reported_time:
                     link.agent_reported_time = self.get_timestamp_from_string(result.agent_reported_time)
-                if result.output:
+                if result.output or result.stderr:
                     link.output = True
                     result.output = await self._postprocess_link_result(result.output, link)
-                    self.get_service('file_svc').write_result_file(result.id, result.output)
+                    command_results = json.dumps(dict(
+                        stdout=self.decode_bytes(result.output, strip_newlines=False),
+                        stderr=self.decode_bytes(result.stderr, strip_newlines=False),
+                        exit_code=result.exit_code))
+                    encoded_command_results = self.encode_string(command_results)
+                    self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.executor.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
@@ -131,7 +144,12 @@ class ContactService(ContactServiceInterface, BaseService):
                         loop.create_task(self.get_service('learning_svc').learn(all_facts, link, result.output,
                                                                                 operation))
             else:
-                self.get_service('file_svc').write_result_file(result.id, result.output)
+                command_results = json.dumps(dict(
+                    stdout=self.decode_bytes(result.output, strip_newlines=False),
+                    stderr=self.decode_bytes(result.stderr, strip_newlines=False),
+                    exit_code=result.exit_code))
+                encoded_command_results = self.encode_string(command_results)
+                self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
         except Exception as e:
             self.log.exception(f'Unexpected error occurred while saving link - {e}')
 
@@ -150,6 +168,10 @@ class ContactService(ContactServiceInterface, BaseService):
         loop.create_task(tunnel.start())
         self.tunnels.append(tunnel)
 
+    async def _stop_c2_channel(self, contact):
+        if hasattr(contact, 'stop'):
+            await contact.stop()
+
     async def _get_instructions(self, agent):
         ops = await self.get_service('data_svc').locate('operations', match=dict(finish=None))
         instructions = []
@@ -162,7 +184,7 @@ class ContactService(ContactServiceInterface, BaseService):
 
     @staticmethod
     def _convert_link_to_instruction(link):
-        link.collect = datetime.now()
+        link.collect = datetime.now(timezone.utc)
         payloads = [] if link.cleanup else link.executor.payloads
         uploads = [] if link.cleanup else link.executor.uploads
         return Instruction(id=link.unique,
@@ -172,7 +194,8 @@ class ContactService(ContactServiceInterface, BaseService):
                            timeout=link.executor.timeout,
                            payloads=payloads,
                            uploads=uploads,
-                           deadman=link.deadman)
+                           deadman=link.deadman,
+                           delete_payload=link.ability.delete_payload)
 
     async def _add_agent_to_operation(self, agent):
         """Determine which operation(s) incoming agent belongs to and

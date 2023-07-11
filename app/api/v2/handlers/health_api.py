@@ -17,10 +17,11 @@ class HealthApi(BaseApi):
     def add_routes(self, app: web.Application):
         router = app.router
         router.add_get('/health', security.authentication_exempt(self.get_health_info))
-        router.add_get('/health-authenticated', self.get_health_info)
 
-    @aiohttp_apispec.docs(tags=["health"])
-    @aiohttp_apispec.response_schema(CalderaInfoSchema, 200)
+    @aiohttp_apispec.docs(tags=['health'],
+                          summary='Health endpoints returns the status of CALDERA',
+                          description='Returns the status of CALDERA and additional details including versions of system components')
+    @aiohttp_apispec.response_schema(CalderaInfoSchema, 200, description='Includes all loaded plugins and system components.')
     async def get_health_info(self, request):
         loaded_plugins_sorted = sorted(self._app_svc.get_loaded_plugins(), key=operator.attrgetter('name'))
 

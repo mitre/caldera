@@ -9,7 +9,7 @@ class AppServiceInterface(abc.ABC):
         Cyclic function that repeatedly checks if there are agents to be marked as untrusted
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def find_link(self, unique):
@@ -18,7 +18,7 @@ class AppServiceInterface(abc.ABC):
         :param unique:
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def find_op_with_link(self, link_id):
@@ -27,6 +27,7 @@ class AppServiceInterface(abc.ABC):
         :param link_id:
         :return: Operation or None
         """
+        raise NotImplementedError
 
     @abc.abstractmethod
     def run_scheduler(self):
@@ -34,7 +35,7 @@ class AppServiceInterface(abc.ABC):
         Kick off all scheduled jobs, as their schedule determines
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def resume_operations(self):
@@ -42,7 +43,7 @@ class AppServiceInterface(abc.ABC):
         Resume all unfinished operations
         :return: None
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def load_plugins(self, plugins):
@@ -50,20 +51,20 @@ class AppServiceInterface(abc.ABC):
         Store all plugins in the data store
         :return:
         """
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
-    def retrieve_compiled_file(self, name, platform):
-        pass
+    def retrieve_compiled_file(self, name, platform, location=''):
+        raise NotImplementedError
 
     @abc.abstractmethod
     def teardown(self):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def register_contacts(self):
-        pass
+        raise NotImplementedError
 
     @abc.abstractmethod
     def load_plugin_expansions(self, plugins):
-        pass
+        raise NotImplementedError

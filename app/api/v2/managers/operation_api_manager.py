@@ -22,16 +22,22 @@ class OperationApiManager(BaseApiManager):
         super().__init__(data_svc=services['data_svc'], file_svc=services['file_svc'])
         self.services = services
 
-    async def get_operation_report(self, operation_id: str, access: dict):
+    async def get_operation_report(self, operation_id: str, access: dict, output: bool):
         operation = await self.get_operation_object(operation_id, access)
-        report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc)
+        report = await operation.report(file_svc=self._file_svc, data_svc=self._data_svc, output=output)
         return report
+
+    async def get_operation_event_logs(self, operation_id: str, access: dict, output: bool):
+        operation = await self.get_operation_object(operation_id, access)
+        event_logs = await operation.event_logs(file_svc=self._file_svc, data_svc=self._data_svc, output=output)
+        return event_logs
 
     async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
                                         access: BaseWorld.Access, existing_operation: Operation = None):
         if data.get('state'):
             await self.validate_operation_state(data, existing_operation)
         operation = await self.setup_operation(data, access)
+        operation.set_start_details()
         operation.store(self._data_svc.ram)
         asyncio.get_event_loop().create_task(operation.run(self.services))
         return operation
@@ -55,6 +61,15 @@ class OperationApiManager(BaseApiManager):
         link = self.search_operation_for_link(operation, link_id)
         return link.display
 
+    async def get_operation_link_result(self, operation_id: str, link_id: str, access: dict):
+        operation = await self.get_operation_object(operation_id, access)
+        link = self.search_operation_for_link(operation, link_id)
+        try:
+            result = self.services['file_svc'].read_result_file('%s' % link_id)
+            return dict(link=link.display, result=result)
+        except FileNotFoundError:
+            return dict(link=link.display, result='')
+
     async def update_operation_link(self, operation_id: str, link_id: str, link_data: dict, access: BaseWorld.Access):
         operation = await self.get_operation_object(operation_id, access)
         link = self.search_operation_for_link(operation, link_id)
@@ -62,15 +77,16 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpForbidden(f'Cannot update link {link_id} due to insufficient permissions.')
         if link.is_finished() or link.can_ignore():
             raise JsonHttpForbidden(f'Cannot update a finished link: {link_id}')
+        if link_data.get('command'):
+            command_str = link_data.get('command')
+            link.executor.command = command_str
+            link.ability = self.build_ability(link_data.get('ability', {}), link.executor)
+            link.command = self._encode_string(command_str)
         if link_data.get('status'):
             link_status = link_data['status']
             if not link.is_valid_status(link_status):
                 raise JsonHttpBadRequest(f'Cannot update link {link_id} due to invalid link status.')
             link.status = link_status
-        if link_data.get('command'):
-            link.command = link_data.get('command')
-            command_str = self._decode_string(link_data.get('command'))
-            link.executor.command = command_str
         return link.display
 
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):
@@ -79,10 +95,11 @@ class OperationApiManager(BaseApiManager):
         agent = await self.get_agent(operation, data)
         if data['executor']['name'] not in agent.executors:
             raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
-        encoded_command = self._encode_string(data['executor']['command'])
+        encoded_command = self._encode_string(agent.replace(self._encode_string(data['executor']['command']),
+                                              file_svc=self.services['file_svc']))
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
-        link = Link.load(dict(command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
+        link = Link.load(dict(command=encoded_command, plaintext_command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
                               cleanup=data.get('cleanup', 0), pin=data.get('pin', 0),
                               host=agent.host, deadman=data.get('deadman', False), used=data.get('used', []),
@@ -107,7 +124,6 @@ class OperationApiManager(BaseApiManager):
         potential_links = [potential_link.display for potential_link in operation.potential_links]
         return potential_links
 
-    """Object Creation Helpers"""
     async def get_operation_object(self, operation_id: str, access: dict):
         try:
             operation = (await self._data_svc.locate('operations', {'id': operation_id}))[0]
@@ -129,7 +145,6 @@ class OperationApiManager(BaseApiManager):
         await operation.update_operation_agents(self.services)
         allowed = self._get_allowed_from_access(access)
         operation.access = allowed
-        operation.set_start_details()
         return operation
 
     async def _construct_and_dump_planner(self, planner_id: str):

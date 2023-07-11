@@ -3,6 +3,7 @@ import asyncio
 import logging
 import os
 import sys
+import warnings
 
 import aiohttp_apispec
 from aiohttp_apispec import validation_middleware
@@ -39,6 +40,7 @@ def setup_logger(level=logging.DEBUG):
             continue
         else:
             logging.getLogger(logger_name).setLevel(100)
+    logging.getLogger("markdown_it").setLevel(logging.WARNING)
     logging.captureWarnings(True)
 
 
@@ -66,6 +68,7 @@ def run_tasks(services):
     loop.create_task(learning_svc.build_model())
     loop.create_task(app_svc.watch_ability_files())
     loop.run_until_complete(start_server())
+    loop.run_until_complete(event_svc.fire_event(exchange='system', queue='ready'))
     try:
         logging.info('All systems ready.')
         loop.run_forever()
@@ -77,6 +80,10 @@ def init_swagger_documentation(app):
     """Makes swagger documentation available at /api/docs for any endpoints
     marked for aiohttp_apispec documentation.
     """
+    warnings.filterwarnings(
+        "ignore",
+        message="Multiple schemas resolved to the name"
+    )
     aiohttp_apispec.setup_aiohttp_apispec(
         app=app,
         title='CALDERA',

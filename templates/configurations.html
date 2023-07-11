@@ -1,72 +1,136 @@
-<div id="configuration" class="section-profile">
-  <div class="advanced row">
-    <div class="topleft duk-icon"><img onclick="removeSection('configuration')" src="/gui/img/x.png"></div>
-    <div class="column planner-header" style="flex:100%;text-align: left">
-        <h3>Configuration</h3>
-        <br>
-        <h4>Settings</h4>
-        <hr><br>
-        <div>
-            <table class="obfuscation-table ttp-template" border=1 frame=void rules=rows>
-                <tr>
-                    <td><img src="/gui/img/planners.png"/></td>
-                    <td>reports_dir</td>
-                    <td><input id="reports_dir" type="text" value="{{ config.reports_dir }}"/></td>
-                    <td>reports are saved here</td>
-                    <td><button class="button-row" onclick="updateConfig('reports_dir')">update</button></td>
-                </tr>
-                <tr>
-                    <td><img src="/gui/img/planners.png"/></td>
-                    <td>exfil_dir</td>
-                    <td><input id="exfil_dir" type="text" value="{{ config.exfil_dir }}"/></td>
-                    <td>exfiled files are saved here</td>
-                    <td><button class="button-row" onclick="updateConfig('exfil_dir')">update</button></td>
-                </tr>
-                {% for k, v in config.items() %}
-                    {% if k.startswith('app.') %}
+<div x-data="alpineConfiguration()" x-init="initPage()">
+    <div>
+        <h2>Configuration</h2>
+    </div>
+    <hr>
+    <div class="container">
+        <div class="tabs is-centered is-small is-toggle">
+            <ul>
+                <li x-bind:class="{ 'is-active': activeTab === 'settings' }" @click="activeTab = 'settings'">
+                    <a>
+                        <span class="icon is-small"><i class="fas fa-cogs" aria-hidden="true"></i></span>
+                        <span>Settings</span>
+                    </a>
+                </li>
+                <li x-bind:class="{ 'is-active': activeTab === 'plugins' }" @click="activeTab = 'plugins'"> 
+                    <a>
+                        <span class="icon is-small"><i class="fas fa-puzzle-piece" aria-hidden="true"></i></span>
+                        <span>Plugins</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+
+        <div x-show="activeTab === 'settings'">
+            <table class="table">
+                <thead>
                     <tr>
-                        <td><img src="/gui/img/facts.png"/></td>
-                        <td>{{ k}}</td>
-                        <td><input id="{{ k }}" type="text" value="{{ v }}"/></td>
-                        <td>a fact to use in a command</td>
-                        <td><button class="button-row" onclick="updateConfig('{{ k }}')">update</button></td>
+                        <th>Setting Name</th>
+                        <th>Current Value</th>
+                        <th></th>
                     </tr>
-                    {% endif %}
-                {% endfor %}
-            </table>
-            <br><br>
-            <h4>Plugins</h4>
-            <hr><br>
-            <table class="obfuscation-table ttp-template" border=1 frame=void rules=rows>
-                {% for plugin in plugins %}
-                    <tr>
-                        <td><img src="/gui/img/operation.png"/></td>
-                        <td>{{ plugin.name }}</td>
-                        <td>{{ plugin.description }}</td>
-                        {% if plugin.enabled %}
-                            <td></td>
-                        {% else %}
-                            <td><button class="button-row" onclick="enablePlugin('{{ plugin.name }}')">enable</button></td>
-                        {% endif %}
-                    </tr>
-                {% endfor %}
+                </thead>
+                <tbody>
+                    <template x-for="setting of Object.keys(settings)" :key="setting">
+                        <tr>
+                            <td x-text="setting"></td>
+                            <td>
+                                <input class="input is-small" x-model="settings[setting]">
+                            </td>
+                            <td>
+                                <button class="button is-small is-primary" @click="updateSetting(setting)">Update</button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
             </table>
         </div>
+
+        <div x-show="activeTab === 'plugins'">
+            <table class="table">
+                <col width="15%">
+                <col width="70%">
+                <col width="15%">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Description</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="plugin of plugins" :key="plugin.name">
+                        <tr>
+                            <td x-text="plugin.name"></td>
+                            <td x-text="plugin.description"></td>
+                            <td>
+                                <button x-show="!plugin.enabled && !pendingPlugins.includes(plugin.name)" class="button is-small is-primary" @click="enablePlugin(plugin.name)">Enable</button>
+                                <p class="has-text-success" x-show="plugin.enabled && !pendingPlugins.includes(plugin.name)">Enabled</p>
+                                <p class="has-text-info" x-show="pendingPlugins.includes(plugin.name)">Pending Restart</p>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+
     </div>
-  </div>
 </div>
 
 <script>
-    $(document).ready(function () {
-        stream('If you change a app.* property, it will auto update in all ability commands. Go ahead and check the Sandcat plugin delivery commands for confirmation.');
-    });
-    function updateConfig(prop) {
-        stream('You updated property "'+prop+'". Good work!');
-        restRequest('POST', {'index': 'configuration', 'prop': prop, 'value': document.getElementById(prop).value}, doNothing);
+    function alpineConfiguration() {
+        return {
+            settings: {},
+            plugins: [],
+            pendingPlugins: [],
+
+            activeTab: 'settings',
+
+            initPage() {
+                apiV2('GET', '/api/v2/config/main').then((config) => {
+                    delete config.plugins;
+                    this.settings = config;
+                    return apiV2('GET', '/api/v2/plugins');
+                }).then((plugins) => {
+                    this.plugins = plugins;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            updateSetting(setting) {
+                let requestBody = {
+                    value: this.settings[setting].toString(),
+                    prop: setting
+                };
+
+                apiV2('PATCH', '/api/v2/config/main', requestBody).then((response) => {
+                    toast('Setting updated', true);
+                }).catch((error) => {
+                    toast(`Error updating ${setting}`, false);
+                    console.error(error);
+                });
+            },
+
+            enablePlugin(pluginName) {
+                pluginName = sanitize(pluginName);
+                let requestBody = {
+                    value: pluginName,
+                    prop: 'plugin'
+                };
+
+                apiV2('PATCH', '/api/v2/config/main', requestBody).then((response) => {
+                    toast('Plugin enabled! Restart the server for the changes to take effect.', true);
+                    this.pendingPlugins.push(pluginName);
+                }).catch((error) => {
+                    toast(`Error enabling ${pluginName}`, false);
+                    console.error(error);
+                });
+            },
+
+        };
     }
-    function enablePlugin(name) {
-        stream(name + ' plugin will be enabled on the next server restart.');
-        restRequest('POST', {'index': 'configuration', 'prop': 'plugin', 'value': name}, doNothing);
-    }
-    //# sourceURL=configurations.js
+
+    // # sourceURL=configuration.js
 </script>

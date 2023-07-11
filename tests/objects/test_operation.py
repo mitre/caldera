@@ -2,7 +2,6 @@ import base64
 import json
 import os
 from base64 import b64encode
-from datetime import datetime
 from unittest import mock
 from unittest.mock import MagicMock
 
@@ -17,6 +16,16 @@ from app.objects.c_planner import Planner
 from app.objects.c_objective import Objective
 from app.objects.secondclass.c_result import Result
 from app.objects.secondclass.c_fact import Fact
+from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
+
+LINK1_DECIDE_TIME = MOCK_LINK_FINISH_TIME = '2021-01-01T08:00:00Z'
+LINK1_COLLECT_TIME = '2021-01-01T08:01:00Z'
+LINK1_FINISH_TIME = '2021-01-01T08:02:00Z'
+
+LINK2_DECIDE_TIME = OP_START_TIME = '2021-01-01T09:00:00Z'
+LINK2_COLLECT_TIME = '2021-01-01T09:01:00Z'
+LINK2_FINISH_TIME = '2021-01-01T09:02:00Z'
 
 
 @pytest.fixture
@@ -28,14 +37,26 @@ def operation_agent(agent):
 
 
 @pytest.fixture
+def untrusted_operation_agent(operation_agent):
+    agent = operation_agent
+    agent.trusted = False
+    return agent
+
+
+@pytest.fixture
+def op_agent_creation_time(operation_agent):
+    return operation_agent.created.strftime(BaseObject.TIME_FORMAT)
+
+
+@pytest.fixture
 def operation_adversary(adversary):
     return adversary(adversary_id='123', name='test adversary', description='test adversary desc')
 
 
 @pytest.fixture
 def operation_link():
-    def _generate_link(command, paw, ability, executor, pid=0, decide=None, collect=None, finish=None, **kwargs):
-        generated_link = Link(command, paw, ability, executor, **kwargs)
+    def _generate_link(command, plaintext_command, paw, ability, executor, pid=0, decide=None, collect=None, finish=None, **kwargs):
+        generated_link = Link(command, plaintext_command, paw, ability, executor, **kwargs)
         generated_link.pid = pid
         if decide:
             generated_link.decide = decide
@@ -55,7 +76,14 @@ def encoded_command():
 
 
 @pytest.fixture
-def op_for_event_logs(operation_agent, operation_adversary, executor, ability, operation_link, encoded_command):
+def setup_op_config():
+    BaseWorld.apply_config(name='main', config={'exfil_dir': '/tmp/caldera',
+                                                'reports_dir': '/tmp'})
+
+
+@pytest.fixture
+def op_for_event_logs(operation_agent, operation_adversary, executor, ability, operation_link, encoded_command,
+                      parse_datestring):
     op = Operation(name='test', agents=[operation_agent], adversary=operation_adversary)
     op.set_start_details()
     command_1 = 'whoami'
@@ -67,24 +95,29 @@ def op_for_event_logs(operation_agent, operation_adversary, executor, ability, o
     ability_2 = ability(ability_id='456', tactic='test tactic', technique_id='T0000', technique_name='test technique',
                         name='test ability 2', description='test ability 2 desc', executors=[executor_2])
     link_1 = operation_link(ability=ability_1, paw=operation_agent.paw, executor=executor_1,
-                            command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
-                            decide=datetime.strptime('2021-01-01 08:00:00', '%Y-%m-%d %H:%M:%S'),
-                            collect=datetime.strptime('2021-01-01 08:01:00', '%Y-%m-%d %H:%M:%S'),
-                            finish='2021-01-01 08:02:00')
+                            command=encoded_command(command_1), plaintext_command=encoded_command(command_1), status=0, host=operation_agent.host, pid=789,
+                            decide=parse_datestring(LINK1_DECIDE_TIME),
+                            collect=parse_datestring(LINK1_COLLECT_TIME),
+                            finish=LINK1_FINISH_TIME)
     link_2 = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
-                            command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
-                            decide=datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S'),
-                            collect=datetime.strptime('2021-01-01 09:01:00', '%Y-%m-%d %H:%M:%S'),
-                            finish='2021-01-01 09:02:00')
+                            command=encoded_command(command_2), plaintext_command=encoded_command(command_2), status=0, host=operation_agent.host, pid=7890,
+                            decide=parse_datestring(LINK2_DECIDE_TIME),
+                            collect=parse_datestring(LINK2_COLLECT_TIME),
+                            finish=LINK2_FINISH_TIME)
     discarded_link = operation_link(ability=ability_2, paw=operation_agent.paw, executor=executor_2,
-                                    command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
-                                    decide=datetime.strptime('2021-01-01 10:00:00', '%Y-%m-%d %H:%M:%S'))
+                                    command=encoded_command(command_2), plaintext_command=encoded_command(command_2), status=-2, host=operation_agent.host, pid=7891,
+                                    decide=parse_datestring('2021-01-01T10:00:00Z'))
     op.chain = [link_1, link_2, discarded_link]
     return op
 
 
 @pytest.fixture
-def fake_event_svc(loop):
+def event_log_op_start_time(op_for_event_logs):
+    return op_for_event_logs.start.strftime(BaseObject.TIME_FORMAT)
+
+
+@pytest.fixture
+def fake_event_svc(event_loop):
     class FakeEventService(BaseService, EventServiceInterface):
         def __init__(self):
             self.fired = {}
@@ -113,8 +146,9 @@ def test_ability(ability, executor):
 
 @pytest.fixture
 def make_test_link(test_ability):
-    def _make_link(link_id):
-        return Link(command='', paw='123456', ability=test_ability, id=link_id, executor=next(test_ability.executors))
+    def _make_link(link_id, link_paw='123456', link_status=-3):
+        return Link(command='', paw=link_paw, ability=test_ability, id=link_id, executor=next(test_ability.executors),
+                    status=link_status)
     return _make_link
 
 
@@ -144,11 +178,11 @@ def op_without_learning_parser(ability, adversary):
 
 
 @pytest.fixture
-def op_with_learning_and_seeded(ability, adversary, operation_agent):
+def op_with_learning_and_seeded(ability, adversary, operation_agent, parse_datestring):
     sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
     op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
     # patch operation to make it 'realistic'
-    op.start = datetime.strptime('2021-01-01 09:00:00', '%Y-%m-%d %H:%M:%S')
+    op.start = parse_datestring(OP_START_TIME)
     op.adversary = op.adversary()
     op.planner = Planner(planner_id='12345', name='test_planner',
                                                   module='not.an.actual.planner', params=None)
@@ -162,15 +196,14 @@ def op_with_learning_and_seeded(ability, adversary, operation_agent):
 class TestOperation:
     def test_ran_ability_id(self, ability, adversary):
         op = Operation(name='test', agents=[], adversary=adversary)
-        mock_link = MagicMock(spec=Link, ability=ability(ability_id='123'), finish='2021-01-01 08:00:00')
+        mock_link = MagicMock(spec=Link, ability=ability(ability_id='123'), finish=MOCK_LINK_FINISH_TIME)
         op.chain = [mock_link]
         assert op.ran_ability_id('123')
 
-    def test_event_logs(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
-        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
-        loop.run_until_complete(data_svc.store(operation_agent))
-        start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
-        agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
+    def test_event_logs(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc, event_log_op_start_time,
+                        op_agent_creation_time, fire_event_mock):
+        event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
+        event_loop.run_until_complete(data_svc.store(operation_agent))
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -182,11 +215,11 @@ class TestOperation:
             privilege='User',
             host='WORKSTATION',
             contact='unknown',
-            created=agent_creation_time,
+            created=op_agent_creation_time,
         )
         want_operation_metadata = dict(
             operation_name='test',
-            operation_start=start_time,
+            operation_start=event_log_op_start_time,
             operation_adversary='test adversary',
         )
         want_attack_metadata = dict(
@@ -196,10 +229,11 @@ class TestOperation:
         )
         want = [
             dict(
-                command='d2hvYW1p',
-                delegated_timestamp='2021-01-01 08:00:00',
-                collected_timestamp='2021-01-01 08:01:00',
-                finished_timestamp='2021-01-01 08:02:00',
+                command='whoami',
+                plaintext_command='whoami',
+                delegated_timestamp=LINK1_DECIDE_TIME,
+                collected_timestamp=LINK1_COLLECT_TIME,
+                finished_timestamp=LINK1_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
@@ -214,10 +248,11 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
             dict(
-                command='aG9zdG5hbWU=',
-                delegated_timestamp='2021-01-01 09:00:00',
-                collected_timestamp='2021-01-01 09:01:00',
-                finished_timestamp='2021-01-01 09:02:00',
+                command='hostname',
+                plaintext_command='hostname',
+                delegated_timestamp=LINK2_DECIDE_TIME,
+                collected_timestamp=LINK2_COLLECT_TIME,
+                finished_timestamp=LINK2_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
@@ -232,15 +267,17 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
         ]
-        event_logs = loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
+        event_logs = event_loop.run_until_complete(op_for_event_logs.event_logs(file_svc, data_svc))
         assert event_logs == want
 
-    def test_writing_event_logs_to_disk(self, loop, op_for_event_logs, operation_agent, file_svc, data_svc):
-        loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
-        loop.run_until_complete(data_svc.store(operation_agent))
+    @pytest.mark.usefixtures(
+        "setup_op_config"
+    )
+    def test_writing_event_logs_to_disk(self, event_loop, op_for_event_logs, operation_agent, file_svc, data_svc,
+                                        event_log_op_start_time, op_agent_creation_time, fire_event_mock):
+        event_loop.run_until_complete(data_svc.remove('agents', match=dict(unique=operation_agent.unique)))
+        event_loop.run_until_complete(data_svc.store(operation_agent))
 
-        start_time = op_for_event_logs.start.strftime('%Y-%m-%d %H:%M:%S')
-        agent_creation_time = operation_agent.created.strftime('%Y-%m-%d %H:%M:%S')
         want_agent_metadata = dict(
             paw='testpaw',
             group='red',
@@ -252,11 +289,11 @@ class TestOperation:
             privilege='User',
             host='WORKSTATION',
             contact='unknown',
-            created=agent_creation_time,
+            created=op_agent_creation_time,
         )
         want_operation_metadata = dict(
             operation_name='test',
-            operation_start=start_time,
+            operation_start=event_log_op_start_time,
             operation_adversary='test adversary',
         )
         want_attack_metadata = dict(
@@ -266,10 +303,11 @@ class TestOperation:
         )
         want = [
             dict(
-                command='d2hvYW1p',
-                delegated_timestamp='2021-01-01 08:00:00',
-                collected_timestamp='2021-01-01 08:01:00',
-                finished_timestamp='2021-01-01 08:02:00',
+                command='whoami',
+                plaintext_command='whoami',
+                delegated_timestamp=LINK1_DECIDE_TIME,
+                collected_timestamp=LINK1_COLLECT_TIME,
+                finished_timestamp=LINK1_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
@@ -284,10 +322,11 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
             dict(
-                command='aG9zdG5hbWU=',
-                delegated_timestamp='2021-01-01 09:00:00',
-                collected_timestamp='2021-01-01 09:01:00',
-                finished_timestamp='2021-01-01 09:02:00',
+                command='hostname',
+                plaintext_command='hostname',
+                delegated_timestamp=LINK2_DECIDE_TIME,
+                collected_timestamp=LINK2_COLLECT_TIME,
+                finished_timestamp=LINK2_FINISH_TIME,
                 status=0,
                 platform='windows',
                 executor='psh',
@@ -302,8 +341,8 @@ class TestOperation:
                 attack_metadata=want_attack_metadata,
             ),
         ]
-        loop.run_until_complete(op_for_event_logs.write_event_logs_to_disk(file_svc, data_svc))
-        target_path = '/tmp/event_logs/operation_%s.json' % op_for_event_logs.id
+        event_loop.run_until_complete(op_for_event_logs.write_event_logs_to_disk(file_svc, data_svc))
+        target_path = f'/tmp/event_logs/operation_{op_for_event_logs.id}.json'
         assert os.path.isfile(target_path)
         try:
             with open(target_path, 'rb') as log_file:
@@ -331,11 +370,11 @@ class TestOperation:
         op.state = 'finished'
         mock_emit_state_change_method.assert_called_with(from_state='running', to_state='finished')
 
-    def test_emit_state_change_event(self, loop, fake_event_svc, adversary):
+    def test_emit_state_change_event(self, event_loop, fake_event_svc, adversary):
         op = Operation(name='test', agents=[], adversary=adversary, state='running')
         fake_event_svc.reset()
 
-        loop.run_until_complete(
+        event_loop.run_until_complete(
             op._emit_state_change_event(
                 from_state='running',
                 to_state='finished'
@@ -350,51 +389,100 @@ class TestOperation:
         assert event_kwargs['from_state'] == 'running'
         assert event_kwargs['to_state'] == 'finished'
 
-    def test_with_learning_parser(self, loop, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
-                                  make_test_link, make_test_result, knowledge_svc):
+    def test_with_learning_parser(self, event_loop, app_svc, file_svc, contact_svc, data_svc, learning_svc, event_svc, op_with_learning_parser,
+                                  make_test_link, make_test_result, knowledge_svc, fire_event_mock):
         test_link = make_test_link(1234)
         op_with_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)
-        loop.run_until_complete(data_svc.store(op_with_learning_parser))
-        loop.run_until_complete(contact_svc._save(test_result))
+        event_loop.run_until_complete(data_svc.store(op_with_learning_parser))
+        event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 1
         fact = test_link.facts[0]
         assert fact.trait == 'host.ip.address'
         assert fact.value == '10.10.10.10'
-        knowledge_data = loop.run_until_complete(op_with_learning_parser.all_facts())
+        knowledge_data = event_loop.run_until_complete(op_with_learning_parser.all_facts())
         assert len(knowledge_data) == 1
         assert knowledge_data[0].trait == 'host.ip.address'
         assert knowledge_data[0].value == '10.10.10.10'
 
-    def test_without_learning_parser(self, loop, app_svc, contact_svc, data_svc, learning_svc, event_svc,
+    def test_without_learning_parser(self, event_loop, app_svc, contact_svc, data_svc, learning_svc, event_svc,
                                      op_without_learning_parser, make_test_link, make_test_result):
-        app_svc = app_svc(loop)  # contact_svc._save(...) needs app service registered
         test_link = make_test_link(5678)
         op_without_learning_parser.add_link(test_link)
         test_result = make_test_result(test_link.id)
-        loop.run_until_complete(data_svc.store(op_without_learning_parser))
-        loop.run_until_complete(contact_svc._save(test_result))
+        event_loop.run_until_complete(data_svc.store(op_without_learning_parser))
+        event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 0
 
-    def test_facts(self, loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, event_svc,
+    def test_facts(self, event_loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, fire_event_mock,
                    op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc):
         test_link = make_test_link(9876)
         op_with_learning_and_seeded.add_link(test_link)
 
         test_result = make_test_result(test_link.id)
-        loop.run_until_complete(data_svc.store(op_with_learning_and_seeded))
-        loop.run_until_complete(op_with_learning_and_seeded._init_source())  # need to call this manually (no 'run')
-        loop.run_until_complete(contact_svc._save(test_result))
+        event_loop.run_until_complete(data_svc.store(op_with_learning_and_seeded))
+        event_loop.run_until_complete(op_with_learning_and_seeded._init_source())  # need to call this manually (no 'run')
+        event_loop.run_until_complete(contact_svc._save(test_result))
         assert len(test_link.facts) == 1
         fact = test_link.facts[0]
         assert fact.trait == 'host.ip.address'
         assert fact.value == '10.10.10.10'
 
-        knowledge_data = loop.run_until_complete(op_with_learning_and_seeded.all_facts())
+        knowledge_data = event_loop.run_until_complete(op_with_learning_and_seeded.all_facts())
         assert len(knowledge_data) == 2
         origin_set = [x.source for x in knowledge_data]
         assert op_with_learning_and_seeded.id in origin_set
         assert op_with_learning_and_seeded.source.id in origin_set
 
-        report = loop.run_until_complete(op_with_learning_and_seeded.report(file_svc, data_svc))
+        report = event_loop.run_until_complete(op_with_learning_and_seeded.report(file_svc, data_svc))
         assert len(report['facts']) == 2
+
+    async def test_wait_for_links_completion_ignorable_link(self, make_test_link, operation_agent):
+        test_agent = operation_agent
+        test_link = make_test_link(9876, test_agent.paw, Link().states['DISCARD'])
+        op = Operation(name='test', agents=[test_agent], state='running')
+        op.add_link(test_link)
+        assert not op.ignored_links
+        assert test_link in op.chain
+        await op.wait_for_links_completion([test_link.id])
+        assert test_link.id in op.ignored_links
+        assert len(op.ignored_links) == 1
+        assert test_link in op.chain
+
+    async def test_wait_for_links_completion_non_ignorable_link(self, make_test_link, untrusted_operation_agent, mocker,
+                                                                async_return):
+        test_agent = untrusted_operation_agent
+        test_link = make_test_link(9876, test_agent.paw)
+        op = Operation(name='test', agents=[test_agent], state='running')
+        op.add_link(test_link)
+        assert not op.ignored_links
+        assert test_link in op.chain
+        with mocker.patch('asyncio.sleep') as mock_sleep:
+            mock_sleep.return_value = async_return(None)
+            await op.wait_for_links_completion([test_link.id])
+        assert not op.ignored_links
+        assert test_link in op.chain
+
+    def test_update_untrusted_agents_with_trusted(self, operation_agent, ability, adversary):
+        operation_agent.trusted = True
+        op = Operation(name='test', agents=[operation_agent], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert not op.untrusted_agents
+
+    def test_update_untrusted_agents_with_untrusted(self, operation_agent, ability, adversary):
+        operation_agent.trusted = False
+        op = Operation(name='test', agents=[operation_agent], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert operation_agent.paw in op.untrusted_agents
+
+    def test_update_untrusted_agents_with_trusted_no_operation_agents(self, operation_agent, ability, adversary):
+        operation_agent.trusted = True
+        op = Operation(name='test', agents=[], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert not op.untrusted_agents
+
+    def test_update_untrusted_agents_with_untrusted_no_operation_agents(self, operation_agent, ability, adversary):
+        operation_agent.trusted = False
+        op = Operation(name='test', agents=[], adversary=adversary)
+        op.update_untrusted_agents(operation_agent)
+        assert not op.untrusted_agents

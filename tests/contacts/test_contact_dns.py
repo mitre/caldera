@@ -32,17 +32,17 @@ def dns_contact_base_world():
 
 
 @pytest.fixture
-def dns_c2(loop, app_svc, contact_svc, data_svc, file_svc, obfuscator):
-    services = app_svc(loop).get_services()
+async def dns_c2(app_svc, contact_svc, data_svc, file_svc, obfuscator):
+    services = app_svc.get_services()
     dns_c2 = DnsContact(services)
     return dns_c2
 
 
 @pytest.fixture
-def get_dns_response(loop, dns_c2):
-    def _get_dns_response(qname, record_type):
+async def get_dns_response(dns_c2):
+    async def _get_dns_response(qname, record_type):
         query_bytes = message.make_query(qname, record_type).to_wire()
-        response_bytes = loop.run_until_complete(dns_c2.handler.generate_dns_tunneling_response_bytes(query_bytes))
+        response_bytes = await dns_c2.handler.generate_dns_tunneling_response_bytes(query_bytes)
         return message.from_wire(response_bytes)
     return _get_dns_response
 
@@ -88,10 +88,10 @@ def get_beacon_profile_qnames(beacon_profile_hex_chunks):
 
 
 @pytest.fixture
-def get_instruction_response(random_data, get_dns_response):
-    def _get_instruction_response(message_id):
+async def get_instruction_response(random_data, get_dns_response):
+    async def _get_instruction_response(message_id):
         qname = '%s.id.0.1.%s.mycaldera.caldera' % (message_id, random_data)
-        return get_dns_response(qname, 'txt')
+        return await get_dns_response(qname, 'txt')
     return _get_instruction_response
 
 
@@ -157,21 +157,21 @@ class TestContactDns:
         assert handler.domain == 'mycaldera.caldera'
         assert handler.name == 'dns'
 
-    def test_non_c2_domain_message(self, get_dns_response):
-        response_msg = get_dns_response('notthec2domain', 'a')
+    async def test_non_c2_domain_message(self, get_dns_response):
+        response_msg = await get_dns_response('notthec2domain', 'a')
         assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
 
-    def test_partial_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id):
+    async def test_partial_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id):
         first_qname = get_beacon_profile_qnames(message_id)[0]
-        response_msg = get_dns_response(first_qname, 'a')
+        response_msg = await get_dns_response(first_qname, 'a')
         self._assert_successful_ivp4(response_msg)
         self._assert_even_ipv4(response_msg)
 
-    def test_completed_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id):
+    async def test_completed_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id, event_svc, fire_event_mock):
         qnames = get_beacon_profile_qnames(message_id)
         final_index = len(qnames) - 1
         for index, qname in enumerate(qnames):
-            response_msg = get_dns_response(qname, 'a')
+            response_msg = await get_dns_response(qname, 'a')
             self._assert_successful_ivp4(response_msg)
 
             # Check final octet
@@ -180,14 +180,14 @@ class TestContactDns:
             else:
                 self._assert_even_ipv4(response_msg)
 
-    def test_instruction_download(self, get_dns_response, get_beacon_profile_qnames, message_id,
-                                  get_instruction_response):
+    async def test_instruction_download(self, get_dns_response, get_beacon_profile_qnames, message_id,
+                                        get_instruction_response):
         # Send beacon before asking for instructions
         for qname in get_beacon_profile_qnames(message_id):
-            get_dns_response(qname, 'a')
+            await get_dns_response(qname, 'a')
 
         # Get instructions
-        response_msg = get_instruction_response(message_id)
+        response_msg = await get_instruction_response(message_id)
         assert response_msg and response_msg.rcode() == self._RCODE_SUCCESS
 
         # Make sure we only get 1 TXT record
@@ -208,18 +208,18 @@ class TestContactDns:
                     instructions='[]')
         assert want == beacon_resp
 
-    def test_unsupported_client_request(self, get_dns_response, message_id, random_data):
+    async def test_unsupported_client_request(self, get_dns_response, message_id, random_data):
         invalid_qname = '%s.invalid.0.1.%s.mycaldera.caldera' % (message_id, random_data)
-        response_msg = get_dns_response(invalid_qname, 'a')
+        response_msg = await get_dns_response(invalid_qname, 'a')
         assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
 
-    def test_invalid_instruction_request(self, get_dns_response, message_id, random_data):
+    async def test_invalid_instruction_request(self, get_dns_response, message_id, random_data):
         invalid_qname = '%s.id.0.1.%s.mycaldera.caldera' % (message_id, random_data)
-        response_msg = get_dns_response(invalid_qname, 'a')  # Should be TXT request
+        response_msg = await get_dns_response(invalid_qname, 'a')  # Should be TXT request
         assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
 
-    def test_file_upload(self, get_dns_response, message_id, get_hex_chunks, get_file_upload_metadata_qnames,
-                         get_file_upload_data_qnames):
+    async def test_file_upload(self, get_dns_response, message_id, get_hex_chunks, get_file_upload_metadata_qnames,
+                               get_file_upload_data_qnames):
         paw = 'asdasd'
         filename = 'testupload.txt'
         hostname = 'testhost'
@@ -236,7 +236,7 @@ class TestContactDns:
         # Send file upload request
         final_index = len(metadata_qnames) - 1
         for index, qname in enumerate(metadata_qnames):
-            response_msg = get_dns_response(qname, 'a')
+            response_msg = await get_dns_response(qname, 'a')
             self._assert_successful_ivp4(response_msg)
             # Check final octet
             if index == final_index:
@@ -247,7 +247,7 @@ class TestContactDns:
         # Send file data
         final_index = len(file_data_qnames) - 1
         for index, qname in enumerate(file_data_qnames):
-            response_msg = get_dns_response(qname, 'a')
+            response_msg = await get_dns_response(qname, 'a')
             self._assert_successful_ivp4(response_msg)
             # Check final octet
             if index == final_index:

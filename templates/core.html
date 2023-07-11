@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>{{ page_title }} | CALDERA</title>
+        <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+        <link rel="stylesheet" href="/gui/css/shared.css">
+        <link rel="stylesheet" href="/gui/css/core.css">
+        <link rel="stylesheet" href="/gui/css/modal.css">
+        <link rel="stylesheet" href="/gui/css/basic.css">
+        <link rel="stylesheet" href="/gui/css/timeline.css">
+        <link rel="stylesheet" href="/gui/css/multi-select.css" media="screen">
+        <link rel="stylesheet" href="/gui/css/lib/custom-bulma.css">
+        <link rel="stylesheet" href="/gui/css/lib/bulma-tooltip.min.css">
+        <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
+        <style>
+            :root {
+                --primary-color: {{ primary_color }};
+                --primary-color-hover: {{ primary_color_hover }};
+                --primary-color-translucent: {{ primary_color_translucent }};
+            }
+        </style>
+    </head>
+    <body>
+        <main id="home" class="main" x-data="alpineCore()" x-init="initPage()">
+            <div class="navigation">
+                <a href="#home" class="scroll-top button is-rounded is-primary" x-show="scrollTop > 0">
+                    <span class="icon"><i class="fas fa-chevron-up"></i></span>
+                </a>
+                <div class="nav-logo">
+                    <img src="/gui/img/caldera-logo.png" alt="CALDERA logo" @click="window.open('https://caldera.mitre.org?ref=caldera', '_blank')"/>
+                </div>
+                <div class="is-flex is-justify-content-center">
+                    <span class="tag is-primary is-small is-rounded mb-2 p-4 user-badge"><em class="fas fa-user pr-3"></em>{{ user_name }}</span>
+                </div>
+                <template x-if="errors.length > 0">
+                    <div class="is-flex is-justify-content-center">
+                        <a id="startup-errors-warning" class="has-text-info">
+                            <em class="fas fa-comment-alt pr-1"></em>
+                            <span title="Click for to view startup errors" class="has-text-info" x-text="`${errors.length} startup message${errors.length > 1 ? 's' : ''}`" @click="showErrors = true"></span>
+                        </a>
+                    </div>
+                </template>
+                <aside id="nav-menu" class="menu">
+                    <p class="menu-label nav-header"><em class="fas fa-flag pr-2"></em>Campaigns</p>
+                    <ul class="menu-list">
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('agents', '/campaign/agents')">agents</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('abilities', '/campaign/abilities')">abilities</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('adversaries', '/campaign/adversaries')">{{ team_name }}</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('operations', '/campaign/operations')">operations</a></li>
+                    </ul>
+                    <p class="menu-label nav-header"><em class="fas fa-puzzle-piece pr-2"></em>Plugins</p>
+                    <ul class="menu-list">
+                        {% for plugin in plugins | sort(attribute='name') %}
+                            <li>
+                                <a href="#home" x-on:click="addTab('{{ plugin.name }}', '{{ plugin.address }}')" class="nav-item">
+                                    {{ plugin.name }}
+                                    <template x-if="`{{plugin.name | e}}` === 'fieldmanual'">
+                                        <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup>
+                                    </template>
+                                </a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    <p class="menu-label nav-header"><em class="fas fa-cog pr-2"></em></em>Configuration</p>
+                    <ul class="menu-list">
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('fact sources', '/advanced/sources')">fact sources</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('objectives', '/advanced/objectives')">objectives</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('planners', '/advanced/planners')">planners</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('contacts', '/advanced/contacts')">contacts</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('obfuscators', '/advanced/obfuscators')">obfuscators</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('configuration', '/advanced/configurations')">configuration</a></li>
+                        <li><a href="#home" class="nav-item" x-on:click="addTab('exfilled files', '/advanced/exfills')">exfilled files</a></li>
+                        <li><a href="./api/docs" target="_blank">
+                            api docs
+                            <sup><em class="fas fa-external-link-alt pl-1 is-size-7"></em></sup></a>
+                        </li>
+                    </ul>
+                    <br>
+                    <ul class="menu-list has-text-centered">
+                        <li>
+                            <a href="/logout">
+                                <span class="icon"><em class="fas fa-sign-out-alt"></em></span>
+                                <span>Log out</span>
+                            </a>
+                        </li>
+                    </ul>
+                </aside>
+            </div>
+
+            <div class="main-content">
+                <div class="tabs nav is-boxed">
+                    <ul>
+                        <template x-for="(tab, index) in openTabs" :key="index">
+                            <li x-bind:class="{ 'is-active' : activeTabIndex === index }">
+                                <a x-on:click="activeTabIndex = index">
+                                    <span x-text="tab.name"></span>
+                                    <span class="icon is-small tab-delete" x-on:click.stop="deleteTab(index, tab.contentID)"><em class="fas fa-sm fa-times"></em></span>
+                                </a>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <div id="active-tab-display" class="container content"></div>
+
+                <div id="no-open-tabs" x-show="openTabs.length === 0">
+                    <p>
+                        Select a tab on the left to get started
+                    </p>
+                    <p>
+                        <a href="docs/Getting-started.html" target="blank">Getting Started Guide</a>
+                    </p>
+                </div>
+            </div>
+
+            <div x-bind:class="{ 'is-active': showErrors }" class="modal">
+                <div class="modal-background" @click="showErrors = false"></div>
+                <div class="modal-card">
+                    <div>
+                        <header class="modal-card-head">
+                            <h2>Startup Messages</h2>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="modal-form">
+                                <template x-if="!errors || errors.length < 1">
+                                    <div class="is-flex is-justify-content-center">
+                                        <em>No startup messages.</em>
+                                    </div>
+                                </template>
+                                <template x-for="error of errors" :key="error.msg">
+                                    <article class="media">
+                                        <div class="media-content">
+                                            <div class="content">
+                                                <p>
+                                                    <span class="is-flex">
+                                                        <strong x-text="error.name" class="mr-2"></strong>
+                                                        <span class="tag" x-show="error.optional">Optional</span>
+                                                    </span>
+                                                    <span x-text="error.msg"></span>
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </article>
+                                </template>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="modal-card-foot">
+                        <button class="button is-primary is-small is-fullwidth" @click="showErrors = false">Close</button>
+                    </footer>
+                </div>
+            </div>
+
+            <div x-bind:class="{ 'is-active': isFirstVisit }" class="modal">
+                <div class="modal-background" @click="isFirstVisit = false"></div>
+                <div class="modal-card">
+                    <div>
+                        <header class="modal-card-head">
+                            <h2>Welcome to CALDERA!</h2>
+                        </header>
+                        <section class="modal-card-body">
+                            <div class="block">
+                                <label class="label">📚 Learn</label>
+                                <div class="is-flex is-justify-content-space-between">
+                                    <p>
+                                        Never used CALDERA before? The User Certificate in the training plugin will walk you through all 
+                                        the capabilities of the platform in hands-on, capture-the-flag style exercises.
+                                    </p>
+                                    <button class="button is-small is-primary" @click="addTab('training', '/plugin/training/gui'); isFirstVisit = false">Start Training</button>
+                                </div>
+                            </div>
+                            <div class="block">
+                                <label class="label">📖 Documentation</label>
+                                <div class="is-flex is-justify-content-space-between">
+                                    <p>
+                                        Get familiar with all of CALDERA's capabilities, terminology, and plugins.
+                                    </p>
+                                    <a class="button is-small is-primary" target="_blank" href="/docs/index.html">Read the Docs</a>
+                                </div>
+                            </div>
+                            <div class="block">
+                                <label class="label">📬 Get in touch</label>
+                                <div class="buttons">
+                                    <a class="button is-small is-primary" target="_blank" rel="noopener" href="https://join.slack.com/t/mitre-caldera/shared_invite/zt-rvngjjpw-OQHAqpUT87DcyClTosF8dQ">
+                                        <span class="icon"><em class="fab fa-slack"></em></span>
+                                        <span>Join our Slack</span>
+                                    </a>
+                                    <a class="button is-small" href="mailto:caldera@mitre.org">
+                                        <span class="icon"><em class="far fa-envelope"></em></span>
+                                        <span>Email us</span>
+                                    </a>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    <footer class="modal-card-foot">
+                        <button class="button fancy-button is-small is-fullwidth" @click="isFirstVisit = false">🚀 Get started</button>
+                    </footer>
+                </div>
+            </div>
+        </main>
+
+        <script>
+            let startupErrors = JSON.parse('{{ errors | tojson }}');
+        </script>
+
+        <script src="/gui/jquery/jquery.js"></script>
+        <script src="/gui/jquery/jquery.multi-select.js"></script>
+        <script src="/gui/js/shared.js"></script>
+        <script src="/gui/js/core.js"></script>
+        <script defer src="/gui/js/lib/alpine.min.js"></script>
+        <script src="/gui/js/lib/bulma-toast.min.js"></script>
+        <script src="/gui/js/lib/confetti.browser.min.js"></script>
+    </body>
+</html>

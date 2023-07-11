@@ -1,0 +1,74 @@
+@charset "utf-8"
+
+//    In order to compile, you'll need to install the CLI tool: https://sass-lang.com/install
+//    The command should look like (from project root):
+//        $ sass static/scss/custom-bulma.sass static/css/lib/custom-bulma.css
+//    This will compile your SASS sheets into CSS to import into your HTML template.
+
+// Defining variables
+$body-background-dark: #060606
+$light-gray: #262626
+
+
+// Update Bulma's global variables
+$family-sans-serif: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"
+$text-strong: #fff
+
+$primary: var(--primary-color)
+$primary-hover: var(--primary-color-hover)
+$primary-translucent: var(--primary-color-translucent)
+
+$background: $light-gray
+$border: #363636
+$danger: #FF0000
+
+
+// Update some of Bulma's component variables
+$body-background-color: $body-background-dark
+
+$box-color: #ffffff
+$box-background-color: #0d0d0d
+$box-radius: 4px
+
+$button-background-color: $light-gray
+$button-hover-color: #fff
+$button-disabled-background-color: none
+
+$dropdown-content-background-color: $light-gray
+$dropdown-item-hover-background-color: #1D1D1D
+$dropdown-item-hover-color: #b0b0b0
+
+$hr-background-color: var(--primary-color)
+
+$input-background-color: $light-gray
+$input-arrow: #ffffff
+$input-focus-border-color: var(--primary-color)
+$input-focus-box-shadow-color: var(--primary-color-translucent)
+
+$menu-item-color: #ffffff
+$menu-item-hover-background-color: var(--primary-color-translucent)
+$menu-label-background-color: var(--primary-color)
+
+$modal-card-head-radius: 4px
+$modal-card-head-background-color: #101010
+$modal-card-title-color: #ffffff
+$modal-card-foot-radius: 4px
+$modal-card-title-size: 1.2rem
+$modal-card-body-background-color: #161616
+
+$table-background-color: #161616
+$table-striped-row-even-background-color: $light-gray
+
+$tabs-boxed-link-radius: 4px
+$tabs-boxed-link-active-background-color: var(--primary-color)
+$tabs-boxed-link-active-border-color: var(--primary-color)
+$tabs-border-bottom-color: var(--primary-color)
+$tabs-boxed-link-hover-background-color: var(--primary-color)
+$tabs-boxed-link-hover-border-bottom-color: var(--primary-color)
+$tabs-toggle-link-active-background-color: var(--primary-color)
+$tabs-toggle-link-active-border-color: var(--primary-color)
+$tabs-toggle-link-hover-background-color: var(--primary-color-hover)
+$tabs-toggle-link-hover-border-bottom-color: var(--primary-color-hover)
+
+
+@import 'bulma/bulma'

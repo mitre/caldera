@@ -1,345 +1,1418 @@
-<div id="sources" class="section-profile">
-  <div class="advanced row">
-      <div class="topleft duk-icon"><img onclick="removeSection('sources')" src="/gui/img/x.png"></div>
-      <div class="bottomright duk-icon"><img onclick="toggleSidebar('sources-sidebar')" src="/gui/img/expand.png"></div>
-      <div id="sources-sidebar"  class="column section-border" style="flex:25%">
-      <img src="/gui/img/facts.png">
-      <h4>Fact Sources</h4>
-      <br>
-      <div class="toggle">
-        <label class="switch"><input type="checkbox" id="togBtnSrc" onchange="toggleSourceView()">
-          <div class="slider round"><span class="on">ADD</span><span class="off">VIEW</span></div>
-        </label>
-      </div>
-      <br>
-      <p class="section-description">
-          Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
-          A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
-      </p>
-      <br>
-      <div id="viewSource">
-          <select id="profile-source-name" style="margin-top:-15px" onchange="loadSource();">
-            <option value="" disabled selected>Select an existing source</option>
-            {% for s in sources %}
-                <option value="{{ s.id|e }}">{{ s.name|e }}</option>
-            {% endfor %}}
-          </select>
-      </div>
-      <div id="addSource"></div>
-      <button id="sourceBtn" type="button" class="button-success atomic-button"
-              onclick="viewRules()">View rules
-      </button>
-      <button id="relationshipBtn" type="button" class="button-success atomic-button"
-              onclick="viewRelationships()">View Relationships</button>
-      <button id="saveSourceBtn" type="button" class="button-success atomic-button"
-              onclick="saveSource()">Save
-      </button>
-    </div>
-    <div class="column adversary-header" style="flex:75%;overflow:hidden;text-align:left">
-        <h4 id="source-name" contenteditable="true" class="advGoal">Sample name</h4>
-        <hr>
-        <table id="factTbl" class="obfuscation-table" border=1 frame=void rules=rows>
-            <thead>
-                <tr>
-                    <th><b>trait</b></th>
-                    <th><b>value</b></th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-        <p style="color:white;text-align:right;font-size:16px;" onclick="addFactRow('Enter trait', 'Enter value')">
-            &#10010;&nbsp;add fact
+<div x-data="alpineSources()" x-init="getSources()" id="sourcePage" xmlns:x-bind="http://www.w3.org/1999/xhtml"
+     xmlns:x-on="http://www.w3.org/1999/xhtml">
+
+    <!-- PAGE HEADER -->
+    <div x-ref="headerSources">
+        <h2>Fact Sources</h2>
+        <p>
+            Facts are identifiable pieces of data, collected by agents or loaded when the server starts.
+            A source is a collection of facts. Rules are boundaries to ensure specific traits cannot be used.
         </p>
     </div>
-  </div>
-</div>
+    <hr>
 
-<div id="rule-modal" class="modal source-modal">
-    <form class="modal-content">
-        <div class="container">
-            <div class="row ability-viewer">
-                <span onclick="document.getElementById('rule-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                <div class="column" style="flex:100%">
-                    <h3 id="rules-name"></h3>
-                    <span>Rules</span>
-                    <ul id="source-rules"></ul>
-                    <p onclick="addRuleBlock()">&#10010;&nbsp;add rule</p>
-                    <p class="source-note">* Rules run in top-down order, in the same way as iptables</p>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<div id="relationship-modal" class="modal source-modal">
-    <form class="modal-content">
-        <div class="container">
-            <div class="row ability-viewer">
-                <span onclick="document.getElementById('relationship-modal').style.display='none'" class="close" title="Close Modal">&times;</span>
-                <div class="column" style="flex:100%">
-                    <h3 id="relationship-name"></h3>
-                    <span>Relationships</span>
-                    <ul id="source-relationships"></ul>
-                    <p onclick="addRelationshipBlock()">&#10010;&nbsp;add relationship</p>
-                </div>
-            </div>
-        </div>
-    </form>
-</div>
-
-<li id="rule-template" class="row-simple ttp-template source-row" style="display: none;">
-    <table>
-        <tr>
-            <td><b>trait:</b></td>
-            <td><input id="trait" contenteditable="false" spellcheck="false"></td>
-            <td><p onclick="$(this).closest('li').remove()">&#x274C;</p></td>
-        </tr>
-        <tr>
-            <td><b>match:</b></td>
-            <td><input id="match" contenteditable="false" spellcheck="false"></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td><b>action:</b></td>
-            <td>
-                <select id="action">
-                    <option value="ALLOW" selected="selected">ALLOW</option>
-                    <option value="DENY">DENY</option>
+    <!-- SOURCES TABLE -->
+    <div class="columns">
+        <!-- LEFT SIDEBAR -->
+        <div class="column m-0 is-2 sidebar">
+            <label x-show="false" class="label">Select a source &nbsp;&nbsp;&nbsp;</label>
+            <div class="select is-small is-fullwidth mb-2">
+                <select x-on:change="getSource()" x-model="selectedSourceId">
+                    <option value="" default disabled selected>Select a source...</option>
+                    <template x-for="source of sources" :key="source.id">
+                        <option x-bind:value="source.id" x-text="source.name"></option>
+                    </template>
                 </select>
-            </td>
-            <td></td>
-        </tr>
-    </table>
-</li>
+            </div>
+            <button type="button" class="button is-primary is-small is-fullwidth mb-4" @click="createSource()"><span
+                    class="icon"><em class="fas fa-plus"></em></span><span>Create Source</span></button>
 
-<li id="relationship-template" class="row-simple ttp-template source-row" style="display: none;">
-    <table>
-        <tr>
-            <td><b>source:</b></td>
-            <td><input id="sourceTrait" contenteditable="false" spellcheck="false" placeholder="trait"></td>
-            <td><input id="sourceValue" contenteditable="false" spellcheck="false" placeholder="value"></td>
-            <td><p onclick="$(this).closest('li').remove()">&#x274C;</p></td>
-        </tr>
-        <tr>
-            <td><b>edge:</b></td>
-            <td><input id="edge" contenteditable="false" spellcheck="false" placeholder="edge"></td>
-            <td></td>
-            <td></td>
-        </tr>
-        <tr>
-            <td><b>target:</b></td>
-            <td><input id="targetTrait" contenteditable="false" spellcheck="false" placeholder="trait"></td>
-            <td><input id="targetValue" contenteditable="false" spellcheck="false" placeholder="value"></td>
-            <td></td>
-        </tr>
-    </table>
-</li>
+            <label for="sourceName" x-show="false" class="label">Source Name</label>
+
+            <div class="has-text-centered" x-show="selectedSourceId && !isEditingSourceName">
+                <h3 x-text="selectedSource.name" class="break-anywhere pointer tooltip has-tooltip-arrow mt-0 mb-5"
+                    data-tooltip="Click to edit" @click="isEditingSourceName = true"></h3>
+            </div>
+            <input x-show="selectedSourceId && isEditingSourceName"
+                   @click.outside="isEditingSourceName = false; saveSourceName()"
+                   id="sourceName" class="input mb-5" placeholder="Enter a source name" x-model="selectedSource.name">
+
+
+            <template x-if="!selectedSourceId">
+                <p class="is-flex is-justify-content-center is-italic mt-2">Select a fact source to get started.</p>
+            </template>
+
+            <div class="control-buttons is-flex is-fullwidth is-flex-direction-column">
+                <button class="button is-small mb-2"
+                        x-bind:disabled="!selectedSourceId"
+                        @click="openModal = { isOpen: true, name: 'Add From Ability' }; filterAbilities()">
+                    <span class="icon"><em class="fas fa-plus"></em></span>
+                    <span>Add Facts from Ability</span>
+                </button>
+                <button class="button is-small mb-2"
+                        x-bind:disabled="!selectedSourceId"
+                        @click="openModal = { isOpen: true, name: 'Add From Adversary' }; getAdversaries();">
+                    <span class="icon"><em class="fas fa-user-plus"></em></span>
+                    <span>Add Facts from Adversary</span>
+                </button>
+                <button class="button is-small mb-2" @click="duplicateSource(selectedSource)"
+                        x-bind:disabled="!selectedSourceId">
+                    <span class="icon"><em class="fas fa-copy"></em></span>
+                    <span>Duplicate Source</span>
+                </button>
+                <button class="button is-primary is-small mb-2" @click="downloadSource()"
+                        x-bind:disabled="!selectedSourceId">
+                    <span class="icon"><em class="fas fa-arrow-down"></em></span>
+                    <span>Download Source</span>
+                </button>
+                <div class="hr"></div>
+                <button class="button is-small mb-2 is-danger is-outlined"
+                        @click="openModal = { isOpen: true, name: 'Delete Source' }">
+                    <span class="icon"><em class="fas fa-trash"></em></span>
+                    <span>Delete Source</span>
+                </button>
+            </div>
+        </div>
+
+        <template x-if="selectedSourceId">
+            <!-- RIGHT SIDEBAR -->
+            <div class="column m-0 pt-0 sources-view is-10">
+                <!-- TOPBAR CHIPS-->
+                <div class="is-flex is-align-items-center">
+                    <template x-for="chip of ['facts', 'rules', 'relationships']">
+                        <button class="is-small button is-rounded m-1"
+                                x-on:click="inView = [chip]; addNewCard = false; editCard = ''; sortAToZ = false;"
+                                x-text="chip" x-bind:class="{'is-primary': inView.includes(chip)}"></button>
+                    </template>
+                    <button class="button is-rounded is-small" @click="sortDisplay(); sortAToZ = !sortAToZ;"><em class="fas fa-sort"></em>
+                    </button>
+                </div>
+
+                <template x-if="inView.includes('facts')">
+                    <!-- FACTS -->
+                    <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
+                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
+                             x-on:click="addNewCard = true; editCard = null;">
+                            <p class="is-italic">+ new fact</p>
+                        </div>
+                        <template x-if="addNewCard">
+                            <div x-data="{newFact: {trait: '', tags: [] }}"
+                                 class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                                <form>
+                                    <div class="field is-horizontal">
+                                        <div class="field-label is-small is-flex-grow-2">
+                                            <label class="label" for="new-fact-trait">Trait</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control">
+                                                <input id="new-fact-trait" class="input is-small" placeholder="fact trait"
+                                                   x-model="newFact.trait">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-flex is-horizontal is-flex is-align-items-center">
+                                        <div class="field-label is-small is-flex-grow-2">
+                                            <label class="label pt-2">Values</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <template x-for="(tag, index) in newFact.tags">
+                                                <div id="new-fact-value" class="tags has-addons mb-0">
+                                                        <span class="is-italic tag is-light break-spaces">
+                                                          <input type="text" class="tag-input w-110-px"
+                                                                 placeholder="value"
+                                                                 x-model="tag.value">
+                                                        </span>
+                                                    <span class="tag is-white break-spaces"><input
+                                                            class="tag-number-input" type="number"
+                                                            pattern="[0-9]*"
+                                                            min="0"
+                                                            placeholder="1"
+                                                            x-model="tag.score">
+                                                    <button @click="newFact.tags.splice(index, 1)"
+                                                            class="delete is-small"></button>
+                                                </span>
+                                                </div>
+                                            </template>
+                                            <div class="is-flex is-justify-content-center">
+                                                <span class="tag is-white break-spaces"
+                                                      data-tooltip="Add a new value"
+                                                      @click="newFact.tags.push({trait: newFact.trait, value: '', score: 1})">
+                                                    <em class="fas fa-plus"></em>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </form>
+
+                                <div class="mt-3">
+                                    <button class="button is-small" @click="addNewCard = false">
+                                        <span>Cancel</span>
+                                    </button>
+                                    <button class="button is-small is-primary ml-2" @click="addFacts(newFact.tags)"
+                                            x-bind:disabled="!newFact.trait">
+                                        <span class="icon"><i class="fas fa-save"></i></span>
+                                        <span>Save</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
+                                 @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
+                                 x-data="{editedValues: {}, editedScores: {}, newTags: []}">
+                                <div>
+                                    <p x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
+                                    <template x-if="editCard === fact.trait">
+                                        <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
+                                    </template>
+                                </div>
+                                <div class="is-flex is-justify-content-center is-flex-direction-row">
+                                    <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                                        <label x-show="fact.scores" class="label mb-0 is-size-7"
+                                               x-text="'Values'"></label>
+                                        <div class="field is-grouped is-grouped-multiline is-flex is-align-items-center is-justify-content-center">
+                                            <template x-for="(score) in fact.scores"
+                                                      :key="fact.trait + score.score"
+                                                      x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores})">
+                                                <div>
+                                                    <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
+                                                        <span x-show-="editCard !== fact.trait"
+                                                              class="tag break-spaces is-info"
+                                                              x-text="score.score + (score.score > 1 ? ' pts:' :' pt:')"></span>
+                                                        <template x-for="(val, index) in score.values" :key="val+index">
+                                                            <div>
+                                                                <template x-if="editCard !== fact.trait">
+                                                                    <span class="tag is-light break-spaces editable-tag"
+                                                                          x-text="(val ? val : '--')"></span>
+                                                                </template>
+                                                                <template x-if="editCard === fact.trait">
+                                                                    <div>
+                                                                        <div class="tags has-addons mb-0">
+                                                                            <span class="is-italic tag is-light break-spaces">
+                                                                              <input type="text" class="tag-input"
+                                                                                     x-bind:value="val"
+                                                                                     x-on:change="val = editedValues[score.unique] = $event.target.value;">
+                                                                            </span>
+                                                                            <span class="tag is-white break-spaces">
+                                                                                <input class="tag-number-input"
+                                                                                       type="number"
+                                                                                       min="0"
+                                                                                       pattern="[0-9]*"
+                                                                                       placeholder="1"
+                                                                                       x-bind:value="score.score">
+                                                                                <button @click="deleteFactValue(fact.trait, score.unique, val)"
+                                                                                    class="delete is-small"></button>
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                </template>
+                                                            </div>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <template x-if="editCard === fact.trait">
+                                            <div>
+                                                <template x-for="(tag, index) in newTags">
+                                                    <div class="tags has-addons mb-0">
+                                                        <span class="is-italic tag is-light break-spaces">
+                                                          <input type="text" class="tag-input"
+                                                                 placeholder="value"
+                                                                 x-model="tag.value">
+                                                        </span>
+                                                        <span class="tag is-white break-spaces"><input
+                                                                class="tag-number-input" type="number"
+                                                                pattern="[0-9]*"
+                                                                min="0"
+                                                                placeholder="1"
+                                                                x-model="tag.score">
+                                                            <button @click="newTags.splice(index, 1)"
+                                                                    class="delete is-small"></button>
+                                                        </span>
+                                                    </div>
+                                                </template>
+                                                <div class="is-flex is-justify-content-center">
+                                                    <span class="tag is-white break-spaces"
+                                                          data-tooltip="Add a new value"
+                                                          @click="newTags.push({trait: fact.trait, value: '', score: 1})">
+                                                        <em class="fas fa-plus"></em>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <template x-if="editCard === fact.trait">
+                                            <div class="mt-3">
+                                                <button class="button is-small" @click="editCard = null;">
+                                                    <span id="cancel-edit-fact">Cancel</span>
+                                                </button>
+                                                <button class="button is-small is-primary ml-2"
+                                                        @click="updateFact(editedValues, editedScores, newTags); newTags = []; $event.stopPropagation();">
+                                                    <span class="icon"><i class="fas fa-save"></i></span>
+                                                    <span>Save</span>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- RULES -->
+                <template x-if="inView.includes('rules')">
+                    <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start">
+                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
+                             x-on:click="addNewCard = true; editCard = null;">
+                            <p class="is-italic">+ new rule</p>
+                        </div>
+                        <template x-if="addNewCard">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
+                                 x-data="{newRule: {trait: '', allow: [], deny: []}, addNewAllow: false, addNewDeny: false, newAllow: '', newDeny: ''}">
+                                <form>
+                                    <div class="field is-horizontal is-flex is-align-items-center">
+                                        <div class="field-label is-small is-flex-grow-2">
+                                            <label class="label" for="new-rule-trait">Trait</label>
+                                        </div>
+                                        <div class="field-body">
+                                            <div class="field">
+                                                <div class="control">
+                                                    <input id="new-rule-trait" class="input is-small" placeholder="fact trait"
+                                                           x-model="newRule.trait">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal mb-3 is-flex is-align-items-center">
+                                        <div class="field-label is-small is-flex-grow-2">
+                                            <label class="label" for="new-rule-allow">Allow</label>
+                                        </div>
+                                        <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="new-rule-allow">
+                                            <template x-for="(match, index) in [...new Set(newRule.allow)]" :key="match">
+                                                        <span class="tag is-success m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="newRule.allow.splice(newRule.allow.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                            </template>
+                                            <template x-if="addNewAllow">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newAllow"/>
+                                                        </span>
+                                            </template>
+                                            <span class="tag is-white break-spaces"
+                                                  data-tooltip="Add a new rule"
+                                                  @click="if (newAllow) {newRule.allow.push(newAllow); newAllow = '';}; addNewAllow = true">
+                                                        <em class="fas fa-plus"></em>
+                                                    </span>
+                                        </div>
+                                    </div>
+                                    <div class="field is-horizontal is-flex is-align-items-center mb-3">
+                                        <div class="field-label is-small is-flex-grow-2">
+                                            <label class="label" for="new-rule-deny">Deny</label>
+                                        </div>
+                                        <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="new-rule-deny">
+                                            <template x-for="(match, index) in [...new Set(newRule.deny)]" :key="match">
+                                                         <span class="tag is-danger m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="newRule.deny.splice(newRule.deny.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                            </template>
+                                            <template x-if="addNewDeny">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newDeny"/>
+                                                        </span>
+                                            </template>
+                                            <span class="tag is-white break-spaces"
+                                                  data-tooltip="Add a new rule"
+                                                  @click="if (newDeny) {newRule.deny.push(newDeny); newDeny = '';}; addNewDeny = true">
+                                                <em class="fas fa-plus"></em>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </form>
+                                <div>
+                                    <button class="button is-small" @click="addNewCard = false">
+                                        <span>Cancel</span>
+                                    </button>
+                                    <button class="button is-small is-primary ml-2"
+                                            @click="if (newAllow) {newRule.allow.push(newAllow); newAllow = '';}; if (newDeny) {newRule.deny.push(newDeny); newDeny = '';}; addRule(newRule)"
+                                            x-bind:disabled="!newRule.trait">
+                                        <span class="icon"><i class="fas fa-save"></i></span>
+                                        <span>Save</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-for="(rule, index) in filteredRules" :key="rule.trait">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column" @click.self="editCard = rule.trait">
+                                <template x-if="editCard !== rule.trait">
+                                    <div>
+                                        <div class="is-flex is-justify-content-center mb-2">
+                                            <p x-text="rule.trait"></p>
+                                        </div>
+                                        <div class="is-size-7">
+                                            <template x-if="rule.allow_matches.length > 0">
+                                                <label class="label mb-0 is-inline-block">Allow: </label>
+                                            </template>
+                                            <template x-for="(match, index) in rule.allow_matches" :key="match">
+                                                <p class="tag is-success m-1 break-spaces editable-tag"
+                                                   x-text="match">
+                                                </p>
+                                            </template>
+                                        </div>
+                                        <div class="is-size-7">
+                                            <template x-if="rule.deny_matches.length > 0">
+                                                <label class="label mb-0 is-inline-block">Deny: </label>
+                                            </template>
+                                            <template x-for="(match, index) in rule.deny_matches" :key="match">
+                                                <p class="tag is-danger m-1 break-spaces editable-tag"
+                                                   x-text="match">
+                                                </p>
+                                            </template>
+                                        </div>
+                                    </div>
+                                </template>
+                                <template x-if="editCard === rule.trait">
+                                    <div x-data="{updatedRule: {trait: rule.trait, allow: rule.allow_matches, deny: rule.deny_matches}, addNewAllow: false, addNewDeny: false, newAllow: '', newDeny: ''}">
+                                        <div class="is-flex is-justify-content-center mb-2">
+                                            <p class="has-background-warning has-text-black p-1" x-text="rule.trait"></p>
+                                            <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteRule(rule.trait)">
+                                                <span class="icon"><em class="fas fa-trash"></em></span>
+                                            </button>
+                                        </div>
+                                        <form>
+                                            <div class="field is-horizontal mb-3 is-flex is-align-items-center">
+                                                <div class="field-label is-small is-flex-grow-2">
+                                                    <label class="label" for="edit-rule-allow">Allow</label>
+                                                </div>
+                                                <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="edit-rule-allow">
+                                                    <template x-for="(match, index) in [...new Set(updatedRule.allow)]" :key="match">
+                                                        <span class="tag is-success m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="updatedRule.allow.splice(updatedRule.allow.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="addNewAllow">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newAllow"/>
+                                                        </span>
+                                                    </template>
+                                                    <span class="tag is-white break-spaces"
+                                                          data-tooltip="Add a new rule"
+                                                          @click="if (newAllow) {updatedRule.allow.push(newAllow); newAllow = '';}; addNewAllow = true">
+                                                        <em class="fas fa-plus"></em>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div class="field is-horizontal is-flex is-align-items-center mb-3">
+                                                <div class="field-label is-small is-flex-grow-2">
+                                                    <label class="label" for="edit-rule-deny">Deny</label>
+                                                </div>
+                                                <div class="field-body is-flex is-flex-direction-row is-flex-wrap-wrap" id="edit-rule-deny">
+                                                    <template x-for="(match, index) in [...new Set(updatedRule.deny)]" :key="match">
+                                                         <span class="tag is-danger m-1 break-spaces editable-tag">
+                                                            <span x-text="match"></span>
+                                                            <button @click="updatedRule.deny.splice(updatedRule.deny.findIndex(v => v === match), 1)" class="delete is-small"></button>
+                                                        </span>
+                                                    </template>
+                                                    <template x-if="addNewDeny">
+                                                        <span class="tag is-light break-spaces">
+                                                            <input class="tag-number-input" placeholder=".*" x-model="newDeny"/>
+                                                        </span>
+                                                    </template>
+                                                    <span class="tag is-white break-spaces"
+                                                          data-tooltip="Add a new rule"
+                                                          @click="if (newDeny) {updatedRule.deny.push(newDeny); newDeny = '';}; addNewDeny = true">
+                                                        <em class="fas fa-plus"></em>
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </form>
+                                        <div class="is-flex is-justify-content-center">
+                                            <button class="button is-small" @click="editCard = ''">
+                                                <span>Cancel</span>
+                                            </button>
+                                            <button class="button is-small is-primary ml-2"
+                                                    @click="if (newAllow) {updatedRule.allow.push(newAllow); newAllow = '';}; if (newDeny) {updatedRule.deny.push(newDeny); newDeny = '';}; updateRules(updatedRule)">
+                                                <span class="icon"><i class="fas fa-save"></i></span>
+                                                <span>Save</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+
+                <!-- RELATIONSHIPS -->
+                <template x-if="inView.includes('relationships')">
+                    <div class="mt-2 is-flex is-flex-wrap-wrap is-align-content-flex-start"
+                         x-data="{newRelationships: [], newRelationship: {edge: '', source: {}, target: {}}}">
+                        <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center"
+                             x-on:click="addNewCard = true; editCard = null;">
+                            <p class="is-italic">+ new relationship</p>
+                        </div>
+                        <template x-if="addNewCard">
+                            <div class="box sources add-new mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                                <div class="w-90">
+                                    <form>
+                                        <div class="field is-horizontal">
+                                            <div class="field-label is-small is-flex-grow-2">
+                                                <label class="label" for="new-relationship-edge">Edge</label>
+                                            </div>
+                                            <div class="field-body">
+                                                <input id="new-relationship-edge" class="input is-small" placeholder="edge"
+                                                       x-model="newRelationship.edge">
+                                            </div>
+                                        </div>
+                                        <div class="field is-horizontal">
+                                            <div class="field-label is-small is-flex-grow-2">
+                                                <label class="label" for="new-relationship-source">Source</label>
+                                            </div>
+                                            <div class="field-body">
+                                                <input id="new-relationship-source" class="input is-small"
+                                                       placeholder="source trait"
+                                                       x-model="newRelationship.source.trait">
+                                            </div>
+                                        </div>
+                                        <div class="field is-horizontal">
+                                            <div class="field-label is-small is-flex-grow-2">
+                                                <label class="label" for="new-relationship-target">Target</label>
+                                            </div>
+                                            <div class="field-body">
+                                                <input id="new-relationship-target" class="input is-small mb-5"
+                                                       placeholder="target trait"
+                                                       x-model="newRelationship.target.trait">
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div>
+                                    <button class="button is-small" @click="addNewCard = false">
+                                        <span>Cancel</span>
+                                    </button>
+                                    <button class="button is-small is-primary ml-2"
+                                            @click="addRelationship(newRelationship); newRelationship = {edge: '', source: {}, target: {}}"
+                                            x-bind:disabled="!newRelationship.edge">
+                                        <span class="icon"><i class="fas fa-save"></i></span>
+                                        <span>Save</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                        <template x-for="(relationship, index) in filteredRelationships" :key="relationship.trait">
+                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column" @click.self="editCard = relationship.trait">
+                                <div>
+                                    <div class="is-flex is-justify-content-center mb-2">
+                                        <p x-bind:class="{'has-background-warning has-text-black': editCard === relationship.trait}" class="p-1"
+                                           x-text="relationship.trait"></p>
+                                        <template x-if="editCard === relationship.trait">
+                                            <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteRelationship(relationship.trait)">
+                                                <span class="icon"><em class="fas fa-trash"></em></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                    <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                                        <template x-for="(rel, index) in relationship.relationships"
+                                                  :key="rel.from+index">
+                                            <div class="is-size-7" x-bind:class="{'pr-2': index > 0}">
+                                                <span class="tag is-outlined is-light is-italic m-1 break-spaces"
+                                                      x-text="rel.from"></span>
+                                                <em class="has-text-white fas fa-arrow-right"></em>
+                                                <span class="tag is-outlined is-light is-italic m-1 break-spaces"
+                                                      x-text="rel.to"></span>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                                <template x-if="editCard === relationship.trait">
+                                    <div class="is-flex is-flex-direction-column is-flex-wrap-wrap is-align-items-center">
+                                        <template x-for="(newTag, index) in newRelationships"
+                                                  :key="'new'+relationship.trait+index">
+                                            <div class="is-size-7" x-bind:class="{'pr-2': index > 0}">
+                                                <div class="is-grouped is-grouped-multiline is-flex is-justify-content-center is-align-items-center mb-2">
+                                                    <span class="tag is-light is-italic m-1 break-spaces w-35">
+                                                        <input type="text" class="tag-input w-100"
+                                                               placeholder="source trait"
+                                                               x-model="newTag.source.trait">
+                                                    </span>
+                                                    <em class="has-text-white fas fa-arrow-right"></em>
+                                                    <span class="tag is-light is-italic m-1 break-spaces w-35">
+                                                        <input type="text" class="tag-input w-100"
+                                                               placeholder="target trait"
+                                                               x-model="newTag.target.trait">
+                                                    </span>
+                                                    <button @click="newRelationships.splice(index, 1)"
+                                                            class="button delete is-small"></button>
+                                                </div>
+                                            </div>
+                                        </template>
+                                        <div class="is-flex is-justify-content-center mb-2">
+                                            <span class="tag is-white break-spaces"
+                                                  data-tooltip="Add a new relationship"
+                                                  @click="newRelationships.push({edge: relationship.trait, source:{trait:''}, target:{trait:''}})">
+                                                <em class="fas fa-plus"></em>
+                                            </span>
+                                        </div>
+                                        <div>
+                                            <button class="button is-small" @click="editCard = ''">
+                                                <span>Cancel</span>
+                                            </button>
+                                            <button class="button is-small is-primary ml-2"
+                                                    @click="updateRelationship(newRelationships); editCard = ''; newRelationships = []">
+                                                <span class="icon"><i class="fas fa-save"></i></span>
+                                                <span>Save</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+            </div>
+        </template>
+    </div>
+
+
+    <!-- MODALS -->
+    <div class="modal" x-bind:class="{ 'is-active': openModal.isOpen }">
+        <div class="modal-background" @click="openModal.isOpen = false"></div>
+        <template x-if="openModal.name.includes('Delete')">
+            <div class="modal-card" style="z-index: 20">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Delete Fact Source?</p>
+                </header>
+                <section class="modal-card-body">
+                    <p>
+                        Are you sure you want to delete this fact source? This cannot be undone.
+                    </p>
+                </section>
+                <footer class="modal-card-foot">
+                    <nav class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button class="button is-small" @click="openModal.isOpen = false">Cancel</button>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button class="button is-danger is-small"
+                                        @click="deleteSource(); openModal.isOpen = false;">
+                                    <span class="icon"><em class="fas fa-trash"></em></span>
+                                    <span class="has-text-weight-bold">Delete Source</span>
+                                </button>
+                                <div>
+                                </div>
+                    </nav>
+                </footer>
+            </div>
+        </template>
+        <template x-if="openModal.name.includes('Ability')" x-data="{selectedAbility: null}">
+            <div class="modal-card" style="z-index: 20">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Add Fact from Ability </p>
+                </header>
+                <section class="modal-card-body">
+                    <form>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small">
+                                <label class="label"><span class="icon is-small"><em
+                                        class="fas fa-search"></em></span></label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <input class="input is-small" x-model="abilitySearch.query"
+                                               placeholder="Search for an ability..." x-on:keyup="filterAbilities()">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small is-flex-grow-2">
+                                <label class="label">Tactic</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <div class="select is-small is-fullwidth">
+                                            <select id="link-tactic" x-model="abilitySearch.tactic"
+                                                    x-on:change="filterAbilities()">
+                                                <option default value="">All tactics</option>
+                                                <template x-for="tactic in tactics" :key="tactic">
+                                                    <option x-text="tactic"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small is-flex-grow-2">
+                                <label class="label">Technique</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <div class="select is-small is-fullwidth">
+                                            <select id="link-technique" x-model="abilitySearch.technique"
+                                                    x-on:change="filterAbilities()">
+                                                <option default value="">All techniques</option>
+                                                <template x-for="technique in techniques" :key="technique">
+                                                    <option x-text="technique"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <hr>
+                    <div class="is-flex is-justify-content-space-between mb-2">
+                        <strong x-show="filteredAbilities.length">Select an ability</strong>
+                    </div>
+                    <template x-for="ability in filteredAbilities" :key="ability.ability_id">
+                        <div class="box selectable mb-2 mr-2 p-3 has-background-black-ter"
+                             x-bind:class="{'selected': selectedAbility === ability}"
+                             @click="selectedAbility = ability">
+                            <p class="mb-0">
+                                <span class="has-text-weight-bold" x-text="ability.name"></span>
+                                <span x-text="`${ability.technique_id}`"></span>
+                            </p>
+                            <div class="is-flex is-align-items-center">
+                                <label class="is-italic is-size-7 break-spaces" for="ability-fact-score">Score: </label>
+                                <input class="input has-background-grey-darker is-small m-2 w-50-px"
+                                       id="ability-fact-score" x-model="ability.score" type="number" required
+                                       pattern="[0-9]*" min="0" placeholder="1"/>
+                            </div>
+                            <p x-show="ability.factTraits" class="is-italic is-size-7 break-anywhere">
+                                <span>Facts: </span>
+                                <template x-for="fact in ability.factTraits">
+                                    <span class="has-background-warning has-text-black mr-2 px-1"
+                                          x-text="`${fact}`"></span>
+                                </template>
+                            </p>
+                            <p class="is-size-7" x-text="ability.description"></p>
+                        </div>
+                    </template>
+                    <template x-if="filteredAbilities.length === 0">
+                        <p class="is-size-7 is-italic ml-4 text-align-center">No results, try
+                            <button class="no-style button-link is-italic has-text-white is-size-7 px-0"
+                                    alt="click to reset search" @click="resetSearch()">
+                                resetting search
+                            </button>
+                            ?
+                        </p>
+                    </template>
+                </section>
+                <footer class="modal-card-foot">
+                    <nav class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button class="button is-small" @click="openModal.isOpen = false">Done</button>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button x-bind:disabled="!selectedAbility" class="button is-primary is-small"
+                                        @click="addFromAbility(selectedAbility.factTraits, selectedAbility.score); openModal.isOpen = false; inView = ['facts'];">
+                                    <span>Add Facts</span>
+                                </button>
+                                <div>
+                                </div>
+                    </nav>
+                </footer>
+            </div>
+        </template>
+        <template x-if="openModal.name.includes('Adversary')" x-data="{selectedAdversary: ''}">
+            <div class="modal-card" style="z-index: 20">
+                <header class="modal-card-head">
+                    <p class="modal-card-title">Add Fact from Adversary</p>
+                </header>
+                <section class="modal-card-body">
+                    <form>
+                        <div class="field is-horizontal">
+                            <div class="field-label is-small is-flex-grow-2">
+                                <label class="label" for="sourcesAdversaryDropdown">Adversary</label>
+                            </div>
+                            <div class="field-body">
+                                <div class="field">
+                                    <div class="control">
+                                        <div class="select is-small is-fullwidth">
+                                            <select id="sourcesAdversaryDropdown"
+                                                    x-on:change="filteredAbilities = []; getAdversaryFacts(selectedAdversary)"
+                                                    x-model="selectedAdversary">
+                                                <option value="" default disabled selected>Select one...</option>
+                                                <template x-for="adversary of adversaries"
+                                                          :key="adversary.adversary_id">
+                                                    <option x-bind:value="adversary.adversary_id"
+                                                            x-text="adversary.name"
+                                                            x-bind:title="adversary.description"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                    <template x-if="selectedAdversary">
+                        <span>
+                            <hr>
+                            <div class="is-flex is-justify-content-space-between mb-2">
+                                <strong x-show="selectedAdversary" x-text="'Adversary Abilities'"></strong>
+                            </div>
+                            <template x-if="filteredAbilities.length < 1">
+                                <div class="box mb-2 mr-2 p-3 has-background-black-ter">
+                                    <p class="text-align-center is-italic">This adversary has no facts available.</p>
+                                </div>
+                            </template>
+                            <template x-if="filteredAbilities.length > 0">
+                                <span>
+                                    <template x-for="(ability, index) in filteredAbilities" :key="index">
+                                        <div class="box mb-2 mr-2 p-3 has-background-black-ter">
+                                            <p>
+                                                <span class="has-text-weight-bold" x-text="ability.name"></span>
+                                                <span x-text="`${ability.technique_id}`"></span>
+                                            </p>
+                                            <div class="is-flex is-align-items-center">
+                                                <label class="is-italic is-size-7"
+                                                       for="adversary-fact-score">Score: </label>
+                                                <input class="input has-background-grey-darker is-small m-2 w-50-px"
+                                                       id="adversary-fact-score" x-model="ability.score" type="number"
+                                                       required pattern="[0-9]*" min="0" placeholder="1"/>
+                                            </div>
+                                            <p x-show="ability.factTraits" class="is-italic is-size-7 break-anywhere">
+                                                <span>Facts: </span>
+                                                <template x-for="fact in ability.factTraits">
+                                                    <span class="has-background-warning has-text-black mr-2 px-1"
+                                                          x-text="`${fact}`"></span>
+                                                </template>
+                                            </p>
+                                            <p class="is-size-7" x-text="ability.description"></p>
+                                        </div>
+                                    </template>
+                                </span>
+                            </template>
+                        </span>
+                    </template>
+                </section>
+                <footer class="modal-card-foot">
+                    <nav class="level">
+                        <div class="level-left">
+                            <div class="level-item">
+                                <button class="button is-small" @click="openModal.isOpen = false">Done</button>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <div class="level-item">
+                                <button x-bind:disabled="filteredAbilities.length < 1"
+                                        class="button is-primary is-small"
+                                        @click="addFromAdversary(); openModal.isOpen = false; inView = ['facts']">
+                                    <span>Add All Facts</span>
+                                </button>
+                                <div>
+                                </div>
+                    </nav>
+                </footer>
+            </div>
+        </template>
+    </div>
+</div>
 
 <script>
-    $(document).ready(function () {
-        stream('New sources will be created after each operation, containing the intelligence that was learned.')
-    });
-    let refresher = setInterval(refresh, 15000);
-    $('.section-profile').bind('destroyed', function() {
-        console.log('sources refresh off');
-        clearInterval(refresher);
-    });
+    function alpineSources() {
+        return {
+            sources: [],
+            inView: ['facts'],
+            sortAToZ: true,
+            isEditingSourceName: false,
 
-    function refresh(){
-        function sourceCallback(data){
-            data.forEach(function(s) {
-                let found = false;
-                $("#profile-source-name > option").each(function() {
-                    if($(this).val() === s.id) {
-                        found = true;
+            // filteredFacts = [{trait: '', scores: {1: [{score: 1, unique: '', value: ''}], 2: [{score: 2,  unique: '', value: ''}]}}]
+            filteredFacts: [],
+            // filteredRules = [{trait: '', allow_matches: [{value: '', allow: true}], deny_matches: [{value: '', allow: false}]}]
+            filteredRules: [],
+            // filteredRelationships = [{trait: '', relationships: [{from: '', to: ''}, {from: '', to: ''}]}]
+            filteredRelationships: [],
+
+            selectedSource: {
+                name: '',
+                relationships: []
+            },
+            selectedSourceId: '',
+
+            openModal: {
+                isOpen: false,
+                name: ''
+            },
+            tactics: [],
+            techniques: [],
+            filteredAbilities: [],
+            abilitySearch: {
+                query: '',
+                tactic: '',
+                technique: null
+            },
+            abilities: [],
+            adversaries: [],
+
+            addNewCard: false,
+            editCard: '',
+
+            getSources() {
+                apiV2('GET', '/api/v2/sources').then((sources) => {
+                    this.sources = sources.sort((a, b) => a.name.toLowerCase() > b.name.toLowerCase());
+                    this.getSource();
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            // Gets selected source and modifies object for display (i.e. filteredFacts is a different object from the source.facts object from the rest API)
+            getSource() {
+                if (!this.selectedSourceId) return;
+                this.selectedSource = this.sources.find((source) => source.id === this.selectedSourceId);
+                this.filterSource();
+            },
+
+            filterSource() {
+                const facts = {}; // bucket facts by 1) trait, 2) score
+                this.selectedSource.facts.forEach((f) => {
+                    if (!(facts[f.trait])) {
+                        const bucket = {};
+                        bucket[f.score] = {
+                            score: f.score,
+                            unique: f.unique,
+                            values: [f.value.replaceAll(',', ', ')]
+                        }; // score is defined twice because this object becomes an array later, and this keeps the score even after the {} is converted to an []
+                        facts[f.trait] = {
+                            trait: f.trait,
+                            scores: bucket
+                        };
+                    } else {
+                        if (!facts[f.trait].scores[f.score]) {
+                            const bucket = {
+                                score: f.score,
+                                unique: f.unique,
+                                values: [f.value.replaceAll(',', ', ')]
+                            };
+                            facts[f.trait].scores[f.score] = bucket;
+                        } else {
+                            facts[f.trait].scores[f.score].values = facts[f.trait].scores[f.score].values.concat([f.value.replaceAll(',', ', ')]);
+                        }
                     }
                 });
-                if(!found){
-                    $('#profile-source-name')
-                        .append($('<option></option>')
-                            .text(s.name)
-                            .val(s.id)
-                        );
+
+                let rules = {};
+                this.selectedSource.rules.forEach((rule) => {
+                    if (rules[rule.trait]) {
+                        if (rule.action === 'ALLOW') {
+                            rules[rule.trait].allow_matches.push(rule.match);
+                        } else if (rule.action === 'DENY') {
+                            rules[rule.trait].deny_matches.push(rule.match);
+                        }
+                    } else {
+                        if (rule.action === 'ALLOW') {
+                            rules[rule.trait] = {
+                                trait: rule.trait,
+                                allow_matches: [rule.match],
+                                deny_matches: []
+                            };
+                        } else if (rule.action === 'DENY') {
+                            rules[rule.trait] = {
+                                trait: rule.trait,
+                                allow_matches: [],
+                                deny_matches: [rule.match]
+                            };
+                        }
+                    }
+                });
+
+                let relationships = {};
+                this.selectedSource.relationships.forEach((r) => {
+                    if (relationships[r.edge]) {
+                        relationships[r.edge].relationships.push({
+                            from: r.source.name,
+                            to: r.target.name
+                        });
+                    } else {
+                        relationships[r.edge] = {
+                            trait: r.edge,
+                            relationships: [{
+                                from: r.source.name,
+                                to: r.target.name
+                            }]
+                        };
+                    }
+                });
+
+                // Convert buckets {} into array for easy looping in template
+                this.filteredFacts = Object.keys(facts).map(key => {
+                    const fact = facts[key];
+                    fact.scores = Object.keys(fact.scores).map(s => facts[key].scores[s]);
+                    return fact;
+                });
+                this.filteredRules = Object.keys(rules).map(key => rules[key]);
+                this.filteredRelationships = Object.keys(relationships).map(key => relationships[key]);
+                this.sortDisplay();
+            },
+
+            sortDisplay() {
+                if (this.inView.length > 0) {
+                    if (this.inView.includes('facts')) {
+                        this.sortAToZ ? this.filteredFacts = this.filteredFacts.sort((a, b) => a.trait.toLowerCase() < b.trait.toLowerCase() ? -1 : 1) :
+                            this.filteredFacts = this.filteredFacts.sort((a, b) => a.trait.toLowerCase() > b.trait.toLowerCase() ? -1 : 1);
+                    }
+                    if (this.inView.includes('rules')) {
+                        this.sortAToZ ? this.filteredRules = this.filteredRules.sort((a, b) => a.trait.toLowerCase() < b.trait.toLowerCase() ? -1 : 1) :
+                            this.filteredRules = this.filteredRules.sort((a, b) => a.trait.toLowerCase() > b.trait.toLowerCase() ? -1 : 1);
+                    }
+                    if (this.inView.includes('relationships')) {
+                        this.sortAToZ ? this.filteredRelationships = this.filteredRelationships.sort((a, b) => a.trait.toLowerCase() < b.trait.toLowerCase() ? -1 : 1) :
+                            this.filteredRelationships = this.filteredRelationships.sort((a, b) => a.trait.toLowerCase() > b.trait.toLowerCase() ? -1 : 1);
+                    }
                 }
-            });
-        }
-        restRequest('POST', {'index':'sources'}, sourceCallback, '/api/rest');
+            },
+
+            createSource() {
+                this.isEditingSourceName = true;
+                const newSource = {
+                    name: 'New source',
+                    facts: [],
+                    rules: [],
+                    relationships: []
+                };
+                apiV2('POST', '/api/v2/sources', newSource).then((src) => {
+                    toast('Added new fact source', true);
+                    this.isEditingSourceName = true;
+                    this.sources.push(src);
+                    this.selectedSourceId = src.id;
+                    this.selectedSource = src;
+                    this.getSource();
+                    this.$nextTick(() => {
+                        document.getElementById('sourceName').focus();
+                    });
+                }).catch((error) => {
+                    toast('Error adding source', false);
+                    console.error(error);
+                });
+            },
+
+            getFilters(abilities) {
+                abilities.forEach((a) => {
+                    this.tactics.push(a.tactic);
+                    this.techniques.push(`${a.technique_id} | ${a.technique_name}`);
+                });
+                this.tactics = [...new Set(this.tactics)].sort();
+                this.techniques = [...new Set(this.techniques)].sort();
+            },
+
+            filterAbilities() {
+                apiV2('GET', '/api/v2/abilities').then((abilities) => {
+                    this.getFilters(abilities);
+                    this.filteredAbilities = getFilteredAbilities(abilities, this.abilitySearch.query, this.abilitySearch.tactic, this.abilitySearch.technique);
+                    this.getAbilityFacts();
+                }).catch((error) => {
+                    toast('There was an error getting abilities', false);
+                    console.error(error);
+                });
+            },
+
+            getAbilityFacts() {
+                let abilitiesWithFacts = [];
+                this.filteredAbilities.forEach((a) => {
+                    let factTraits = [];
+                    if (a.executors) {
+                        a.executors.forEach((e) => {
+                            if (e.command) {
+                                const m = [...e.command.matchAll(/#{(.*?)}/gm)];
+                                if (m && m.length > 0) factTraits = factTraits.concat(m.map((variable) => variable[1])); // find all abilities where an executor has a command with a ${} fact variable
+                            }
+                        });
+                        if (factTraits.length > 0) {
+                            abilitiesWithFacts.push({
+                                ...a,
+                                score: 1,
+                                factTraits: [...new Set(factTraits)]
+                            });
+                        }
+                    }
+                });
+                this.filteredAbilities = abilitiesWithFacts;
+            },
+
+            addFromAbility(factTraits, score, fromAdversary = false) { // add all facts found from abilities
+                this.openModal.isOpen = false;
+                factTraits.forEach((val) => {
+                    this.addFact({
+                        trait: val,
+                        value: '',
+                        score: score
+                    }, true);
+                });
+                if (!fromAdversary) toast('Added facts to source', true);
+            },
+
+            getAdversaries() {
+                apiV2('GET', '/api/v2/adversaries').then((adversaries) => {
+                    this.adversaries = adversaries;
+                    return apiV2('GET', '/api/v2/abilities');
+                }).then((abilities) => {
+                    this.abilities = abilities;
+                }).catch((error) => {
+                    toast('Error getting adversaries', false);
+                    console.error(`Error getting adversaries: ${error}`);
+                });
+            },
+
+            getAdversaryFacts(selectedAdversaryID) {
+                const selectedAdversary = this.adversaries.find((adversary) => adversary.adversary_id === selectedAdversaryID);
+                this.filteredAbilities = selectedAdversary.atomic_ordering.map((ability_id) => ({ ...this.abilities.find((ability) => ability.ability_id === ability_id) }));
+                this.getAbilityFacts();
+            },
+
+            addFromAdversary() {
+                this.filteredAbilities.forEach((a) => {
+                    if (a.factTraits) {
+                        this.addFromAbility(a.factTraits, a.score, true);
+                    }
+                });
+            },
+
+            duplicateSource(source) {
+                const newSource = {
+                    ...source,
+                    name: `${source.name} (copy)`,
+                    id: ''
+                };
+                apiV2('POST', '/api/v2/sources', newSource).then((src) => {
+                    this.sources.push(src);
+                    this.selectedSourceId = src.id;
+                    this.selectedSource = src;
+                    this.getSources();
+                    toast('Duplicated fact source', true);
+                }).catch((error) => {
+                    toast('Error duplicating source', false);
+                    console.error(error);
+                });
+            },
+
+            updateFactSource(source = this.selectedSource) {
+                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, source).then((r) => {
+                    toast('Updated source', true);
+                    this.selectedSource = r;
+                    this.getSources();
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            addFact(newFact, bulkAdd = false) {
+                const updatedSource = { ...this.selectedSource };
+                updatedSource.facts.push(newFact);
+                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, updatedSource).then((res) => {
+                    if (!bulkAdd) toast('Updated source', res);
+                    this.getSources();
+                    this.addNewCard = false;
+                }).catch((error) => {
+                    toast('Error adding fact', false);
+                    console.error(error);
+                });
+            },
+
+            addFacts(newFacts) {
+                newFacts.forEach(f => this.addFact(f, true));
+                toast('Added new fact.', true);
+            },
+
+            updateFact(editedValues, editedScores, newTags) {
+                // Do a comparison of facts and new facts--replace uniques with ones in the new one
+                let updated = this.selectedSource.facts.map((f) => {
+                    if (!editedValues[f.unique] && !editedScores[f.unique]) {
+                        return f; // return original fact
+                    }
+                    let fact = { trait: f.trait };
+                    if (editedValues[f.unique]) {
+                        fact.value = editedValues[f.unique];
+                    } else {
+                        fact.value = f.value;
+                    }
+                    if (editedScores[f.unique]) {
+                        fact.score = isNaN(editedScores[f.unique]) ? 1 : Number(editedScores[f.unique]);
+                    } else {
+                        fact.score = f.score;
+                    }
+                    return fact;
+                });
+
+                updated = updated.concat(newTags);
+                this.editCard = null;
+                this.selectedSource.facts = updated;
+                this.updateFactSource(this.selectedSource);
+            },
+
+            deleteFactValue(trait, unique, value) {
+                this.selectedSource.facts = this.selectedSource.facts.filter((f) => {
+                    return (f.unique !== unique || f.value !== value);
+                });
+                if (this.selectedSource.facts.filter((f) => f.trait === trait).length < 1) this.deleteFact(trait); // delete fact if it doesn't have any values
+                this.updateFactSource(this.selectedSource);
+            },
+
+            deleteFact(factTrait) {
+                this.selectedSource.facts = this.selectedSource.facts.filter((f) => f.trait !== factTrait);
+                this.updateFactSource(this.selectedSource);
+            },
+
+            updateRules(updatedRule) {
+                this.selectedSource.rules = this.selectedSource.rules.filter(match => match.trait !== updatedRule.trait);
+                this.editCard = '';
+                this.addRule(updatedRule);
+            },
+
+            addRule(newRule) {
+                if (newRule.allow) {
+                    const allowMatches = newRule.allow.map((m) => ({
+                        trait: newRule.trait,
+                        match: m,
+                        action: 'ALLOW'
+                    }));
+                    this.selectedSource.rules = this.selectedSource.rules.concat(allowMatches);
+                }
+                if (newRule.deny) {
+                    const denyMatches = newRule.deny.map((m) => ({
+                        trait: newRule.trait,
+                        match: m,
+                        action: 'DENY'
+                    }));
+                    this.selectedSource.rules = this.selectedSource.rules.concat(denyMatches);
+                }
+                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then(() => {
+                    toast('Updated source', true);
+                    this.getSources();
+                    this.addNewCard = false;
+                }).catch((error) => {
+                    toast('Error adding rule', false);
+                    console.error(error);
+                });
+            },
+
+            deleteRule(trait) {
+                this.selectedSource.rules = this.selectedSource.rules.filter((r) => r.trait !== trait);
+                this.updateFactSource();
+            },
+
+            updateRelationship(newRelationships) {
+                if (newRelationships) {
+                    newRelationships.forEach((r) => this.addRelationship(r));
+                }
+            },
+
+            addRelationship(newRelationship) {
+                if (!newRelationship.source.trait && !newRelationship.target.trait) return;
+                this.selectedSource.relationships.push(newRelationship);
+                apiV2('PUT', `/api/v2/sources/${this.selectedSource.id}`, this.selectedSource).then(() => {
+                    toast('Updated source', true);
+                    this.addNewCard = false;
+                    this.getSources();
+                }).catch((error) => {
+                    toast('Error adding relationship', false);
+                    console.error(error);
+                });
+            },
+
+            deleteRelationship(trait) {
+                this.selectedSource.relationships = this.selectedSource.relationships.filter((r) => r.edge !== trait);
+                this.updateFactSource();
+            },
+
+            deleteSource() {
+                apiV2('DELETE', `/api/v2/sources/${this.selectedSourceId}`).then((res) => {
+                    toast('Deleted fact source', true);
+                    this.selectedSourceId = '';
+                    this.selectedSource = {
+                        name: '',
+                        relationships: []
+                    };
+                    this.getSources();
+                }).catch((error) => {
+                    toast('Error deleting source', false);
+                    console.error(error);
+                });
+            },
+
+            saveSourceName() {
+                if (!this.selectedSource.name) {
+                    toast('Source name cannot be blank', false);
+                    return;
+                }
+
+                apiV2('PATCH', `/api/v2/sources/${this.selectedSource.id}`, { name: this.selectedSource.name }).then(() => {
+                    toast('Source name updated', true);
+                    this.isEditingSourceName = false;
+                }).catch((error) => {
+                    toast('Error loading page', false);
+                    console.error(error);
+                });
+            },
+
+            downloadSource() {
+                apiV2('GET', `/api/v2/sources/${this.selectedSourceId}`)
+                    .then((res) => {
+                      const dataURL = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(res, null, 2))}`
+                      const fileName = `${this.selectedSource.name}.json`
+                      const elem = document.createElement('a');
+                      elem.setAttribute('href', dataURL);
+                      elem.setAttribute('download', fileName);
+                      elem.click();
+                      elem.remove();
+                    }).catch((error) => {
+                      toast('Error downloading source');
+                      console.error(error)
+                    });
+            },
+
+            resetSearch() {
+                this.abilitySearch = {
+                    query: '',
+                    tactic: '',
+                    technique: null
+                };
+                this.filterAbilities();
+            },
+        };
     }
 
-    function toggleSourceView() {
-        $('#viewSource').toggle();
-        $('#addSource').toggle();
-        clearFactCanvas();
-    }
-
-    function clearFactCanvas(){
-        $('#factTbl tbody tr').remove();
-        $('#source-rules').empty();
-        $('#source-relationships').empty();
-        if($('#source-name').data('id')){
-            $('#source-name').data('id', null);
-        }
-    }
-
-    function loadSource() {
-        function loadSourceCallback(data) {
-            clearFactCanvas();
-            let source = $('#source-name');
-            data[0].facts.forEach(f => {
-                addFactRow(f.trait, f.value);
-            });
-            source.data('id', data[0].id);
-            applyRules(data[0].rules);
-            source.text(data[0].name);
-            populateRelationships(data[0].relationships);
-        }
-        stream('Traits can be used inside ability commands as variables, which get replaced at runtime with their corresponding values.');
-        restRequest('POST', {'index':'sources', 'id': $('#profile-source-name').val()}, loadSourceCallback);
-    }
-
-    function addFactRow(trait, value){
-        $('#factTbl tbody').append($('<tr></tr>')
-            .append($('<td></td>')
-                .append($('<p></p>')
-                    .text(trait)
-                    .attr('contenteditable', 'true')
-                )
-            )
-            .append($('<td></td>')
-                .append($('<p></p>')
-                    .text(value)
-                    .attr('contenteditable', 'true')
-                )
-            )
-            .append($('<td></td>')
-                .append($('<p></p>')
-                    .html('&#x274C;')
-                    .attr('contenteditable', 'true')
-                    .click(event => {
-                        $(event.currentTarget).closest('tr').remove()
-                    })
-                    .css('cursor', 'pointer')
-                )
-            )
-        );
-    }
-
-    function saveSource(){
-        function saveSourceCallback(data) {
-            stream('New fact source saved!');
-        }
-        let source = $('#source-name');
-        let name = source.text();
-        let id = source.data('id');
-        if(!name){ warn('Please enter a name!'); return; }
-        if(!id) {
-            id = uuidv4();
-            source.data('id', id);
-        }
-        let data = {};
-        data['index'] = 'sources';
-        data['id'] = id;
-        data['name'] = name;
-        data['facts'] = [];
-        data['rules'] = [];
-        data['relationships'] = []
-
-        $('#factTbl tbody tr').each(function () {
-            let trait = $(this.cells[0]).text();
-            let value = $(this.cells[1]).text();
-            data['facts'].push({'trait':trait,'value':value});
-        });
-
-        let invalidRules = 0;
-        $('#source-rules li').each(function() {
-            let trait = $(this).find('#trait').val();
-            let match = $(this).find('#match').val();
-            let action = $(this).find('#action').val();
-            if(trait === undefined || match === undefined || action === undefined){
-                return;
-            }
-            if(action !== 'ALLOW' && action !== 'DENY') {
-                invalidRules += 1;
-            }
-            data['rules'].push({'trait': trait, 'match': match, 'action': action});
-        });
-        if(invalidRules > 0) {
-            warn(invalidRules + ' invalid rules! Action must be either ALLOW or DENY.');
-            return;
-        }
-        if(data['facts'].length === 0 && data['rules'].length === 0) { warn('Sources must have at least one rule or one fact specified'); return; }
-        $('#source-relationships li').each(function() {
-            let sourceTrait = $(this).find('#sourceTrait').val();
-            let sourceValue = $(this).find('#sourceValue').val();
-            let edge = $(this).find('#edge').val();
-            let targetTrait = $(this).find('#targetTrait').val();
-            let targetValue = $(this).find('#targetValue').val();
-            if(sourceTrait === undefined || sourceValue === undefined || edge === undefined || targetTrait == undefined || targetValue == undefined){
-                return;
-            }
-            data['relationships'].push({'source': {'trait':sourceTrait,'value':sourceValue}, 'edge': edge, 'target': {'trait':targetTrait,'value':targetValue}});
-        });
-        if(data['relationships'].length > 0 && data['facts'].length === 0) { warn('Relationships require at least one fact to be specified.'); return; }
-        restRequest('PUT', data, saveSourceCallback);
-    }
-
-    function viewRules(){
-        document.getElementById("rule-modal").style.display = "block";
-        let sourceName = $('#source-name').text();
-        $('#rules-name').text(sourceName);
-    }
-
-    function applyRules(rules){
-        rules.forEach(r => {
-            let template = $("#rule-template").clone();
-            template.removeAttr('id');
-            template.find('#trait').val(r.trait);
-            template.find('#match').val(r.match);
-            if(r.action === 0) {
-                template.find('#action').val('DENY');
-            } else if (r.action === 1) {
-                template.find('#action').val('ALLOW');
-            }
-            template.show();
-            $('#source-rules').append(template);
-        });
-    }
-
-    function addRuleBlock(){
-        let template = $("#rule-template").clone();
-        template.removeAttr('id');
-        template.show();
-        $('#source-rules').append(template);
-    }
-
-    function populateRelationships(relationships){
-        relationships.forEach(r => {
-            let template = $("#relationship-template").clone();
-            template.removeAttr('id');
-            template.find('#sourceTrait').val(r.source.trait);
-            template.find('#sourceValue').val(r.source.value);
-            template.find('#edge').val(r.edge);
-            template.find('#targetTrait').val(r.target.trait);
-            template.find('#targetValue').val(r.target.value);
-            template.show();
-            $('#source-relationships').append(template);
-        });
-    }
-
-    function viewRelationships(){
-        document.getElementById("relationship-modal").style.display = "block";
-        let sourceName = $('#source-name').text();
-        $('#relationship-name').text(sourceName);
-    }
-
-    function addRelationshipBlock(){
-        let template = $("#relationship-template").clone();
-        template.removeAttr('id');
-        template.show();
-        $('#source-relationships').append(template);
-    }
-
-    //# sourceURL=sources.js
+    // # sourceURL=sources.js
 </script>
+
+<style scoped>
+    #sourcePage .box.selectable:hover, #sourcePage .box.selected {
+        cursor: hand;
+        border: 2px solid white;
+    }
+
+    #sourcePage .delete-card-button {
+        position: absolute;
+        top: 10px;
+        right: 16px;
+    }
+
+    #sourcePage .sidebar {
+        min-height: calc(100vh - 230px);
+        border-right: 1px solid rgb(97, 97, 97);
+    }
+
+    #sourcePage .hr {
+        content: "";
+        height: 1px;
+        background-color: rgb(97, 97, 97);
+        margin: 0.5em 0 1em;
+    }
+
+    #sourcePage button.no-style {
+        background-color: transparent;
+        border: none;
+        box-shadow: none;
+    }
+
+    #sourcePage .button.no-style:focus, #sourcePage .button.no-style.is-focused {
+        color: white;
+    }
+
+    @media (max-width: 900px) {
+        #sourcePage .box.sources {
+            width: 98%;
+        }
+    }
+
+    @media (min-width: 900px) and (max-width: 1300px) {
+        #sourcePage .box.sources {
+            width: 48%;
+        }
+    }
+
+    @media (min-width: 1300px) {
+        #sourcePage .box.sources {
+            width: 32%;
+        }
+    }
+
+    #sourcePage .box.sources .field-body {
+        flex-grow: 4 !important;
+    }
+
+    #sourcePage .box.sources {
+        position: relative;
+        cursor: pointer;
+        border: 1px solid transparent;
+        background-color: #272727;
+        word-break: break-word;
+    }
+
+    #sourcePage .box.sources:hover {
+        border: 1px solid #474747;
+    }
+
+    #sourcePage .box.sources.add-new {
+        border: 2px solid #ffffff08;
+    }
+
+    #sourcePage .box.sources.add-new:hover {
+        cursor: pointer;
+        background-color: #ffffff38;
+    }
+
+    #sourcePage .editable-tag {
+        cursor: text !important;
+    }
+
+    #sourcePage .break-anywhere {
+        word-break: break-word;
+    }
+
+    #sourcePage .break-spaces, #sourcePage .button.is-small {
+        height: auto !important;
+        overflow-wrap: anywhere;
+        white-space: break-spaces !important;
+        min-height: 2.3em;
+    }
+
+    #sourcePage .tag-input, #sourcePage .tag-number-input {
+        border: none;
+        background-color: transparent;
+    }
+
+    #sourcePage .tag-number-input {
+        width: 2.5em;
+    }
+
+    #sourcePage .w-110-px {
+        width: 110px;
+    }
+
+    #sourcePage .w-50-px {
+        width: 50px !important;
+    }
+
+    #sourcePage .w-35 {
+        width: 35% !important;
+    }
+
+    #sourcePage .w-90 {
+        width: 90% !important;
+    }
+
+    #sourcePage .w-100 {
+        width: 100% !important;
+    }
+</style>

@@ -24,7 +24,7 @@ class PluginSchema(ma.Schema):
 class Plugin(FirstClassObjectInterface, BaseObject):
 
     schema = PluginSchema()
-    display_schema = PluginSchema(only=['name', 'enabled', 'address'])
+    display_schema = PluginSchema(only=['name', 'description', 'enabled', 'address'])
 
     @property
     def unique(self):
@@ -83,8 +83,6 @@ class Plugin(FirstClassObjectInterface, BaseObject):
                     await expansion(services)
         except Exception as e:
             logging.error('Error expanding plugin=%s, %s' % (self.name, e))
-
-    """ PRIVATE """
 
     def _load_module(self):
         try:

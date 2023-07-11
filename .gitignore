@@ -19,6 +19,7 @@ calderaenv/
 conf/*.yml
 !conf/default.yml
 data/object_store
+data/fact_store
 data/results/*
 !data/results/.gitkeep
 data/payloads/*
@@ -32,6 +33,7 @@ data/objectives/*
 data/backup/*
 !data/backup/.gitkeep
 .tox/
+node_modules/
 
 # coverage reports
 htmlcov/

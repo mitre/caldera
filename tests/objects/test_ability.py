@@ -4,50 +4,50 @@ from app.objects.c_agent import Agent
 
 class TestAbility:
 
-    def test_privileged_to_run__1(self, loop, data_svc):
+    def test_privileged_to_run__1(self, event_loop, data_svc):
         """ Test ability.privilege == None """
-        agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
-        ability = loop.run_until_complete(data_svc.store(
+        agent = event_loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
+        ability = event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', privilege=None)
         ))
         assert agent.privileged_to_run(ability)
 
-    def test_privileged_to_run__2(self, loop, data_svc):
+    def test_privileged_to_run__2(self, event_loop, data_svc):
         """ Test ability.privilege == 'User' """
-        agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
-        ability = loop.run_until_complete(data_svc.store(
+        agent = event_loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
+        ability = event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', privilege='User')
         ))
         assert agent.privileged_to_run(ability)
 
-    def test_privileged_to_run__3(self, loop, data_svc):
+    def test_privileged_to_run__3(self, event_loop, data_svc):
         """ Test ability.privilege == 'Elevated' """
-        agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
-        ability = loop.run_until_complete(data_svc.store(
+        agent = event_loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0)))
+        ability = event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', privilege='Elevated')
         ))
         assert not agent.privileged_to_run(ability)
 
-    def test_privileged_to_run__4(self, loop, data_svc):
+    def test_privileged_to_run__4(self, event_loop, data_svc):
         """ Test ability.privilege == 'User' and agent.privilege == 'Elevated' """
-        agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
-        ability = loop.run_until_complete(data_svc.store(
+        agent = event_loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
+        ability = event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', privilege='User')
         ))
         assert agent.privileged_to_run(ability)
 
-    def test_privileged_to_run__5(self, loop, data_svc):
+    def test_privileged_to_run__5(self, event_loop, data_svc):
         """ Test ability.privilege == 'Elevated' and agent.privilege == 'Elevated' """
-        agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
-        ability = loop.run_until_complete(data_svc.store(
+        agent = event_loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
+        ability = event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123', privilege='Elevated')
         ))
         assert agent.privileged_to_run(ability)
 
-    def test_privileged_to_run__6(self, loop, data_svc):
+    def test_privileged_to_run__6(self, event_loop, data_svc):
         """ Test ability.privilege == 'None' and agent.privilege == 'Elevated' """
-        agent = loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
-        ability = loop.run_until_complete(data_svc.store(
+        agent = event_loop.run_until_complete(data_svc.store(Agent(sleep_min=1, sleep_max=2, watchdog=0, privilege='Elevated')))
+        ability = event_loop.run_until_complete(data_svc.store(
             Ability(ability_id='123')
         ))
         assert agent.privileged_to_run(ability)
@@ -110,3 +110,9 @@ class TestAbility:
         test_ability.remove_all_executors()
 
         assert len(list(test_ability.executors)) == 0
+
+    def test_ability_name_duplication(self, event_loop, data_svc):
+        ability1 = event_loop.run_until_complete(data_svc.store(Ability(ability_id='12345', name='testA')))
+        ability2 = event_loop.run_until_complete(data_svc.store(Ability(ability_id='54321', name='testA')))
+        assert ability1.name != ability2.name
+        assert ability2.name == 'testA (2)'

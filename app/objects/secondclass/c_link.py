@@ -2,7 +2,7 @@ import asyncio
 import logging
 import uuid
 from base64 import b64decode
-from datetime import datetime
+from datetime import datetime, timezone
 from importlib import import_module
 
 import marshmallow as ma
@@ -13,6 +13,7 @@ from app.objects.secondclass.c_fact import Fact, FactSchema, OriginType
 from app.objects.secondclass.c_relationship import RelationshipSchema
 from app.objects.secondclass.c_visibility import Visibility, VisibilitySchema
 from app.utility.base_object import BaseObject
+from app.utility.base_parser import PARSER_SIGNALS_FAILURE
 from app.utility.base_service import BaseService
 
 
@@ -27,17 +28,18 @@ class LinkSchema(ma.Schema):
     id = ma.fields.String(missing='')
     paw = ma.fields.String()
     command = ma.fields.String()
+    plaintext_command = ma.fields.String()
     status = ma.fields.Integer(missing=-3)
     score = ma.fields.Integer(missing=0)
     jitter = ma.fields.Integer(missing=0)
-    decide = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S')
+    decide = ma.fields.DateTime(format=BaseObject.TIME_FORMAT)
     pin = ma.fields.Integer(missing=0)
     pid = ma.fields.String()
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
     used = ma.fields.List(ma.fields.Nested(FactSchema()))
     unique = ma.fields.String()
-    collect = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', default='')
+    collect = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, default='')
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
     executor = ma.fields.Nested(ExecutorSchema())
@@ -46,7 +48,7 @@ class LinkSchema(ma.Schema):
     host = ma.fields.String(missing=None)
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
-    agent_reported_time = ma.fields.DateTime(format='%Y-%m-%d %H:%M:%S', missing=None)
+    agent_reported_time = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, missing=None)
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
@@ -129,6 +131,13 @@ class Link(BaseObject):
     def status(self):
         return self._status
 
+    @property
+    def display(self):
+        dump = LinkSchema(exclude=['jitter']).dump(self)
+        dump['command'] = self.decode_bytes(dump['command'])
+        dump['plaintext_command'] = self.decode_bytes(dump['plaintext_command'])
+        return dump
+
     @status.setter
     def status(self, value):
         previous_status = getattr(self, '_status', NO_STATUS_SET)
@@ -150,11 +159,12 @@ class Link(BaseObject):
     def is_global_variable(cls, variable):
         return variable in cls.RESERVED
 
-    def __init__(self, command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
+    def __init__(self, command='', plaintext_command='', paw='', ability=None, executor=None, status=-3, score=0, jitter=0, cleanup=0, id='',
                  pin=0, host=None, deadman=False, used=None, relationships=None, agent_reported_time=None):
         super().__init__()
         self.id = str(id)
         self.command = command
+        self.plaintext_command = plaintext_command
         self.command_hash = None
         self.paw = paw
         self.host = host
@@ -164,7 +174,7 @@ class Link(BaseObject):
         self.status = status
         self.score = score
         self.jitter = jitter
-        self.decide = datetime.now()
+        self.decide = datetime.now(timezone.utc)
         self.pid = None
         self.collect = None
         self.finish = None
@@ -190,8 +200,15 @@ class Link(BaseObject):
             source_facts = operation.source.facts if operation else []
             try:
                 relationships = await self._parse_link_result(result, parser, source_facts)
+
+                if len(relationships) > 0 and relationships[0] == PARSER_SIGNALS_FAILURE:
+                    logging.getLogger('link').debug(f'link {self.id} (ability id={self.ability.ability_id}) encountered '
+                                                    f'an error during execution, which was caught during parsing.')
+                    self.status = self.states['ERROR']
+                    relationships = []  # we didn't actually get anything out of this, so let's reset
+                else:
+                    await self.create_relationships(relationships, operation)
                 await update_scores(operation, increment=len(relationships), used=self.used, facts=self.facts)
-                await self._create_relationships(relationships, operation)
             except Exception as e:
                 logging.getLogger('link').debug('error in %s while parsing ability %s: %s'
                                                 % (parser.module, self.ability.ability_id, e))
@@ -214,8 +231,6 @@ class Link(BaseObject):
     def replace_origin_link_id(self):
         decoded_cmd = self.decode_bytes(self.command)
         self.command = self.encode_string(decoded_cmd.replace(self.RESERVED['origin_link_id'], self.id))
-
-    """ PRIVATE """
 
     def _emit_status_change_event(self, from_status, to_status):
         event_svc = BaseService.get_service('event_svc')
@@ -244,25 +259,29 @@ class Link(BaseObject):
         module = import_module(module_info['module'])
         return getattr(module, module_type)(module_info)
 
-    async def _create_relationships(self, relationships, operation):
+    async def create_relationships(self, relationships, operation):
         for relationship in relationships:
             relationship.origin = operation.id if operation else self.id
-            await self._save_fact(operation, relationship.source, relationship.score, relationship.shorthand)
-            await self._save_fact(operation, relationship.target, relationship.score, relationship.shorthand)
+            await self.save_fact(operation, relationship.source, relationship.score, relationship.shorthand)
+            await self.save_fact(operation, relationship.target, relationship.score, relationship.shorthand)
             if all((relationship.source.trait, relationship.edge)):
                 knowledge_svc_handle = BaseService.get_service('knowledge_svc')
                 await knowledge_svc_handle.add_relationship(relationship)
                 self.relationships.append(relationship)
 
-    async def _save_fact(self, operation, fact, score, relationship):
+    async def save_fact(self, operation, fact, score, relationship):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
         all_facts = await operation.all_facts() if operation else self.facts
         source = operation.id if operation else self.id
         rl = [relationship] if relationship else []
         if all([fact.trait, fact.value]):
+            if operation and operation.source:
+                if any([(fact.trait, fact.value) == (x.trait, x.value) for x in
+                        await knowledge_svc_handle.get_facts(criteria=dict(source=operation.source.id))]):
+                    source = operation.source.id
             fact.source = source  # Manual addition to ensure the check works correctly
             if not await knowledge_svc_handle.check_fact_exists(fact, all_facts):
-                f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=self.paw,
+                f_gen = Fact(trait=fact.trait, value=fact.value, source=source, score=score, collected_by=[self.paw],
                              technique_id=self.ability.technique_id, links=[self.id], relationships=rl,
                              origin_type=OriginType.LEARNED)
                 self.facts.append(f_gen)
@@ -275,10 +294,13 @@ class Link(BaseObject):
                     existing_fact.links.append(self.id)
                 if relationship not in existing_fact.relationships:
                     existing_fact.relationships.append(relationship)
+                if self.paw not in existing_fact.collected_by and existing_fact not in self.used:
+                    existing_fact.collected_by.append(self.paw)
                 await knowledge_svc_handle.update_fact(criteria=dict(trait=fact.trait, value=fact.value,
                                                                      source=fact.source),
                                                        updates=dict(links=existing_fact.links,
-                                                                    relationships=existing_fact.relationships))
+                                                                    relationships=existing_fact.relationships,
+                                                                    collected_by=existing_fact.collected_by))
                 existing_local_record = [x for x in self.facts if x.trait == fact.trait and x.value == fact.value]
                 if existing_local_record:
                     existing_local_record[0].links = existing_fact.links

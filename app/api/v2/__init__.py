@@ -21,6 +21,9 @@ def make_app(services):
     from .handlers.planner_api import PlannerApi
     PlannerApi(services).add_routes(app)
 
+    from .handlers.ability_api import AbilityApi
+    AbilityApi(services).add_routes(app)
+
     from .handlers.plugins_api import PluginApi
     PluginApi(services).add_routes(app)
 
@@ -36,6 +39,9 @@ def make_app(services):
     from .handlers.agent_api import AgentApi
     AgentApi(services).add_routes(app)
 
+    from .handlers.schedule_api import ScheduleApi
+    ScheduleApi(services).add_routes(app)
+
     from .handlers.operation_api import OperationApi
     OperationApi(services).add_routes(app)
 
@@ -44,5 +50,8 @@ def make_app(services):
 
     from .handlers.fact_api import FactApi
     FactApi(services).add_routes(app)
+
+    from .handlers.contact_api import ContactApi
+    ContactApi(services).add_routes(app)
 
     return app

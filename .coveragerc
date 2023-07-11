@@ -1,9 +1,9 @@
 [run]
 source =
-    .
-omit =
-    *tests*
-    *.tox*
-    *venv*
+    ./app
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
 [html]
 directory = _htmlcov

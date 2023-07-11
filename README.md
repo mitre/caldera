@@ -4,29 +4,32 @@
 [![codecov](https://codecov.io/gh/mitre/caldera/branch/master/graph/badge.svg)](https://codecov.io/gh/mitre/caldera)
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
 
-# CALDERA&trade;
+# MITRE Caldera&trade;
 
-*Full documentation, training and use-cases can be found [here](https://caldera.readthedocs.io/en/latest/).*
-
-CALDERA&trade; is a cyber security framework designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
+MITRE Caldera&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
 
 The framework consists of two components:
 
-1) **The core system**. This is the framework code, consisting of what is available in this repository. Included is 
-an asynchronous command-and-control (C2) server with a REST API and a web interface. 
+1) **The core system**. This is the framework code, consisting of what is available in this repository. Included is
+an asynchronous command-and-control (C2) server with a REST API and a web interface.
 2) **Plugins**. These repositories expand the core framework capabilities and providing additional functionality. Examples include agents, reporting, collections of TTPs and more.
+
+## Resources and Socials
+* 📜 [Documentation, training, and use-cases](https://caldera.readthedocs.io/en/latest/)
+* ✍️ [Caldera's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
+* 🌐 [Homepage](https://caldera.mitre.org)
 
 ## Plugins
 
 :star: Create your own plugin! Plugin generator: **[Skeleton](https://github.com/mitre/skeleton)** :star:
 
 ### Default
+These plugins are supported and maintained by the Caldera team.
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Red Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
-- **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
 - **[Debrief](https://github.com/mitre/debrief)** (operations insights)
 - **[Emu](https://github.com/mitre/emu)** (CTID emulation plans)
@@ -34,7 +37,6 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 - **[GameBoard](https://github.com/mitre/gameboard)** (visualize joint red and blue operations)
 - **[Human](https://github.com/mitre/human)** (create simulated noise on an endpoint)
 - **[Manx](https://github.com/mitre/manx)** (shell functionality and reverse shell payloads)
-- **[Mock](https://github.com/mitre/mock)** (simulate agents in operations)
 - **[Response](https://github.com/mitre/response)** (incident response)
 - **[Sandcat](https://github.com/mitre/sandcat)** (default agent)
 - **[SSL](https://github.com/mitre/SSL)** (enable https for caldera)
@@ -42,7 +44,9 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 - **[Training](https://github.com/mitre/training)** (certification and training course)
 
 ### More
-These plugins are ready to use but are not included by default:
+These plugins are ready to use but are not included by default and are not maintained by the Caldera team.
+- **[Arsenal](https://github.com/mitre-atlas/arsenal)** (MITRE ATLAS techniques and profiles)
+- **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
 - **[Pathfinder](https://github.com/center-for-threat-informed-defense/caldera_pathfinder)** (vulnerability scanning)
 - **[SAML](https://github.com/mitre/saml)** (SAML authentication)
 
@@ -51,48 +55,76 @@ These plugins are ready to use but are not included by default:
 These requirements are for the computer running the core framework:
 
 * Any Linux or MacOS
-* Python 3.6.1+ (with Pip3)
-* Google Chrome is our only supported browser
+* Python 3.7+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
+* Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
 
 ## Installation
 
-Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins. If you clone master - or any non-release branch - you may experience bugs.
+Concise installation steps:
 ```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch 3.1.0
+git clone https://github.com/mitre/caldera.git --recursive
+cd caldera
+pip3 install -r requirements.txt
+python3 server.py --insecure
+```
+
+Full steps:
+Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins.
+```Bash
+git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x
 ```
 
 Next, install the PIP requirements:
 ```Bash
 pip3 install -r requirements.txt
 ```
-**Super-power your CALDERA server installation! [Install GoLang (1.13+)](https://golang.org/doc/install)**
+**Super-power your Caldea server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
 
-Finally, start the server. 
+Finally, start the server.
 ```Bash
 python3 server.py --insecure
 ```
 
-Collectively this would be:
+Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
+
+## Docker Deployment
+To build a Caldera docker image, ensure you have docker installed and perform the following actions:
 ```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch 3.1.0
+# Recursively clone the Caldera repository if you have not done so
+git clone https://github.com/mitre/caldera.git --recursive
+
+# Build the docker image. Change image tagging as desired.
+# WIN_BUILD is set to true to allow Caldera installation to compile windows-based agents.
+# Alternatively, you can use the docker compose YML file via "docker-compose build"
 cd caldera
-pip3 install -r requirements.txt
-python3 server.py --insecure
+docker build . --build-arg WIN_BUILD=true -t caldera:latest
+
+# Run the image. Change port forwarding configuration as desired.
+docker run -p 8888:8888 caldera:latest
 ```
 
-Once started, you should log into http://localhost:8888 using the credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use the framework.
+To gracefully terminate your docker container, do the following:
+```Bash
+# Find the container ID for your docker container running Caldera
+docker ps
 
-## Video tutorial
-
-Watch the [following video](https://www.youtube.com/watch?v=_mVGjqu03fg) for a brief run through of how to run your first operation. 
+# Send interrupt signal, e.g. "docker kill --signal=SIGINT 5b9220dd9c0f"
+docker kill --signal=SIGINT [container ID]
+```
 
 ## Contributing
 
 Refer to our [contributor documentation](CONTRIBUTING.md).
 
+## Vulnerability Disclosures
+
+Refer to our [vulnerability discolosure documentation](SECURITY.md) for submitting bugs.
+
 ## Licensing
 
-In addition to CALDERA&trade;'s open source capabilities, MITRE maintains several in-house CALDERA&trade; plugins that offer 
-more advanced functionality. For more information, or to discuss licensing opportunities, please reach out to 
-caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
+To discuss licensing opportunities, please reach out to caldera@mitre.org or directly to [MITRE's Technology Transfer Office](https://www.mitre.org/about/corporate-overview/contact-us#technologycontact).
+
+## Caldera Benefactor Program
+
+If you are interested in partnering to support, sustain, and evolve Caldera&trade;'s open source capabilities, please contact us at caldera@mitre.org.

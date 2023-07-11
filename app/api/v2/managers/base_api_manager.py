@@ -23,8 +23,6 @@ class BaseApiManager(BaseWorld):
     def log(self):
         return self._log
 
-    """Object Retrieval"""
-
     def find_objects(self, ram_key: str, search: dict = None):
         """Find objects matching the given criteria"""
         for obj in self._data_svc.ram[ram_key]:
@@ -41,7 +39,11 @@ class BaseApiManager(BaseWorld):
         for obj in self.find_objects(ram_key, search):
             dumped_obj = self.dump_object_with_filters(obj, include, exclude)
             matched_objs.append(dumped_obj)
-        return sorted(matched_objs, key=lambda p: p.get(sort, 0))
+        sorted_objs = sorted(matched_objs, key=lambda p: p.get(sort, 0))
+        if sorted_objs and sort in sorted_objs[0]:
+            return sorted(sorted_objs,
+                          key=lambda x: 0 if x[sort] == self._data_svc.get_config(f"objects.{ram_key}.default") else 1)
+        return sorted_objs
 
     @staticmethod
     def dump_object_with_filters(obj: Any, include: List[str] = None, exclude: List[str] = None) -> dict:
@@ -54,14 +56,11 @@ class BaseApiManager(BaseWorld):
                 dumped.pop(exclude_attribute, None)
         return dumped
 
-    """Object Creation"""
-
     def create_object_from_schema(self, schema: SchemaMeta, data: dict, access: BaseWorld.Access):
         obj_schema = schema()
         obj = obj_schema.load(data)
         obj.access = self._get_allowed_from_access(access)
-        obj.store(self._data_svc.ram)
-        return obj
+        return obj.store(self._data_svc.ram)
 
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         obj_id = data.get(id_property) or str(uuid.uuid4())
@@ -79,8 +78,6 @@ class BaseApiManager(BaseWorld):
             return self._data_svc.Access.BLUE
         else:
             return self._data_svc.Access.RED
-
-    """Object Updates"""
 
     def find_and_update_object(self, ram_key: str, data: dict, search: dict = None):
         for obj in self.find_objects(ram_key, search):
@@ -113,16 +110,12 @@ class BaseApiManager(BaseWorld):
         await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
-    """"Object Replacement"""
-
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
         obj_id = getattr(obj, id_property)
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
 
         await self._save_and_reload_object(file_path, data, type(obj), obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
-
-    """"Object Removal"""
 
     async def remove_object_from_memory_by_id(self, identifier: str, ram_key: str, id_property: str):
         await self._data_svc.remove(ram_key, {id_property: identifier})
@@ -132,8 +125,6 @@ class BaseApiManager(BaseWorld):
 
         if os.path.exists(file_path):
             os.remove(file_path)
-
-    """Helpers"""
 
     @staticmethod
     async def _get_new_object_file_path(identifier: str, ram_key: str) -> str:
