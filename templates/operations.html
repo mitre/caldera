@@ -846,9 +846,6 @@
                                         <td>
                                             <label class="label">subcommand</label>
                                         </td>
-                                        <td>
-                                            <span x-text="(selectedOperation.subcommand === 0 ? 1 : 0)"></span>
-                                        </td>
                                     </tr>
                                     <tr>
                                         <td>selectedOperation.autonomous
@@ -1005,35 +1002,32 @@
                             </template>
                             <em x-show="showNotRepeatableText" class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not available for this operation</em>
                         </section>
-                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id" > 
+                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id"> 
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
                             <p x-text="selectedPotentialLink.description" style="white-space: pre-line;"></p>
                             <hr>
-                            
-                            <div class="toggleContainer flex is-flex-direction-column is-align-items-left"  >
-                                <div style="display:none" id="subcommandToggle">
-                                  <label id="command_label" for="toggleSubcommand">Command1</label>
-                                  <div class="toggleSwitch mx-2" >
-                                      <input type="checkbox"
-                                             id="subcommandToggle"
-                                             x-model="selectedOperation.subcommand"
-                                             x-bind:checked="Boolean(selectedOperation.subcommand) ? 'checked' : null"/>
-                                      <span class="toggleSlider toggleSliderRound"
-                                            title="Toggle chosen command for this ability"
-                                            x-on:click="selectedOperation.subcommand = (selectedOperation.subcommand === 0) ? 1 : 0; switchSubcommand()"
-                                            x-bind:class="Boolean(selectedOperation.subcommand) ? 'toggle-on' : 'toggle-off'">
-                                          <span x-bind:class="Boolean(selectedOperation.subcommand) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
-                                      </span>
-                                  </div>
-                                  <label id="alt_command_label" for="toggleSubcommand">Command2</label>
-                            </div>
-                        <!--     
-                            <input type="button" onclick="switchSubcommand(selectedPotentialLink)" value="subcommand1" id="subcommandToggleMaybe">
-                            <div id = "subcommandToggle" style='visibility:hidden'>
-                                <input type="text" >
-                            </div>
-                        -->
+                            <!-- <template x-if="checkAltCommand()"> -->
+                                <div class="toggleContainer flex is-flex-direction-column is-align-items-left">
+
+                                    <div id="subcommandToggle" style="display:none;">
+                                    <label id="command_label" for="toggleSubcommand">Command1</label>
+                                    <div class="toggleSwitch mx-2" >
+                                        <input type="checkbox"
+                                                id="subcommandToggle"
+                                                x-model="selectedCommand"
+                                                x-bind:checked="Boolean(selectedCommand) ? 'checked' : null"/>
+                                        <span class="toggleSlider toggleSliderRound"
+                                                title="Toggle chosen command for this ability"
+                                                x-on:click="switchSubcommand();"
+                                                x-bind:class="Boolean(selectedCommand) ? 'toggle-on' : 'toggle-off'">
+                                            <span x-bind:class="Boolean(selectedCommand) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                        </span>
+                                    </div>
+                                    <label id="alt_command_label" for="toggleSubcommand">Command2</label>
+                                    </div>
+                                </div>
+                            <!-- </template> -->
                             <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
                             <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
                                 This link needs facts in order to run properly. Select one value for each fact to add one potential link, otherwise, select multiple
@@ -1270,6 +1264,7 @@
             agentGroups: [],
             selectedOperationID: '',
             selectedOperation: null,
+            selectedCommand: 0,
             selectedAgentIndex: 0,
             isSelectedAdversaryRepeatable: false,
             selectedLink: null,
@@ -1292,7 +1287,7 @@
             operations: [],
             operationToStart: {},
 
-            selectedPotentialLink: {},
+            selectedPotentialLink: {"alt_command":0},
             selectedPotentialLinkFacts: {},
             potentialLinksToAdd: [],
             potentialLinkSearchQuery: '',
@@ -1656,19 +1651,24 @@
 
 
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
+                
                 if (executor.alt_command)
                 {
+                    //this.selectedPotentialLink.alt_command = 1;
                     document.getElementById("subcommandToggle").style.display="block";
                     document.getElementById("command_label").innerHTML = executor.labels[0];
                     document.getElementById("alt_command_label").innerHTML = executor.labels[1];
                     if (this.potentialLinkCommand != executor.command) {
+                        this.selectedCommand = 0;
                         var chosen_command = executor.command;
                     }
                     else {
+                        this.selectedCommand = 1;
                         var chosen_command = executor.alt_command;
                     }
                 }
                 else {
+                    //this.selectedPotentialLink.alt_command = 1;
                     document.getElementById("subcommandToggle").style.display="none";
                     var chosen_command = executor.command;
                 }
@@ -1939,19 +1939,22 @@
             //
             // Subcommand Support
             //
-            checkSubcommand(ability) {
-                if (subcommand in ability) {
-                    //Display Toggle and 
-                    document.getElementById("subcommandToggle").style.visibility="visibule";
-                }
-
-
+            resetToggle() {
+                this.selectedCommand = 0;
             },
             
+            checkAltCommand() {
+                if (this.selectedPotentialLink.executor.alt_command) {
+                    return 1;
+                }
+                return 0;
+            },
+
             switchSubcommand() {
                 // Return the other ability
                 //this.selectedPotentialLink.o
-                this.selectPotentialLink(this.selectedPotentialLink)
+                this.selectPotentialLink(this.selectedPotentialLink);
+
             }
         };
     }
