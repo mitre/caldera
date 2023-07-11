@@ -138,7 +138,8 @@
                                 </span>
                             </template>
                             <template x-if="isOperationRunning">
-                                <div class="toggleContainer">
+                                <div class="toggleContainer flex is-flex-direction-column is-align-items-left">
+                                  <div>
                                     <label for="toggleAutonomous">Manual</label>
                                     <div class="toggleSwitch mx-2">
                                         <input type="checkbox"
@@ -153,6 +154,22 @@
                                         </span>
                                     </div>
                                     <label for="toggleAutonomous">Autonomous</label>
+                                  </div>
+                                  <div class="mt-4">
+                                    <label for="toggleScroll">Autoscroll</label>
+                                    <div class="toggleSwitch">
+                                        <input type="checkbox"
+                                               id="toggleAutonomous"
+                                               x-model="linkScrollHistory.isEnabled"
+                                               x-bind:checked="linkScrollHistory.isEnabled ? 'checked' : null"/>
+                                        <span class="toggleSlider toggleSliderRound"
+                                              title="Toggle autoscrolling"
+                                              x-on:click="linkScrollHistory.isEnabled = (linkScrollHistory.isEnabled === false) ? true : false"
+                                              x-bind:class="linkScrollHistory.isEnabled ? 'toggle-on' : 'toggle-off'">
+                                            <span x-bind:class="linkScrollHistory.isEnabled ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                        </span>
+                                    </div>
+                                  </div>
                                 </div>
                             </template>
                         </div>
@@ -220,7 +237,7 @@
                             <template x-for="(link, index) in selectedOperation.chain" :key="link.id">
                                 <tbody>
                                 <tr x-bind:id="link.id"
-                                    x-on:click="selectedLink = link">
+                                    x-on:click="selectedLink = link" x-ref="linkRow" x-init="$nextTick(() => scrollToLastLink($refs.linkRow, index))">
                                     <td class="decideColumn">
                                         <span class="has-text-grey-light" x-text="getReadableTime(link.decide)"></span>
                                     </td>
@@ -1228,6 +1245,7 @@
             selectedLinkFacts: null,
             selectedLinkPlaintextCommand: null,
             selectedLinkCommand: null,
+            linkScrollHistory: {operationID: -1, shouldScroll: true, isEnabled: true},
             selectedReportType: 'full-report',
             isAgentOutputSelected: false,
             openModal: null,
@@ -1367,6 +1385,13 @@
                 });
             },
 
+            scrollToLastLink(linkRow, index){
+              // Check if link is the last link and that we haven't just switched operations
+              if (index === this.selectedOperation.chain.length - 1 && this.linkScrollHistory.shouldScroll && this.linkScrollHistory.isEnabled){
+                linkRow.scrollIntoView();
+              }
+            },
+
             //
             // API CALLS
             //
@@ -1446,6 +1471,12 @@
 
                 apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
                     this.selectedOperation = res;
+                    if (this.linkScrollHistory.operationID != this.selectedOperationID){
+                      this.linkScrollHistory.shouldScroll = false;
+                    }else{
+                      this.linkScrollHistory.shouldScroll = true;
+                    }
+                    this.linkScrollHistory.operationID = this.selectedOperationID;
                     this.generateAddedLinksList();
                 }).catch(() => {
                     toast('Error getting operation');

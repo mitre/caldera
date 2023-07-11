@@ -125,10 +125,20 @@
                         <template x-for="(ability, index) of selectedProfileAbilities">
                             <tr @click="selectAbility(ability.ability_id)" class="ability-row" 
                                 x-bind:class="{ 'orange-row': needsParser.indexOf(ability.name) > -1 ,
-                                                'row-hover': ability.ability_id === abilityTableDragHoverId && abilityTableDragHoverId != undefined, 
-                                                'red-row-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }" 
-                                x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()" x-on:dragenter="abilityTableDragHoverId = ability.ability_id"> 
-                                <td class="has-text-centered drag" @click.stop draggable="true" x-on:dragstart="startAbilitySwap"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="swapAbilities">&#9776;</td>
+                                                'row-hover-above': 
+                                                  ability.ability_id === abilityTableDragHoverId
+                                                  && abilityTableDragHoverId != undefined
+                                                  && abilityTableDragEndIndex < abilityTableDragTargetIndex,
+                                                'row-hover-below': 
+                                                  ability.ability_id === abilityTableDragHoverId
+                                                  && abilityTableDragHoverId != undefined
+                                                  && abilityTableDragEndIndex > abilityTableDragTargetIndex,
+                                                'red-row-unclickable': undefinedAbilities.indexOf(ability.ability_id) > -1 }"
+                                x-on:mouseenter="setAbilityHover(ability.ability_id)" x-on:mouseleave="clearAbilityHover()"> 
+                                <td class="has-text-centered drag" 
+                                  @click.stop draggable="true" x-on:dragstart="startAbilitySwap" x-on:dragenter="abilityTableDragHoverId = ability.ability_id"  x-on:dragover.prevent="swapAbilitiesHover" x-on:dragend="dragAbility">
+                                  &#9776;
+                                </td>
                                 <td>
                                     <div class="icon-text">
                                         <span x-text="index + 1"></span>
@@ -820,7 +830,7 @@
             // Global page variables
             adversaries: [],
             abilities: [],
-			abilityIDs: [],
+  	        abilityIDs: [],
             objectives: [],
             platforms: JSON.parse('{{ platforms | tojson }}'),
             payloads: JSON.parse('{{ payloads | tojson }}').sort(),
@@ -847,6 +857,7 @@
 
             // Table on drag and drop
             abilityTableDragTarget: undefined,
+            abilityTableDragTargetIndex: undefined,
             abilityTableDragEndIndex: undefined,
             abilityTableDragHoverId: undefined,
 
@@ -1404,6 +1415,7 @@
 
             startAbilitySwap(event) {
                 this.abilityTableDragTarget = event.target.parentNode;
+                this.abilityTableDragTargetIndex = parseInt(this.abilityTableDragTarget.children[1].children[0].children[0].innerHTML, 10);
             },
 
             swapAbilitiesHover(event) {
@@ -1415,13 +1427,13 @@
                     this.abilityTableDragEndIndex = parseInt(event.target.parentNode.children[1].children[0].children[0].innerHTML, 10);
                 }
             },
-
-            swapAbilities(event) {
-                const fromIndex = parseInt(this.abilityTableDragTarget.children[1].children[0].children[0].innerHTML, 10) - 1;
+            
+            dragAbility(event){
+                const fromIndex = this.abilityTableDragTargetIndex - 1;
                 const toIndex = this.abilityTableDragEndIndex - 1;
                 const temp = this.selectedProfileAbilities[fromIndex];
-                this.selectedProfileAbilities[fromIndex] = this.selectedProfileAbilities[toIndex];
-                this.selectedProfileAbilities[toIndex] = temp;
+                this.selectedProfileAbilities.splice(fromIndex, 1);
+                this.selectedProfileAbilities.splice(toIndex, 0, temp);
 
                 this.unsavedChanges = true;
                 this.abilityTableDragHoverId = undefined;
@@ -1521,6 +1533,14 @@
 
     .row-hover {
         background-color: #484848 !important;
+    }
+
+    .row-hover-above {
+      border-top: 2px solid green;
+    }
+
+    .row-hover-below {
+      border-bottom: 2px solid green;
     }
 
     .tactic-breakdown {
