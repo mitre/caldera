@@ -66,9 +66,9 @@ fi
 WORKDIR /usr/src/app/plugins/emu
 
 # If emu is enabled, complete necessary installation steps
-RUN if [ $(grep -c "\- emu" conf/local.yml) ]; then \
+RUN if [ $(grep -c "\- emu" ../../conf/local.yml)  ]; then \
     apt-get -y install zlib1g unzip;                \
-    pip3 install -r ./requirements.txt;             \
+    pip3 install -r requirements.txt;               \
     ./download_payloads.sh;                         \
 fi
 
