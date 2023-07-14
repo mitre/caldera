@@ -1,3 +1,4 @@
+
 import asyncio
 import copy
 import datetime
@@ -45,7 +46,7 @@ DEPRECATION_WARNING_LOAD = "Function deprecated and will be removed in a future 
 
 
 class DataService(DataServiceInterface, BaseService):
-
+    fact_descriptions = {}
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
@@ -292,6 +293,7 @@ class DataService(DataServiceInterface, BaseService):
                 plugins.append(Plugin(data_dir='data'))
             for plug in plugins:
                 await self._load_payloads(plug)
+                await self._load_fact_description_files(plug)
                 await self._load_abilities(plug, async_tasks)
                 await self._load_objectives(plug)
                 await self._load_adversaries(plug)
@@ -423,7 +425,31 @@ class DataService(DataServiceInterface, BaseService):
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
                           access=access, singleton=singleton, plugin=plugin, **kwargs)
         #print(ability.additional_info["style"])
+        
+        ability.fact_descriptions = self.fact_descriptions[plugin]
+        #print("FACT DESC", ability.fact_descriptions)
         return await self.store(ability)
+
+    async def _load_fact_description_files(self, plugin):
+        #print("PLUGIN")
+        filename = f"plugins/{plugin.name}/fact_description.yml"
+        if os.path.exists(filename):
+        #print(filename)
+            print("loading")
+            self.load_fact_description_file(filename, plugin.name)
+            print("completed")
+
+
+    def load_fact_description_file(self, filename, plugin_name):
+        print("Loading fact desc file")
+        try:
+            for entries in self.strip_yml(filename):
+                #All facts
+                all_facts = entries.keys()
+                self.fact_descriptions[plugin_name] = dict(entries)
+
+        except Exception as e1:
+            print("bad plugin", e1)
 
     async def _prune_non_critical_data(self):
         self.ram.pop('plugins')

@@ -776,8 +776,22 @@
                     </div>
                 </template>
 
+                <div id="mySidebar" class="sidebar">
+                    <a href="javascript:void(0)" class="closebtn" x-on:click="closeNav()">×</a>
+                    <ul x-html="relevantFacts"> </ul>
+                    
+                </div>
+
+
                 <template x-if="openModal === 'showOperationDetails'">
                     <div class="modal-card">
+                        <template x-if="">
+                            <div class="sidebar">
+                                test
+
+                            </div>
+
+                        </template>
                         <header class="modal-card-head">
                             <p class="modal-card-title">Operation Details</p>
                         </header>
@@ -1002,11 +1016,19 @@
                             </template>
                             <em x-show="showNotRepeatableText" class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not available for this operation</em>
                         </section>
+
+
+
                         <section class="modal-card-body " x-show="selectedPotentialLink.ability_id"> 
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
                             <p x-text="selectedPotentialLink.description" style="white-space: pre-line;"></p>
                             <hr>
+
+                            <div id="factSidebar">
+                                <button class="openbtn flex is-flex-direction-column is-align-items-right" x-on:click="openNav()">Fact Help! ☰ </button>  
+                            </div>
+
                             <!-- <template x-if="checkAltCommand()"> -->
                                 <div class="toggleContainer flex is-flex-direction-column is-align-items-left">
 
@@ -1279,7 +1301,7 @@
             openModalForm: {
                 advanced: false
             },
-
+            relevantFacts: "This ability has no facts!",
             facts: [],
             jitterMin: 2,
             jitterMax: 8,
@@ -1608,6 +1630,8 @@
                 });
             },
 
+
+
             addManualCommand(manualCommand) {
                 if (!manualCommand.executor.command) {
                     toast('Enter manual command.');
@@ -1645,13 +1669,16 @@
             selectPotentialLink(link) {
                 this.selectedPotentialLink = link;
                 this.selectedPotentialLinkFacts = {};
+
+                var factInfo = link.fact_descriptions;
+                this.plugin_fact_descriptions = factInfo;
                 this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
                 //subcommand support
 
+                
 
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
-                
                 if (executor.alt_command)
                 {
                     //this.selectedPotentialLink.alt_command = 1;
@@ -1673,9 +1700,13 @@
                     var chosen_command = executor.command;
                 }
                 const fields = [...new Set([...chosen_command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
+                this.getDescriptionsFromFields(fields);
+                //console.log(this.relevantFacts);
                 const opSource = this.SOURCES.find((s) => s.id === this.selectedOperation.source.id);
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
                 const facts = (opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : [])).concat(this.facts);
+
+
                 this.potentialLinkCommand = chosen_command;
 
                 fields.filter((field) => facts.find((fact) => fact.name === field)).forEach((field) => {
@@ -1691,6 +1722,7 @@
 
                 this.setPotentialLinksToAdd();
             },
+            
 
             setPotentialLinksToAdd() {
                 this.potentialLinksToAdd = [];
@@ -1955,7 +1987,52 @@
                 //this.selectedPotentialLink.o
                 this.selectPotentialLink(this.selectedPotentialLink);
 
-            }
+            },
+
+            // FACT INFO
+            getDescriptionsFromFields(fields) {
+                //Create Big Paragraph to Return
+                var data="";
+                for (var k of Object.keys(this.plugin_fact_descriptions)) {
+                    //console.log(k);
+                    //console.log(k);
+                    //console.log(fields);
+                    for (var field of fields) {
+                        if (field == k) {
+                            console.log(this.plugin_fact_descriptions[k]);
+                            data = data + '<li><strong>' + k + '</strong></li>' + '\n<p>' + this.plugin_fact_descriptions[k]["description"] + '</p>\n';
+                            //data = data + "\n" + k + "\n" + this.plugin_fact_descriptions[k]["description"] + "\n";
+                            //console.log('DATA' + data);
+                        }
+                    }
+                   // if (fields.includes(k)) {
+                        
+
+                    //}
+                }
+                //console.log(data);
+                console.log(data);
+                this.relevantFacts = data;
+            },
+
+            openNav() {
+
+                console.log(document.getElementById("mySidebar").style.width);
+                if (document.getElementById("mySidebar").style.width == "250px") {
+                    console.log("Closing out");
+                    this.closeNav();
+                }
+                else {
+                    document.getElementById("mySidebar").style.width = "250px";
+                }
+                //document.getElementById("factSidebar").style.marginLeft = "250px";
+            },
+
+            closeNav() {
+                document.getElementById("mySidebar").style.width = "0";
+                //document.getElementById("factSidebar").style.marginLeft= "0";
+            },
+
         };
     }
 </script>
@@ -2228,4 +2305,61 @@
     #operationsPage span.status-timeout::after {
         box-shadow: 0 0 0 0.2em cornflowerblue;
     }
+
+
+    /*fact sidebar*/
+   #operationsPage .sidebar {
+  height: 100%;
+  width: 0;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  right: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  transition: 0.5s;
+  padding-top: 60px;
+}
+
+#operationsPage .sidebar a {
+  padding: 8px 8px 8px 32px;
+  text-decoration: none;
+  font-size: 25px;
+  color: #818181;
+  display: block;
+  transition: 0.3s;
+}
+
+#operationsPage .sidebar a:hover {
+  color: #f1f1f1;
+}
+
+#operationsPage .sidebar .closebtn {
+  position: absolute;
+  top: 0;
+  right: 25px;
+  font-size: 36px;
+  margin-left: 50px;
+}
+
+#operationsPage .openbtn {
+  font-size: 15px;
+  cursor: pointer;
+  background-color: #111;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  position: absolute;
+  right:25px;
+}
+
+#operationsPage .openbtn:hover {
+  background-color: #444;
+}
+
+#operationsPage #main {
+  transition: margin-left .5s;
+  padding: 16px;
+}
+
 </style>

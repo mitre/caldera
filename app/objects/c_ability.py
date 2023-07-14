@@ -24,6 +24,7 @@ class AbilitySchema(ma.Schema):
     repeatable = ma.fields.Bool(missing=None)
     buckets = ma.fields.List(ma.fields.String(), missing=None)
     additional_info = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String())
+    fact_descriptions = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.Dict())
     access = ma.fields.Nested(AccessSchema, missing=None)
     singleton = ma.fields.Bool(missing=None)
     plugin = ma.fields.String(missing=None)
@@ -80,6 +81,7 @@ class Ability(FirstClassObjectInterface, BaseObject):
             self.access = self.Access(access)
         self.additional_info = additional_info or dict()
         self.additional_info.update(**kwargs)
+        self.fact_descriptions = {}
         self.tags = set(tags) if tags else set()
         self.plugin = plugin
         self.delete_payload = delete_payload
