@@ -1478,7 +1478,7 @@
             },
 
             resetOperationToStart() {
-                let defaultSourceId = 'ed32b9c3-9593-4c33-b0db-e2007315096b'  // basic fact source
+                let defaultSourceId = 'default'  // default fact source
                 if (!this.SOURCES.find((s) => s.id === defaultSourceId) && this.SOURCES[0]) {
                     defaultSourceId = this.SOURCES[0].id
                 }

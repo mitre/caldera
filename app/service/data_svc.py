@@ -11,6 +11,7 @@ import warnings
 import pathlib
 from importlib import import_module
 
+from app.objects.secondclass.c_fact import Fact
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_objective import Objective
@@ -46,6 +47,7 @@ DEPRECATION_WARNING_LOAD = "Function deprecated and will be removed in a future 
 
 
 class DataService(DataServiceInterface, BaseService):
+    list_of_facts = []
     fact_descriptions = {}
     def __init__(self):
         self.log = self.add_service('data_svc', self)
@@ -116,6 +118,20 @@ class DataService(DataServiceInterface, BaseService):
                     await self.store(c_object)
             self.log.debug('Restored data from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
+
+    async def create_facts(self, data):
+        plugin_facts = []
+        for field in data:
+            default = data[field]["default"]
+            if default:
+                newFact = Fact(value=default, trait=field, score=1, source="default")
+                plugin_facts.append(newFact)
+        self.list_of_facts.extend(plugin_facts)
+
+    async def load_default_facts(self):
+        if self.list_of_facts:
+            newSource = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
+            await self.store(newSource)
 
     async def apply(self, collection):
         if collection not in self.ram:
@@ -300,6 +316,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_planners(plug)
                 await self._load_sources(plug)
                 await self._load_packers(plug)
+            await self.load_default_facts()
             for task in async_tasks:
                 await task
             await self._load_extensions()
@@ -435,19 +452,16 @@ class DataService(DataServiceInterface, BaseService):
         filename = f"plugins/{plugin.name}/fact_description.yml"
         if os.path.exists(filename):
         #print(filename)
-            print("loading")
-            self.load_fact_description_file(filename, plugin.name)
-            print("completed")
+            await self.load_fact_description_file(filename, plugin.name)
 
 
-    def load_fact_description_file(self, filename, plugin_name):
-        print("Loading fact desc file")
+    async def load_fact_description_file(self, filename, plugin_name):
         try:
             for entries in self.strip_yml(filename):
                 #All facts
                 all_facts = entries.keys()
+                await self.create_facts(entries)
                 self.fact_descriptions[plugin_name] = dict(entries)
-
         except Exception as e1:
             print("bad plugin", e1)
 
