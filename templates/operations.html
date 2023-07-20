@@ -858,7 +858,7 @@
                                     </tr>
                                     <tr>
                                         <td>
-                                            <label class="label">subcommand</label>
+                                            <label class="label">altcommand</label>
                                         </td>
                                     </tr>
                                     <tr>
@@ -1029,27 +1029,25 @@
                                 <button class="openbtn flex is-flex-direction-column is-align-items-right" x-on:click="openNav()">Fact Help! ☰ </button>  
                             </div>
 
-                            <!-- <template x-if="checkAltCommand()"> -->
                                 <div class="toggleContainer flex is-flex-direction-column is-align-items-left">
 
-                                    <div id="subcommandToggle" style="display:none;">
-                                    <label id="command_label" for="toggleSubcommand">Command1</label>
+                                    <div id="altcommandToggle" style="display:none;">
+                                    <label id="command_label" for="toggleAltcommand">Command1</label>
                                     <div class="toggleSwitch mx-2" >
                                         <input type="checkbox"
-                                                id="subcommandToggle"
+                                                id="altcommandToggle"
                                                 x-model="selectedCommand"
                                                 x-bind:checked="Boolean(selectedCommand) ? 'checked' : null"/>
                                         <span class="toggleSlider toggleSliderRound"
                                                 title="Toggle chosen command for this ability"
-                                                x-on:click="switchSubcommand();"
+                                                x-on:click="switchAltcommand();"
                                                 x-bind:class="Boolean(selectedCommand) ? 'toggle-on' : 'toggle-off'">
                                             <span x-bind:class="Boolean(selectedCommand) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
                                         </span>
                                     </div>
-                                    <label id="alt_command_label" for="toggleSubcommand">Command2</label>
+                                    <label id="alt_command_label" for="toggleAltcommand">Command2</label>
                                     </div>
                                 </div>
-                            <!-- </template> -->
                             <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
                             <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
                                 This link needs facts in order to run properly. Select one value for each fact to add one potential link, otherwise, select multiple
@@ -1674,15 +1672,11 @@
                 this.plugin_fact_descriptions = factInfo;
                 this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
-                //subcommand support
-
-                
-
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
+                //alt_command support
                 if (executor.alt_command)
                 {
-                    //this.selectedPotentialLink.alt_command = 1;
-                    document.getElementById("subcommandToggle").style.display="block";
+                    document.getElementById("altcommandToggle").style.display="block";
                     document.getElementById("command_label").innerHTML = executor.labels[0];
                     document.getElementById("alt_command_label").innerHTML = executor.labels[1];
                     if (this.potentialLinkCommand != executor.command) {
@@ -1695,8 +1689,7 @@
                     }
                 }
                 else {
-                    //this.selectedPotentialLink.alt_command = 1;
-                    document.getElementById("subcommandToggle").style.display="none";
+                    document.getElementById("altcommandToggle").style.display="none";
                     var chosen_command = executor.command;
                 }
                 const fields = [...new Set([...chosen_command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
@@ -1969,20 +1962,9 @@
             },
 
             //
-            // Subcommand Support
+            // Altcommand Support
             //
-            resetToggle() {
-                this.selectedCommand = 0;
-            },
-            
-            checkAltCommand() {
-                if (this.selectedPotentialLink.executor.alt_command) {
-                    return 1;
-                }
-                return 0;
-            },
-
-            switchSubcommand() {
+            switchAltcommand() {
                 // Return the other ability
                 //this.selectedPotentialLink.o
                 this.selectPotentialLink(this.selectedPotentialLink);
@@ -1991,35 +1973,20 @@
 
             // FACT INFO
             getDescriptionsFromFields(fields) {
-                //Create Big Paragraph to Return
                 var data="";
                 for (var k of Object.keys(this.plugin_fact_descriptions)) {
-                    //console.log(k);
-                    //console.log(k);
-                    //console.log(fields);
                     for (var field of fields) {
                         if (field == k) {
-                            console.log(this.plugin_fact_descriptions[k]);
                             data = data + '<li><strong>' + k + '</strong></li>' + '\n<p>' + this.plugin_fact_descriptions[k]["description"] + '</p>\n';
-                            //data = data + "\n" + k + "\n" + this.plugin_fact_descriptions[k]["description"] + "\n";
-                            //console.log('DATA' + data);
                         }
                     }
-                   // if (fields.includes(k)) {
-                        
-
-                    //}
                 }
-                //console.log(data);
-                console.log(data);
                 this.relevantFacts = data;
             },
 
             openNav() {
 
-                console.log(document.getElementById("mySidebar").style.width);
                 if (document.getElementById("mySidebar").style.width == "250px") {
-                    console.log("Closing out");
                     this.closeNav();
                 }
                 else {
