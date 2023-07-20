@@ -152,9 +152,7 @@ class DataService(DataServiceInterface, BaseService):
             self.log.error('[!] REMOVE: %s' % e)
 
     async def load_ability_file(self, filename, access):
-        
         for entries in self.strip_yml(filename):
-
             for ab in entries:
                 ability_id = ab.pop('id', None)
                 name = ab.pop('name', '')
@@ -172,8 +170,7 @@ class DataService(DataServiceInterface, BaseService):
                 plugin = self._get_plugin_name(filename)
                 ab.pop('plugin', plugin)
                 if tactic and tactic not in filename:
-                    self.log.error('Ability=%s has wrong tactic' % ability_id)
-                
+                    self.log.error('Ability=%s has wrong tactic' % ability_id)     
                 await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                                            technique_id=technique_id, technique_name=technique_name,
                                            executors=executors, requirements=requirements, privilege=privilege,
@@ -208,12 +205,9 @@ class DataService(DataServiceInterface, BaseService):
         executors = []
         for platform_names, platform_executors in platforms.items():
             for executor_names, executor in platform_executors.items():
-
                 command = executor['command'].strip() if executor.get('command') else None
                 alt_command = executor['alt_command'].strip() if executor.get('alt_command') else None
-                
                 cleanup = executor['cleanup'].strip() if executor.get('cleanup') else None
-
                 code = executor['code'].strip() if executor.get('code') else None
                 if code:
                     _, code_path = await self.get_service('file_svc').find_file_path(code)
@@ -417,12 +411,10 @@ class DataService(DataServiceInterface, BaseService):
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
                               repeatable=False, buckets=None, access=None, singleton=False, plugin='', **kwargs):
-        #print(**kwargs)
         ability = Ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
                           access=access, singleton=singleton, plugin=plugin, **kwargs)
-        #print(ability.additional_info["style"])
         return await self.store(ability)
 
     async def _prune_non_critical_data(self):
