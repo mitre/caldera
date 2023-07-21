@@ -14,6 +14,7 @@ def get_fact_descriptions():
         with open(ability_path, "r") as file:
             plugin_name = Path(ability_path).parents[3].name
             if plugin_name not in facts_per_plugin:
+                # print("reseting")
                 facts_per_plugin[plugin_name] = set()
             r_ability = yaml.safe_load(file)[0]
             commands = []
@@ -26,14 +27,14 @@ def get_fact_descriptions():
                         for thingy in r_ability["platforms"][platform]:
                             commands.append(r_ability["platforms"][platform][thingy]["command"])
                             commands.append(r_ability["platforms"][platform][thingy]["alt_command"])
-                        
+
                     except KeyError:
                         pass
                 if not commands:
                     #No command
-                    continue                    
+                    continue
         plugin_facts = get_facts_from_commands(commands, plugin_name)
-        facts_per_plugin[plugin_name].union(plugin_facts)
+        facts_per_plugin[plugin_name] = facts_per_plugin[plugin_name] | plugin_facts[plugin_name]
     return facts_per_plugin
 
 def get_facts_from_commands(commands, plugin_name):
@@ -56,6 +57,7 @@ def write_descriptions(facts_per_plugin):
         descriptions = {x:{"default":None, "description":""} for x in facts_per_plugin[plug]}
         #Verify that we aren't overwriting files, default to using existing files and add new facts
         descriptions_path = f"./plugins/{plug}/fact_description.yml"
+        to_write = {}
         if os.path.exists(descriptions_path):
             with open(descriptions_path, "r") as f:
                 existing_data = yaml.safe_load(f)
@@ -63,12 +65,13 @@ def write_descriptions(facts_per_plugin):
                     to_write = existing_data
                     for k in descriptions:
                         if k not in existing_data:
-                            to_write.update({k:descriptions[k]})                 
+                            to_write.update({k:descriptions[k]})
         else:
             to_write = descriptions
-            
-        with open(descriptions_path, "w") as fw:
-            yaml.dump(to_write, fw)
+
+        if to_write:
+            with open(descriptions_path, "w") as fw:
+                yaml.dump(to_write, fw)
 
 
 if __name__ == "__main__":
