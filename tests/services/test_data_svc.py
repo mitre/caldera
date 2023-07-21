@@ -154,6 +154,29 @@ class TestDataService:
         agents = event_loop.run_until_complete(data_svc.locate('agents', match=dict(paw=a1.paw)))
         assert len(agents) == 0
 
+    def test_create_fact(self, event_loop, data_svc):
+        fact_desc_data = {"test.fact.1": {"default": "default"}, "test.fact.2": {"default": "deadbeef"}, "test.fact.3": {"default": None}}
+        event_loop.run_until_complete(data_svc.create_facts(fact_desc_data))
+        assert len(data_svc.list_of_facts) == 2
+        event_loop.run_until_complete(data_svc.load_default_facts())
+        assert data_svc.ram["sources"]
+
+    def test_load_fact_description_file(self, event_loop, data_svc):
+        plugin = Plugin(name="test")
+        event_loop.run_until_complete(data_svc._load_fact_description_files(plugin))
+        assert data_svc.fact_descriptions == {}
+
+        filename = "tests/data/fact_description.yml"
+        event_loop.run_until_complete(data_svc.load_fact_description_file(filename, "test"))
+        expected = {"test.fact.1": {"default": None, "description": ""}}
+        assert data_svc.fact_descriptions["test"] == expected
+        assert list(data_svc.fact_descriptions.keys()) == ["test"]
+
+    def test_loader_executors_from_platform_dict(self, event_loop, data_svc):
+        platforms = {"linux": {"sh": {"command": "./test_cli test_command", "payloads": "test_cli"}}}
+        executors = event_loop.run_until_complete(data_svc.load_executors_from_platform_dict(platforms))
+        assert len(executors) == 1
+
     def test_no_autogen_cleanup_cmds(self, event_loop, data_svc):
         cleanup_executor = Executor(name='sh', platform='linux', cleanup='rm #{payload}')
         event_loop.run_until_complete(data_svc.store(

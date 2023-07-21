@@ -489,7 +489,7 @@
                             </template>
                             <template x-if="!isLinkEditable(selectedLink)">
                                 <div>
-                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">      
+                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">
                                     <div>
                                         <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
                                     </div>
@@ -779,7 +779,7 @@
                 <div id="mySidebar" class="sidebar">
                     <a href="javascript:void(0)" class="closebtn" x-on:click="closeNav()">×</a>
                     <ul x-html="relevantFacts"> </ul>
-                    
+
                 </div>
 
 
@@ -857,11 +857,6 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>
-                                            <label class="label">altcommand</label>
-                                        </td>
-                                    </tr>
-                                    <tr>
                                         <td>selectedOperation.autonomous
                                             <label class="label">Parser</label>
                                         </td>
@@ -886,7 +881,7 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                                
+
                             </table>
                         </section>
                         <footer class="modal-card-foot">
@@ -901,7 +896,7 @@
                         </footer>
                     </div>
                 </template>
-                
+
                 <template x-if="openModal === 'addLink'">
                     <div class="modal-card wide" x-init="getAbilities()">
                         <header class="modal-card-head">
@@ -1019,35 +1014,15 @@
 
 
 
-                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id"> 
+                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
                             <p x-text="selectedPotentialLink.description" style="white-space: pre-line;"></p>
                             <hr>
 
                             <div id="factSidebar">
-                                <button class="openbtn flex is-flex-direction-column is-align-items-right" x-on:click="openNav()">Fact Help! ☰ </button>  
+                                <button class="openbtn flex is-flex-direction-column is-align-items-right" x-on:click="openNav()">Fact Help! ☰ </button>
                             </div>
-
-                                <div class="toggleContainer flex is-flex-direction-column is-align-items-left">
-
-                                    <div id="altcommandToggle" style="display:none;">
-                                    <label id="command_label" for="toggleAltcommand">Command1</label>
-                                    <div class="toggleSwitch mx-2" >
-                                        <input type="checkbox"
-                                                id="altcommandToggle"
-                                                x-model="selectedCommand"
-                                                x-bind:checked="Boolean(selectedCommand) ? 'checked' : null"/>
-                                        <span class="toggleSlider toggleSliderRound"
-                                                title="Toggle chosen command for this ability"
-                                                x-on:click="switchAltcommand();"
-                                                x-bind:class="Boolean(selectedCommand) ? 'toggle-on' : 'toggle-off'">
-                                            <span x-bind:class="Boolean(selectedCommand) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
-                                        </span>
-                                    </div>
-                                    <label id="alt_command_label" for="toggleAltcommand">Command2</label>
-                                    </div>
-                                </div>
                             <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
                             <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
                                 This link needs facts in order to run properly. Select one value for each fact to add one potential link, otherwise, select multiple
@@ -1299,7 +1274,7 @@
             openModalForm: {
                 advanced: false
             },
-            relevantFacts: "This ability has no facts!",
+            relevantFacts: "No fact_description.yml found, please update the plugin!",
             facts: [],
             jitterMin: 2,
             jitterMax: 8,
@@ -1307,7 +1282,7 @@
             operations: [],
             operationToStart: {},
 
-            selectedPotentialLink: {"alt_command":0},
+            selectedPotentialLink: {},
             selectedPotentialLinkFacts: {},
             potentialLinksToAdd: [],
             potentialLinkSearchQuery: '',
@@ -1673,34 +1648,14 @@
                 this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
-                //alt_command support
-                if (executor.alt_command)
-                {
-                    document.getElementById("altcommandToggle").style.display="block";
-                    document.getElementById("command_label").innerHTML = executor.labels[0];
-                    document.getElementById("alt_command_label").innerHTML = executor.labels[1];
-                    if (this.potentialLinkCommand != executor.command) {
-                        this.selectedCommand = 0;
-                        var chosen_command = executor.command;
-                    }
-                    else {
-                        this.selectedCommand = 1;
-                        var chosen_command = executor.alt_command;
-                    }
+                const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
+                if (factInfo) {
+                    this.getDescriptionsFromFields(fields);
                 }
-                else {
-                    document.getElementById("altcommandToggle").style.display="none";
-                    var chosen_command = executor.command;
-                }
-                const fields = [...new Set([...chosen_command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
-                this.getDescriptionsFromFields(fields);
-                //console.log(this.relevantFacts);
                 const opSource = this.SOURCES.find((s) => s.id === this.selectedOperation.source.id);
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
                 const facts = (opSource.facts.concat(opSourceCollected ? opSourceCollected.facts : [])).concat(this.facts);
-
-
-                this.potentialLinkCommand = chosen_command;
+                this.potentialLinkCommand = executor.command;
 
                 fields.filter((field) => facts.find((fact) => fact.name === field)).forEach((field) => {
                     this.selectedPotentialLinkFacts[field] = []
@@ -1715,7 +1670,7 @@
 
                 this.setPotentialLinksToAdd();
             },
-            
+
 
             setPotentialLinksToAdd() {
                 this.potentialLinksToAdd = [];
@@ -1959,16 +1914,6 @@
                     matchQuery = ability.name.toLowerCase().includes(this.potentialLinkSearchQuery.toLowerCase()) || ability.description.toLowerCase().includes(this.potentialLinkSearchQuery.toLowerCase());
                     return matchAgent && matchTactic && matchTechnique && matchQuery;
                 });
-            },
-
-            //
-            // Altcommand Support
-            //
-            switchAltcommand() {
-                // Return the other ability
-                //this.selectedPotentialLink.o
-                this.selectPotentialLink(this.selectedPotentialLink);
-
             },
 
             // FACT INFO

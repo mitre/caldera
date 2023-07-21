@@ -27,6 +27,7 @@ def new_ability_payload():
             'singleton': False,
             'plugin': '',
             'delete_payload': True,
+            'fact_descriptions': {},
             }
 
 

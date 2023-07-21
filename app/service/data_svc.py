@@ -1,4 +1,3 @@
-
 import asyncio
 import copy
 import datetime
@@ -125,14 +124,13 @@ class DataService(DataServiceInterface, BaseService):
         for field in data:
             default = data[field]["default"]
             if default:
-                newFact = Fact(value=default, trait=field, score=1, source="default")
-                plugin_facts.append(newFact)
+                new_fact = Fact(value=default, trait=field, score=1, source="default")
+                plugin_facts.append(new_fact)
         self.list_of_facts.extend(plugin_facts)
 
     async def load_default_facts(self):
-        if self.list_of_facts:
-            newSource = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
-            await self.store(newSource)
+        new_source = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
+        await self.store(new_source)
 
     async def apply(self, collection):
         if collection not in self.ram:
@@ -225,7 +223,6 @@ class DataService(DataServiceInterface, BaseService):
             for executor_names, executor in platform_executors.items():
 
                 command = executor['command'].strip() if executor.get('command') else None
-                alt_command = executor['alt_command'].strip() if executor.get('alt_command') else None
 
                 cleanup = executor['cleanup'].strip() if executor.get('cleanup') else None
 
@@ -239,7 +236,6 @@ class DataService(DataServiceInterface, BaseService):
                 language = executor.get('language')
                 build_target = executor.get('build_target')
                 payloads = executor.get('payloads')
-                labels = executor.get('labels')
                 uploads = executor.get('uploads')
                 timeout = executor.get('timeout', 60)
                 variations = executor.get('variations', [])
@@ -251,7 +247,7 @@ class DataService(DataServiceInterface, BaseService):
                         executors.append(Executor(name=executor_name, platform=platform_name, command=command,
                                                   code=code, language=language, build_target=build_target,
                                                   payloads=payloads, uploads=uploads, timeout=timeout,
-                                                  parsers=parsers, cleanup=cleanup, variations=variations, alt_command=alt_command, labels=labels))
+                                                  parsers=parsers, cleanup=cleanup, variations=variations))
         return executors
 
     async def load_executors_from_list(self, executors: list):
@@ -438,8 +434,10 @@ class DataService(DataServiceInterface, BaseService):
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
                           access=access, singleton=singleton, plugin=plugin, **kwargs)
-
-        ability.fact_descriptions = self.fact_descriptions[plugin]
+        if plugin in self.fact_descriptions:
+            ability.fact_descriptions = self.fact_descriptions[plugin]
+        else:
+            ability.fact_descriptions = {}
         return await self.store(ability)
 
     async def _load_fact_description_files(self, plugin):
