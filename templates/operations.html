@@ -489,7 +489,7 @@
                             </template>
                             <template x-if="!isLinkEditable(selectedLink)">
                                 <div>
-                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">      
+                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">
                                     <div>
                                         <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
                                     </div>
@@ -779,7 +779,7 @@
                 <div id="mySidebar" class="sidebar">
                     <a href="javascript:void(0)" class="closebtn" x-on:click="closeNav()">×</a>
                     <ul x-html="relevantFacts"> </ul>
-                    
+
                 </div>
 
 
@@ -886,7 +886,7 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                                
+
                             </table>
                         </section>
                         <footer class="modal-card-foot">
@@ -901,7 +901,7 @@
                         </footer>
                     </div>
                 </template>
-                
+
                 <template x-if="openModal === 'addLink'">
                     <div class="modal-card wide" x-init="getAbilities()">
                         <header class="modal-card-head">
@@ -1019,14 +1019,14 @@
 
 
 
-                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id"> 
+                        <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
                             <span x-text="`(${selectedPotentialLink.technique_id})`"></span>
                             <p x-text="selectedPotentialLink.description" style="white-space: pre-line;"></p>
                             <hr>
 
                             <div id="factSidebar">
-                                <button class="openbtn flex is-flex-direction-column is-align-items-right" x-on:click="openNav()">Fact Help! ☰ </button>  
+                                <button class="openbtn flex is-flex-direction-column is-align-items-right" x-on:click="openNav()">Fact Help! ☰ </button>
                             </div>
 
                                 <div class="toggleContainer flex is-flex-direction-column is-align-items-left">
@@ -1299,7 +1299,7 @@
             openModalForm: {
                 advanced: false
             },
-            relevantFacts: "This ability has no facts!",
+            relevantFacts: "No fact_description.yml found, please update the plugin!",
             facts: [],
             jitterMin: 2,
             jitterMax: 8,
@@ -1693,7 +1693,9 @@
                     var chosen_command = executor.command;
                 }
                 const fields = [...new Set([...chosen_command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
-                this.getDescriptionsFromFields(fields);
+                if (factInfo) {
+                    this.getDescriptionsFromFields(fields);
+                }
                 //console.log(this.relevantFacts);
                 const opSource = this.SOURCES.find((s) => s.id === this.selectedOperation.source.id);
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
@@ -1715,7 +1717,7 @@
 
                 this.setPotentialLinksToAdd();
             },
-            
+
 
             setPotentialLinksToAdd() {
                 this.potentialLinksToAdd = [];

@@ -440,7 +440,7 @@ class DataService(DataServiceInterface, BaseService):
         if plugin in self.fact_descriptions:
             ability.fact_descriptions = self.fact_descriptions[plugin]
         else:
-            ability.fact_descriptions = None
+            ability.fact_descriptions = {}
         return await self.store(ability)
 
     async def _load_fact_description_files(self, plugin):
