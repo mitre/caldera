@@ -36,7 +36,7 @@ def get_facts_from_commands(commands, plugin_name):
     plugin_facts = {plugin_name: set()}
     for command in commands:
         split_command = command.split()
-        for i, cmd in enumerate(split_command):
+        for cmd in split_command:
             if "#{" in cmd:
                 fact_start_idx = cmd.index("#{")
                 fact_end_idx = cmd.index("}")
