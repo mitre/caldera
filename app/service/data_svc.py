@@ -125,13 +125,13 @@ class DataService(DataServiceInterface, BaseService):
         for field in data:
             default = data[field]["default"]
             if default:
-                newFact = Fact(value=default, trait=field, score=1, source="default")
-                plugin_facts.append(newFact)
+                new_fact = Fact(value=default, trait=field, score=1, source="default")
+                plugin_facts.append(new_fact)
         self.list_of_facts.extend(plugin_facts)
 
     async def load_default_facts(self):
-        newSource = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
-        await self.store(newSource)
+        new_source = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
+        await self.store(new_source)
 
     async def apply(self, collection):
         if collection not in self.ram:
