@@ -49,6 +49,7 @@ DEPRECATION_WARNING_LOAD = "Function deprecated and will be removed in a future 
 class DataService(DataServiceInterface, BaseService):
     list_of_facts = []
     fact_descriptions = {}
+
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
@@ -169,9 +170,7 @@ class DataService(DataServiceInterface, BaseService):
             self.log.error('[!] REMOVE: %s' % e)
 
     async def load_ability_file(self, filename, access):
-        
         for entries in self.strip_yml(filename):
-
             for ab in entries:
                 ability_id = ab.pop('id', None)
                 name = ab.pop('name', '')
@@ -190,7 +189,6 @@ class DataService(DataServiceInterface, BaseService):
                 ab.pop('plugin', plugin)
                 if tactic and tactic not in filename:
                     self.log.error('Ability=%s has wrong tactic' % ability_id)
-                
                 await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                                            technique_id=technique_id, technique_name=technique_name,
                                            executors=executors, requirements=requirements, privilege=privilege,
@@ -228,7 +226,7 @@ class DataService(DataServiceInterface, BaseService):
 
                 command = executor['command'].strip() if executor.get('command') else None
                 alt_command = executor['alt_command'].strip() if executor.get('alt_command') else None
-                
+
                 cleanup = executor['cleanup'].strip() if executor.get('cleanup') else None
 
                 code = executor['code'].strip() if executor.get('code') else None
@@ -436,30 +434,22 @@ class DataService(DataServiceInterface, BaseService):
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
                               repeatable=False, buckets=None, access=None, singleton=False, plugin='', **kwargs):
-        #print(**kwargs)
         ability = Ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
                           access=access, singleton=singleton, plugin=plugin, **kwargs)
-        #print(ability.additional_info["style"])
-        
+
         ability.fact_descriptions = self.fact_descriptions[plugin]
-        #print("FACT DESC", ability.fact_descriptions)
         return await self.store(ability)
 
     async def _load_fact_description_files(self, plugin):
-        #print("PLUGIN")
         filename = f"plugins/{plugin.name}/fact_description.yml"
         if os.path.exists(filename):
-        #print(filename)
             await self.load_fact_description_file(filename, plugin.name)
-
 
     async def load_fact_description_file(self, filename, plugin_name):
         try:
             for entries in self.strip_yml(filename):
-                #All facts
-                all_facts = entries.keys()
                 await self.create_facts(entries)
                 self.fact_descriptions[plugin_name] = dict(entries)
         except Exception as e1:
