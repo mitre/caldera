@@ -130,9 +130,8 @@ class DataService(DataServiceInterface, BaseService):
         self.list_of_facts.extend(plugin_facts)
 
     async def load_default_facts(self):
-        if self.list_of_facts:
-            newSource = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
-            await self.store(newSource)
+        newSource = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
+        await self.store(newSource)
 
     async def apply(self, collection):
         if collection not in self.ram:
@@ -438,8 +437,10 @@ class DataService(DataServiceInterface, BaseService):
                           technique_id=technique_id, technique_name=technique_name, executors=executors,
                           requirements=requirements, privilege=privilege, repeatable=repeatable, buckets=buckets,
                           access=access, singleton=singleton, plugin=plugin, **kwargs)
-
-        ability.fact_descriptions = self.fact_descriptions[plugin]
+        if plugin in self.fact_descriptions:
+            ability.fact_descriptions = self.fact_descriptions[plugin]
+        else:
+            ability.fact_descriptions = None
         return await self.store(ability)
 
     async def _load_fact_description_files(self, plugin):
