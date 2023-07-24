@@ -352,7 +352,7 @@ class TestOperationsApi:
             assert result['paw'] == payload['paw']
             assert result['id']
             assert result['ability']['name'] == 'Manual Command'
-            assert result['command'] == "://None:None 123"
+            assert result['command'] == "unknown 123"
 
     async def test_create_potential_link(self, api_v2_client, api_cookies, mocker, async_return):
         with mocker.patch('app.objects.c_operation.Operation.apply') as mock_apply:
