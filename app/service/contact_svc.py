@@ -89,6 +89,7 @@ class ContactService(ContactServiceInterface, BaseService):
             self.log.debug("Agent %s can accept deadman abilities. Will return any available deadman abilities." %
                            agent.paw)
             await agent.deadman(data_svc)
+        await self.get_service('event_svc').fire_event(exchange='agent', queue='added', agent=agent.display)
         return agent, await self._get_instructions(agent)
 
     async def build_filename(self):
@@ -125,7 +126,8 @@ class ContactService(ContactServiceInterface, BaseService):
                     result.output = await self._postprocess_link_result(result.output, link)
                     command_results = json.dumps(dict(
                         stdout=self.decode_bytes(result.output, strip_newlines=False),
-                        stderr=self.decode_bytes(result.stderr, strip_newlines=False)))
+                        stderr=self.decode_bytes(result.stderr, strip_newlines=False),
+                        exit_code=result.exit_code))
                     encoded_command_results = self.encode_string(command_results)
                     self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
@@ -144,7 +146,8 @@ class ContactService(ContactServiceInterface, BaseService):
             else:
                 command_results = json.dumps(dict(
                     stdout=self.decode_bytes(result.output, strip_newlines=False),
-                    stderr=self.decode_bytes(result.stderr, strip_newlines=False)))
+                    stderr=self.decode_bytes(result.stderr, strip_newlines=False),
+                    exit_code=result.exit_code))
                 encoded_command_results = self.encode_string(command_results)
                 self.get_service('file_svc').write_result_file(result.id, encoded_command_results)
         except Exception as e:

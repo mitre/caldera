@@ -11,6 +11,7 @@ from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_world import BaseWorld
+from tests import AsyncMock
 
 
 stop_bucket_exhaustion_params = [
@@ -67,13 +68,6 @@ def planner_stub(**kwargs):
             for k, v in kwargs.items():
                 setattr(self, k, v)
     return PlannerStub(**kwargs)
-
-
-def async_wrapper(return_value):
-    """Creates an async method that returns a constant value for mocking purposes."""
-    async def wrap(*args, **kwargs):
-        return return_value
-    return wrap
 
 
 @pytest.fixture
@@ -146,7 +140,7 @@ class TestPlanningService:
             timeout = True
         assert timeout is True
 
-    async def test_get_links(self, setup_planning_test, planning_svc, data_svc, knowledge_svc):
+    async def test_get_links(self, setup_planning_test, planning_svc, data_svc, knowledge_svc, fire_event_mock):
         # PART A: Don't fill in facts for "cability" so only "tability"
         #   is returned in "links"
         tability, agent, operation, cability = setup_planning_test
@@ -212,7 +206,7 @@ class TestPlanningService:
         facts.append(stopping_condition)
         assert await planning_svc._stopping_condition_met(facts, stopping_condition) is True
 
-    async def test_check_stopping_conditions(self, fact, link, setup_planning_test, planning_svc):
+    async def test_check_stopping_conditions(self, fact, link, setup_planning_test, planning_svc, fire_event_mock):
         ability, agent, operation, _ = setup_planning_test
         executor = next(ability.executors)
         operation.source.facts = []
@@ -229,7 +223,7 @@ class TestPlanningService:
         # now verify stopping condition is met since we directly inserted fact that matches stopping condition
         assert await planning_svc.check_stopping_conditions(stopping_conditions, operation) is True
 
-    async def test_update_stopping_condition_met(self, fact, link, setup_planning_test, planning_svc):
+    async def test_update_stopping_condition_met(self, fact, link, setup_planning_test, planning_svc, fire_event_mock):
         ability, agent, operation, _ = setup_planning_test
         stopping_condition = fact(trait='t.c.t', value='boss')
 
@@ -331,9 +325,8 @@ class TestPlanningService:
         f3 = Fact(trait='a.b.e', value='3')
 
         gen = await planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3])
-
         assert len(gen) == 2
-        assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+        assert gen[1].display['command'] == target_string
 
     async def test_trim_links(self, setup_planning_test, planning_svc):
         """
@@ -356,15 +349,15 @@ class TestPlanningService:
             Fact(trait='a.b.e', value='3'),
         ]
 
-        operation.all_facts = async_wrapper(facts)
+        operation.all_facts = AsyncMock(return_value=facts)
         operation.planner = MagicMock()
-        planning_svc.load_module = async_wrapper(RequirementFake())
+        planning_svc.load_module = AsyncMock(return_value=RequirementFake())
         link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
 
         trimmed_links = await planning_svc.trim_links(operation, [link], agent)
 
         assert len(trimmed_links) == 1
-        assert BaseWorld.decode_bytes(trimmed_links[0].display['command']) == target_string
+        assert trimmed_links[0].display['command'] == target_string
 
     async def test_filter_bs(self, setup_planning_test, planning_svc):
         _, agent, operation, ability = setup_planning_test
@@ -382,7 +375,7 @@ class TestPlanningService:
         gen = await planning_svc.add_test_variants([link], agent, facts=[f0, f1, f2, f3, f4, f5, f6])
 
         assert len(gen) == 4
-        assert BaseWorld.decode_bytes(gen[1].display['command']) == target_string
+        assert gen[1].display['command'] == target_string
 
     async def test_duplicate_lateral_filter(self, setup_planning_test, planning_svc, link, fact):
         ability, agent, operation, sability = setup_planning_test

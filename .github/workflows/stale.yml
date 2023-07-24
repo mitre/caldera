@@ -17,7 +17,7 @@ jobs:
       pull-requests: write
 
     steps:
-    - uses: actions/stale@9c1b1c6e115ca2af09755448e0dbba24e5061cc8
+    - uses: actions/stale@a20b814fb01b71def3bd6f56e7494d667ddf28da
       with:
         repo-token: ${{ secrets.GITHUB_TOKEN }}
         stale-issue-label: 'no-issue-activity'

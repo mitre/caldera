@@ -1,0 +1,16 @@
+---
+
+id: aaa7c857-37a0-4c4a-85f7-4e9f7f30e31a
+name: atomic
+description: |
+  During each phase of the operation, the atomic planner iterates through each agent and sends the next
+  available ability it thinks that agent can complete. This decision is based on the agent matching the operating
+  system (execution platform) of the ability and the ability command having no unsatisfied variables.
+  The planner then waits for each agent to complete its command before determining the subsequent abilities.
+  The abilities are processed in the order set by each agent's atomic ordering.
+  For instance, if agent A has atomic ordering (A1, A2, A3) and agent B has atomic ordering (B1, B2, B3), then
+  the planner would send (A1, B1) in the first phase, then (A2, B2), etc.
+module: app.planners.atomic
+params: {}
+ignore_enforcement_modules: []
+allow_repeatable_abilities: False

@@ -25,6 +25,7 @@ from app.api.v2.handlers.contact_api import ContactApi
 from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
 from app.api.v2.handlers.plugins_api import PluginApi
 from app.api.v2.handlers.fact_source_api import FactSourceApi
+from app.api.v2.handlers.fact_api import FactApi
 from app.api.v2.handlers.planner_api import PlannerApi
 from app.api.v2.handlers.health_api import HealthApi
 from app.api.v2.handlers.schedule_api import ScheduleApi
@@ -61,6 +62,7 @@ from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.rest_api import RestApi
 
 from app import version
+from tests import AsyncMock
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
@@ -349,6 +351,7 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         ObjectiveApi(svcs).add_routes(app)
         ObfuscatorApi(svcs).add_routes(app)
         PluginApi(svcs).add_routes(app)
+        FactApi(svcs).add_routes(app)
         FactSourceApi(svcs).add_routes(app)
         PlannerApi(svcs).add_routes(app)
         HealthApi(svcs).add_routes(app)
@@ -388,7 +391,6 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         )
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
-
         return app_svc
 
     app_svc = await initialize()
@@ -597,3 +599,13 @@ def setup_empty_operation(event_loop, test_operation):
     test_objective = Objective(id='123', name='test objective', description='test', goals=[])
     test_operation.objective = test_objective
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
+
+
+@pytest.fixture()
+def fire_event_mock(event_svc):
+    """A mock for event_svc.fire_event()
+
+    fire_event()  wont work in tests as underlying Application
+    is a stub so mock call here
+    """
+    event_svc.fire_event = AsyncMock(return_value=None)
