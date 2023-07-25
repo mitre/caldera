@@ -168,6 +168,34 @@ class TestAgent:
         assert Agent.parse_endpoint(test) == want
         assert Agent.parse_endpoint(test_slash) == want
 
+    def test_server_value_with_protocol_localhost_port(self):
+        test = 'http://localhost:8888'
+        test_slash = 'http://localhost:8888/'
+        want = 'http://localhost:8888'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_with_protocol_localhost_without_port(self):
+        test = 'http://localhost'
+        test_slash = 'http://localhost/'
+        want = 'http://localhost'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_without_protocol_localhost_port(self):
+        test = 'localhost:8888'
+        test_slash = 'localhost:8888/'
+        want = 'localhost:8888'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
+    def test_server_value_without_protocol_localhost_without_port(self):
+        test = 'localhost'
+        test_slash = 'localhost/'
+        want = 'unknown'
+        assert Agent.parse_endpoint(test) == want
+        assert Agent.parse_endpoint(test_slash) == want
+
     def test_heartbeat_modification_new_server(self, loop):
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows',
                       server='unknown')
