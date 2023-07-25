@@ -329,7 +329,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     @staticmethod
     def parse_endpoint(server):
-        if re.search(r'^[^:/]+://[^:\s]+(:\d{1,5})?/*$', server):
+        if re.search(r'^[^:/\s]+://(?=([^:\s]+))\1(:\d{1,5})?/*$', server):
             # E.g. http://127.0.0.1:8888
             url = urlparse(server)
             parsed = '%s://%s' % (url.scheme, url.hostname)
