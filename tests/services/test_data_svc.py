@@ -155,16 +155,15 @@ class TestDataService:
         assert len(agents) == 0
 
     def test_create_fact(self, event_loop, data_svc):
-        fact_desc_data = {"test.fact.1": {"default":"default"}, "test.fact.2": {"default":"deadbeef"}, "test.fact.3":{"default": None}}
+        fact_desc_data = {"test.fact.1": {"default": "default"}, "test.fact.2": {"default": "deadbeef"}, "test.fact.3": {"default": None}}
         event_loop.run_until_complete(data_svc.create_facts(fact_desc_data))
         assert len(data_svc.list_of_facts) == 2
         # event_loop.run_until_complete(data_svc.load_default_facts())
         # assert self.ram["sources"]
 
     def test_loader_executors_from_platform_dict(self, event_loop, data_svc):
-        platforms = {"linux": {"sh":{"command": "./test_cli test_command", "payloads": "test_cli"}}}
+        platforms = {"linux": {"sh": {"command": "./test_cli test_command", "payloads": "test_cli"}}}
         executors = event_loop.run_until_complete(data_svc.load_executors_from_platform_dict(platforms))
-        expected_executors = Executor(name= "sh", platform= "linux", command= "./test_cli test_command", payload = "test_cli")
         assert len(executors) == 1
 
     def test_no_autogen_cleanup_cmds(self, event_loop, data_svc):

@@ -130,6 +130,7 @@ class DataService(DataServiceInterface, BaseService):
         self.list_of_facts.extend(plugin_facts)
 
     async def load_default_facts(self):
+        print("actually loading default facts")
         new_source = Source(id="default", name="default", facts=self.list_of_facts, adjustments=[])
         await self.store(new_source)
 
