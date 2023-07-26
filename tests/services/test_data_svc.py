@@ -166,6 +166,12 @@ class TestDataService:
         event_loop.run_until_complete(data_svc._load_fact_description_files(plugin))
         assert data_svc.fact_descriptions == {}
 
+        filename = "tests/data/fact_description.yml"
+        event_loop.run_until_complete(data_svc.load_fact_description_file(filename, "test"))
+        expected = {"test.fact.1": {"default": None, "description": ""}}
+        assert data_svc.fact_descriptions["test"] == expected
+        assert list(data_svc.fact_descriptions.keys()) == ["test"]
+
     def test_loader_executors_from_platform_dict(self, event_loop, data_svc):
         platforms = {"linux": {"sh": {"command": "./test_cli test_command", "payloads": "test_cli"}}}
         executors = event_loop.run_until_complete(data_svc.load_executors_from_platform_dict(platforms))
