@@ -158,8 +158,14 @@ class TestDataService:
         fact_desc_data = {"test.fact.1": {"default": "default"}, "test.fact.2": {"default": "deadbeef"}, "test.fact.3": {"default": None}}
         event_loop.run_until_complete(data_svc.create_facts(fact_desc_data))
         assert len(data_svc.list_of_facts) == 2
-        # event_loop.run_until_complete(data_svc.load_default_facts())
-        # assert self.ram["sources"]
+        event_loop.run_until_complete(data_svc.load_default_facts())
+        assert data_svc.ram["sources"]
+
+    def test_load_fact_description_file(self, event_loop, data_svc):
+        plugin = Plugin(name="test")
+        event_loop.run_until_complete(data_svc._load_fact_description_files(plugin))
+        assert data_svc.fact_descriptions == {}
+
 
     def test_loader_executors_from_platform_dict(self, event_loop, data_svc):
         platforms = {"linux": {"sh": {"command": "./test_cli test_command", "payloads": "test_cli"}}}
