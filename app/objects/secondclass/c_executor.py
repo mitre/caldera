@@ -59,7 +59,9 @@ class Executor(BaseObject):
         self.language = language
         self.build_target = build_target
 
-        self.labels = labels if labels else []
+        self.labels = labels if labels else ["Command1", "Command2"]
+        if len(self.labels) < 2:
+            self.labels.append("Command2")
         self.payloads = payloads if payloads else []
         self.uploads = uploads if uploads else []
 
