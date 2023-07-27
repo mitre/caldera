@@ -236,7 +236,6 @@ class DataService(DataServiceInterface, BaseService):
                 language = executor.get('language')
                 build_target = executor.get('build_target')
                 payloads = executor.get('payloads')
-                labels = executor.get('labels')
                 uploads = executor.get('uploads')
                 timeout = executor.get('timeout', 60)
                 variations = executor.get('variations', [])
@@ -248,7 +247,7 @@ class DataService(DataServiceInterface, BaseService):
                         executors.append(Executor(name=executor_name, platform=platform_name, command=command,
                                                   code=code, language=language, build_target=build_target,
                                                   payloads=payloads, uploads=uploads, timeout=timeout,
-                                                  parsers=parsers, cleanup=cleanup, variations=variations, labels=labels))
+                                                  parsers=parsers, cleanup=cleanup, variations=variations))
         return executors
 
     async def load_executors_from_list(self, executors: list):

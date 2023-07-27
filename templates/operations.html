@@ -1648,7 +1648,7 @@
                 this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
-                const fields = [...new Set([...chosen_command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
+                const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
                 if (factInfo) {
                     this.getDescriptionsFromFields(fields);
                 }
