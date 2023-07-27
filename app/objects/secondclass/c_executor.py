@@ -52,7 +52,6 @@ class Executor(BaseObject):
         self.platform = platform.lower()
 
         self.command = command
-        self.alt_command = alt_command
         self.code = code
         self.language = language
         self.build_target = build_target
