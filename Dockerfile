@@ -22,7 +22,8 @@ RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y install mingw-w64; fi
 RUN pip3 install --no-cache-dir -r requirements.txt
 
 # Set up config file and disable atomic by default
-RUN grep -v "\- atomic" conf/default.yml > conf/local.yml
+RUN python3 -c "import app; import app.utility.config_generator; app.utility.config_generator.ensure_local_config();"; \
+    sed -i '/\- atomic/d' conf/local.yml;
 
 # Install golang
 RUN curl -L https://go.dev/dl/go1.17.6.linux-amd64.tar.gz -o go1.17.6.linux-amd64.tar.gz
@@ -58,6 +59,15 @@ RUN ./update-agents.sh
 RUN if [ ! -d "/usr/src/app/plugins/atomic/data/atomic-red-team" ]; then   \
     git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git \
         /usr/src/app/plugins/atomic/data/atomic-red-team;                  \
+fi
+
+WORKDIR /usr/src/app/plugins/emu
+
+# If emu is enabled, complete necessary installation steps
+RUN if [ $(grep -c "\- emu" ../../conf/local.yml)  ]; then \
+    apt-get -y install zlib1g unzip;                \
+    pip3 install -r requirements.txt;               \
+    ./download_payloads.sh;                         \
 fi
 
 WORKDIR /usr/src/app
