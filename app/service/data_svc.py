@@ -1,4 +1,3 @@
-
 import asyncio
 import copy
 import datetime
@@ -224,7 +223,6 @@ class DataService(DataServiceInterface, BaseService):
             for executor_names, executor in platform_executors.items():
 
                 command = executor['command'].strip() if executor.get('command') else None
-                alt_command = executor['alt_command'].strip() if executor.get('alt_command') else None
 
                 cleanup = executor['cleanup'].strip() if executor.get('cleanup') else None
 
@@ -250,7 +248,7 @@ class DataService(DataServiceInterface, BaseService):
                         executors.append(Executor(name=executor_name, platform=platform_name, command=command,
                                                   code=code, language=language, build_target=build_target,
                                                   payloads=payloads, uploads=uploads, timeout=timeout,
-                                                  parsers=parsers, cleanup=cleanup, variations=variations, alt_command=alt_command, labels=labels))
+                                                  parsers=parsers, cleanup=cleanup, variations=variations, labels=labels))
         return executors
 
     async def load_executors_from_list(self, executors: list):

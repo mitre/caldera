@@ -10,11 +10,9 @@ class ExecutorSchema(ma.Schema):
     name = ma.fields.String(missing=None)
     platform = ma.fields.String(missing=None)
     command = ma.fields.String(missing=None)
-    alt_command = ma.fields.String(missing=None)
     code = ma.fields.String(missing=None)
     language = ma.fields.String(missing=None)
     build_target = ma.fields.String(missing=None)
-    labels = ma.fields.List(ma.fields.String())
     payloads = ma.fields.List(ma.fields.String())
     uploads = ma.fields.List(ma.fields.String())
     timeout = ma.fields.Int(missing=60)
@@ -48,7 +46,7 @@ class Executor(BaseObject):
 
     def __init__(self, name, platform, command=None, code=None, language=None, build_target=None,
                  payloads=None, uploads=None, timeout=60, parsers=None, cleanup=None, variations=None,
-                 additional_info=None, alt_command=None, labels=None, **kwargs):
+                 additional_info=None, **kwargs):
         super().__init__()
         self.name = name
         self.platform = platform.lower()
@@ -58,8 +56,6 @@ class Executor(BaseObject):
         self.code = code
         self.language = language
         self.build_target = build_target
-
-        self.labels = labels if labels else []
         self.payloads = payloads if payloads else []
         self.uploads = uploads if uploads else []
 
