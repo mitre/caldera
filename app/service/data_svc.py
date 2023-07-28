@@ -119,7 +119,7 @@ class DataService(DataServiceInterface, BaseService):
             self.log.debug('Restored data from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
-    async def create_facts(self, data):
+    async def create_default_facts(self, data):
         plugin_facts = []
         for field in data:
             default = data[field]["default"]
@@ -448,10 +448,10 @@ class DataService(DataServiceInterface, BaseService):
     async def load_fact_description_file(self, filename, plugin_name):
         try:
             for entries in self.strip_yml(filename):
-                await self.create_facts(entries)
+                await self.create_default_facts(entries)
                 self.fact_descriptions[plugin_name] = dict(entries)
         except Exception as e1:
-            print("bad plugin", e1)
+            print(f"ERROR: Unable to read fact_description.yml for plugin {plugin_name}::", e1)
 
     async def _prune_non_critical_data(self):
         self.ram.pop('plugins')

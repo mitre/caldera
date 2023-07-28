@@ -156,7 +156,7 @@ class TestDataService:
 
     def test_create_fact(self, event_loop, data_svc):
         fact_desc_data = {"test.fact.1": {"default": "default"}, "test.fact.2": {"default": "deadbeef"}, "test.fact.3": {"default": None}}
-        event_loop.run_until_complete(data_svc.create_facts(fact_desc_data))
+        event_loop.run_until_complete(data_svc.create_default_facts(fact_desc_data))
         assert len(data_svc.list_of_facts) == 2
         event_loop.run_until_complete(data_svc.load_default_facts())
         assert data_svc.ram["sources"]
