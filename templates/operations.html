@@ -220,6 +220,7 @@
                                 <th>pid</th>
                                 <th>Link Command</th>
                                 <th>Link Output</th>
+                                <th>Replay Link</th>
                                 <th title="Link Actions" class="csv-exclude"></th>
                             </tr>
                             </thead>
@@ -296,6 +297,15 @@
                                                 </button>
                                             </div>
                                         </template>
+                                    </td>
+
+                                    <td class="replayLink">
+                                        <div class="is-flex is-justify-content-flex-start"></div>
+                                            <button class="button is-small"
+                                                x-on:click="openModal = null; modalReplayExistingLink(link)"
+                                                title="replay">&#x21bb;
+                                            </button>
+                                        </div>
                                     </td>
 
                                     <td class="csv-exclude">
@@ -489,7 +499,7 @@
                             </template>
                             <template x-if="!isLinkEditable(selectedLink)">
                                 <div>
-                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">      
+                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">
                                     <div>
                                         <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
                                     </div>
@@ -867,7 +877,7 @@
                                         </td>
                                     </tr>
                                 </tbody>
-                                
+
                             </table>
                         </section>
                         <footer class="modal-card-foot">
@@ -882,7 +892,7 @@
                         </footer>
                     </div>
                 </template>
-                
+
                 <template x-if="openModal === 'addLink'">
                     <div class="modal-card wide" x-init="getAbilities()">
                         <header class="modal-card-head">
@@ -1619,7 +1629,6 @@
                 this.selectedPotentialLinkFacts = {};
                 this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
-
                 const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
                 const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
                 const opSource = this.SOURCES.find((s) => s.id === this.selectedOperation.source.id);
@@ -1688,7 +1697,6 @@
                         let split = fact.split('|');
                         command = command.replaceAll(`#{${split[0]}}`, split[1])
                     });
-
                     this.potentialLinksToAdd.push({
                         ability: this.selectedPotentialLink,
                         paw: this.potentialLink.agent.paw,
@@ -1731,6 +1739,8 @@
                         this.selectedLinkCommand = res.command;
                         this.selectedLinkPlaintextCommand = res.plaintext_command;
                         this.editableCommand = res.command;
+                        return res;
+
                     })
                     .catch(() => {
                         this.selectedLinkResults = null;
@@ -1739,6 +1749,7 @@
                         this.selectedLinkPlaintextCommand = null;
                         toast('Error getting link results.');
                     });
+
             },
 
             getLinkResults(output, link) {
@@ -1884,6 +1895,14 @@
                     return matchAgent && matchTactic && matchTechnique && matchQuery;
                 });
             },
+
+            modalReplayExistingLink(link) {
+                this.getLink(link);
+                this.potentialLink.executor = link.executor.name;
+                this.potentialLink.agent = this.selectedOperation.host_group[0];
+                this.selectPotentialLink(link.ability);
+                this.openModal = 'addLink';
+            }
         };
     }
 </script>
