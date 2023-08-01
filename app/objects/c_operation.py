@@ -456,10 +456,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                 and link.ability.ability_id == ability.ability_id])
 
         if agent.platform == 'unknown':
-            return dict(reason='No platform specified', reason_id=self.Reason.PLATFORM.value,
+            return dict(reason='Platform not available', reason_id=self.Reason.PLATFORM.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not valid_executors:
-            return dict(reason='Executor is unavailable', reason_id=self.Reason.EXECUTOR.value,
+            return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
             return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
@@ -468,10 +468,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
             return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not set(associated_links).isdisjoint(self.ignored_links):
-            return dict(reason='Link was ignored', reason_id=self.Reason.LINK_IGNORED.value,
+            return dict(reason='Link ignored', reason_id=self.Reason.LINK_IGNORED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.trusted:
-            return dict(reason='Untrusted', reason_id=self.Reason.UNTRUSTED.value,
+            return dict(reason='Agent not trusted', reason_id=self.Reason.UNTRUSTED.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif state != 'finished':
             return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
