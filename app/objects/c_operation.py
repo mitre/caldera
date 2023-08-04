@@ -459,7 +459,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             return dict(reason='Platform not available', reason_id=self.Reason.PLATFORM.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not valid_executors:
-            return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
+            return dict(reason='Mismatched ability platform', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
             return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
