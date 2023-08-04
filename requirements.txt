@@ -5,8 +5,7 @@ aiohttp-security==0.4.0
 aiohttp-apispec==2.2.3
 jinja2==3.0.3
 pyyaml>=5.1
-cryptography>=3.2,<37.0.0; python_version <= '3.7'
-cryptography>=3.2; python_version > '3.7'
+cryptography>=3.2
 websockets>=10.3
 Sphinx==5.1.1
 docutils==0.16 # Broken bullet lists in sphinx_rtd_theme https://github.com/readthedocs/sphinx_rtd_theme/issues/1115
@@ -24,5 +23,4 @@ svglib==1.0.1  # debrief
 Markdown==3.3.3  # training
 dnspython==2.1.0
 asyncssh==2.11.0
-aioftp~=0.20.0; python_version >= '3.7'
-aioftp==0.16.1; python_version < '3.7'
+aioftp~=0.20.0
