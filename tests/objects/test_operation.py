@@ -503,7 +503,7 @@ class TestOperation:
         op = Operation(name='test', agents=[test_agent], state='running')
         reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=test_agent.executors, agent_ran={})
-        assert reason['reason'] == 'No platform specified'
+        assert reason['reason'] == 'Platform not available'
         assert reason['reason_id'] == Operation.Reason.PLATFORM.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
@@ -513,7 +513,7 @@ class TestOperation:
         op = Operation(name='test', agents=[test_agent], state='running')
         reason = op._check_reason_skipped(agent=test_agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=[], agent_ran={})
-        assert reason['reason'] == 'Executor is unavailable'
+        assert reason['reason'] == 'Mismatched ability platform and executor'
         assert reason['reason_id'] == Operation.Reason.EXECUTOR.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
@@ -553,7 +553,7 @@ class TestOperation:
         op.ignored_links = [test_link.id]
         reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=agent.executors, agent_ran={})
-        assert reason['reason'] == 'Link was ignored'
+        assert reason['reason'] == 'Link ignored - highly visible or discarded link'
         assert reason['reason_id'] == Operation.Reason.LINK_IGNORED.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
@@ -563,7 +563,7 @@ class TestOperation:
         op = Operation(name='test', agents=[agent], state='running')
         reason = op._check_reason_skipped(agent=agent, ability=test_ability, op_facts=[], state=op.state,
                                           agent_executors=agent.executors, agent_ran={})
-        assert reason['reason'] == 'Untrusted'
+        assert reason['reason'] == 'Agent not trusted'
         assert reason['reason_id'] == Operation.Reason.UNTRUSTED.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
