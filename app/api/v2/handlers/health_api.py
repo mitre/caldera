@@ -24,10 +24,12 @@ class HealthApi(BaseApi):
     @aiohttp_apispec.response_schema(CalderaInfoSchema, 200, description='Includes all loaded plugins and system components.')
     async def get_health_info(self, request):
         loaded_plugins_sorted = sorted(self._app_svc.get_loaded_plugins(), key=operator.attrgetter('name'))
+        access = await self._auth_svc.get_permissions(request)
 
         mapping = {
             'application': 'CALDERA',
             'version': app.get_version(),
+            'access': access[0].name,
             'plugins': loaded_plugins_sorted
         }
 
