@@ -279,7 +279,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                                                      state=self.state, agent_ran=agent_ran)
                 if skipped:
                     if agent_skipped[skipped['ability_id']]:
-                        if agent_skipped[skipped['ability_id']]['reason_id'] < skipped['reason_id']:
+                        if agent_skipped[skipped['ability_id']]['reason_id'] > skipped['reason_id']:
                             agent_skipped[skipped['ability_id']] = skipped
                     else:
                         agent_skipped[skipped['ability_id']] = skipped
@@ -452,21 +452,33 @@ class Operation(FirstClassObjectInterface, BaseObject):
             facts = re.findall(BasePlanningService.re_variable, executor.test) if executor.command else []
             if not facts or all(fact in op_facts for fact in facts):
                 fact_dependency_fulfilled = True
+        associated_links = set([link.id for link in self.chain if link.paw == agent.paw
+                                and link.ability.ability_id == ability.ability_id])
 
-        if not agent.trusted:
-            return dict(reason='Agent untrusted', reason_id=self.Reason.UNTRUSTED.value,
+        if agent.platform == 'unknown':
+            return dict(reason='Platform not available', reason_id=self.Reason.PLATFORM.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not valid_executors:
-            return dict(reason='Executor not available', reason_id=self.Reason.EXECUTOR.value,
-                        ability_id=ability.ability_id, ability_name=ability.name)
-        elif not fact_dependency_fulfilled:
-            return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
+            return dict(reason='Mismatched ability platform and executor', reason_id=self.Reason.EXECUTOR.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
         elif not agent.privileged_to_run(ability):
             return dict(reason='Ability privilege not fulfilled', reason_id=self.Reason.PRIVILEGE.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
+        elif not fact_dependency_fulfilled:
+            return dict(reason='Fact dependency not fulfilled', reason_id=self.Reason.FACT_DEPENDENCY.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
+        elif not set(associated_links).isdisjoint(self.ignored_links):
+            return dict(reason='Link ignored - highly visible or discarded link',
+                        reason_id=self.Reason.LINK_IGNORED.value, ability_id=ability.ability_id,
+                        ability_name=ability.name)
+        elif not agent.trusted:
+            return dict(reason='Agent not trusted', reason_id=self.Reason.UNTRUSTED.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
         elif state != 'finished':
             return dict(reason='Operation not completed', reason_id=self.Reason.OP_RUNNING.value,
+                        ability_id=ability.ability_id, ability_name=ability.name)
+        else:
+            return dict(reason='Other', reason_id=self.Reason.OTHER.value,
                         ability_id=ability.ability_id, ability_name=ability.name)
 
     def _get_operation_metadata_for_event_log(self):
@@ -524,10 +536,12 @@ class Operation(FirstClassObjectInterface, BaseObject):
     class Reason(Enum):
         PLATFORM = 0
         EXECUTOR = 1
-        FACT_DEPENDENCY = 2
-        PRIVILEGE = 3
-        OP_RUNNING = 4
+        PRIVILEGE = 2
+        FACT_DEPENDENCY = 3
+        LINK_IGNORED = 4
         UNTRUSTED = 5
+        OP_RUNNING = 6
+        OTHER = 7
 
     class States(Enum):
         RUNNING = 'running'
