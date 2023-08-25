@@ -161,9 +161,10 @@
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
                                  @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
-                                 x-data="{editedValues: {}, editedScores: {}, newTags: []}">
+                                 x-data="{editedValues: {}, editedScores: {}, newTags: [], editedNames: {}}">
                                 <div>
                                     <p x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
+                                    <input class="input is-small" x-show="editCard === fact.trait" x-model="editedNames[fact.trait]" x-init="editedNames[fact.trait] = fact.trait">
                                     <template x-if="editCard === fact.trait">
                                         <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
                                     </template>
@@ -249,7 +250,7 @@
                                                     <span id="cancel-edit-fact">Cancel</span>
                                                 </button>
                                                 <button class="button is-small is-primary ml-2"
-                                                        @click="updateFact(editedValues, editedScores, newTags); newTags = []; $event.stopPropagation();">
+                                                        @click="updateFact(editedValues, editedScores, newTags, editedNames); newTags = []; $event.stopPropagation();">
                                                     <span class="icon"><i class="fas fa-save"></i></span>
                                                     <span>Save</span>
                                                 </button>
@@ -1134,10 +1135,10 @@
                 toast('Added new fact.', true);
             },
 
-            updateFact(editedValues, editedScores, newTags) {
+            updateFact(editedValues, editedScores, newTags, editedNames) {
                 // Do a comparison of facts and new facts--replace uniques with ones in the new one
                 let updated = this.selectedSource.facts.map((f) => {
-                    if (!editedValues[f.unique] && !editedScores[f.unique]) {
+                    if (!editedValues[f.unique] && !editedScores[f.unique] && !editedNames[f.name]) {
                         return f; // return original fact
                     }
                     let fact = { trait: f.trait };
@@ -1150,6 +1151,12 @@
                         fact.score = isNaN(editedScores[f.unique]) ? 1 : Number(editedScores[f.unique]);
                     } else {
                         fact.score = f.score;
+                    }
+                    if (editedNames[f.name]) {
+                        fact.name = editedNames[f.name];
+                        fact.trait = editedNames[f.name];
+                    } else {
+                        fact.name = f.name;
                     }
                     return fact;
                 });
