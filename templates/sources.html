@@ -176,7 +176,7 @@
                                         <div class="field is-grouped is-grouped-multiline is-flex is-align-items-center is-justify-content-center">
                                             <template x-for="(score) in fact.scores"
                                                       :key="fact.trait + score.score"
-                                                      x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores})">
+                                                      x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores;})">
                                                 <div>
                                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
                                                         <span x-show-="editCard !== fact.trait"
@@ -203,7 +203,7 @@
                                                                                        pattern="[0-9]*"
                                                                                        placeholder="1"
                                                                                        x-bind:value="score.score">
-                                                                                <button @click="deleteFactValue(fact.trait, score.unique, val)"
+                                                                                <button @click="score.values.splice(index, 1) && deleteFactValue(fact.trait, score.unique, val)"
                                                                                     class="delete is-small"></button>
                                                                             </span>
                                                                         </div>
@@ -1169,7 +1169,7 @@
 
             deleteFactValue(trait, unique, value) {
                 this.selectedSource.facts = this.selectedSource.facts.filter((f) => {
-                    return (f.unique !== unique || f.value !== value);
+                    return (f.value !== value);
                 });
                 if (this.selectedSource.facts.filter((f) => f.trait === trait).length < 1) this.deleteFact(trait); // delete fact if it doesn't have any values
                 this.updateFactSource(this.selectedSource);
