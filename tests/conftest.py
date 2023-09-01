@@ -502,7 +502,7 @@ def test_agent(event_loop):
 
 @pytest.fixture
 def test_executor(test_agent):
-    return ExecutorSchema().load(dict(timeout=60, platform=test_agent.platform, name='linux', command='ls'))
+    return ExecutorSchema().load(dict(timeout=60, platform=test_agent.platform, name='sh', command='ls'))
 
 
 @pytest.fixture
