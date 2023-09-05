@@ -30,6 +30,7 @@ These plugins are supported and maintained by the Caldera team.
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Red Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
+- **[Caldera for OT](https://github.com/mitre/caldera-ot)** (ICS/OT capabilities for Caldera)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
 - **[Debrief](https://github.com/mitre/debrief)** (operations insights)
 - **[Emu](https://github.com/mitre/emu)** (CTID emulation plans)
