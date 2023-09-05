@@ -163,7 +163,7 @@
                                  @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
                                  x-data="{editedValues: {}, editedScores: {}, newTags: [], editedNames: {}}">
                                 <div>
-                                    <p x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
+                                    <p x-show="editCard !== fact.trait" x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
                                     <input class="input is-small" x-show="editCard === fact.trait" x-model="editedNames[fact.trait]" x-init="editedNames[fact.trait] = fact.trait">
                                     <template x-if="editCard === fact.trait">
                                         <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
