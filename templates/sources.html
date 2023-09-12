@@ -60,6 +60,11 @@
                     <span class="icon"><em class="fas fa-copy"></em></span>
                     <span>Duplicate Source</span>
                 </button>
+                <button class="button is-primary is-small mb-2" @click="downloadSource()"
+                        x-bind:disabled="!selectedSourceId">
+                    <span class="icon"><em class="fas fa-arrow-down"></em></span>
+                    <span>Download Source</span>
+                </button>
                 <div class="hr"></div>
                 <button class="button is-small mb-2 is-danger is-outlined"
                         @click="openModal = { isOpen: true, name: 'Delete Source' }">
@@ -107,7 +112,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="field is-flex is-horizontal is-flex is-align-items-center">
+                                    <div class="field is-flex is-horizontal is-flex is-align-items-center is-flex-direction-column">
                                         <div class="field-label is-small is-flex-grow-2">
                                             <label class="label pt-2">Values</label>
                                         </div>
@@ -156,9 +161,10 @@
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
                             <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
                                  @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
-                                 x-data="{editedValues: {}, editedScores: {}, newTags: []}">
+                                 x-data="{editedValues: {}, editedScores: {}, newTags: [], editedNames: {}}">
                                 <div>
-                                    <p x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
+                                    <p x-show="editCard !== fact.trait" x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
+                                    <input class="input is-small" x-show="editCard === fact.trait" x-model="editedNames[fact.trait]" x-init="editedNames[fact.trait] = fact.trait">
                                     <template x-if="editCard === fact.trait">
                                         <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
                                     </template>
@@ -170,7 +176,7 @@
                                         <div class="field is-grouped is-grouped-multiline is-flex is-align-items-center is-justify-content-center">
                                             <template x-for="(score) in fact.scores"
                                                       :key="fact.trait + score.score"
-                                                      x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores})">
+                                                      x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores;})">
                                                 <div>
                                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
                                                         <span x-show-="editCard !== fact.trait"
@@ -197,7 +203,7 @@
                                                                                        pattern="[0-9]*"
                                                                                        placeholder="1"
                                                                                        x-bind:value="score.score">
-                                                                                <button @click="deleteFactValue(fact.trait, score.unique, val)"
+                                                                                <button @click="score.values.splice(index, 1) && deleteFactValue(fact.trait, score.unique, val)"
                                                                                     class="delete is-small"></button>
                                                                             </span>
                                                                         </div>
@@ -244,7 +250,7 @@
                                                     <span id="cancel-edit-fact">Cancel</span>
                                                 </button>
                                                 <button class="button is-small is-primary ml-2"
-                                                        @click="updateFact(editedValues, editedScores, newTags); newTags = []; $event.stopPropagation();">
+                                                        @click="updateFact(editedValues, editedScores, newTags, editedNames); newTags = []; $event.stopPropagation();">
                                                     <span class="icon"><i class="fas fa-save"></i></span>
                                                     <span>Save</span>
                                                 </button>
@@ -1129,10 +1135,10 @@
                 toast('Added new fact.', true);
             },
 
-            updateFact(editedValues, editedScores, newTags) {
+            updateFact(editedValues, editedScores, newTags, editedNames) {
                 // Do a comparison of facts and new facts--replace uniques with ones in the new one
                 let updated = this.selectedSource.facts.map((f) => {
-                    if (!editedValues[f.unique] && !editedScores[f.unique]) {
+                    if (!editedValues[f.unique] && !editedScores[f.unique] && !editedNames[f.name]) {
                         return f; // return original fact
                     }
                     let fact = { trait: f.trait };
@@ -1146,6 +1152,12 @@
                     } else {
                         fact.score = f.score;
                     }
+                    if (editedNames[f.name]) {
+                        fact.name = editedNames[f.name];
+                        fact.trait = editedNames[f.name];
+                    } else {
+                        fact.name = f.name;
+                    }
                     return fact;
                 });
 
@@ -1157,7 +1169,7 @@
 
             deleteFactValue(trait, unique, value) {
                 this.selectedSource.facts = this.selectedSource.facts.filter((f) => {
-                    return (f.unique !== unique || f.value !== value);
+                    return (f.value !== value);
                 });
                 if (this.selectedSource.facts.filter((f) => f.trait === trait).length < 1) this.deleteFact(trait); // delete fact if it doesn't have any values
                 this.updateFactSource(this.selectedSource);
@@ -1260,6 +1272,22 @@
                 });
             },
 
+            downloadSource() {
+                apiV2('GET', `/api/v2/sources/${this.selectedSourceId}`)
+                    .then((res) => {
+                      const dataURL = `data:text/json;charset=utf-8,${encodeURIComponent(JSON.stringify(res, null, 2))}`
+                      const fileName = `${this.selectedSource.name}.json`
+                      const elem = document.createElement('a');
+                      elem.setAttribute('href', dataURL);
+                      elem.setAttribute('download', fileName);
+                      elem.click();
+                      elem.remove();
+                    }).catch((error) => {
+                      toast('Error downloading source');
+                      console.error(error)
+                    });
+            },
+
             resetSearch() {
                 this.abilitySearch = {
                     query: '',
@@ -1328,6 +1356,7 @@
 
     #sourcePage .box.sources .field-body {
         flex-grow: 4 !important;
+        flex-direction: column !important;
     }
 
     #sourcePage .box.sources {
