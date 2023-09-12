@@ -80,7 +80,7 @@ Next, install the PIP requirements:
 ```Bash
 pip3 install -r requirements.txt
 ```
-**Super-power your Caldea server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
+**Super-power your Caldera server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
 
 Finally, start the server.
 ```Bash
