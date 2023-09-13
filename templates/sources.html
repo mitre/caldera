@@ -159,11 +159,11 @@
                             </div>
                         </template>
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
-                            <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column"
-                                 @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
+                          <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
+                            <div @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
                                  x-data="{editedValues: {}, editedScores: {}, newTags: [], editedNames: {}}">
                                 <div>
-                                    <p x-show="editCard !== fact.trait" x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1" x-text="fact.trait"></p>
+                                    <p x-show="editCard !== fact.trait" x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1 has-text-centered" x-text="fact.trait"></p>
                                     <input class="input is-small" x-show="editCard === fact.trait" x-model="editedNames[fact.trait]" x-init="editedNames[fact.trait] = fact.trait">
                                     <template x-if="editCard === fact.trait">
                                         <button class="button is-danger is-outlined is-small delete-card-button" @click="deleteFact(fact.trait)"><span class="icon"><em class="fas fa-trash"></em></span></button>
@@ -179,22 +179,22 @@
                                                       x-init="$watch('filteredFacts', updated => {if (updated && updated[index]) fact.scores = updated[index].scores;})">
                                                 <div>
                                                     <div class="is-flex is-justify-content-center is-align-items-center is-flex-direction-row is-flex-wrap-wrap">
-                                                        <span x-show-="editCard !== fact.trait"
+                                                        <span x-show="editCard !== fact.trait"
                                                               class="tag break-spaces is-info"
                                                               x-text="score.score + (score.score > 1 ? ' pts:' :' pt:')"></span>
-                                                        <template x-for="(val, index) in score.values" :key="val+index">
+                                                        <template x-for="(val, index) in score.values" :key="val.id">
                                                             <div>
                                                                 <template x-if="editCard !== fact.trait">
                                                                     <span class="tag is-light break-spaces editable-tag"
-                                                                          x-text="(val ? val : '--')"></span>
+                                                                          x-text="(val.value ? val.value : '--')"></span>
                                                                 </template>
                                                                 <template x-if="editCard === fact.trait">
                                                                     <div>
                                                                         <div class="tags has-addons mb-0">
                                                                             <span class="is-italic tag is-light break-spaces">
                                                                               <input type="text" class="tag-input"
-                                                                                     x-bind:value="val"
-                                                                                     x-on:change="val = editedValues[score.unique] = $event.target.value;">
+                                                                                     x-bind:value="val.value"
+                                                                                     x-on:change="val.value = editedValues[score.unique] = $event.target.value;">
                                                                             </span>
                                                                             <span class="tag is-white break-spaces">
                                                                                 <input class="tag-number-input"
@@ -203,7 +203,7 @@
                                                                                        pattern="[0-9]*"
                                                                                        placeholder="1"
                                                                                        x-bind:value="score.score">
-                                                                                <button @click="score.values.splice(index, 1) && deleteFactValue(fact.trait, score.unique, val)"
+                                                                                <button @click="score.values.splice(index, 1) && deleteFactValue(fact.trait, score.unique, val.value)"
                                                                                     class="delete is-small"></button>
                                                                             </span>
                                                                         </div>
@@ -259,6 +259,7 @@
                                     </div>
                                 </div>
                             </div>
+                          </div>
                         </template>
                     </div>
                 </template>
@@ -959,6 +960,15 @@
                 this.filteredFacts = Object.keys(facts).map(key => {
                     const fact = facts[key];
                     fact.scores = Object.keys(fact.scores).map(s => facts[key].scores[s]);
+                    // Give each fact score value a unique id for easy deletion
+                    fact.scores.forEach((score) => {
+                        score.values.forEach((value, index) => {
+                            score.values[index] = {
+                                id: `${fact.trait}-${score.score}-${index}`,
+                                value: value
+                            };
+                        });
+                    });
                     return fact;
                 });
                 this.filteredRules = Object.keys(rules).map(key => rules[key]);
