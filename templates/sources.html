@@ -160,7 +160,7 @@
                         </template>
                         <template x-for="(fact, index) in filteredFacts" :key="fact.trait">
                           <div class="box sources mb-2 mr-2 p-3 is-flex is-justify-content-center is-align-items-center is-flex-direction-column">
-                            <div @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
+                            <div class="w-100" @click="($event) => editCard = ($event.target.id !== 'cancel-edit-fact') ? fact.trait : null"
                                  x-data="{editedValues: {}, editedScores: {}, newTags: [], editedNames: {}}">
                                 <div>
                                     <p x-show="editCard !== fact.trait" x-bind:class="{'has-background-warning has-text-black': editCard === fact.trait}" class="p-1 has-text-centered" x-text="fact.trait"></p>
