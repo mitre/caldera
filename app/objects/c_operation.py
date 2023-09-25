@@ -440,10 +440,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
         return [link for link in self.chain if link.paw == paw and not link.finish and not link.can_ignore()]
 
     async def _get_all_possible_abilities_by_agent(self, data_svc):
-        abilities_by_agent = {a.paw: {'all_abilities': []} for a in self.agents}
+        abilities = {'all_abilities': [ab for ab_id in self.adversary.atomic_ordering
+                                       for ab in await data_svc.locate('abilities', match=dict(ability_id=ab_id))]}
+        abilities_by_agent = {a.paw: abilities for a in self.agents}
         for link in self.chain:
-            matching_abilities = await data_svc.locate('abilities', match=dict(ability_id=link.ability.ability_id))
-            abilities_by_agent[link.paw]['all_abilities'].extend(matching_abilities)
+            if link.ability.ability_id not in self.adversary.atomic_ordering:
+                matching_abilities = await data_svc.locate('abilities', match=dict(ability_id=link.ability.ability_id))
+                abilities_by_agent[link.paw]['all_abilities'].extend(matching_abilities)
         return abilities_by_agent
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
