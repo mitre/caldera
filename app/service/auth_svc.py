@@ -1,5 +1,6 @@
 import base64
 from collections import namedtuple
+from hmac import compare_digest
 from importlib import import_module
 
 from aiohttp import web, web_request
@@ -142,9 +143,9 @@ class AuthService(AuthServiceInterface, BaseService):
 
         if api_key is None:
             return False
-        if api_key == self.get_config(CONFIG_API_KEY_RED):
+        if compare_digest(api_key, self.get_config(CONFIG_API_KEY_RED)):
             return True
-        if api_key == self.get_config(CONFIG_API_KEY_BLUE):
+        if compare_digest(api_key, self.get_config(CONFIG_API_KEY_BLUE)):
             return True
         return False
 
