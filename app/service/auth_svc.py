@@ -148,7 +148,6 @@ class AuthService(AuthServiceInterface, BaseService):
                 return True
         return False
 
-
     async def request_has_valid_user_session(self, request):
         return await aiohttp_security_api.authorized_userid(request) is not None
 
