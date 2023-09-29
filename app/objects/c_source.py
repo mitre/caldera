@@ -33,7 +33,7 @@ class SourceSchema(ma.Schema):
     rules = ma.fields.List(ma.fields.Nested(RuleSchema))
     adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema))
-    plugin = ma.fields.String(missing=None)
+    plugin = ma.fields.String(load_default=None)
 
     @ma.pre_load
     def fix_adjustments(self, in_data, **_):

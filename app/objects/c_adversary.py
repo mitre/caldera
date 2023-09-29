@@ -18,7 +18,7 @@ class AdversarySchema(ma.Schema):
     objective = ma.fields.String()
     tags = ma.fields.List(ma.fields.String(), allow_none=True)
     has_repeatable_abilities = ma.fields.Boolean(dump_only=True)
-    plugin = ma.fields.String(missing=None)
+    plugin = ma.fields.String(load_default=None)
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
