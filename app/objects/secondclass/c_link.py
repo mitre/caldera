@@ -25,15 +25,15 @@ class LinkSchema(ma.Schema):
     class Meta:
         unknown = ma.EXCLUDE
 
-    id = ma.fields.String(missing='')
+    id = ma.fields.String(load_default='')
     paw = ma.fields.String()
     command = ma.fields.String()
     plaintext_command = ma.fields.String()
-    status = ma.fields.Integer(missing=-3)
-    score = ma.fields.Integer(missing=0)
-    jitter = ma.fields.Integer(missing=0)
+    status = ma.fields.Integer(load_default=-3)
+    score = ma.fields.Integer(load_default=0)
+    jitter = ma.fields.Integer(load_default=0)
     decide = ma.fields.DateTime(format=BaseObject.TIME_FORMAT)
-    pin = ma.fields.Integer(missing=0)
+    pin = ma.fields.Integer(load_default=0)
     pid = ma.fields.String()
     facts = ma.fields.List(ma.fields.Nested(FactSchema()))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
@@ -43,12 +43,12 @@ class LinkSchema(ma.Schema):
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
     executor = ma.fields.Nested(ExecutorSchema())
-    cleanup = ma.fields.Integer(missing=0)
+    cleanup = ma.fields.Integer(load_default=0)
     visibility = ma.fields.Nested(VisibilitySchema())
-    host = ma.fields.String(missing=None)
+    host = ma.fields.String(load_default=None)
     output = ma.fields.String()
     deadman = ma.fields.Boolean()
-    agent_reported_time = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, missing=None)
+    agent_reported_time = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, load_default=None)
 
     @ma.pre_load()
     def fix_ability(self, link, **_):
