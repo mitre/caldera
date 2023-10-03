@@ -12,7 +12,7 @@ class InstructionSchema(ma.Schema):
     payloads = ma.fields.List(ma.fields.String())
     deadman = ma.fields.Boolean()
     uploads = ma.fields.List(ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.String()))
-    delete_payload = ma.fields.Bool(missing=None)
+    delete_payload = ma.fields.Bool(load_default=None)
 
     @ma.post_load
     def build_instruction(self, data, **_):
