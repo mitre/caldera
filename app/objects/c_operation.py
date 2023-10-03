@@ -50,7 +50,7 @@ class OperationSchema(ma.Schema):
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
     use_learning_parsers = ma.fields.Boolean()
-    group = ma.fields.String(missing='')
+    group = ma.fields.String(load_default='')
     source = ma.fields.Nested(SourceSchema())
 
     @ma.pre_load()
