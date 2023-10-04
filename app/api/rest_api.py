@@ -30,9 +30,10 @@ class RestApi(BaseWorld):
 
     async def enable(self):
         self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
+        self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('GET', '/', self.landing)
-        self.app_svc.application.router.add_route('GET', '/{tail:.*}', self.handle_catch)
+        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/).*}', self.handle_catch)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         # unauthorized API endpoints
@@ -53,7 +54,7 @@ class RestApi(BaseWorld):
         return render_template("index.html", request, {})
 
     async def handle_catch(self, request):
-        return web.FileResponse('plugins/magma/dist/index.html')
+        return render_template("index.html", request, {})
 
     @check_authorization
     async def rest_core(self, request):
