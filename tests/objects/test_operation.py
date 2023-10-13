@@ -592,7 +592,7 @@ class TestOperation:
         test_agent = operation_agent
         test_link = make_test_link(9876, test_agent.paw, Link().states['DISCARD'])
         op = Operation(name='test', agents=[test_agent], state='running')
-        op.add_ignored_link(test_link)
+        op.add_ignored_link(test_link.id)
         assert op.ignored_links
-        assert test_link in op.ignored_links
+        assert test_link.id in op.ignored_links
         assert len(op.ignored_links) == 1
