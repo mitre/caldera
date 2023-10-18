@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* HELPFUL functions to call */
 
-function restRequest(requestType, data, callback = (r) => {
+export function restRequest(requestType, data, callback = (r) => {
     console.log('Fetch Success', r);
 }, endpoint = '/api/rest') {
     const requestData = requestType === 'GET' ?
@@ -25,7 +25,7 @@ function restRequest(requestType, data, callback = (r) => {
         .catch((error) => console.error(error));
 }
 
-function apiV2(requestType, endpoint, body = null, jsonRequest = true) {
+export function apiV2(requestType, endpoint, body = null, jsonRequest = true) {
     let requestBody = { method: requestType };
     if (jsonRequest) {
         requestBody.headers = { 'Content-Type': 'application/json' };
