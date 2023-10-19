@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.objects.c_adversary import Adversary
 

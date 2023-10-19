@@ -24,7 +24,7 @@ class AdversaryApi(BaseObjectApi):
         router.add_patch(adversaries_by_id_path, self.update_adversary)
         router.add_put(adversaries_by_id_path, self.create_or_update_adversary)
         router.add_delete(adversaries_by_id_path, self.delete_adversary)
-        router.add_post('/adveraries/fact_analysis', self.get_adversary_fact_analysis)
+        router.add_post('/adversaries/fact_analysis', self.get_adversary_fact_analysis)
 
     @aiohttp_apispec.docs(tags=['adversaries'],
                           summary='Retrieve all adversaries',
