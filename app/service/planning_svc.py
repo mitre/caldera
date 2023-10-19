@@ -1,3 +1,4 @@
+from __future__ import annotations
 import re
 
 from app.objects.secondclass.c_link import Link
@@ -293,11 +294,10 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 missing_fact_reqs['errors'].append('Ability (ID: {ability_id}) not found')
                 continue
 
-            #self.log.error(f'-----Ability: {ability[0].name}')
-
             # record produced and required facts
             ability = ability[0]
             executors = ability.get_executors()
+            required_fact_diff = set([])
             for _platform, name_executor in executors.items():
                 for _name, executor in name_executor.items():
                     required_facts = set([])
@@ -306,7 +306,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                         fact_ = _clean_fact(fact_)
                         if fact_:
                             required_facts.add(fact_)
-                            #self.log.error(f'--------Required Fact: {fact_}')
                     # record produced facts
                     for parser in executor.parsers:
                         for parserconfig in parser.parserconfigs:
@@ -315,19 +314,22 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                                 fact_ = _clean_fact(fact_)
                                 if fact_:
                                     all_produced_facts.add(fact_)
-                                    #self.log.error(f'--------Produced Fact: {fact_}')
 
-                    required_fact_diff = (required_facts - all_produced_facts)
-                    if required_fact_diff:
-                        all_missing_facts.update(required_fact_diff)
-                        missing_fact_reqs['missing_requirements'].append(dict(
-                            step=i,
-                            ability=ability.display if dump else ability,
-                            missing_required_facts=list(required_fact_diff),
-                            fulfillment_abilities=[],
-                            fulfillment_tactics=[],
-                            _added_abilities=set([])   # just used to prevent duplicates in adding in abilities in next step, removed before return
-                        ))
+                    required_fact_diff |= (required_facts - all_produced_facts)
+
+            if required_fact_diff:
+                # only add facts we haven't already added
+                new_missing_facts = (required_fact_diff - all_missing_facts)
+                if new_missing_facts:
+                    all_missing_facts.update(new_missing_facts)
+                    missing_fact_reqs['missing_requirements'].append(dict(
+                        step=i,
+                        ability=ability.display if dump else ability,
+                        missing_required_facts=list(new_missing_facts),
+                        fulfillment_abilities=[],
+                        fulfillment_tactics=[],
+                        _added_abilities=set([])   # just used to prevent duplicates in adding in abilities in next step, removed before return
+                    ))
 
         # Retrieve abilities for all facts at once, as each call results in loop over all abilities (and is expensive)
         fulfillment_abilities = await self.get_abilities_by_facts(produced_facts=all_missing_facts)
