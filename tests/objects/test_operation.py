@@ -587,3 +587,12 @@ class TestOperation:
         assert reason['reason_id'] == Operation.Reason.OTHER.value
         assert reason['ability_id'] == test_ability.ability_id
         assert reason['ability_name'] == test_ability.name
+
+    async def test_add_ignored_link(self, make_test_link, operation_agent):
+        test_agent = operation_agent
+        test_link = make_test_link(9876, test_agent.paw, Link().states['DISCARD'])
+        op = Operation(name='test', agents=[test_agent], state='running')
+        op.add_ignored_link(test_link.id)
+        assert op.ignored_links
+        assert test_link.id in op.ignored_links
+        assert len(op.ignored_links) == 1
