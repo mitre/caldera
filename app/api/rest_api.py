@@ -30,10 +30,11 @@ class RestApi(BaseWorld):
 
     async def enable(self):
         self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
+        #TODO: only serve static files in legacy plugin mode
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('GET', '/', self.landing)
-        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/).*}', self.handle_catch)
+        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/|docs/).*}', self.handle_catch)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         # unauthorized API endpoints
