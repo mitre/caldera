@@ -128,6 +128,7 @@ if __name__ == '__main__':
     parser.add_argument('--insecure', action='store_true', required=False, default=False,
                         help='Start caldera with insecure default config values. Equivalent to "-E default".')
     parser.add_argument('--uidev', dest='uiDevHost', help='Start VueJS dev server for front-end alongside the caldera server. Provide hostname, i.e. localhost.')
+    parser.add_argument('--build', action='store_true', required=False, default=False, help='Build the VueJS front-end to serve it from the caldera server.')
 
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
@@ -166,6 +167,13 @@ if __name__ == '__main__':
     init_swagger_documentation(app_svc.application)
     if (args.uiDevHost):    
         app_svc.application.on_response_prepare.append(enable_cors)
+
+    if (args.build):
+        logging.info("Building VueJS front-end.")
+        os.chdir('plugins/magma')
+        os.system('npm run build')
+        os.chdir('../..')
+        logging.info("VueJS front-end build complete.")
 
     if args.fresh:
         logging.info("Fresh startup: resetting server data. See %s directory for data backups.", DATA_BACKUP_DIR)
