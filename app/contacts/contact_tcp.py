@@ -85,6 +85,7 @@ class TcpSessionHandler(BaseWorld):
         try:
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
             conn.send(str.encode(' '))
+            time.sleep(0.01)
             conn.send(str.encode('%s\n' % cmd))
             response = await self._attempt_connection(session_id, conn, timeout=timeout)
             response = json.loads(response)

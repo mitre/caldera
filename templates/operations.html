@@ -743,18 +743,6 @@
                                         </p>
                                     </div>
                                 </div>
-                                <div>
-                                    <label for="stealth-queue"><span
-                                            class="has-tooltip-multiline has-tooltip-top"
-                                            x-bind:data-tooltip="usage['Visibility']">Visibility</span></label>
-                                    <div class="modal-form-fields">
-                                        <input x-model="operationToStart.visibility"
-                                               id="stealth-queue"
-                                               type="range" value="50" min="1" max="100"
-                                               x-on:change.once="toast('The higher the visibility number, the more risk you will take with your operation getting noticed by the defense.', true)">
-                                        <span x-text="operationToStart.visibility"></span>
-                                    </div>
-                                </div>
                             </div>
                         </section>
                         <footer class="modal-card-foot">

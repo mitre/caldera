@@ -33,7 +33,7 @@ class SourceSchema(ma.Schema):
     rules = ma.fields.List(ma.fields.Nested(RuleSchema))
     adjustments = ma.fields.List(ma.fields.Nested(AdjustmentSchema))
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema))
-    plugin = ma.fields.String(missing=None)
+    plugin = ma.fields.String(load_default=None)
 
     @ma.pre_load
     def fix_adjustments(self, in_data, **_):
@@ -60,17 +60,15 @@ class SourceSchema(ma.Schema):
         :param input_data: A 'source' dictionary
         :return: input_data with updated facts/relationships (patched in place)
         """
-        if 'facts' in input_data:
-            for y in input_data['facts']:
-                y['origin_type'] = OriginType.IMPORTED.name
-                y['source'] = input_data['id']
-        if 'relationships' in input_data:
-            for y in input_data['relationships']:
-                y['source']['origin_type'] = OriginType.IMPORTED.name
-                y['source']['source'] = input_data['id']
-                if 'target' in y:
-                    y['target']['origin_type'] = OriginType.IMPORTED.name
-                    y['target']['source'] = input_data['id']
+        for y in input_data.get('facts', []):
+            y['origin_type'] = OriginType.IMPORTED.name
+            y['source'] = input_data['id']
+        for y in input_data.get('relationships', []):
+            y['source']['origin_type'] = OriginType.IMPORTED.name
+            y['source']['source'] = input_data['id']
+            if y.get('target'):
+                y['target']['origin_type'] = OriginType.IMPORTED.name
+                y['target']['source'] = input_data['id']
 
 
 class Source(FirstClassObjectInterface, BaseObject):

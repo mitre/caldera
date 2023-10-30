@@ -1,5 +1,5 @@
 [![Release](https://img.shields.io/badge/dynamic/json?color=blue&label=Release&query=tag_name&url=https%3A%2F%2Fapi.github.com%2Frepos%2Fmitre%2Fcaldera%2Freleases%2Flatest)](https://github.com/mitre/caldera/releases/latest)
-[![Testing Status](https://github.com/mitre/caldera/actions/workflows/testing.yml/badge.svg?branch=master)](https://github.com/mitre/caldera/actions/workflows/testing.yml?query=branch%3Amaster)
+[![Testing Status](https://github.com/mitre/caldera/actions/workflows/quality.yml/badge.svg?branch=master)](https://github.com/mitre/caldera/actions/workflows/quality.yml?query=branch%3Amaster)
 [![Security Status](https://github.com/mitre/caldera/actions/workflows/security.yml/badge.svg?branch=master)](https://github.com/mitre/caldera/actions/workflows/security.yml?query=branch%3Amaster)
 [![codecov](https://codecov.io/gh/mitre/caldera/branch/master/graph/badge.svg)](https://codecov.io/gh/mitre/caldera)
 [![Documentation Status](https://readthedocs.org/projects/caldera/badge/?version=stable)](http://caldera.readthedocs.io/?badge=stable)
@@ -30,6 +30,7 @@ These plugins are supported and maintained by the Caldera team.
 - **[Access](https://github.com/mitre/access)** (red team initial access tools and techniques)
 - **[Atomic](https://github.com/mitre/atomic)** (Atomic Red Team project TTPs)
 - **[Builder](https://github.com/mitre/builder)** (dynamically compile payloads)
+- **[Caldera for OT](https://github.com/mitre/caldera-ot)** (ICS/OT capabilities for Caldera)
 - **[Compass](https://github.com/mitre/compass)** (ATT&CK visualizations)
 - **[Debrief](https://github.com/mitre/debrief)** (operations insights)
 - **[Emu](https://github.com/mitre/emu)** (CTID emulation plans)
@@ -55,7 +56,7 @@ These plugins are ready to use but are not included by default and are not maint
 These requirements are for the computer running the core framework:
 
 * Any Linux or MacOS
-* Python 3.7+ (with Pip3)
+* Python 3.8+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 * Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
 
@@ -79,7 +80,7 @@ Next, install the PIP requirements:
 ```Bash
 pip3 install -r requirements.txt
 ```
-**Super-power your Caldea server installation! [Install GoLang (1.17+)](https://go.dev/doc/install)**
+**Super-power your Caldera server installation! [Install GoLang (1.19+)](https://go.dev/doc/install)**
 
 Finally, start the server.
 ```Bash
