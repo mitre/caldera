@@ -166,6 +166,10 @@ if __name__ == '__main__':
     app_svc.register_subapp('/api/v2', app.api.v2.make_app(app_svc.get_services()))
     init_swagger_documentation(app_svc.application)
     if (args.uiDevHost):    
+        if not os.path.exists("./plugins/magma/dist"):
+            logging.info("Building VueJS front-end.")
+            subprocess.run(['npm', 'run', 'build'], cwd='plugins/magma', check=True)
+            logging.info("VueJS front-end build complete.")
         app_svc.application.on_response_prepare.append(enable_cors)
 
     if (args.build):
