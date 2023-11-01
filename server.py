@@ -170,9 +170,7 @@ if __name__ == '__main__':
 
     if (args.build):
         logging.info("Building VueJS front-end.")
-        os.chdir('plugins/magma')
-        os.system('npm run build')
-        os.chdir('../..')
+        subprocess.run(['npm', 'run', 'build'], cwd='plugins/magma', check=True)
         logging.info("VueJS front-end build complete.")
 
     if args.fresh:
