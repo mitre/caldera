@@ -16,7 +16,7 @@ class PlannerSchema(ma.Schema):
     stopping_conditions = ma.fields.List(ma.fields.Nested(FactSchema()))
     ignore_enforcement_modules = ma.fields.List(ma.fields.String())
     allow_repeatable_abilities = ma.fields.Boolean()
-    plugin = ma.fields.String(missing=None)
+    plugin = ma.fields.String(load_default=None)
 
     @ma.post_load()
     def build_planner(self, data, **kwargs):

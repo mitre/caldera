@@ -50,7 +50,7 @@ class OperationSchema(ma.Schema):
     visibility = ma.fields.Integer()
     objective = ma.fields.Nested(ObjectiveSchema())
     use_learning_parsers = ma.fields.Boolean()
-    group = ma.fields.String(missing='')
+    group = ma.fields.String(load_default='')
     source = ma.fields.Nested(SourceSchema())
 
     @ma.pre_load()
@@ -234,7 +234,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for link_id in link_ids:
             link = [link for link in self.chain if link.id == link_id][0]
             if link.can_ignore():
-                self.ignored_links.add(link.id)
+                self.add_ignored_link(link.id)
             member = [member for member in self.agents if member.paw == link.paw][0]
             while not (link.finish or link.can_ignore()):
                 await asyncio.sleep(5)
@@ -256,6 +256,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
     def link_status(self):
         return -3 if self.autonomous else -1
 
+    def add_ignored_link(self, link_id):
+        self.ignored_links.add(link_id)
+
     async def active_agents(self):
         active = []
         for agent in self.agents:
@@ -272,7 +275,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for agent in self.agents:
             agent_skipped = defaultdict(dict)
             agent_executors = agent.executors
-            agent_ran = set([link.ability.ability_id for link in self.chain if link.paw == agent.paw])
+            agent_ran = set([link.ability.ability_id for link in self.chain if link.paw == agent.paw and link.finish])
             for ab in abilities_by_agent[agent.paw]['all_abilities']:
                 skipped = self._check_reason_skipped(agent=agent, ability=ab, agent_executors=agent_executors,
                                                      op_facts=[f.trait for f in await self.all_facts()],
@@ -438,8 +441,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def _get_all_possible_abilities_by_agent(self, data_svc):
         abilities = {'all_abilities': [ab for ab_id in self.adversary.atomic_ordering
-                     for ab in await data_svc.locate('abilities', match=dict(ability_id=ab_id))]}
-        return {a.paw: abilities for a in self.agents}
+                                       for ab in await data_svc.locate('abilities', match=dict(ability_id=ab_id))]}
+        abilities_by_agent = {a.paw: abilities for a in self.agents}
+        for link in self.chain:
+            if link.ability.ability_id not in self.adversary.atomic_ordering:
+                matching_abilities = await data_svc.locate('abilities', match=dict(ability_id=link.ability.ability_id))
+                abilities_by_agent[link.paw]['all_abilities'].extend(matching_abilities)
+        return abilities_by_agent
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
         if ability.ability_id in agent_ran:

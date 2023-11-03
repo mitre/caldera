@@ -87,6 +87,8 @@ class OperationApiManager(BaseApiManager):
             if not link.is_valid_status(link_status):
                 raise JsonHttpBadRequest(f'Cannot update link {link_id} due to invalid link status.')
             link.status = link_status
+            if link.can_ignore():
+                operation.add_ignored_link(link.id)
         return link.display
 
     async def create_potential_link(self, operation_id: str, data: dict, access: BaseWorld.Access):

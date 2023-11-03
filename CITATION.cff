@@ -2,7 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 authors:
 - name: "MITRE Corporation"
-title: "CALDERA: A Scalable, Automated Adversary Emulation Platform"
-version: 4.1.0
-date-released: 2022-09-17
+title: "MITRE Caldera: A Scalable, Automated Adversary Emulation Platform"
+version: 4.2.0
+date-released: 2023-06-19
 url: "https://github.com/mitre/caldera"

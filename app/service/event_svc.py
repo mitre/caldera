@@ -82,6 +82,7 @@ class EventService(EventServiceInterface, BaseService):
         d = json.dumps(callback_kwargs)
         async with websockets.connect(uri) as websocket:
             asyncio.get_event_loop().create_task(self.handle_exceptions(websocket.send(d)))
+            await asyncio.sleep(0)  # yield control to event loop
 
 
 class _Handle:
