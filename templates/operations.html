@@ -1,4 +1,5 @@
-<div id="operationsPage" x-data="alpineOperations()" x-init="initOperations()" xmlns="http://www.w3.org/1999/html">
+<div id="operationsPage" x-data="alpineOperations()" x-init="initOperations()"
+     xmlns="http://www.w3.org/1999/html">
     <div>
         <div>
             <div x-ref="operationsHeader">
@@ -16,17 +17,17 @@
                             <option value="" default disabled selected>Select one...</option>
                             <template x-for="op in operations" :key="op.id">
                                 <option x-bind:value="op.id"
-                                    x-bind:title="op.name + ' has ' + op.chain.length + ' decisions'">
+                                        x-bind:title="op.name + ' has ' + op.chain.length + ' decisions'">
                                     <span x-text="op.name"></span>
-                                    <span
-                                        x-text="' - ' + op.chain.length + ' decisions | ' + getHumanFriendlyTimeISO8601(op.start)"></span>
+                                    <span x-text="' - ' + op.chain.length + ' decisions | ' + getHumanFriendlyTimeISO8601(op.start)"></span>
                                 </option>
                             </template>
                         </select>
                     </div>
                 </div>
                 <div class="control">
-                    <button type="button" class="button is-primary is-small" x-on:click="openOperationCreateModal()">
+                    <button type="button" class="button is-primary is-small"
+                            x-on:click="openOperationCreateModal()">
                         <em class="pr-1 fas fa-plus"></em>
                         Create Operation
                     </button>
@@ -38,25 +39,22 @@
             <div class="section p-2 pb-2">
                 <div class="control-buttons is-flex is-flex-direction-row is-justify-content-space-between">
                     <div class="buttons">
-                        <button class="button is-small" x-on:click="openModal='showOperationDetails'"
-                            title="view operation details">Operation Details</button>
-                        <button title="download reports" class="button is-primary is-small"
-                            x-on:click="openModal = 'showDownloadMenu'">
+                        <button class="button is-small" x-on:click="openModal='showOperationDetails'" title="view operation details">Operation Details</button>
+                        <button title="download reports" class="button is-primary is-small" x-on:click="openModal = 'showDownloadMenu'">
                             <span class="icon">
                                 <em class="fas fa-arrow-down"></em>
                             </span>
                             <span>Download</span>
                         </button>
-                        <button type="button" title="delete operation" class="button is-danger is-outlined is-small"
-                            x-on:click="openModal = 'deleteOperationModal'">
+                        <button type="button" title="delete operation" class="button is-danger is-outlined is-small" x-on:click="openModal = 'deleteOperationModal'">
                             <span class="icon">
                                 <em class="fas fa-trash"></em>
                             </span>
                             <span>Delete</span>
                         </button>
                         <div class="vr"></div>
-                        <span>Current state: <span class="level-item tag is-medium m-0"><span class="has-text-success"
-                                    x-text="selectedOperation.state"></span></span></span>
+                        <span>Current state: <span class="level-item tag is-medium m-0"><span
+                                class="has-text-success" x-text="selectedOperation.state"></span></span></span>
                     </div>
 
                     <!-- OPERATION CONTROLS -->
@@ -64,23 +62,25 @@
                         <template x-if="isOperationRunning">
                             <div class="is-flex is-flex-direction-column is-align-items-center">
                                 <button x-bind:disabled="!isOperationRunning" class="button no-style is-large"
-                                    x-on:click="updateOperation('state', 'cleanup')" id="op-stop-button"><em
+                                        x-on:click="updateOperation('state', 'cleanup')" id="op-stop-button"><em
                                         title="stop" class="fas fa-stop"></em></button>
                                 <label class="label is-small" for="op-stop-button">Stop</label>
                             </div>
                         </template>
                         <template x-if="selectedOperation.state === 'running' && isOperationRunning">
                             <div class="is-flex is-flex-direction-column is-align-items-center">
-                                <button x-bind:disabled="!isOperationRunning" class="button no-style is-larger"
-                                    id="op-pause-button" x-on:click="updateOperation('state', 'paused')"><em
+                                <button x-bind:disabled="!isOperationRunning"
+                                        class="button no-style is-larger" id="op-pause-button"
+                                        x-on:click="updateOperation('state', 'paused')"><em
                                         title="pause" class="fas fa-pause-circle"></em></button>
                                 <label class="label is-small" for="op-pause-button">Pause</label>
                             </div>
                         </template>
                         <template x-if="selectedOperation.state !== 'running' && isOperationRunning">
                             <div class="is-flex is-flex-direction-column is-align-items-center">
-                                <button x-bind:disabled="!isOperationRunning" class="button no-style is-larger"
-                                    id="op-run-button" x-on:click="updateOperation('state', 'running')">
+                                <button x-bind:disabled="!isOperationRunning"
+                                        class="button no-style is-larger" id="op-run-button"
+                                        x-on:click="updateOperation('state', 'running')">
                                     <em title="run" class="fas fa-play-circle"></em></button>
                                 <label class="label is-small" for="op-run-button">Run</label>
                             </div>
@@ -88,7 +88,7 @@
                         <template x-if="isOperationRunning">
                             <div class="is-flex is-flex-direction-column is-align-items-center">
                                 <button x-bind:disabled="!isOperationRunning" class="button no-style is-medium"
-                                    x-on:click="updateOperation('state', 'run_one_link')" id="op-run-1-button">
+                                        x-on:click="updateOperation('state', 'run_one_link')" id="op-run-1-button">
                                     <em title="run one step" class="fas fa-play"><sub>1</sub></em></button>
                                 <label class="label is-small" for="op-run-1-button">Run 1 Link</label>
                             </div>
@@ -96,7 +96,7 @@
                         <template x-if="!isOperationRunning">
                             <div class="is-flex is-flex-direction-column is-align-items-center">
                                 <button class="button no-style is-large" x-on:click="rerunOperation()">
-                                    <em title="Re-run operation with same settings" class="fas fa-redo-alt"></em>
+                                        <em title="Re-run operation with same settings" class="fas fa-redo-alt"></em>
                                 </button>
                                 <label class="label is-small">Re-run operation</label>
                             </div>
@@ -109,14 +109,15 @@
                             <span class="is-flex is-align-items-center">
                                 <span class="mr-2">Obfuscation:</span>
                                 <template x-if="!isOperationRunning">
-                                    <span class="level-item tag is-medium m-0"><span class="has-text-success"
+                                    <span class="level-item tag is-medium m-0"><span
+                                            class="has-text-success"
                                             x-text="selectedOperation.obfuscator"></span></span>
                                 </template>
                                 <template x-if="isOperationRunning">
                                     <div class="select is-small">
                                         <select id="operation-obfuscator"
-                                            x-on:change="updateOperation('obfuscator', $el.value)"
-                                            x-model="selectedOperation.obfuscator">
+                                                x-on:change="updateOperation('obfuscator', $el.value)"
+                                                x-model="selectedOperation.obfuscator">
                                             <option value="" default disabled selected>Select one...</option>
                                             <template x-for="o in OBFUSCATORS" :key="o.name">
                                                 <option x-bind:value="o.name" x-text="o.name"></option>
@@ -133,42 +134,42 @@
                         <div class="mb-5 is-flex is-flex-direction-row is-justify-content-center is-align-items-center">
                             <template x-if="!isOperationRunning">
                                 <span class="level-item tag is-medium m-0">
-                                    <span class="has-text-success"
-                                        x-text="selectedOperation.autonomous === 0 ? 'manual' : 'autonomous'"></span>
+                                    <span class="has-text-success" x-text="selectedOperation.autonomous === 0 ? 'manual' : 'autonomous'"></span>
                                 </span>
                             </template>
                             <template x-if="isOperationRunning">
                                 <div class="toggleContainer flex is-flex-direction-column is-align-items-left">
-                                    <div>
-                                        <label for="toggleAutonomous">Manual</label>
-                                        <div class="toggleSwitch mx-2">
-                                            <input type="checkbox" id="toggleAutonomous"
-                                                x-model="selectedOperation.autonomous"
-                                                x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null" />
-                                            <span class="toggleSlider toggleSliderRound"
-                                                title="Toggle operation to run autonomously"
-                                                x-on:click="selectedOperation.autonomous = (selectedOperation.autonomous === 0) ? 1 : 0; updateOperation('autonomous', Number(selectedOperation.autonomous))"
-                                                x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-on' : 'toggle-off'">
-                                                <span
-                                                    x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
-                                            </span>
-                                        </div>
-                                        <label for="toggleAutonomous">Autonomous</label>
+                                  <div>
+                                    <label for="toggleAutonomous">Manual</label>
+                                    <div class="toggleSwitch mx-2">
+                                        <input type="checkbox"
+                                               id="toggleAutonomous"
+                                               x-model="selectedOperation.autonomous"
+                                               x-bind:checked="Boolean(selectedOperation.autonomous) ? 'checked' : null"/>
+                                        <span class="toggleSlider toggleSliderRound"
+                                              title="Toggle operation to run autonomously"
+                                              x-on:click="selectedOperation.autonomous = (selectedOperation.autonomous === 0) ? 1 : 0; updateOperation('autonomous', Number(selectedOperation.autonomous))"
+                                              x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-on' : 'toggle-off'">
+                                            <span x-bind:class="Boolean(selectedOperation.autonomous) ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                        </span>
                                     </div>
-                                    <div class="mt-4">
-                                        <label for="toggleScroll">Autoscroll</label>
-                                        <div class="toggleSwitch">
-                                            <input type="checkbox" id="toggleAutonomous"
-                                                x-model="linkScrollHistory.isEnabled"
-                                                x-bind:checked="linkScrollHistory.isEnabled ? 'checked' : null" />
-                                            <span class="toggleSlider toggleSliderRound" title="Toggle autoscrolling"
-                                                x-on:click="linkScrollHistory.isEnabled = (linkScrollHistory.isEnabled === false) ? true : false"
-                                                x-bind:class="linkScrollHistory.isEnabled ? 'toggle-on' : 'toggle-off'">
-                                                <span
-                                                    x-bind:class="linkScrollHistory.isEnabled ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
-                                            </span>
-                                        </div>
+                                    <label for="toggleAutonomous">Autonomous</label>
+                                  </div>
+                                  <div class="mt-4">
+                                    <label for="toggleScroll">Autoscroll</label>
+                                    <div class="toggleSwitch">
+                                        <input type="checkbox"
+                                               id="toggleAutonomous"
+                                               x-model="linkScrollHistory.isEnabled"
+                                               x-bind:checked="linkScrollHistory.isEnabled ? 'checked' : null"/>
+                                        <span class="toggleSlider toggleSliderRound"
+                                              title="Toggle autoscrolling"
+                                              x-on:click="linkScrollHistory.isEnabled = (linkScrollHistory.isEnabled === false) ? true : false"
+                                              x-bind:class="linkScrollHistory.isEnabled ? 'toggle-on' : 'toggle-off'">
+                                            <span x-bind:class="linkScrollHistory.isEnabled ? 'toggle-slider-on' : 'toggle-slider-off'"></span>
+                                        </span>
                                     </div>
+                                  </div>
                                 </div>
                             </template>
                         </div>
@@ -184,20 +185,19 @@
                     <template x-if="isOperationRunning">
                         <div class="is-flex is-flex-direction-row is-justify-content-space-between">
                             <div class="has-text-grey-light is-size-7">
-                                <em x-show="selectedOperation.chain.length > 0"><span class="has-text-grey-light"
+                                <em x-show="selectedOperation.chain.length > 0"><span
+                                        class="has-text-grey-light"
                                         x-text="'Last ran ' + selectedOperation.chain[selectedOperation.chain.length-1]?.ability.name + ' (' + getLastDecideTime() + ')'"></span></em>
                             </div>
                             <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
                                 <div class="mb-6 mr-4 text-align-right">
-                                    <button title="add manual command" class="button is-small"
-                                        x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
+                                    <button title="add manual command" class="button is-small" x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
                                         <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
                                         <span>Manual Command</span>
                                     </button>
                                 </div>
                                 <div class="mb-6 mr-4">
-                                    <button title="add potential link" class="button is-small"
-                                        x-on:click="openPotentialLinkModal()">
+                                    <button title="add potential link" class="button is-small" x-on:click="openPotentialLinkModal()">
                                         <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
                                         <span>Potential Link</span>
                                     </button>
@@ -208,176 +208,179 @@
                     <div class="timeline-table">
                         <table class="table">
                             <thead>
-                                <tr class="table-header">
-                                    <th class="decideColumn">Decide</th>
-                                    <th id="link-status-header" class="statusColumn csv-exclude pl-4"
-                                        title="Link Status Indicator">
-                                        Status
-                                    </th>
-                                    <th class="infoColumn">Link/Ability Name</th>
-                                    <th>Agent #paw</th>
-                                    <th>Host</th>
-                                    <th>pid</th>
-                                    <th>Link Command</th>
-                                    <th>Link Output</th>
-                                    <th title="Link Actions" class="csv-exclude"></th>
-                                </tr>
+                            <tr class="table-header">
+                                <th class="decideColumn">Decide</th>
+                                <th id="link-status-header" class="statusColumn csv-exclude pl-4"
+                                    title="Link Status Indicator">
+                                    Status
+                                </th>
+                                <th class="infoColumn">Link/Ability Name</th>
+                                <th>Agent #paw</th>
+                                <th>Host</th>
+                                <th>pid</th>
+                                <th>Link Command</th>
+                                <th>Link Output</th>
+                                <th title="Link Actions" class="csv-exclude"></th>
+                            </tr>
                             </thead>
 
                             <template x-if="selectedOperation.chain.length === 0">
                                 <tbody>
-                                    <tr class="csv-exclude">
-                                        <td colspan="9" class="has-text-centered"><em>No links––click the buttons on the
-                                                right to add
-                                                commands/links.</em>
-                                        </td>
-                                    </tr>
+                                <tr class="csv-exclude">
+                                    <td colspan="9" class="has-text-centered"><em>No links––click the buttons on the
+                                        right to add
+                                        commands/links.</em>
+                                    </td>
+                                </tr>
                                 </tbody>
                             </template>
                             <template x-for="(link, index) in selectedOperation.chain" :key="link.id">
                                 <tbody>
-                                    <tr x-bind:id="link.id" x-on:click="selectedLink = link" x-ref="linkRow"
-                                        x-init="$nextTick(() => scrollToLastLink($refs.linkRow, index))">
-                                        <td class="decideColumn">
-                                            <span class="has-text-grey-light"
-                                                x-text="getReadableTime(link.decide)"></span>
-                                        </td>
-                                        <td class="linkStatusColumn csv-exclude" headers="link-status-header">
-                                            <span
-                                                x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
-                                                x-bind:data-content="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"
-                                                x-bind:title="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"></span>
-                                        </td>
-                                        <td class="linkInfoColumn"
-                                            x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')">
-                                        </td>
+                                <tr x-bind:id="link.id"
+                                    x-on:click="selectedLink = link" x-ref="linkRow" x-init="$nextTick(() => scrollToLastLink($refs.linkRow, index))">
+                                    <td class="decideColumn">
+                                        <span class="has-text-grey-light" x-text="getReadableTime(link.decide)"></span>
+                                    </td>
+                                    <td class="linkStatusColumn csv-exclude" headers="link-status-header">
+                                        <span x-bind:class="'linkStatus status-'+((link.status in LINK_STATUSES) ? LINK_STATUSES[link.status] : 'queued')"
+                                              x-bind:data-content="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"
+                                              x-bind:title="link.status in LINK_STATUSES ? LINK_STATUSES[link.status] : 'queued'"></span>
+                                    </td>
+                                    <td class="linkInfoColumn"
+                                        x-text="link.ability.name + ((link.ability.cleanup) ? '(CLEANUP)' : '')"></td>
 
-                                        <!--AGENT COLUMN-->
-                                        <td class="agentDetails">
-                                            <p x-show="!link.paw"><em>n/a</em></p>
-                                            <p x-show="link.paw"><em x-text="link.paw"></em></p>
-                                        </td>
-                                        <td class="agentDetails">
-                                            <p x-show="!link.host"><em>n/a</em></p>
-                                            <p x-show="link.host"><em x-text="link.host"></em></p>
-                                        </td>
-                                        <td class="agentDetails">
-                                            <p x-show="!link.pid" class="mb-0"><em>n/a</em></p>
-                                            <p x-show="link.pid"><em x-text="link.pid"></em></p>
-                                        </td>
+                                    <!--AGENT COLUMN-->
+                                    <td class="agentDetails">
+                                        <p x-show="!link.paw"><em>n/a</em></p>
+                                        <p x-show="link.paw"><em x-text="link.paw"></em></p>
+                                    </td>
+                                    <td class="agentDetails">
+                                        <p x-show="!link.host"><em>n/a</em></p>
+                                        <p x-show="link.host"><em x-text="link.host"></em></p>
+                                    </td>
+                                    <td class="agentDetails">
+                                        <p x-show="!link.pid" class="mb-0"><em>n/a</em></p>
+                                        <p x-show="link.pid"><em x-text="link.pid"></em></p>
+                                    </td>
 
-                                        <!--COMMAND COLUMN-->
-                                        <td class="commandDetails">
-                                            <div class="is-flex is-justify-content-flex-start">
-                                                <template x-if="!isLinkEditable(link)">
-                                                    <button class="button is-small"
+                                    <!--COMMAND COLUMN-->
+                                    <td class="commandDetails">
+                                        <div class="is-flex is-justify-content-flex-start">
+                                            <template x-if="!isLinkEditable(link)">
+                                                <button class="button is-small"
                                                         x-on:click="getLink(link); openModal='showCommand'"
                                                         title="view output">View Command
-                                                    </button>
-                                                </template>
-                                                <template x-if="isLinkEditable(link)">
-                                                    <button class="button is-small is-warning is-outlined"
+                                                </button>
+                                            </template>
+                                            <template x-if="isLinkEditable(link)">
+                                                <button class="button is-small is-warning is-outlined"
                                                         x-on:click="getLink(link); openModal='showCommand'"
                                                         title="view output">
-                                                        <i class="fas fa-exclamation-triangle pr-2"></i>
-                                                        Review Command
-                                                    </button>
-                                                </template>
-                                            </div>
-                                        </td>
-
-                                        <!--OUTPUT/FACTS COLUMN-->
-                                        <td class="outputDetails">
-                                            <template x-if="link.output !== 'True'">
-                                                <p class="is-size-7 is-italic ml-4">No output.</p>
+                                                    <i class="fas fa-exclamation-triangle pr-2"></i>
+                                                    Review Command
+                                                </button>
                                             </template>
-                                            <template x-if="link.output === 'True'">
-                                                <div>
-                                                    <button class="button is-small"
+                                        </div>
+                                    </td>
+
+                                    <!--OUTPUT/FACTS COLUMN-->
+                                    <td class="outputDetails">
+                                        <template x-if="link.output !== 'True'">
+                                            <p class="is-size-7 is-italic ml-4">No output.</p>
+                                        </template>
+                                        <template x-if="link.output === 'True'">
+                                            <div>
+                                                <button class="button is-small"
                                                         x-on:click="getLink(link); openModal='showOutput'"
                                                         title="view output">View Output
-                                                    </button>
-                                                </div>
-                                            </template>
-                                        </td>
+                                                </button>
+                                            </div>
+                                        </template>
+                                    </td>
 
-                                        <td class="csv-exclude">
-                                            <button
-                                                x-show="selectedLink === link && isOperationRunning && !(link.status in LINK_STATUSES)"
+                                    <td class="csv-exclude">
+                                        <button x-show="selectedLink === link && isOperationRunning && !(link.status in LINK_STATUSES)"
                                                 type="button" title="delete link"
                                                 class="button is-danger is-outlined is-small ml-2"
                                                 x-on:click="openModal = 'deleteLinkModal'"><em
-                                                    class="pr-1 fas fa-trash"></em>Discard Link
-                                            </button>
-                                        </td>
-                                    </tr>
+                                                class="pr-1 fas fa-trash"></em>Discard Link
+                                        </button>
+                                    </td>
+                                </tr>
                                 </tbody>
                             </template>
 
                             <!--                                NEW ROW TO ADD MANUAL COMMAND-->
                             <template x-if="addNewRow">
                                 <tbody>
-                                    <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
-                                        <template x-if="selectedOperation.host_group.length < 1">
-                                            <td colspan="9" class="has-text-right"><em>No agents running. Add an agent
-                                                    to run an operation.</em></td>
-                                        </template>
-                                    </tr>
-
-                                    <template x-if="selectedOperation.host_group.length > 0">
-                                        <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
-                                            <td></td>
-                                            <td></td>
-                                            <td>New Manual Command</td>
-                                            <td>
-                                                <label x-show="false" for="manual-agent">Choose an agent:</label>
-                                                <div class="select is-small my-2 ml-3">
-                                                    <select id="manual-agent" x-model="selectedAgentIndex"
-                                                        x-on:change="getAgent(selectedAgent.paw)" required>
-                                                        <option value="" disabled>Choose agent</option>
-                                                        <template x-for="(agent, index) in selectedOperation.host_group"
-                                                            :key="agent.paw">
-                                                            <option x-bind:selected="index === 0" :value="index"
-                                                                x-text="agent.display_name + '-' + agent.paw"></option>
-                                                        </template>
-                                                    </select>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div class="select is-small my-2 ml-3">
-                                                    <select x-model="manualCommand.executor.name" id="manual-executors"
-                                                        class="executor-selector">
-                                                        <option value="" disabled>Choose executor</option>
-                                                        <template x-for="(executor, index) in selectedAgentExecutors"
-                                                            :key="executor.executor">
-                                                            <option x-bind:selected="index === 0"
-                                                                x-text="executor.display" :value="executor.executor">
-                                                            </option>
-                                                        </template>
-                                                    </select>
-                                                </div>
-                                            </td>
-                                            <td colspan="2">
-                                                <label x-show="false" for="input-command">Type manual command:</label>
-                                                <div
-                                                    class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
-                                                    <textarea x-model="manualCommand.executor.command"
-                                                        class="input executor-command" id="input-command" type="text"
-                                                        spellcheck="false" contenteditable required></textarea>
-                                                </div>
-                                            </td>
-                                            <td class="is-flex is-justify-content-center is-flex-direction-column">
-                                                <button type="button" class="button is-primary is-small my-2"
-                                                    x-on:click="addManualCommand(manualCommand)">
-                                                    Add Command
-                                                </button>
-                                                <button type="button" class="button is-small"
-                                                    x-on:click="addNewRow = false">
-                                                    Cancel
-                                                </button>
-                                            </td>
-                                        </tr>
+                                <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
+                                    <template x-if="selectedOperation.host_group.length < 1">
+                                        <td colspan="9" class="has-text-right"><em>No agents running. Add an agent
+                                            to run an operation.</em></td>
                                     </template>
+                                </tr>
+
+                                <template x-if="selectedOperation.host_group.length > 0">
+                                    <tr class="csv-exclude" x-data="{manualCommand: EMPTY_MANUAL_COMMAND_OBJECT}">
+                                        <td></td>
+                                        <td></td>
+                                        <td>New Manual Command</td>
+                                        <td>
+                                            <label x-show="false" for="manual-agent">Choose an agent:</label>
+                                            <div class="select is-small my-2 ml-3">
+                                                <select id="manual-agent" x-model="selectedAgentIndex"
+                                                        x-on:change="getAgent(selectedAgent.paw)" required>
+                                                    <option value="" disabled>Choose agent</option>
+                                                    <template x-for="(agent, index) in selectedOperation.host_group"
+                                                              :key="agent.paw">
+                                                        <option x-bind:selected="index === 0"
+                                                                :value="index"
+                                                                x-text="agent.display_name + '-' + agent.paw"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="select is-small my-2 ml-3">
+                                                <select x-model="manualCommand.executor.name"
+                                                        id="manual-executors"
+                                                        class="executor-selector">
+                                                    <option value="" disabled>Choose executor</option>
+                                                    <template x-for="(executor, index) in selectedAgentExecutors"
+                                                              :key="executor.executor">
+                                                        <option x-bind:selected="index === 0"
+                                                                x-text="executor.display"
+                                                                :value="executor.executor"></option>
+                                                    </template>
+                                                </select>
+                                            </div>
+                                        </td>
+                                        <td colspan="2">
+                                            <label x-show="false" for="input-command">Type manual command:</label>
+                                            <div class="is-flex is-align-items-flex-end is-justify-content-center is-flex-direction-column">
+                                            <textarea x-model="manualCommand.executor.command"
+                                                      class="input executor-command"
+                                                      id="input-command"
+                                                      type="text"
+                                                      spellcheck="false"
+                                                      contenteditable
+                                                      required></textarea>
+                                            </div>
+                                        </td>
+                                        <td class="is-flex is-justify-content-center is-flex-direction-column">
+                                            <button type="button"
+                                                    class="button is-primary is-small my-2"
+                                                    x-on:click="addManualCommand(manualCommand)">
+                                                Add Command
+                                            </button>
+                                            <button type="button"
+                                                    class="button is-small"
+                                                    x-on:click="addNewRow = false">
+                                                Cancel
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </template>
                                 </tbody>
                             </template>
                         </table>
@@ -387,15 +390,13 @@
                     <template x-if="isOperationRunning">
                         <div class="is-flex is-flex-direction-row is-justify-content-flex-end">
                             <div class="mb-6 mr-4 text-align-right">
-                                <button title="add manual command" class="button is-small"
-                                    x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
+                                <button title="add manual command" class="button is-small" x-on:click="addNewRow = true; getAgents(); setTimeout(() => {document.querySelector('#input-command').scrollIntoView()}, 2);">
                                     <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
                                     <span>Manual Command</span>
                                 </button>
                             </div>
                             <div class="mb-6 mr-4">
-                                <button title="add potential link" class="button is-small"
-                                    x-on:click="openPotentialLinkModal()">
+                                <button title="add potential link" class="button is-small" x-on:click="openPotentialLinkModal()">
                                     <span class="icon"><em class="pr-1 fas fa-plus"></em></span>
                                     <span>Potential Link</span>
                                 </button>
@@ -443,24 +444,16 @@
                                 </div>
                             </template>
                             <div>
-                                <p class="mt-3 mb-2"
-                                    x-text="`Exit Code: ${selectedLinkResults && selectedLinkResults.exit_code ? selectedLinkResults.exit_code : 'Nothing to show'}`">
-                                </p>
-                                <p class="mt-3 mb-2"
-                                    x-text="`Standard Output: ${selectedLinkResults && selectedLinkResults.stdout ? '' : 'Nothing to show'}`">
-                                </p>
+                                <p class="mt-3 mb-2" x-text="`Exit Code: ${selectedLinkResults && selectedLinkResults.exit_code ? selectedLinkResults.exit_code : 'Nothing to show'}`"></p>
+                                <p class="mt-3 mb-2" x-text="`Standard Output: ${selectedLinkResults && selectedLinkResults.stdout ? '' : 'Nothing to show'}`"></p>
                                 <template x-if="selectedLinkResults != null && selectedLinkResults.stdout !== ''">
-                                    <pre class="has-text-left white-space-pre-line"
-                                        x-text="selectedLinkResults.stdout"></pre>
+                                    <pre class="has-text-left white-space-pre-line" x-text="selectedLinkResults.stdout"></pre>
                                 </template>
                             </div>
                             <div>
-                                <p class="mt-3 mb-2"
-                                    x-text="`Standard Error: ${selectedLinkResults && selectedLinkResults.stderr ? '' : 'Nothing to show'}`">
-                                </p>
+                                <p class="mt-3 mb-2" x-text="`Standard Error: ${selectedLinkResults && selectedLinkResults.stderr ? '' : 'Nothing to show'}`"></p>
                                 <template x-if="selectedLinkResults != null && selectedLinkResults.stderr !== ''">
-                                    <pre class="has-text-left white-space-pre-line has-text-danger"
-                                        x-text="selectedLinkResults.stderr"></pre>
+                                    <pre class="has-text-left white-space-pre-line has-text-danger" x-text="selectedLinkResults.stderr"></pre>
                                 </template>
                             </div>
                         </section>
@@ -487,30 +480,28 @@
                             <template x-if="isLinkEditable(selectedLink)">
                                 <div>
                                     <label x-show="false" htmlFor="edit-command">Edit command</label>
-                                    <textarea id="edit-command" class="textarea is-small code" contentEditable
-                                        x-model="editableCommand" spellCheck="false"></textarea>
+                                    <textarea id="edit-command"
+                                              class="textarea is-small code"
+                                              contentEditable
+                                              x-model="editableCommand"
+                                              spellCheck="false"></textarea>
                                 </div>
                             </template>
                             <template x-if="!isLinkEditable(selectedLink)">
                                 <div>
-                                    <template
-                                        x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">
-                                        <div>
-                                            <pre class="has-text-left white-space-pre-line"
-                                                x-text="selectedLinkCommand"></pre>
-                                        </div>
-                                    </template>
-                                    <template
-                                        x-if="selectedLinkPlaintextCommand && selectedLinkPlaintextCommand !== selectedLinkCommand">
-                                        <div>
-                                            <p class="mt-3 mb-2">Obfuscated:</p>
-                                            <pre class="has-text-left white-space-pre-line"
-                                                x-text="selectedLinkCommand"></pre>
-                                            <p class="mt-3 mb-2">Plaintext:</p>
-                                            <pre class="has-text-left white-space-pre-line"
-                                                x-text="selectedLinkPlaintextCommand"></pre>
-                                        </div>
-                                    </template>
+                                <template x-if="!selectedLinkPlaintextCommand || selectedLinkPlaintextCommand == selectedLinkCommand">      
+                                    <div>
+                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                    </div>
+                                </template>
+                                <template x-if="selectedLinkPlaintextCommand && selectedLinkPlaintextCommand !== selectedLinkCommand">
+                                    <div>
+                                        <p class="mt-3 mb-2">Obfuscated:</p>
+                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkCommand"></pre>
+                                        <p class="mt-3 mb-2">Plaintext:</p>
+                                        <pre class="has-text-left white-space-pre-line" x-text="selectedLinkPlaintextCommand"></pre>
+                                    </div>
+                                </template>
                                 </div>
                             </template>
                         </section>
@@ -518,8 +509,9 @@
                             <nav class="level">
                                 <div class="level-left">
                                     <template x-if="isLinkEditable(selectedLink)">
-                                        <button type="button" class="button is-danger is-outlined is-small"
-                                            x-on:click="updateLink(-2); openModal = null;">
+                                        <button type="button"
+                                                class="button is-danger is-outlined is-small"
+                                                x-on:click="updateLink(-2); openModal = null;">
                                             Discard
                                         </button>
                                     </template>
@@ -530,8 +522,9 @@
                                     </div>
                                     <template x-if="isLinkEditable(selectedLink)">
                                         <div class="level-item">
-                                            <button type="button" class="button is-primary is-small"
-                                                x-on:click="updateLink(-3, editableCommand); openModal = null;">
+                                            <button type="button"
+                                                    class="button is-primary is-small"
+                                                    x-on:click="updateLink(-3, editableCommand); openModal = null;">
                                                 Approve
                                             </button>
                                         </div>
@@ -553,16 +546,17 @@
                                     <label for="op-name">Operation name</label>
                                     <div class="modal-form-fields">
                                         <input class="input is-small" id="op-name" type="text"
-                                            x-model="operationToStart.name" required>
+                                               x-model="operationToStart.name" required>
                                     </div>
                                 </div>
                                 <div>
-                                    <label for="basic-adversary"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                    <label for="basic-adversary"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Adversary']">Adversary</span></label>
                                     <div class="modal-form-fields" id="basic-adversary">
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="operationToStart.adversary.adversary_id"
-                                                x-on:change="handleSelectAdversary()">
+                                                    x-on:change="handleSelectAdversary()">
                                                 <option value="" selected>No adversary (manual)</option>
                                                 <template x-for="a in ADVERSARIES" :key="a.adversary_id">
                                                     <option :value="a.adversary_id" x-text="a.name"></option>
@@ -573,14 +567,13 @@
                                 </div>
 
                                 <div>
-                                    <label for="autonomous-source"><span class="has-tooltip-multiline has-tooltip-top"
-                                            x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
+                                    <label for="autonomous-source"><span class="has-tooltip-multiline has-tooltip-top" x-bind:data-tooltip="usage['Fact source']">Fact source</span></label>
                                     <div class="modal-form-fields" id="autonomous-source">
                                         <div class="select is-small my-2 ml-3">
                                             <select x-model="operationToStart.source.id">
                                                 <template x-for="s in SOURCES" :key="s.id">
                                                     <option :value="s.id" x-text="s.name"
-                                                        x-bind:selected="operationToStart.source.id === s.id"></option>
+                                                            x-bind:selected="operationToStart.source.id === s.id"></option>
                                                 </template>
                                             </select>
                                         </div>
@@ -590,27 +583,32 @@
                             </div>
                             <div class="modal-form-group-header">
                                 <button type="button" class="button no-style heading pt-2"
-                                    x-on:click="openModalForm.advanced = !openModalForm.advanced"
-                                    x-bind:class="openModalForm.advanced ? 'expanded' : 'collapsed'">
+                                        x-on:click="openModalForm.advanced = !openModalForm.advanced"
+                                        x-bind:class="openModalForm.advanced ? 'expanded' : 'collapsed'">
                                     <span>Advanced</span>
                                     <span class="navbar-divider"></span>
                                 </button>
                             </div>
                             <div class="modal-form" x-show="openModalForm.advanced">
                                 <div>
-                                    <label for="basic-groups"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                    <label for="basic-groups"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Group']">Group</span></label>
-                                    <div class="modal-form-fields" id="basic-groups">
-                                        <button type="button" class="is-small button is-rounded is-primary m-1"
-                                            x-bind:class="(operationToStart.group === '') ? '' : 'is-outlined has-text-white'"
-                                            x-on:click="operationToStart.group = ''">
+                                    <div class="modal-form-fields"
+                                         id="basic-groups">
+                                        <button type="button"
+                                                class="is-small button is-rounded is-primary m-1"
+                                                x-bind:class="(operationToStart.group === '') ? '' : 'is-outlined has-text-white'"
+                                                x-on:click="operationToStart.group = ''">
                                             all groups
                                         </button>
                                         <template x-for="(group, index) in agentGroups" :key="group">
-                                            <button type="button" class="is-small button is-rounded is-primary m-1"
-                                                x-bind:class="(operationToStart.group === group) ? '' : 'is-outlined has-text-white'"
-                                                x-on:click="operationToStart.group = group" x-show="group !== ''"
-                                                x-text="group">
+                                            <button type="button"
+                                                    class="is-small button is-rounded is-primary m-1"
+                                                    x-bind:class="(operationToStart.group === group) ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="operationToStart.group = group"
+                                                    x-show="group !== ''"
+                                                    x-text="group">
                                             </button>
                                         </template>
                                     </div>
@@ -624,14 +622,14 @@
                                             <select id="autonomous-planner" x-model="operationToStart.planner.id">
                                                 <template x-for="p in PLANNERS" :key="p.id">
                                                     <option :value="p.id"
-                                                        x-bind:selected="operationToStart.planner.id === p.id"
-                                                        x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable)"
-                                                        x-text="p.name"></option>
+                                                            x-bind:selected="operationToStart.planner.id === p.id"
+                                                            x-bind:disabled="(!p.allow_repeatable_abilities && isSelectedAdversaryRepeatable)"
+                                                            x-text="p.name"></option>
                                                 </template>
                                             </select>
                                         </div>
                                         <span x-show="isSelectedAdversaryRepeatable" class="icon has-text-warning ml-2"
-                                            data-tooltip="The selected adversary has repeated abilities so some planners are unavailable.">
+                                              data-tooltip="The selected adversary has repeated abilities so some planners are unavailable.">
                                             <em class="fas fa-exclamation-triangle"></em>
                                         </span>
                                     </div>
@@ -642,9 +640,11 @@
                                             x-bind:data-tooltip="usage['Obfuscators']">Obfuscators</span></label>
                                     <div class="modal-form-fields" id="stealth-obfuscator">
                                         <template x-for="o in OBFUSCATORS" :key="o.name">
-                                            <button class="is-small button is-rounded is-primary m-1" type="button"
-                                                x-bind:class="operationToStart.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
-                                                x-on:click="operationToStart.obfuscator = o.name" x-text="o.name">
+                                            <button class="is-small button is-rounded is-primary m-1"
+                                                    type="button"
+                                                    x-bind:class="operationToStart.obfuscator === o.name ? '' : 'is-outlined has-text-white'"
+                                                    x-on:click="operationToStart.obfuscator = o.name"
+                                                    x-text="o.name">
                                             </button>
                                         </template>
                                     </div>
@@ -654,11 +654,11 @@
                                             class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Autonomous']">Autonomous</span></label>
                                     <div class="modal-form-fields" id="autonomous-autonomous">
-                                        <input type="radio" id="run-autonomously" x-model="operationToStart.autonomous"
-                                            value="1" checked>
+                                        <input type="radio" id="run-autonomously"
+                                               x-model="operationToStart.autonomous" value="1" checked>
                                         <label for="run-autonomously">Run autonomously</label>
-                                        <input type="radio" id="manual-approval" x-model="operationToStart.autonomous"
-                                            value="0">
+                                        <input type="radio" id="manual-approval"
+                                               x-model="operationToStart.autonomous" value="0">
                                         <label for="manual-approval">Require manual approval</label>
                                     </div>
                                 </div>
@@ -669,59 +669,78 @@
                                             x-bind:data-tooltip="usage['Parser']">Parser</span></label>
                                     <div class="modal-form-fields" id="autonomous-use_learning_parsers">
                                         <input type="radio" id="parsers-default"
-                                            x-model="operationToStart.use_learning_parsers" value="1" checked>
+                                               x-model="operationToStart.use_learning_parsers" value="1" checked>
                                         <label for="parsers-default">Use default parsers</label>
                                         <input type="radio" id="parsers-no_default"
-                                            x-model="operationToStart.use_learning_parsers" value="0">
+                                               x-model="operationToStart.use_learning_parsers" value="0">
                                         <label for="parsers-no_default">Do not use default parsers</label>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label for="basic-keep"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                    <label for="basic-keep"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Auto-close']">Auto-close</span></label>
                                     <div class="modal-form-fields" id="basic-keep">
-                                        <input type="radio" id="keep-open" x-model="operationToStart.auto_close"
-                                            value="0" checked>
+                                        <input type="radio" id="keep-open"
+                                               x-model="operationToStart.auto_close"
+                                               value="0" checked>
                                         <label for="keep-open">Keep open forever</label>
-                                        <input type="radio" id="auto-close" x-model="operationToStart.auto_close"
-                                            value="1">
+                                        <input type="radio" id="auto-close"
+                                               x-model="operationToStart.auto_close"
+                                               value="1">
                                         <label for="auto-close">Auto close operation</label>
                                     </div>
                                 </div>
                                 <div>
-                                    <label for="basic-run"><span class="has-tooltip-multiline has-tooltip-bottom"
+                                    <label for="basic-run"><span
+                                            class="has-tooltip-multiline has-tooltip-bottom"
                                             x-bind:data-tooltip="usage['Run immediately']">Run state</span></label>
 
                                     <div class="modal-form-fields" id="basic-run">
-                                        <input type="radio" x-model="operationToStart.state" id="run-immediately"
-                                            value="running" checked>
+                                        <input type="radio" x-model="operationToStart.state"
+                                               id="run-immediately"
+                                               value="running" checked>
                                         <label for="run-immediately">Run immediately</label>
-                                        <input type="radio" x-model="operationToStart.state" id="pause-on-start"
-                                            value="paused">
+                                        <input type="radio" x-model="operationToStart.state"
+                                               id="pause-on-start"
+                                               value="paused">
                                         <label for="pause-on-start">Pause on start</label>
                                     </div>
                                 </div>
 
                                 <div>
-                                    <label for="stealth-jitter"><span class="has-tooltip-multiline has-tooltip-top"
+                                    <label for="stealth-jitter"><span
+                                            class="has-tooltip-multiline has-tooltip-top"
                                             x-bind:data-tooltip="usage['Jitter']">Jitter (sec/sec)</span></label>
                                     <div class="modal-form-fields" id="stealth-jitter">
-                                        <input class="input" :class="{ 'is-danger': !isJitterValid() }"
-                                            x-model="jitterMin" id="stealth-jitterMin" type="number" required
-                                            pattern="[0-9]*" placeholder="2" />
+                                        <input class="input"
+                                               :class="{ 'is-danger': !isJitterValid() }"
+                                               x-model="jitterMin"
+                                               id="stealth-jitterMin"
+                                               type="number"
+                                               required
+                                               pattern="[0-9]*"
+                                               placeholder="2"/>
                                         <label class="input-hover-label" for="stealth-jitterMin">min</label>
                                         <span>/</span>
-                                        <input class="input" :class="{ 'is-danger': !isJitterValid() }"
-                                            x-model="jitterMax" id="stealth-jitterMax" type="number" required
-                                            pattern="[0-9]*" placeholder="8" />
+                                        <input class="input"
+                                               :class="{ 'is-danger': !isJitterValid() }"
+                                               x-model="jitterMax"
+                                               id="stealth-jitterMax"
+                                               type="number"
+                                               required
+                                               pattern="[0-9]*"
+                                               placeholder="8"/>
                                         <label class="input-hover-label" for="stealth-jitterMax">max</label>
                                         <button type="button" class="button is-primary no-style reset"
-                                            title="reset to default" x-on:click="jitterMin = 2; jitterMax = 8;">
+                                                title="reset to default"
+                                                x-on:click="jitterMin = 2; jitterMax = 8;">
                                             Reset
                                         </button>
                                         <p x-show="!isJitterValid()" class="pl-3 help has-text-danger">
-                                            Min and Max need to be >= 0, and Min must be <= Max </p>
+                                            Min and Max need to be >= 0, and Min must be <= Max
+                                        </p>
                                     </div>
                                 </div>
                             </div>
@@ -736,8 +755,8 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                            x-on:click="addOperation()"
-                                            x-text="schedule ? 'Schedule' : 'Start'"></button>
+                                                x-on:click="addOperation()"
+                                                x-text="schedule ? 'Schedule' : 'Start'"></button>
                                     </div>
                                 </div>
                             </nav>
@@ -784,8 +803,7 @@
                                             <label class="label">Group</label>
                                         </td>
                                         <td>
-                                            <span
-                                                x-text="(selectedOperation.group ? selectedOperation.group : 'all')"></span>
+                                            <span x-text="(selectedOperation.group ? selectedOperation.group : 'all')"></span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -809,8 +827,7 @@
                                             <label class="label">Autonomous</label>
                                         </td>
                                         <td>
-                                            <span
-                                                x-text="(selectedOperation.autonomous === 0 ? 'manual' : 'autonomous')"></span>
+                                            <span x-text="(selectedOperation.autonomous === 0 ? 'manual' : 'autonomous')"></span>
                                         </td>
                                     </tr>
                                     <tr>
@@ -838,7 +855,7 @@
                                         </td>
                                     </tr>
                                 </tbody>
-
+                                
                             </table>
                         </section>
                         <footer class="modal-card-foot">
@@ -853,7 +870,7 @@
                         </footer>
                     </div>
                 </template>
-
+                
                 <template x-if="openModal === 'addLink'">
                     <div class="modal-card wide" x-init="getAbilities()">
                         <header class="modal-card-head">
@@ -869,13 +886,10 @@
                                         <div class="field">
                                             <div class="control">
                                                 <div class="select is-small is-fullwidth">
-                                                    <select id="link-agent" x-model="selectedAgentIndex"
-                                                        x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
+                                                    <select id="link-agent" x-model="selectedAgentIndex" x-on:change="getAgent(selectedAgent.paw); potentialLink.agent = selectedAgent">
                                                         <option default disabled value="">Choose an agent</option>
-                                                        <template x-for="(agent, index) in selectedOperation.host_group"
-                                                            :key="agent.paw">
-                                                            <option :value="index" x-bind:selected="index === 0"
-                                                                x-text="agent.display_name + '-' + agent.paw"></option>
+                                                        <template x-for="(agent, index) in selectedOperation.host_group" :key="agent.paw">
+                                                            <option :value="index" x-bind:selected="index === 0" x-text="agent.display_name + '-' + agent.paw"></option>
                                                         </template>
                                                     </select>
                                                 </div>
@@ -891,13 +905,10 @@
                                         <div class="field">
                                             <div class="control">
                                                 <div class="select is-small is-fullwidth">
-                                                    <select id="link-exec" x-model="potentialLink.executor"
-                                                        x-on:change="filterAbilities(abilities)">
+                                                    <select id="link-exec" x-model="potentialLink.executor" x-on:change="filterAbilities(abilities)">
                                                         <option value="" disabled>Select an executor</option>
-                                                        <template x-for="(exec, index) of selectedAgentExecutors"
-                                                            :key="exec.executor">
-                                                            <option x-text="exec.display" :value="exec.executor">
-                                                            </option>
+                                                        <template x-for="(exec, index) of selectedAgentExecutors" :key="exec.executor">
+                                                            <option x-text="exec.display" :value="exec.executor"></option>
                                                         </template>
                                                     </select>
                                                 </div>
@@ -908,15 +919,12 @@
                                 <div class="p-3"></div>
                                 <div class="field is-horizontal">
                                     <div class="field-label is-small">
-                                        <label class="label"><span class="icon is-small"><em
-                                                    class="fas fa-search"></em></span></label>
+                                        <label class="label"><span class="icon is-small"><em class="fas fa-search"></em></span></label>
                                     </div>
                                     <div class="field-body">
                                         <div class="field">
                                             <div class="control">
-                                                <input class="input is-small" x-model="potentialLinkSearchQuery"
-                                                    placeholder="Search for a link..."
-                                                    x-on:keyup="filterAbilities(abilities)">
+                                                <input class="input is-small" x-model="potentialLinkSearchQuery" placeholder="Search for a link..." x-on:keyup="filterAbilities(abilities)">
                                             </div>
                                         </div>
                                     </div>
@@ -929,8 +937,7 @@
                                         <div class="field">
                                             <div class="control">
                                                 <div class="select is-small is-fullwidth">
-                                                    <select id="link-tactic" x-model="potentialLink.tactic"
-                                                        x-on:change="filterAbilities(abilities)">
+                                                    <select id="link-tactic" x-model="potentialLink.tactic" x-on:change="filterAbilities(abilities)">
                                                         <option default value="">All tactics</option>
                                                         <template x-for="tactic in tacticFiltersList" :key="tactic">
                                                             <option x-text="tactic"></option>
@@ -949,11 +956,9 @@
                                         <div class="field">
                                             <div class="control">
                                                 <div class="select is-small is-fullwidth">
-                                                    <select id="link-technique" x-model="potentialLink.technique"
-                                                        x-on:change="filterAbilities(abilities)">
+                                                    <select id="link-technique" x-model="potentialLink.technique" x-on:change="filterAbilities(abilities)">
                                                         <option default value="">All techniques</option>
-                                                        <template x-for="technique in techniqueFiltersList"
-                                                            :key="technique">
+                                                        <template x-for="technique in techniqueFiltersList" :key="technique">
                                                             <option x-text="technique"></option>
                                                         </template>
                                                     </select>
@@ -966,9 +971,7 @@
                             <hr>
                             <div class="is-flex is-justify-content-space-between mb-2">
                                 <strong x-show="filteredAbilitiesList.length">Select a potential link</strong>
-                                <p
-                                    x-text="`${filteredAbilitiesList.length} potential link${((filteredAbilitiesList.length === 1) ? '' : 's')}`">
-                                </p>
+                                <p x-text="`${filteredAbilitiesList.length} potential link${((filteredAbilitiesList.length === 1) ? '' : 's')}`"></p>
                             </div>
                             <template x-for="ability in filteredAbilitiesList" :key="ability.ability_id">
                                 <div class="box mb-2 mr-2 p-3 op-ability" @click="selectPotentialLink(ability)">
@@ -976,15 +979,11 @@
                                         <span class="has-text-weight-bold" x-text="ability.name"></span>
                                         <span x-text="`(${ability.technique_id})`"></span>
                                     </p>
-                                    <p class="help mb-0" x-text="ability.description"
-                                        style="width: 90%; white-space: pre-line;"></p>
-                                    <span class="icon is-large ability-icon"><em
-                                            class="fas fa-lg fa-arrow-right"></em></span>
+                                    <p class="help mb-0" x-text="ability.description" style="width: 90%; white-space: pre-line;"></p>
+                                    <span class="icon is-large ability-icon"><em class="fas fa-lg fa-arrow-right"></em></span>
                                 </div>
                             </template>
-                            <em x-show="showNotRepeatableText"
-                                class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not
-                                available for this operation</em>
+                            <em x-show="showNotRepeatableText" class="has-text-grey-light is-pulled-right is-size-7">Note: Repeated links are not available for this operation</em>
                         </section>
                         <section class="modal-card-body " x-show="selectedPotentialLink.ability_id">
                             <strong x-text="selectedPotentialLink.name" class="mb-2 is-size-4"></strong>
@@ -993,8 +992,7 @@
                             <hr>
                             <p class="has-text-centered has-text-weight-bold">Fact Templates</p>
                             <p class="help" x-show="Object.keys(selectedPotentialLinkFacts).length">
-                                This link needs facts in order to run properly. Select one value for each fact to add
-                                one potential link, otherwise, select multiple
+                                This link needs facts in order to run properly. Select one value for each fact to add one potential link, otherwise, select multiple
                                 values and a potential link will be added for each possible combination.
                             </p>
                             <p class="help" x-show="!Object.keys(selectedPotentialLinkFacts).length">
@@ -1005,20 +1003,17 @@
                                     <span class="icon-text">
                                         <label class="label" x-text="factName"></label>
                                         <span class="icon has-text-warning"
-                                            x-show="selectedPotentialLinkFacts[factName] ? selectedPotentialLinkFacts[factName].every((fact) => !fact.selected) : false"
-                                            data-tooltip="There are currently empty fact templates. You can still add this link but it may not run properly.">
+                                              x-show="selectedPotentialLinkFacts[factName] ? selectedPotentialLinkFacts[factName].every((fact) => !fact.selected) : false"
+                                              data-tooltip="There are currently empty fact templates. You can still add this link but it may not run properly.">
                                             <em class="fas fa-exclamation-triangle"></em>
                                         </span>
                                     </span>
-                                    <template x-for="fact in selectedPotentialLinkFacts[factName] || null"
-                                        :key="fact.value">
+                                    <template x-for="fact in selectedPotentialLinkFacts[factName] || null" :key="fact.value">
                                         <div>
                                             <label class="checkbox">
-                                                <input type="checkbox" x-model="fact.selected"
-                                                    x-on:change="setPotentialLinksToAdd()">
+                                                <input type="checkbox" x-model="fact.selected" x-on:change="setPotentialLinksToAdd()">
                                                 <span x-text="fact.value"></span>
-                                                <span class="tag" x-text="fact.origin"
-                                                    data-tooltip="The origin of this fact"></span>
+                                                <span class="tag" x-text="fact.origin" data-tooltip="The origin of this fact"></span>
                                             </label>
                                         </div>
                                     </template>
@@ -1027,11 +1022,9 @@
 
                             <p class="has-text-centered has-text-weight-bold">Link Command</p>
                             <p class="help">
-                                You can edit the link's command here. Editing the fact templates (<code>#{...}</code>)
-                                may result in unexpected behavior.
+                                You can edit the link's command here. Editing the fact templates (<code>#{...}</code>) may result in unexpected behavior.
                             </p>
-                            <textarea class="textarea is-family-monospace" x-model="potentialLinkCommand"
-                                x-on:change="setPotentialLinksToAdd()"></textarea>
+                            <textarea class="textarea is-family-monospace" x-model="potentialLinkCommand" x-on:change="setPotentialLinksToAdd()"></textarea>
                         </section>
                         <footer class="modal-card-foot" x-show="!selectedPotentialLink.ability_id">
                             <nav class="level">
@@ -1039,8 +1032,7 @@
                                 </div>
                                 <div class="level-right">
                                     <div class="level-item">
-                                        <button class="button is-small"
-                                            @click="openModal = null; selectPotentialLink({})">Close</button>
+                                        <button class="button is-small" @click="openModal = null; selectPotentialLink({})">Close</button>
                                     </div>
                                 </div>
                             </nav>
@@ -1055,17 +1047,12 @@
                                 </div>
                                 <div class="level-right">
                                     <div class="level-item">
-                                        <button class="button is-small"
-                                            @click="openModal = null; selectPotentialLink({})">Close</button>
+                                        <button class="button is-small" @click="openModal = null; selectPotentialLink({})">Close</button>
                                     </div>
-                                    <button class="button is-small"
-                                        x-bind:class="{ 'is-primary': !isAddingBlankPotentialLink || !Object.keys(selectedPotentialLinkFacts).length, 'is-warning': isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length }"
-                                        @click="addPotentialLinks()">
+                                    <button class="button is-small" x-bind:class="{ 'is-primary': !isAddingBlankPotentialLink || !Object.keys(selectedPotentialLinkFacts).length, 'is-warning': isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length }" @click="addPotentialLinks()">
                                         <span class="icon">
-                                            <em class="fas fa-plus"
-                                                x-show="!isAddingBlankPotentialLink || !Object.keys(selectedPotentialLinkFacts).length"></em>
-                                            <em class="fas fa-exclamation-triangle"
-                                                x-show="isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length"></em>
+                                            <em class="fas fa-plus" x-show="!isAddingBlankPotentialLink || !Object.keys(selectedPotentialLinkFacts).length"></em>
+                                            <em class="fas fa-exclamation-triangle" x-show="isAddingBlankPotentialLink && Object.keys(selectedPotentialLinkFacts).length"></em>
                                         </span>
                                         <span>
                                             Add
@@ -1089,8 +1076,11 @@
                                 <div>
                                     <label for="agent-output-field">Agent output</label>
                                     <div class="modal-form-fields" id="agent-output-field">
-                                        <input id="agent-output" x-bind:disabled="selectedReportType === 'csv'"
-                                            type="checkbox" class="mr-1" x-model="isAgentOutputSelected">
+                                        <input id="agent-output"
+                                               x-bind:disabled="selectedReportType === 'csv'"
+                                               type="checkbox"
+                                               class="mr-1"
+                                               x-model="isAgentOutputSelected">
                                         <label for="agent-output">include agent output</label>
                                     </div>
                                 </div>
@@ -1098,13 +1088,13 @@
                                     <label for="report-type">Report type</label>
                                     <div class="modal-form-fields download-buttons-container" id="report-type">
                                         <input class="mr-1" type="radio" x-model="selectedReportType"
-                                            value="full-report" id="full-report">
+                                               value="full-report" id="full-report">
                                         <label for="full-report">Full Report</label>
-                                        <input class="mr-1" type="radio" x-model="selectedReportType" value="event-logs"
-                                            id="event-logs">
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                               value="event-logs" id="event-logs">
                                         <label for="event-logs">Event Logs</label>
-                                        <input class="mr-1" type="radio" x-model="selectedReportType" value="csv"
-                                            id="csv">
+                                        <input class="mr-1" type="radio" x-model="selectedReportType"
+                                               value="csv" id="csv">
                                         <label for="csv">CSV</label>
                                     </div>
                                 </div>
@@ -1120,7 +1110,7 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                            x-on:click="handleDownload()">
+                                                x-on:click="handleDownload()">
                                             Download
                                         </button>
                                     </div>
@@ -1148,7 +1138,7 @@
                                 <div class="level-left">
                                     <div class="level-item">
                                         <button type="button" class="button ml-2 is-small"
-                                            x-on:click="openModal = null">
+                                                x-on:click="openModal = null">
                                             Cancel
                                         </button>
                                     </div>
@@ -1156,7 +1146,7 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                            x-on:click="deleteOperation(); openModal = null;">
+                                                x-on:click="deleteOperation(); openModal = null;">
                                             Delete
                                         </button>
                                     </div>
@@ -1184,7 +1174,7 @@
                                 <div class="level-left">
                                     <div class="level-item">
                                         <button type="button" class="button ml-2 is-small"
-                                            x-on:click="openModal = null">
+                                                x-on:click="openModal = null">
                                             Cancel
                                         </button>
                                     </div>
@@ -1192,7 +1182,7 @@
                                 <div class="level-right">
                                     <div class="level-item">
                                         <button type="button" class="button is-primary is-small"
-                                            x-on:click="updateLink(-2); openModal = null;">
+                                                x-on:click="updateLink(-2); openModal = null;">
                                             Delete
                                         </button>
                                     </div>
@@ -1243,7 +1233,7 @@
             selectedLinkFacts: null,
             selectedLinkPlaintextCommand: null,
             selectedLinkCommand: null,
-            linkScrollHistory: { operationID: -1, shouldScroll: true, isEnabled: true },
+            linkScrollHistory: {operationID: -1, shouldScroll: true, isEnabled: true},
             selectedReportType: 'full-report',
             isAgentOutputSelected: false,
             openModal: null,
@@ -1343,7 +1333,7 @@
                 this.openModal = null;
                 this.openModalForm = { advanced: false };
                 this.operations = [];
-                this.operationToStart = { planner: '', source: '' };
+                this.operationToStart = { planner: '', source: ''};
             },
 
             isLinkEditable(currentLink) {
@@ -1383,11 +1373,11 @@
                 });
             },
 
-            scrollToLastLink(linkRow, index) {
-                // Check if link is the last link and that we haven't just switched operations
-                if (index === this.selectedOperation.chain.length - 1 && this.linkScrollHistory.shouldScroll && this.linkScrollHistory.isEnabled) {
-                    linkRow.scrollIntoView();
-                }
+            scrollToLastLink(linkRow, index){
+              // Check if link is the last link and that we haven't just switched operations
+              if (index === this.selectedOperation.chain.length - 1 && this.linkScrollHistory.shouldScroll && this.linkScrollHistory.isEnabled){
+                linkRow.scrollIntoView();
+              }
             },
 
             //
@@ -1469,10 +1459,10 @@
 
                 apiV2('GET', `${this.ENDPOINT}/${this.selectedOperationID}`).then((res) => {
                     this.selectedOperation = res;
-                    if (this.linkScrollHistory.operationID != this.selectedOperationID) {
-                        this.linkScrollHistory.shouldScroll = false;
-                    } else {
-                        this.linkScrollHistory.shouldScroll = true;
+                    if (this.linkScrollHistory.operationID != this.selectedOperationID){
+                      this.linkScrollHistory.shouldScroll = false;
+                    }else{
+                      this.linkScrollHistory.shouldScroll = true;
                     }
                     this.linkScrollHistory.operationID = this.selectedOperationID;
                     this.generateAddedLinksList();
@@ -1814,7 +1804,7 @@
             },
 
             downloadCSV() {
-                let csv = ['Decide,Link/Ability Name,Agent #paw,Host,pid,Command,Plaintext Command'];
+                let csv = [ 'Decide,Link/Ability Name,Agent #paw,Host,pid,Command,Plaintext Command' ];
 
                 this.selectedOperation.chain.forEach(async (link) => {
                     const rowItems = [];
@@ -1892,7 +1882,7 @@
         margin: 0 auto;
     }
 
-    #operationsPage .control-buttons>.button {
+    #operationsPage .control-buttons > .button {
         margin: 0 10px 10px 0;
     }
 
@@ -1910,11 +1900,9 @@
         border: 1px solid transparent;
         background-color: #272727;
     }
-
     #operationsPage .box.op-ability:hover {
         border: 1px solid #474747;
     }
-
     #operationsPage .ability-icon {
         position: absolute;
         right: 0;
@@ -1927,9 +1915,7 @@
     }
 
     /*END MODAL FORM STYLE*/
-    #operationsPage .timeline-table .modal-card code,
-    table code,
-    .modal-form code {
+    #operationsPage .timeline-table .modal-card code, table code, .modal-form code {
         color: #ff8181;
         background-color: initial;
         white-space: pre-line;
@@ -1950,10 +1936,7 @@
         border-bottom: none;
     }
 
-    #operationsPage .button:active,
-    .button.is-active,
-    .button:focus,
-    .button.is-focused {
+    #operationsPage .button:active, .button.is-active, .button:focus, .button.is-focused {
         color: inherit;
     }
 
@@ -1993,8 +1976,7 @@
         max-height: 34px;
     }
 
-    #operationsPage .timeline-table th:not(.decideColumn),
-    th:not(.statusColumn) {
+    #operationsPage .timeline-table th:not(.decideColumn), th:not(.statusColumn) {
         text-align: left;
     }
 
