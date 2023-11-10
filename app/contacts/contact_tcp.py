@@ -60,12 +60,17 @@ class TcpSessionHandler(BaseWorld):
             session = self.sessions[index]
 
             try:
-                session.connection.send(str.encode(' '))
+                session.send(' '.encode())
             except socket.error:
                 self.log.debug('Error occurred when refreshing session %s. Removing from session pool.', session.id)
                 del self.sessions[index]
             else:
                 index += 1
+
+    @staticmethod
+    async def _handshake(reader):
+        profile_bites = (await reader.readline()).strip()
+        return json.loads(profile_bites)
 
     async def accept(self, reader, writer):
         try:
@@ -74,39 +79,37 @@ class TcpSessionHandler(BaseWorld):
             self.log.debug('Handshake failed: %s' % e)
             return
         connection = writer.get_extra_info('socket')
+
         profile['executors'] = [e for e in profile['executors'].split(',') if e]
         profile['contact'] = 'tcp'
         agent, _ = await self.services.get('contact_svc').handle_heartbeat(**profile)
-        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection)
+        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection, reader=reader, writer=writer)
         self.sessions.append(new_session)
         await self.send(new_session.id, agent.paw, timeout=5)
 
     async def send(self, session_id: int, cmd: str, timeout: int = 60) -> Tuple[int, str, str, str]:
         try:
-            conn = next(i.connection for i in self.sessions if i.id == int(session_id))
-            conn.send(str.encode(' '))
-            time.sleep(0.01)
-            conn.send(str.encode('%s\n' % cmd))
-            response = await self._attempt_connection(session_id, conn, timeout=timeout)
+            session = next(i for i in self.sessions if i.id == int(session_id))
+            session.send(f'{cmd}\n'.encode())
+            response = await self._attempt_connection(session, timeout=timeout)
+
+            if response == '\n':    # Agents returns this at connection establishment
+                return 0, '~$ ', 'established', ''
+
             response = json.loads(response)
             return response['status'], response['pwd'], response['response'], response.get('agent_reported_time', '')
         except Exception as e:
             self.log.exception(e)
             return 1, '~$ ', str(e), ''
 
-    @staticmethod
-    async def _handshake(reader):
-        profile_bites = (await reader.readline()).strip()
-        return json.loads(profile_bites)
-
-    async def _attempt_connection(self, session_id, connection, timeout):
+    async def _attempt_connection(self, session, timeout):
         buffer = 4096
         data = b''
         waited_seconds = 0
         time.sleep(0.1)  # initial wait for fast operations.
         while True:
             try:
-                part = connection.recv(buffer)
+                part = await session.receive(n=buffer)
                 data += part
                 if len(part) < buffer:
                     break
@@ -115,6 +118,6 @@ class TcpSessionHandler(BaseWorld):
                     time.sleep(1)
                     waited_seconds += 1
                 else:
-                    self.log.error("Timeout reached for session %s", session_id)
+                    self.log.error("Timeout reached for session %s", session.id)
                     return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
         return str(data, 'utf-8')
