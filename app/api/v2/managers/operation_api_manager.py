@@ -206,6 +206,57 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpNotFound(f'Agent {data["paw"]} was not found.')
         return agent
 
+    def get_agents(self, operation: dict):
+        agents = {}
+        chain = operation.get('chain', [])
+        for link in chain:
+            paw = link.get('paw')
+            if paw and paw not in agents:
+                tmp_agent = self.find_object('agents', {'paw': paw}).display
+                tmp_agent['links'] = []
+                agents[paw] = tmp_agent
+
+            agents[paw]['links'].append(link)
+
+        return agents
+
+    async def get_hosts(self, operation: dict):
+        hosts = {}
+        chain = operation.get('chain', [])
+        for link in chain:
+            host = link.get('host')
+            if not host:
+                continue
+
+            if host not in hosts:
+                tmp_agent = self.find_object('agents', {'host': host}).display
+                tmp_host = {
+                    'host': tmp_agent.get('host'),
+                    'host_ip_addrs': tmp_agent.get('host_ip_addrs'),
+                    'platform': tmp_agent.get('platform'),
+                    'reachable_hosts': await self.get_reachable_hosts(operation)
+                }
+                hosts[host] = tmp_host
+
+        return hosts
+
+    async def get_reachable_hosts(self, operation: dict):
+        paws = ()
+        for agent in operation.get('host_group', []):
+            paw = agent.get('paw')
+            if paw:
+                paws = paws + (paw,)
+
+        hosts = []
+        fqdns = await self.services['knowledge_svc'].get_facts({
+            'trait': 'remote.host.fqdn',
+            'collected_by': paws,
+        })
+        for name in fqdns:
+            hosts.append(name.value)
+
+        return hosts
+
     def build_executor(self, data: dict, agent: Agent):
         if not data.get('timeout'):
             data['timeout'] = 60
