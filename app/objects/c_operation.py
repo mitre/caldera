@@ -66,6 +66,23 @@ class OperationSchema(ma.Schema):
         return None if kwargs.get('partial') is True else Operation(**data)
 
 
+class HostSchema(ma.Schema):
+    display_name = ma.fields.String(dump_only=True)
+    host = ma.fields.String()
+    host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
+    platform = ma.fields.String()
+    reachable_hosts = ma.fields.List(ma.fields.String(), allow_none=True)
+
+
+class OperationSchemaAlt(OperationSchema):
+    chain = property(lambda: AttributeError)
+    host_group = property(lambda: AttributeError)
+    source = property(lambda: AttributeError)
+    visibility = property(lambda: AttributeError)
+    agents = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.Nested(AgentSchema()))
+    hosts = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.Nested(HostSchema()))
+
+
 class Operation(FirstClassObjectInterface, BaseObject):
     EVENT_EXCHANGE = 'operation'
     EVENT_QUEUE_STATE_CHANGED = 'state_changed'
