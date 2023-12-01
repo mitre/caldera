@@ -61,8 +61,7 @@ class TcpSessionHandler(BaseWorld):
             session = self.sessions[index]
 
             try:
-                session.connection.writer.write(str.encode(' '))
-                await session.connection.writer.drain()
+                await session.connection.send(str.encode(' '))
             except socket.error:
                 self.log.debug('Error occurred when refreshing session %s. Removing from session pool.', session.id)
                 del self.sessions[index]
@@ -85,10 +84,9 @@ class TcpSessionHandler(BaseWorld):
     async def send(self, session_id: int, cmd: str, timeout: int = 60) -> Tuple[int, str, str, str]:
         try:
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
-            conn.writer.write(str.encode(' '))
+            await conn.send(str.encode(' '))
             time.sleep(0.01)
-            conn.writer.write(str.encode('%s\n' % cmd))
-            await conn.writer.drain()
+            await conn.send(str.encode('%s\n' % cmd))
             response = await self._attempt_connection(session_id, conn, timeout=timeout)
             response = json.loads(response)
             return response['status'], response['pwd'], response['response'], response.get('agent_reported_time', '')
@@ -108,7 +106,7 @@ class TcpSessionHandler(BaseWorld):
         time.sleep(0.1)  # initial wait for fast operations.
         while True:
             try:
-                part = await connection.reader.read(buffer)
+                part = await connection.recv(buffer)
                 data += part
                 if len(part) < buffer:
                     break
