@@ -7,6 +7,7 @@ from typing import Tuple
 
 from app.utility.base_world import BaseWorld
 from plugins.manx.app.c_session import Session
+from plugins.manx.app.c_connection import Connection
 
 
 class Contact(BaseWorld):
@@ -60,7 +61,8 @@ class TcpSessionHandler(BaseWorld):
             session = self.sessions[index]
 
             try:
-                session.connection.send(str.encode(' '))
+                session.connection.writer.write(str.encode(' '))
+                await session.connection.writer.drain()
             except socket.error:
                 self.log.debug('Error occurred when refreshing session %s. Removing from session pool.', session.id)
                 del self.sessions[index]
@@ -73,20 +75,20 @@ class TcpSessionHandler(BaseWorld):
         except Exception as e:
             self.log.debug('Handshake failed: %s' % e)
             return
-        connection = writer.get_extra_info('socket')
         profile['executors'] = [e for e in profile['executors'].split(',') if e]
         profile['contact'] = 'tcp'
         agent, _ = await self.services.get('contact_svc').handle_heartbeat(**profile)
-        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection)
+        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=Connection(reader, writer))
         self.sessions.append(new_session)
         await self.send(new_session.id, agent.paw, timeout=5)
 
     async def send(self, session_id: int, cmd: str, timeout: int = 60) -> Tuple[int, str, str, str]:
         try:
             conn = next(i.connection for i in self.sessions if i.id == int(session_id))
-            conn.send(str.encode(' '))
+            conn.writer.write(str.encode(' '))
             time.sleep(0.01)
-            conn.send(str.encode('%s\n' % cmd))
+            conn.writer.write(str.encode('%s\n' % cmd))
+            await conn.writer.drain()
             response = await self._attempt_connection(session_id, conn, timeout=timeout)
             response = json.loads(response)
             return response['status'], response['pwd'], response['response'], response.get('agent_reported_time', '')
@@ -106,7 +108,7 @@ class TcpSessionHandler(BaseWorld):
         time.sleep(0.1)  # initial wait for fast operations.
         while True:
             try:
-                part = connection.recv(buffer)
+                part = await connection.reader.read(buffer)
                 data += part
                 if len(part) < buffer:
                     break
