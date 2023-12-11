@@ -241,6 +241,8 @@ class OperationApiManager(BaseApiManager):
         return hosts
 
     async def get_reachable_hosts(self, operation: dict):
+        trait_names = BaseWorld.get_config('reachable_host_traits') or []
+
         paws = ()
         for agent in operation.get('host_group', []):
             paw = agent.get('paw')
@@ -248,12 +250,13 @@ class OperationApiManager(BaseApiManager):
                 paws = paws + (paw,)
 
         hosts = []
-        fqdns = await self.services['knowledge_svc'].get_facts({
-            'trait': 'remote.host.fqdn',
-            'collected_by': paws,
-        })
-        for name in fqdns:
-            hosts.append(name.value)
+        for trait in trait_names:
+            fqdns = await self.services['knowledge_svc'].get_facts({
+                'trait': trait,
+                'collected_by': paws,
+            })
+            for name in fqdns:
+                hosts.append(name.value)
 
         return hosts
 
