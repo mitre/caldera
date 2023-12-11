@@ -26,6 +26,9 @@ objects.planners.default: atomic
 crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp/caldera
+reachable_host_traits:
+- remote.host.fqdn
+- remote.host.ip
 host: 0.0.0.0
 plugins:
 - access
