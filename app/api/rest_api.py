@@ -34,7 +34,6 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('GET', '/', self.landing)
-        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/|docs/).*}', self.handle_catch)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         # unauthorized API endpoints
@@ -44,6 +43,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
+        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/).*}', self.handle_catch)
 
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
