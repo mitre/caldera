@@ -59,6 +59,7 @@ These requirements are for the computer running the core framework:
 * Python 3.8+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 * Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
+* NodeJS (v16+ recommended for UI) 
 
 ## Installation
 
@@ -67,7 +68,7 @@ Concise installation steps:
 git clone https://github.com/mitre/caldera.git --recursive
 cd caldera
 pip3 install -r requirements.txt
-python3 server.py --insecure
+python3 server.py --insecure --build
 ```
 
 Full steps:
@@ -84,9 +85,9 @@ pip3 install -r requirements.txt
 
 Finally, start the server.
 ```Bash
-python3 server.py --insecure
+python3 server.py --insecure --build
 ```
-
+The --build flag automatically installs any UI dependencies, bundles the UI into a dist directory, and is served by the Caldera server. You will only have to use the --build flag again if you add any plugins or make any changes to the UI.
 Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
 
 ### User Interface Development
@@ -98,9 +99,9 @@ If you'll be developing the UI, there are a few more additional installation ste
 
 **Setup**
 
-1. Add the Magma submodule: `git submodule add https://gitlab.mitre.org/caldera/other/magma`
-1. Install NodeJS dependencies: `cd magma && npm install && cd ..`
-1. Start the CALDERA server with an additional flag: `python3 server.py --uidev`
+1. Add the Magma submodule if you haven't already: `git submodule add https://gitlab.mitre.org/caldera/other/magma`
+1. Install NodeJS dependencies: `cd plugins/magma && npm install && cd ..`
+1. Start the CALDERA server with an additional flag: `python3 server.py --uidev localhost`
 
 Your CALDERA server is available at http://localhost:8888 as usual, but there will now be a hot-reloading development server for the VueJS front-end available at http://localhost:3000. Both logs from the server and the front-end will display in the terminal you launched the server from.
 
