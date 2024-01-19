@@ -1608,7 +1608,7 @@
                 this.setPotentialLinksToAdd();
                 if (!this.selectedPotentialLink.ability_id) return;
 
-                const executor = link.executors.find((e) => this.potentialLink.executor === e.name);
+                const executor = link.executors.find((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.executor === ex.name);
                 const fields = [...new Set([...executor.command.matchAll(/#{(.*?)}/gm)].map((field) => field[1]))];
                 const opSource = this.SOURCES.find((s) => s.id === this.selectedOperation.source.id);
                 const opSourceCollected = this.SOURCES.find((source) => source.name === this.selectedOperation.name);
@@ -1654,7 +1654,7 @@
 
                 let executor;
                 if (this.selectedPotentialLink.executors) {
-                    executor = this.selectedPotentialLink.executors.find((e) => this.potentialLink.executor === e.name);
+                    executor = this.selectedPotentialLink.executors.find((ex) => ex.platform === this.potentialLink.agent.platform && this.potentialLink.executor === ex.name);
                 }
 
                 if (!combinations.length) {
