@@ -128,4 +128,4 @@ To discuss licensing opportunities, please reach out to caldera@mitre.org or dir
 
 ## Caldera Benefactor Program
 
-If you are interested in partnering to support, sustain, and evolve Caldera&trade;'s open source capabilities, please contact us at caldera@mitre.org.
+If you are interested in partnering to support, sustain, and evolve MITRE Caldera&trade;'s open source capabilities, please contact us at caldera@mitre.org.
