@@ -19,6 +19,23 @@ RUN apt-get update && \
 ARG WIN_BUILD=false
 RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y install mingw-w64; fi
 
+# Install Haproxy, needed for SSL plugin
+RUN apt-get install haproxy -y
+
+# Arguments used to generate the self signed certificate
+ARG COUNTRY=US
+ARG ST=""
+ARG L=""
+ARG O=""
+ARG OU=""
+ARG CN=""
+
+# Generate self signed certificate
+RUN openssl req -x509 -newkey rsa:4096 -out plugins/ssl/conf/certificate.pem -keyout plugins/ssl/conf/certificate.pem -subj "/C=$COUNTRY/ST=$ST/L=$L/O=$O/OU=$OU/CN=$CN" -nodes
+
+RUN cp plugins/ssl/templates/haproxy.conf plugins/ssl/conf/
+RUN sed -i 's/insecure_certificate.pem/certificate.pem/' plugins/ssl/conf/haproxy.conf
+
 # Set up python virtualenv
 ENV VIRTUAL_ENV=/opt/venv/caldera
 RUN python3 -m venv $VIRTUAL_ENV
@@ -30,6 +47,9 @@ RUN pip3 install --no-cache-dir -r requirements.txt
 # Set up config file and disable atomic by default
 RUN python3 -c "import app; import app.utility.config_generator; app.utility.config_generator.ensure_local_config();"; \
     sed -i '/\- atomic/d' conf/local.yml;
+
+# Enable ssl plugin
+RUN sed -i '/^\-\ manx/a \-\ ssl' conf/local.yml
 
 # Compile default sandcat agent binaries, which will download basic golang dependencies.
 
