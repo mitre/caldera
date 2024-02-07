@@ -39,7 +39,7 @@ class SourceSchema(ma.Schema):
     def fix_adjustments(self, in_data, **_):
         x = []
         raw_adjustments = in_data.pop('adjustments', {})
-        if raw_adjustments and type(raw_adjustments) == dict:
+        if raw_adjustments and isintance(raw_adjustments, dict):
             for ability_id, adjustments in raw_adjustments.items():
                 for trait, block in adjustments.items():
                     for change in block:

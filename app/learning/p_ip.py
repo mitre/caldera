@@ -22,6 +22,6 @@ class Parser:
             if raw_ip in ['0.0.0.0', '127.0.0.1']:  # nosec
                 return False
             ip_address(raw_ip)
-        except BaseException:
+        except ValueError:
             return False
         return True
