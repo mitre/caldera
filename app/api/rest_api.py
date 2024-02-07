@@ -7,7 +7,7 @@ import base64
 
 import marshmallow as ma
 from aiohttp import web
-from aiohttp_jinja2 import template, render_template
+from aiohttp_jinja2 import render_template
 
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
@@ -30,7 +30,7 @@ class RestApi(BaseWorld):
 
     async def enable(self):
         self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
-        #TODO: only serve static files in legacy plugin mode
+        # TODO: only serve static files in legacy plugin mode
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('GET', '/', self.landing)
