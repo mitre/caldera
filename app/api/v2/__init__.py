@@ -55,4 +55,7 @@ def make_app(services):
     from .handlers.contact_api import ContactApi
     ContactApi(services).add_routes(app)
 
+    from .handlers.payload_api import PayloadApi
+    PayloadApi(services).add_routes(app)
+
     return app

@@ -22,11 +22,6 @@ class CampaignPack(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/campaign/abilities', self._section_abilities)
         self.app_svc.application.router.add_route('GET', '/campaign/adversaries', self._section_profiles)
         self.app_svc.application.router.add_route('GET', '/campaign/operations', self._section_operations)
-        self.app_svc.application.router.add_route('GET', '/api/payloads', self.get_payloads)
-
-    async def get_payloads(self, request):
-        payloads = list(await self.rest_svc.list_payloads())
-        return web.json_response(dict(payloads=payloads))
 
     @check_authorization
     @template('agents.html')
