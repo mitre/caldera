@@ -4,7 +4,7 @@ import re
 import yaml
 import logging
 import subprocess
-import distutils.version
+import packaging.version
 from base64 import b64encode, b64decode
 from datetime import datetime, timezone
 from importlib import import_module
@@ -126,7 +126,7 @@ class BaseWorld:
 
         def compare_versions(version_string, minimum_version):
             version = parse_version(version_string)
-            return distutils.version.StrictVersion(version) >= distutils.version.StrictVersion(str(minimum_version))
+            return packaging.version.parse(version) >= packaging.version.parse(str(minimum_version))
 
         def parse_version(version_string, pattern=r'([0-9]+(?:\.[0-9]+)+)'):
             groups = re.search(pattern, version_string)
