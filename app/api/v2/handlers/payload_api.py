@@ -28,7 +28,7 @@ class PayloadApi(BaseApi):
                           description='Retrieves all stored payloads.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(PayloadSchema(),
-                                    description='Returns a list of all payloads in PayloadSchema format.')
+                                     description='Returns a list of all payloads in PayloadSchema format.')
     async def get_payloads(self, request: web.Request):
         cwd = pathlib.Path.cwd()
         payload_dirs = [cwd / 'data' / 'payloads']

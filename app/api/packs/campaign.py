@@ -2,7 +2,6 @@ import operator
 from collections import defaultdict
 
 from aiohttp_jinja2 import template
-from aiohttp import web
 
 from app.service.auth_svc import check_authorization
 from app.utility.base_world import BaseWorld

@@ -1,9 +1,4 @@
-import pytest
-
 from http import HTTPStatus
-
-from app.utility.base_service import BaseService
-
 
 
 class TestPayloadsApi:
