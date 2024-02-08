@@ -35,6 +35,10 @@ class OperationOutputRequestSchema(ma.Schema):
 
 
 class OperationSchema(ma.Schema):
+
+    class Meta:
+        unknown = ma.EXCLUDE
+
     id = ma.fields.String()
     name = ma.fields.String(required=True)
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents', dump_only=True)

@@ -9,6 +9,9 @@ from app.utility.base_object import BaseObject
 
 class ScheduleSchema(ma.Schema):
 
+    class Meta:
+        unknown = ma.EXCLUDE
+
     id = ma.fields.String()
     schedule = ma.fields.Time(required=True)
     task = ma.fields.Nested(OperationSchema())
