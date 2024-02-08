@@ -18,12 +18,17 @@ class Contact(BaseWorld):
         self.contact_svc = services.get('contact_svc')
         self.domain = self.get_config('app.contact.dns.domain')
         self.handler = Handler(self.domain, services, self.name)
+        self.transport = None
 
     async def start(self):
         loop = asyncio.get_event_loop()
         dns = self.get_config('app.contact.dns.socket')
         addr, port = dns.split(':')
-        await loop.create_datagram_endpoint(lambda: self.handler, local_addr=(addr, port))
+        self.transport, _ = await loop.create_datagram_endpoint(lambda: self.handler, local_addr=(addr, port))
+
+    async def stop(self):
+        if self.transport:
+            self.transport.close()
 
 
 class DnsPacket:

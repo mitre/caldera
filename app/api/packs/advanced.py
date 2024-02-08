@@ -14,6 +14,7 @@ class AdvancedPack(BaseWorld):
         self.rest_svc = services.get('rest_svc')
 
     async def enable(self):
+        self.app_svc.application.router._frozen = False
         self.app_svc.application.router.add_route('GET', '/advanced/sources', self._section_sources)
         self.app_svc.application.router.add_route('GET', '/advanced/objectives', self._section_objectives)
         self.app_svc.application.router.add_route('GET', '/advanced/planners', self._section_planners)

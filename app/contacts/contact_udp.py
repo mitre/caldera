@@ -13,12 +13,17 @@ class Contact(BaseWorld):
         self.log = self.create_logger('contact_udp')
         self.contact_svc = services.get('contact_svc')
         self.handler = Handler(services)
+        self.transport = None
 
     async def start(self):
         loop = asyncio.get_event_loop()
         udp = self.get_config('app.contact.udp')
         addr, port = udp.split(':')
-        loop.create_task(loop.create_datagram_endpoint(lambda: self.handler, local_addr=(addr, port)))
+        self.transport, _ = await loop.create_task(loop.create_datagram_endpoint(lambda: self.handler, local_addr=(addr, port)))
+
+    async def stop(self):
+        if self.transport:
+            self.transport.close()
 
 
 class Handler(asyncio.DatagramProtocol):
