@@ -31,7 +31,7 @@ class InvalidOperationStateError(Exception):
 
 
 class OperationOutputRequestSchema(ma.Schema):
-    enable_agent_output = ma.fields.Boolean(default=False)
+    enable_agent_output = ma.fields.Boolean(dump_default=False)
 
 
 class OperationSchema(ma.Schema):
