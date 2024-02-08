@@ -35,6 +35,9 @@ class LinkStub():
     def __init__(self, ability_id):
         self.ability = AbilityStub(ability_id)
 
+    def __eq__(self, other):
+        return self.ability.ability_id == other.ability.ability_id
+
 
 @pytest.fixture
 def atomic_planner():
@@ -61,8 +64,8 @@ class TestAtomic():
 
         assert atomic_planner.operation.apply.call_count == 1
         assert atomic_planner.operation.wait_for_links_completion.call_count == 1
-        assert atomic_planner.operation.apply.called_with(LinkStub('ability_b'))
-        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b')])
+        atomic_planner.operation.apply.assert_called_with(LinkStub('ability_b'))
+        atomic_planner.operation.wait_for_links_completion.assert_called_with([LinkStub('ability_b')])
 
     def test_atomic_with_links_out_of_order(self, event_loop, atomic_planner):
 
@@ -77,8 +80,8 @@ class TestAtomic():
 
         assert atomic_planner.operation.apply.call_count == 1
         assert atomic_planner.operation.wait_for_links_completion.call_count == 1
-        assert atomic_planner.operation.apply.called_with(LinkStub('ability_b'))
-        assert atomic_planner.operation.wait_for_links_completion.called_with([LinkStub('ability_b')])
+        atomic_planner.operation.apply.assert_called_with(LinkStub('ability_b'))
+        atomic_planner.operation.wait_for_links_completion.assert_called_with([LinkStub('ability_b')])
 
     def test_atomic_no_links(self, event_loop, atomic_planner):
 
