@@ -11,6 +11,9 @@ DEFAULT_OBJECTIVE_ID = '495a9828-cab1-44dd-a0ca-66e58177d8cc'
 
 class AdversarySchema(ma.Schema):
 
+    class Meta:
+        unknown = ma.EXCLUDE
+
     adversary_id = ma.fields.String()
     name = ma.fields.String()
     description = ma.fields.String()

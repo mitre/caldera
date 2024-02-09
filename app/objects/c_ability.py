@@ -12,6 +12,10 @@ from app.utility.base_world import AccessSchema
 
 
 class AbilitySchema(ma.Schema):
+
+    class Meta:
+        unknown = ma.EXCLUDE
+
     ability_id = ma.fields.String()
     tactic = ma.fields.String(load_default=None)
     technique_name = ma.fields.String(load_default=None)

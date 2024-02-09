@@ -27,7 +27,7 @@ def expected_updated_schedule_dump(test_schedule, updated_schedule_payload):
 
     def _merge_dictionaries(dict1, dict2):
         for key in dict1.keys():
-            if type(dict1[key]) == dict:
+            if isinstance(dict1[key], dict):
                 _merge_dictionaries(dict1[key], dict2[key])
             else:
                 dict2[key] = dict1[key]

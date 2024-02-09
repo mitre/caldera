@@ -39,7 +39,7 @@ class LinkSchema(ma.Schema):
     relationships = ma.fields.List(ma.fields.Nested(RelationshipSchema()))
     used = ma.fields.List(ma.fields.Nested(FactSchema()))
     unique = ma.fields.String()
-    collect = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, default='')
+    collect = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_default='')
     finish = ma.fields.String()
     ability = ma.fields.Nested(AbilitySchema())
     executor = ma.fields.Nested(ExecutorSchema())
