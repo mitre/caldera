@@ -368,6 +368,7 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         _ = DataService()
         _ = RestService()
         _ = PlanningService()
+        _ = KnowledgeService()
         _ = LearningService()
         auth_svc = AuthService()
         _ = FileSvc()
