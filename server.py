@@ -90,7 +90,7 @@ def init_swagger_documentation(app):
     )
     aiohttp_apispec.setup_aiohttp_apispec(
         app=app,
-        title='CALDERA',
+        title='Caldera',
         version=version.get_version(),
         swagger_path='/api/docs',
         url='/api/docs/swagger.json',
@@ -99,11 +99,13 @@ def init_swagger_documentation(app):
     app.middlewares.append(apispec_request_validation_middleware)
     app.middlewares.append(validation_middleware)
 
+
 async def enable_cors(request, response):
     response.headers['Access-Control-Allow-Origin'] = 'http://' + args.uiDevHost + ':3000'
     response.headers['Access-Control-Allow-Credentials'] = 'true'
     response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD'
     response.headers['Access-Control-Allow-Headers'] = 'Access-Control-Allow-Headers, Origin, Accept, X-Requested-With, Content-Type, Access-Control-Request-Method, Access-Control-Request-Headers'
+
 
 async def start_vue_dev_server():
     await asyncio.create_subprocess_shell(
@@ -112,6 +114,7 @@ async def start_vue_dev_server():
         stderr=sys.stderr,
         cwd='./plugins/magma/')
     logging.info('VueJS development server is live.')
+
 
 if __name__ == '__main__':
     def list_str(values):

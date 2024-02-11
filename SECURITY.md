@@ -28,14 +28,14 @@ Under this policy, "research" means activities in which you:
 
 ## Reporting a vulnerability
 
-Information submitted under this policy will be used for defensive purposes only, i.e. to mitigate or remediate vulnerabilities. Since CALDERA is run by a not-for-profit and is open source by nature, by
+Information submitted under this policy will be used for defensive purposes only, i.e. to mitigate or remediate vulnerabilities. Since Caldera is run by a not-for-profit and is open source by nature, by
 submitting a vulnerability, you acknowledge that you have no expectation of payment. However, we will ensure that credit is given to the bug finder.  
 
 ## What we would like to see from you
 
 To help us triage and prioritize submissions, please include the following in your report:
 
-- Affected version of CALDERA (committed hash or version number), operating system used, and python version.
+- Affected version of Caldera (committed hash or version number), operating system used, and python version.
 
 - Describe the location the vulnerability was discovered and the potential impact of exploitation.
 
@@ -49,7 +49,7 @@ When you choose to share your contact information with us, we commit to coordina
 
 -   Within ***10 business days***, we will acknowledge that your report has been received.
 
--   After notifying the CALDERA team, we will open reported issues to the public within ***90 days***, or after a fix is released (whichever comes first).
+-   After notifying the Caldera team, we will open reported issues to the public within ***90 days***, or after a fix is released (whichever comes first).
 
 -   To the best of our ability, we will confirm the existence of the vulnerability to you and be as transparent as possible about what steps we are taking during the remediation process, including on issues or challenges that may delay resolution.
 

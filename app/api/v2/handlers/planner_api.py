@@ -20,7 +20,7 @@ class PlannerApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['planners'],
                           summary='Retrieve planners',
-                          description='Retrieve CALDERA planners by criteria. Supply fields from the `PlannerSchema` '
+                          description='Retrieve Caldera planners by criteria. Supply fields from the `PlannerSchema` '
                                       'to the `include` and `exclude` fields of the `BaseGetAllQuerySchema` in the '
                                       'request body to filter retrieved planners.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -32,7 +32,7 @@ class PlannerApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['planners'],
                           summary='Retrieve a planner by planner id',
-                          description='Retrieve one CALDERA planner based on the planner id (String `UUID`). '
+                          description='Retrieve one Caldera planner based on the planner id (String `UUID`). '
                                       'Supply fields from the `PlannerSchema` to the `include` and `exclude` fields '
                                       'of the `BaseGetOneQuerySchema` in the request body to filter retrieved '
                                       'planners.',

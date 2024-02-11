@@ -101,9 +101,9 @@ If you'll be developing the UI, there are a few more additional installation ste
 
 1. Add the Magma submodule if you haven't already: `git submodule add https://gitlab.mitre.org/caldera/other/magma`
 1. Install NodeJS dependencies: `cd plugins/magma && npm install && cd ..`
-1. Start the CALDERA server with an additional flag: `python3 server.py --uidev localhost`
+1. Start the Caldera server with an additional flag: `python3 server.py --uidev localhost`
 
-Your CALDERA server is available at http://localhost:8888 as usual, but there will now be a hot-reloading development server for the VueJS front-end available at http://localhost:3000. Both logs from the server and the front-end will display in the terminal you launched the server from.
+Your Caldera server is available at http://localhost:8888 as usual, but there will now be a hot-reloading development server for the VueJS front-end available at http://localhost:3000. Both logs from the server and the front-end will display in the terminal you launched the server from.
 
 ## Docker Deployment
 To build a Caldera docker image, ensure you have docker installed and perform the following actions:

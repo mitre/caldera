@@ -38,7 +38,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve operations',
-                          description='Retrieve all CALDERA operations from memory.  Use fields from the '
+                          description='Retrieve all Caldera operations from memory.  Use fields from the '
                                       '`BaseGetAllQuerySchema` in the request body to filter.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
     @aiohttp_apispec.response_schema(OperationSchema(many=True, partial=True),
@@ -49,7 +49,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve an operation by operation id',
-                          description='Retrieve one CALDERA operation from memory based on the operation id (String '
+                          description='Retrieve one Caldera operation from memory based on the operation id (String '
                                       'UUID).  Use fields from the `BaseGetOneQuerySchema` in the request body to add '
                                       '`include` and `exclude` filters.',
                           parameters=[{
@@ -68,7 +68,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Retrieve operations (alternate)',
-                          description='Retrieve all CALDERA operations from memory, with an alternate selection'
+                          description='Retrieve all Caldera operations from memory, with an alternate selection'
                                       ' of properties. Use fields from the `BaseGetAllQuerySchema` in the request'
                                       ' body to filter.')
     @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
@@ -89,8 +89,8 @@ class OperationApi(BaseObjectApi):
         return web.json_response(operations_mod)
 
     @aiohttp_apispec.docs(tags=['operations'],
-                          summary='Create a new CALDERA operation record',
-                          description='Create a new CALDERA operation using the format provided in the '
+                          summary='Create a new Caldera operation record',
+                          description='Create a new Caldera operation using the format provided in the '
                                       '`OperationSchema`. Required schema fields are as follows: "name", '
                                       '"adversary.adversary_id", "planner.id", and "source.id"')
     @aiohttp_apispec.request_schema(OperationSchema)
@@ -102,7 +102,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Update fields within an operation',
-                          description='Update one CALDERA operation in memory based on the operation id (String '
+                          description='Update one Caldera operation in memory based on the operation id (String '
                                       'UUID). The `state`, `autonomous` and `obfuscator` fields in the operation '
                                       'object may be edited in the request body using the `OperationSchema`.',
                           parameters=[{
@@ -121,7 +121,7 @@ class OperationApi(BaseObjectApi):
 
     @aiohttp_apispec.docs(tags=['operations'],
                           summary='Delete an operation by operation id',
-                          description='Delete one CALDERA operation from memory based on the operation id (String '
+                          description='Delete one Caldera operation from memory based on the operation id (String '
                                       'UUID).',
                           parameters=[{
                               'in': 'path',
