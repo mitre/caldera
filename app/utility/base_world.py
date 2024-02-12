@@ -58,7 +58,11 @@ class BaseWorld:
     @staticmethod
     def jitter(fraction):
         i = fraction.split('/')
-        return randint(int(i[0]), int(i[1]))
+        min, max = int(i[0]), int(i[1])
+        if min > max:
+            logging.warn('Jitter range max value (max={max}) less than min value (min={min}). Using min={max} and max={min}.')
+            min, max = max, min
+        return randint(min, max)
 
     @staticmethod
     def create_logger(name):
