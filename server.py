@@ -12,6 +12,7 @@ from aiohttp import web
 
 import app.api.v2
 from app import version
+from app.ascii_banner import ASCII_BANNER
 from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.v2.security import pass_option_middleware
@@ -75,6 +76,7 @@ def run_tasks(services, run_vue_server=False):
         loop.run_until_complete(start_vue_dev_server())
     try:
         logging.info('All systems ready.')
+        logging.info(ASCII_BANNER)
         loop.run_forever()
     except KeyboardInterrupt:
         loop.run_until_complete(services.get('app_svc').teardown(main_config_file=args.environment))
