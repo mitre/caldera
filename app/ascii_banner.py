@@ -41,7 +41,7 @@ BANNER_SECTION_3 = "\
 "
 
 
-if int(os.environ['NO_COLOR']) == 1:
+if int(os.environ.get('NO_COLOR', 0)) == 1:
     ASCII_BANNER = _BANNER
 else:
     ASCII_BANNER = f"{DARK_BLUE}{_BANNER_SECTION_1}{DARK_PURPLE}{_BANNER_SECTION_2}{DARK_RED}{BANNER_SECTION_3}{END}"
