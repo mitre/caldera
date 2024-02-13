@@ -234,20 +234,27 @@ class OperationApiManager(BaseApiManager):
                     'host': tmp_agent.get('host'),
                     'host_ip_addrs': tmp_agent.get('host_ip_addrs'),
                     'platform': tmp_agent.get('platform'),
-                    'reachable_hosts': await self.get_reachable_hosts(operation)
+                    'reachable_hosts': await self.get_reachable_hosts(agent=tmp_agent)
                 }
                 hosts[host] = tmp_host
 
         return hosts
 
-    async def get_reachable_hosts(self, operation: dict):
+    async def get_reachable_hosts(self, agent: dict = None, operation: dict = None):
+        """
+        NOTE: When agent is supplied, only hosts discovered by agent
+        are retrieved.
+        """
         trait_names = BaseWorld.get_config('reachable_host_traits') or []
 
         paws = ()
-        for agent in operation.get('host_group', []):
-            paw = agent.get('paw')
-            if paw:
-                paws = paws + (paw,)
+        if agent is not None:
+            paws = paws + (agent.get('paw'),)
+        else:
+            for agent in operation.get('host_group', []):
+                paw = agent.get('paw')
+                if paw:
+                    paws = paws + (paw,)
 
         hosts = []
         for trait in trait_names:
