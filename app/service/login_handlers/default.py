@@ -32,7 +32,7 @@ class DefaultLoginHandler(LoginHandlerInterface):
                     raise Exception('Auth service not available.')
                 await auth_svc.handle_successful_login(request, username)
             self.log.debug('%s failed login attempt: ', username)
-        raise web.HTTPFound('/login')
+        raise web.HTTPFound('/')
 
     async def handle_login_redirect(self, request, **kwargs):
         """Handle login redirect.

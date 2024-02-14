@@ -2,7 +2,7 @@
 This module contains helper functions for encoding and decoding payload files.
 
 If AV is running on the server host, then it may sometimes flag, quarantine, or delete
-CALDERA payloads. To help prevent this, encoded payloads can be used to prevent AV
+Caldera payloads. To help prevent this, encoded payloads can be used to prevent AV
 from breaking the server. The convention expected by the server is that
 encoded payloads will be XOR'ed with the DEFAULT_KEY contained in the payload_encoder.py
 module.

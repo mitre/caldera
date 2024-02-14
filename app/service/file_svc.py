@@ -243,7 +243,7 @@ class FileSvc(FileServiceInterface, BaseService):
             try:
                 buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
             except InvalidToken:
-                self.log.error('Failed to decrypt saved CALDERA state due to incorrect encryption key.\n'
+                self.log.error('Failed to decrypt saved Caldera state due to incorrect encryption key.\n'
                                ' - If attempting to restore secure backup, verify that conf/local.yml exists with '
                                'correct encryption_key value, and that the server is being run without --insecure.\n'
                                ' - If attempting to restore insecure backup, verify that conf/default.yml exists '

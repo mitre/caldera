@@ -7,7 +7,7 @@ import base64
 
 import marshmallow as ma
 from aiohttp import web
-from aiohttp_jinja2 import template, render_template
+from aiohttp_jinja2 import render_template
 
 from app.api.packs.advanced import AdvancedPack
 from app.api.packs.campaign import CampaignPack
@@ -29,12 +29,13 @@ class RestApi(BaseWorld):
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
+        self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
+        # TODO: only serve static files in legacy plugin mode
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
-        self.app_svc.application.router.add_route('*', '/', self.landing)
-        self.app_svc.application.router.add_route('*', '/enter', self.validate_login)
-        self.app_svc.application.router.add_route('*', '/logout', self.logout)
-        self.app_svc.application.router.add_route('GET', '/login', self.login)
+        self.app_svc.application.router.add_route('GET', '/', self.landing)
+        self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
+        self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         # unauthorized API endpoints
         self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
@@ -42,31 +43,19 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
-
-    @template('login.html', status=401)
-    async def login(self, request):
-        return dict()
+        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/).*}', self.handle_catch)
 
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
 
-    @template('login.html')
     async def logout(self, request):
         await self.auth_svc.logout_user(request)
 
     async def landing(self, request):
-        access = await self.auth_svc.get_permissions(request)
-        if not access:
-            # If user doesn't have access, server will attempt to redirect to login.
-            return await self.auth_svc.login_redirect(request)
-        plugins = await self.data_svc.locate('plugins', {'access': tuple(access), **dict(enabled=True)})
-        data = dict(plugins=[p.display for p in plugins], errors=self.app_svc.errors + self._request_errors(request))
-        template_name = access[0].name
-        if template_name == "RED":
-            template_name = "core_red"
-        elif template_name == "BLUE":
-            template_name = "core_blue"
-        return render_template(f"{template_name}.html", request, data)
+        return render_template("index.html", request, {})
+
+    async def handle_catch(self, request):
+        return render_template("index.html", request, {})
 
     @check_authorization
     async def rest_core(self, request):

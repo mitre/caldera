@@ -80,9 +80,9 @@ class RuleSet:
                                     | DENY: 127.0.0.0/24 | 127.0.0.0/23 |
                                     -------------------------------------
         In the above case, we do not match on this fact, since the fact is a supernet of the rule (it "contains" the
-        rule subnet). Therefore, the rule subnet is only a portion of the fact subnet. Thus, CALDERA would ignore the
+        rule subnet). Therefore, the rule subnet is only a portion of the fact subnet. Thus, Caldera would ignore the
         DENY rule and scan /23 anyway. But this would include a denied subnet range, which is undesired behavior.
-        This being the case, CALDERA does not match on non-equivalent subnets.
+        This being the case, Caldera does not match on non-equivalent subnets.
         """
         if rule.match != '.*':
             is_fact_address = await self._is_ip_address(fact.value)
