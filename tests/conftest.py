@@ -1,13 +1,15 @@
 import asyncio
 import os.path
 
+import aiohttp_apispec
+import aiohttp_jinja2
+import jinja2
 import pytest
 import random
 import string
 import uuid
-import yaml
-import aiohttp_apispec
 import warnings
+import yaml
 
 from datetime import datetime, timezone
 from base64 import b64encode
@@ -356,6 +358,7 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         PlannerApi(svcs).add_routes(app)
         HealthApi(svcs).add_routes(app)
         ScheduleApi(svcs).add_routes(app)
+        # aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader(['plugins/magma/dist']))
         return app
 
     async def initialize():
@@ -392,6 +395,7 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         )
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
+        aiohttp_jinja2.setup(app_svc.application, loader=jinja2.FileSystemLoader(['plugins/magma/dist']))
         return app_svc
 
     app_svc = await initialize()

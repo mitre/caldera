@@ -62,6 +62,7 @@ def test_ability(event_loop, api_v2_client, executor):
 class TestAbilitiesApi:
     async def test_get_abilities(self, api_v2_client, api_cookies, test_ability):
         resp = await api_v2_client.get('/api/v2/abilities', cookies=api_cookies)
+        print(await resp.text())
         abilities_list = await resp.json()
         assert len(abilities_list) == 1
         ability_dict = abilities_list[0]
