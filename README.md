@@ -16,7 +16,7 @@ The framework consists of two components:
 an asynchronous command-and-control (C2) server with a REST API and a web interface.
 2) **Plugins**. These repositories expand the core framework capabilities and providing additional functionality. Examples include agents, reporting, collections of TTPs and more.
 
-## Resources and Socials
+## Resources & Socials
 * 📜 [Documentation, training, and use-cases](https://caldera.readthedocs.io/en/latest/)
 * ✍️ [Caldera's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
 * 🌐 [Homepage](https://caldera.mitre.org)
@@ -37,6 +37,7 @@ These plugins are supported and maintained by the Caldera team.
 - **[Fieldmanual](https://github.com/mitre/fieldmanual)** (documentation)
 - **[GameBoard](https://github.com/mitre/gameboard)** (visualize joint red and blue operations)
 - **[Human](https://github.com/mitre/human)** (create simulated noise on an endpoint)
+- **[Magma](https://github.com/mitre/magma)** (VueJS UI for Caldera v5)
 - **[Manx](https://github.com/mitre/manx)** (shell functionality and reverse shell payloads)
 - **[Response](https://github.com/mitre/response)** (incident response)
 - **[Sandcat](https://github.com/mitre/sandcat)** (default agent)
@@ -59,7 +60,7 @@ These requirements are for the computer running the core framework:
 * Python 3.8+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 * Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
-* NodeJS (v16+ recommended for UI) 
+* NodeJS (v16+ recommended for v5 VueJS UI) 
 
 ## Installation
 
@@ -87,8 +88,10 @@ Finally, start the server.
 ```Bash
 python3 server.py --insecure --build
 ```
-The --build flag automatically installs any UI dependencies, bundles the UI into a dist directory, and is served by the Caldera server. You will only have to use the --build flag again if you add any plugins or make any changes to the UI.
+The --build flag automatically installs any VueJS UI dependencies, bundles the UI into a dist directory, and is served by the Caldera server. You will only have to use the --build flag again if you add any plugins or make any changes to the UI.
 Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
+
+If you prefer to not use the new VueJS UI, revert to Caldera v4.2.0. Correspondingly, do not use the `--build` flag for earlier versions as not required.
 
 ### User Interface Development
 
