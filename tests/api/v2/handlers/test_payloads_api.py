@@ -8,7 +8,7 @@ class TestPayloadsApi:
         payloads_list = await resp.json()
         assert len(payloads_list) > 0
         payload = payloads_list[0]
-        assert type(payload) == str
+        assert isinstance(payload, str)
 
     async def test_unauthorized_get_payloads(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/payloads')

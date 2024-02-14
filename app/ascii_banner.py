@@ -20,10 +20,10 @@ _BANNER = """
 ██║     ██╔══██║██║     ██║  ██║██╔══╝  ██╔══██╗██╔══██║
 ╚██████╗██║  ██║███████╗██████╔╝███████╗██║  ██║██║  ██║
  ╚═════╝╚═╝  ╚═╝╚══════╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝
-"""
+"""  # noqa
 
 
-_BANNER_SECTION_1 =  "\n\
+_BANNER_SECTION_1 = "\n\
  ██████╗ █████╗ ██╗     ██████╗ ███████╗██████╗  █████╗\n\
 ██╔════╝██╔══██╗██║     ██╔══██╗██╔════╝██╔══██╗██╔══██╗\n\
 "
@@ -45,4 +45,3 @@ if int(os.environ.get('NO_COLOR', 0)) == 1:
     ASCII_BANNER = _BANNER
 else:
     ASCII_BANNER = f"{DARK_BLUE}{_BANNER_SECTION_1}{DARK_PURPLE}{_BANNER_SECTION_2}{DARK_RED}{BANNER_SECTION_3}{END}"
- 

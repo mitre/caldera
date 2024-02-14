@@ -68,12 +68,13 @@ def authentication_required_middleware_factory(auth_svc):
         return await handler(request)
     return authentication_required_middleware
 
-"""Allow all 'OPTIONS' request to the server to return 200
 
-This mitigates CORS issues while developing the UI.
-"""
 @web.middleware
 async def pass_option_middleware(request, handler):
+    """Allow all 'OPTIONS' request to the server to return 200
+
+    This mitigates CORS issues while developing the UI.
+    """
     if request.method == 'OPTIONS':
         raise web.HTTPOk()
     return await handler(request)

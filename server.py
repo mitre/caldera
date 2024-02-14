@@ -193,7 +193,7 @@ def _get_parser():
 
 if __name__ == '__main__':
     sys.path.append("")
-    
+
     parser = _get_parser()
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
