@@ -215,9 +215,7 @@ class OperationApiManager(BaseApiManager):
                 tmp_agent = self.find_object('agents', {'paw': paw}).display
                 tmp_agent['links'] = []
                 agents[paw] = tmp_agent
-
             agents[paw]['links'].append(link)
-
         return agents
 
     async def get_hosts(self, operation: dict):
@@ -227,7 +225,6 @@ class OperationApiManager(BaseApiManager):
             host = link.get('host')
             if not host:
                 continue
-
             if host not in hosts:
                 tmp_agent = self.find_object('agents', {'host': host}).display
                 tmp_host = {
@@ -237,7 +234,6 @@ class OperationApiManager(BaseApiManager):
                     'reachable_hosts': await self.get_reachable_hosts(agent=tmp_agent)
                 }
                 hosts[host] = tmp_host
-
         return hosts
 
     async def get_reachable_hosts(self, agent: dict = None, operation: dict = None):
@@ -246,8 +242,8 @@ class OperationApiManager(BaseApiManager):
         are retrieved.
         """
         trait_names = BaseWorld.get_config('reachable_host_traits') or []
-
         paws = ()
+
         if agent is not None:
             paws = paws + (agent.get('paw'),)
         else:

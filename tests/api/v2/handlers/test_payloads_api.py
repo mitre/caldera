@@ -2,6 +2,7 @@ from http import HTTPStatus
 
 
 class TestPayloadsApi:
+
     async def test_get_payloads(self, api_v2_client, api_cookies):
         resp = await api_v2_client.get('/api/v2/payloads', cookies=api_cookies)
         payloads_list = await resp.json()
