@@ -3,6 +3,6 @@ message: "If you use this software, please cite it as below."
 authors:
 - name: "MITRE Corporation"
 title: "MITRE Caldera: A Scalable, Automated Adversary Emulation Platform"
-version: 4.2.0
+version: 5.0.0
 date-released: 2023-06-19
 url: "https://github.com/mitre/caldera"
