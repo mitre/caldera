@@ -1648,7 +1648,7 @@
 
                 let combinations = [];
                 Object.keys(this.selectedPotentialLinkFacts).forEach((factName) => {
-                    combinations.push(this.selectedPotentialLinkFacts[factName].filter((fact) => fact.selected).map((fact) => `${factName}|${fact.value}`));
+                    combinations.push(this.selectedPotentialLinkFacts[factName].filter((fact) => fact.selected).map((fact) => `${factName.length}|${factName}${fact.value}`));
                 });
                 combinations = cartesian(combinations);
 
@@ -1673,8 +1673,8 @@
                 combinations.forEach((factGroup) => {
                     let command = this.potentialLinkCommand;
                     factGroup.forEach((fact) => {
-                        let split = fact.split('|');
-                        command = command.replaceAll(`#{${split[0]}}`, split[1])
+                        let factNameLength = fact.split('|', 1)[0], restOfFact = fact.slice(1+factNameLength.length);
+                        command = command.replaceAll(`#{${restOfFact.slice(0, parseInt(factNameLength))}}`, restOfFact.slice(parseInt(factNameLength)))
                     });
 
                     this.potentialLinksToAdd.push({
