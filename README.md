@@ -102,7 +102,7 @@ If you'll be developing the UI, there are a few more additional installation ste
 
 **Setup**
 
-1. Add the Magma submodule if you haven't already: `git submodule add https://gitlab.mitre.org/caldera/other/magma`
+1. Add the Magma submodule if you haven't already: `git submodule add https://github.com/mitre/magma`
 1. Install NodeJS dependencies: `cd plugins/magma && npm install && cd ..`
 1. Start the Caldera server with an additional flag: `python3 server.py --uidev localhost`
 
