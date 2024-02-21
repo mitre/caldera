@@ -46,7 +46,7 @@ def setup_logger(level=logging.DEBUG):
             level=level,
             format=format,
             datefmt=datefmt,
-            handlers=[RichHandler(rich_tracebacks=True, markup=True)]
+            handlers=[RichHandler(rich_tracebacks=True, markup=True, show_time=False)]
         )
 
     for logger_name in logging.root.manager.loggerDict.keys():
