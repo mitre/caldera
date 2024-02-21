@@ -2,6 +2,8 @@ import argparse
 import asyncio
 import logging
 import os
+from rich.logging import RichHandler
+from rich import print as rich_print
 import sys
 import warnings
 import subprocess
@@ -12,7 +14,7 @@ from aiohttp import web
 
 import app.api.v2
 from app import version
-from app.ascii_banner import ASCII_BANNER
+from app.ascii_banner import no_color, print_rich_banner
 from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.v2.security import pass_option_middleware
@@ -35,11 +37,18 @@ from app.utility.config_generator import ensure_local_config
 
 
 def setup_logger(level=logging.DEBUG):
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s - %(levelname)-5s (%(filename)s:%(lineno)s %(funcName)s) %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
+    format = "%(asctime)s - %(levelname)-5s (%(filename)s:%(lineno)s %(funcName)s) %(message)s"
+    datefmt = "%Y-%m-%d %H:%M:%S"
+    if no_color():
+        logging.basicConfig(level=level, format=format, datefmt=datefmt)
+    else:
+        logging.basicConfig(
+            level=level,
+            format=format,
+            datefmt=datefmt,
+            handlers=[RichHandler(rich_tracebacks=True, markup=True)]
+        )
+
     for logger_name in logging.root.manager.loggerDict.keys():
         if logger_name in ("aiohttp.server", "asyncio"):
             continue
@@ -88,7 +97,7 @@ def run_tasks(services, run_vue_server=False):
         loop.run_until_complete(start_vue_dev_server())
     try:
         logging.info("All systems ready.")
-        logging.info(ASCII_BANNER)
+        logging.info(print_rich_banner())
         loop.run_forever()
     except KeyboardInterrupt:
         loop.run_until_complete(
@@ -138,7 +147,7 @@ def _get_parser():
     def list_str(values):
         return values.split(",")
 
-    parser = argparse.ArgumentParser("Welcome to the system")
+    parser = argparse.ArgumentParser("Caldera Server")
     parser.add_argument(
         "-E",
         "--environment",
@@ -191,16 +200,16 @@ def _get_parser():
     return parser
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     sys.path.append("")
-    
+
     parser = _get_parser()
     args = parser.parse_args()
     setup_logger(getattr(logging, args.logLevel))
 
     if args.insecure:
         logging.warning(
-            "--insecure flag set. Caldera will use the default.yml config file."
+            "[orange_red1]--insecure flag set. Caldera will use the default user accounts in default.yml config file.[/orange_red1]"
         )
         args.environment = "default"
     elif args.environment == "local":
@@ -248,10 +257,17 @@ if __name__ == '__main__':
         subprocess.run(["npm", "install"], cwd="plugins/magma", check=True)
         subprocess.run(["npm", "run", "build"], cwd="plugins/magma", check=True)
         logging.info("VueJS front-end build complete.")
+    else:
+        if not os.path.exists("./plugins/magma/dist"):
+            logging.warning(
+                "[bright_yellow]Built Caldera v5 Vue components not detected, and `--build` flag not supplied."
+                " If attempting to start Caldera v5 for the first time, the `--build` flag must be"
+                 " supplied to trigger the building of the Vue source components.[/bright_yellow]"
+            )
 
     if args.fresh:
         logging.info(
-            "Fresh startup: resetting server data. See %s directory for data backups.",
+            "[green]Fresh startup: resetting server data. See %s directory for data backups.[/green]",
             DATA_BACKUP_DIR,
         )
         asyncio.get_event_loop().run_until_complete(data_svc.destroy())
