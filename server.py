@@ -3,7 +3,6 @@ import asyncio
 import logging
 import os
 from rich.logging import RichHandler
-from rich import print as rich_print
 import sys
 import warnings
 import subprocess
@@ -14,7 +13,7 @@ from aiohttp import web
 
 import app.api.v2
 from app import version
-from app.ascii_banner import no_color, print_rich_banner
+from app.ascii_banner import _BANNER, no_color, print_rich_banner
 from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.v2.security import pass_option_middleware
@@ -147,7 +146,10 @@ def _get_parser():
     def list_str(values):
         return values.split(",")
 
-    parser = argparse.ArgumentParser("Caldera Server")
+    parser = argparse.ArgumentParser(
+        description=_BANNER,
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "-E",
         "--environment",
@@ -262,7 +264,7 @@ if __name__ == "__main__":
             logging.warning(
                 "[bright_yellow]Built Caldera v5 Vue components not detected, and `--build` flag not supplied."
                 " If attempting to start Caldera v5 for the first time, the `--build` flag must be"
-                 " supplied to trigger the building of the Vue source components.[/bright_yellow]"
+                " supplied to trigger the building of the Vue source components.[/bright_yellow]"
             )
 
     if args.fresh:
