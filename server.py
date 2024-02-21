@@ -2,7 +2,9 @@ import argparse
 import asyncio
 import logging
 import os
+from rich.console import Console
 from rich.logging import RichHandler
+from rich.theme import Theme
 import sys
 import warnings
 import subprocess
@@ -36,16 +38,17 @@ from app.utility.config_generator import ensure_local_config
 
 
 def setup_logger(level=logging.DEBUG):
-    format = "%(asctime)s - %(levelname)-5s (%(filename)s:%(lineno)s %(funcName)s) %(message)s"
+    format = "%(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
     if no_color():
         logging.basicConfig(level=level, format=format, datefmt=datefmt)
     else:
+        console = Console(theme=Theme({"logging.level.warning": "yellow"}))
         logging.basicConfig(
             level=level,
             format=format,
             datefmt=datefmt,
-            handlers=[RichHandler(rich_tracebacks=True, markup=True, show_time=False)]
+            handlers=[RichHandler(rich_tracebacks=True, markup=True, console=console)]
         )
 
     for logger_name in logging.root.manager.loggerDict.keys():
