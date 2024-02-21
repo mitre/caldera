@@ -53,7 +53,7 @@ else:
 
 
 def print_rich_banner():
-    """Print banner using Python Rich libary"""
+    """Print banner using Python Rich library"""
     if no_color():
         rich_print(f"{_BANNER_SECTION_1}{_BANNER_SECTION_2}{BANNER_SECTION_3}")
     else:
