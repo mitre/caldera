@@ -14,7 +14,7 @@ CYAN = "\033[36m"
 END = "\033[0m"
 
 
-_BANNER = """
+BANNER = """
  ██████╗ █████╗ ██╗     ██████╗ ███████╗██████╗  █████╗ 
 ██╔════╝██╔══██╗██║     ██╔══██╗██╔════╝██╔══██╗██╔══██╗
 ██║     ███████║██║     ██║  ██║█████╗  ██████╔╝███████║
@@ -47,7 +47,7 @@ def no_color():
 
 
 if no_color():
-    ASCII_BANNER = _BANNER
+    ASCII_BANNER = BANNER
 else:
     ASCII_BANNER = f"{DARK_BLUE}{_BANNER_SECTION_1}{DARK_PURPLE}{_BANNER_SECTION_2}{DARK_RED}{BANNER_SECTION_3}{END}"
 
