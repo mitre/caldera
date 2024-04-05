@@ -1,0 +1,7 @@
+{
+  "client_id": "test",
+  "client_secret": "GGrA0xtn6n91z2gB1HjUkST7r54zVmA8",
+  "redirect_uri": "http://13.127.117.229:8888",
+  "server_url": "http://13.234.15.29:8080/",
+  "realm_name": "openid"
+}
