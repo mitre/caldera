@@ -1,0 +1,1 @@
+python-keycloak==3.9.1
