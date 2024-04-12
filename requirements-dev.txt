@@ -5,4 +5,4 @@ coverage
 pre-commit
 safety
 bandit
-dnspython==2.1.0
+dnspython==2.6.1
