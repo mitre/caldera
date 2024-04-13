@@ -77,7 +77,7 @@ fi
 
 WORKDIR /usr/src/app/plugins/human
 
-  # If emu is enabled, complete necessary installation steps
+  # If human is enabled, complete necessary installation steps
 RUN if [ $(grep -c "\- human" ../../conf/local.yml)  ]; then \
     apt-get -y install xvfb python3-tk python3-dev;          \
     pip3 install --no-cache-dir -r requirements.txt;         \
