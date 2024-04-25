@@ -13,7 +13,7 @@ class ScheduleSchema(ma.Schema):
         unknown = ma.EXCLUDE
 
     id = ma.fields.String()
-    schedule = ma.fields.Time(required=True)
+    schedule = ma.fields.String(required=True) # update to check if the string is a valid cron string
     task = ma.fields.Nested(OperationSchema())
 
     @ma.post_load
