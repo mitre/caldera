@@ -99,7 +99,7 @@ def run_tasks(services, run_vue_server=False):
         loop.run_until_complete(start_vue_dev_server())
     try:
         logging.info("All systems ready.")
-        logging.info(print_rich_banner())
+        print_rich_banner()
         loop.run_forever()
     except KeyboardInterrupt:
         loop.run_until_complete(
