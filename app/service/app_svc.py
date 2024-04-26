@@ -111,7 +111,7 @@ class AppService(AppServiceInterface, BaseService):
                 await self.get_service('data_svc').store(plugin)
                 self._loaded_plugins.append(plugin)
 
-            if plugin.name in self.get_config('plugins'):
+            if plugin.name in self.get_config('plugins') or plugin.name == 'magma':
                 await plugin.enable(self.get_services())
                 self.log.info('Enabled plugin: %s' % plugin.name)
 
