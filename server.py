@@ -37,6 +37,9 @@ from app.utility.base_world import BaseWorld
 from app.utility.config_generator import ensure_local_config
 
 
+MAGMA_PATH = "./plugins/magma"
+
+
 def setup_logger(level=logging.DEBUG):
     format = "%(message)s"
     datefmt = "%Y-%m-%d %H:%M:%S"
@@ -139,9 +142,17 @@ async def enable_cors(request, response):
 
 async def start_vue_dev_server():
     await asyncio.create_subprocess_shell(
-        "npm run dev", stdout=sys.stdout, stderr=sys.stderr, cwd="./plugins/magma/"
+        "npm run dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH
     )
     logging.info("VueJS development server is live.")
+
+
+def configure_magma_env_file():
+    logging.info("Setting VueJS environment file.")
+    host = BaseWorld.get_config("host")
+    port = BaseWorld.get_config("port")
+    with open("%s/.env" % MAGMA_PATH, "w") as fp:
+        fp.write("VITE_CALDERA_URL=http://%s:%s" % (host, port))
 
 
 def _get_parser():
@@ -251,19 +262,20 @@ if __name__ == "__main__":
     app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))
     init_swagger_documentation(app_svc.application)
     if args.uiDevHost:
-        if not os.path.exists("./plugins/magma/dist"):
+        if not os.path.exists("%s/dist" % MAGMA_PATH):
             logging.info("Building VueJS front-end.")
-            subprocess.run(["npm", "run", "build"], cwd="plugins/magma", check=True)
+            subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
             logging.info("VueJS front-end build complete.")
         app_svc.application.on_response_prepare.append(enable_cors)
 
     if args.build:
+        configure_magma_env_file()
         logging.info("Building VueJS front-end.")
-        subprocess.run(["npm", "install"], cwd="plugins/magma", check=True)
-        subprocess.run(["npm", "run", "build"], cwd="plugins/magma", check=True)
+        subprocess.run(["npm", "install"], cwd=MAGMA_PATH, check=True)
+        subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
         logging.info("VueJS front-end build complete.")
     else:
-        if not os.path.exists("./plugins/magma/dist"):
+        if not os.path.exists("%s/dist" % MAGMA_PATH):
             logging.warning(
                 "[bright_yellow]Built Caldera v5 Vue components not detected, and `--build` flag not supplied."
                 " If attempting to start Caldera v5 for the first time, the `--build` flag must be"
