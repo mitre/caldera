@@ -134,6 +134,7 @@ class OperationApi(BaseObjectApi):
         await self.delete_object(request)
         knowledge_svc_handle = self._api_manager.knowledge_svc
         await knowledge_svc_handle.delete_fact(criteria=dict(source=request.match_info.get('id')))
+        await knowledge_svc_handle.delete_relationship(criteria=dict(origin=request.match_info.get('id')))
         return web.HTTPNoContent()
 
     @aiohttp_apispec.docs(tags=['operations'],
