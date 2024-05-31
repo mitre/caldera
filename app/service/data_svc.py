@@ -23,6 +23,8 @@ from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
+import plugins.detection.app.c_connector as connectors 
+
 MIN_MODULE_LEN = 1
 
 DATA_BACKUP_DIR = "data/backup"
@@ -481,3 +483,14 @@ class DataService(DataServiceInterface, BaseService):
     def _get_plugin_name(self, filename):
         plugin_path = pathlib.PurePath(filename).parts
         return plugin_path[1] if 'plugins' in plugin_path else ''
+
+    async def load_connector_file(self, filename, access):
+        for entries in self.strip_yml(filename):
+            for connector in entries:
+                connector_class = connector.pop('type')
+                connector_id = connector.pop('id', None)
+                await self._create_connector(connector_class=connector_class, connector_id=connector_id, **connector)
+
+    async def _create_connector(self, connector_class, connector_id, **kwargs):
+        connector = getattr(connectors, connector_class)(connector_id=connector_id, **kwargs)
+        return await self.store(connector)
