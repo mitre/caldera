@@ -23,7 +23,7 @@ from app.objects.secondclass.c_requirement import Requirement, RequirementSchema
 from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
-import plugins.detection.app.c_connector as connectors 
+import plugins.detection.app.objects.c_connector as connectors 
 
 MIN_MODULE_LEN = 1
 
