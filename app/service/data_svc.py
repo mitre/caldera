@@ -1,3 +1,4 @@
+import traceback
 import asyncio
 import copy
 import datetime
@@ -134,6 +135,7 @@ class DataService(DataServiceInterface, BaseService):
             return c_object.store(self.ram)
         except Exception as e:
             self.log.error('[!] can only store first-class objects: %s' % e)
+            print(traceback.format_exc())
 
     async def locate(self, object_name, match=None):
         try:
@@ -311,12 +313,15 @@ class DataService(DataServiceInterface, BaseService):
             await self.load_yaml_file(Adversary, filename, plugin.access)
 
     async def _load_abilities(self, plugin, tasks=None):
+        print(f'### _load_abilities for plugin {plugin.name} ###')
         tasks = [] if tasks is None else tasks
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
             tasks.append(asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access)))
 
     async def _load_connectors(self, plugin):
-        for filename in glob.iglob('%s/connectors/**/*.yml' % plugin.data_dir, recursive=True):
+        print(f'### _load_connectors for plugin {plugin.name} ###')
+        for filename in glob.iglob('%s/connectors/*.yml' % plugin.data_dir, recursive=True):
+           print(f'\tfile: {filename}') 
            await self.load_connector_file(filename, plugin.access)
 
     @staticmethod
@@ -490,6 +495,7 @@ class DataService(DataServiceInterface, BaseService):
         return plugin_path[1] if 'plugins' in plugin_path else ''
 
     async def load_connector_file(self, filename, access):
+        print(f'### load_connector_file on {filename}')
         for entries in self.strip_yml(filename):
             for connector in entries:
                 connector_class = connector.pop('type')
@@ -497,5 +503,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._create_connector(connector_class=connector_class, connector_id=connector_id, **connector)
 
     async def _create_connector(self, connector_class, connector_id, **kwargs):
+        print('\t_create_connector')
         connector = getattr(connectors, connector_class)(connector_id=connector_id, **kwargs)
+        print(f'\tconnector: {connector}')
         return await self.store(connector)
