@@ -38,6 +38,7 @@ DATA_FILE_GLOBS = (
     'data/results/*',
     'data/sources/*',
     'data/object_store',
+    'data/connectors/*'
 )
 
 PAYLOADS_CONFIG_STANDARD_KEY = 'standard_payloads'
@@ -52,7 +53,7 @@ class DataService(DataServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
+                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[], connectors=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -319,9 +320,13 @@ class DataService(DataServiceInterface, BaseService):
             tasks.append(asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access)))
 
     async def _load_connectors(self, plugin):
+<<<<<<< HEAD
         print(f'### _load_connectors for plugin {plugin.name} ###')
         for filename in glob.iglob('%s/connectors/*.yml' % plugin.data_dir, recursive=True):
            print(f'\tfile: {filename}') 
+=======
+        for filename in glob.iglob('%s/connectors/*.yml' % plugin.data_dir, recursive=True):
+>>>>>>> 94b4d57e865e2a58a007a0bd32ffcadc56aca30e
            await self.load_connector_file(filename, plugin.access)
 
     @staticmethod
