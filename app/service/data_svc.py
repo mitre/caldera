@@ -46,6 +46,8 @@ PAYLOADS_CONFIG_EXTENSIONS_KEY = 'extensions'
 
 DEPRECATION_WARNING_LOAD = "Function deprecated and will be removed in a future update. Use load_yaml_file"
 
+def detection_plugin(func):
+    return func
 
 class DataService(DataServiceInterface, BaseService):
 
@@ -316,6 +318,7 @@ class DataService(DataServiceInterface, BaseService):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
             tasks.append(asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access)))
 
+    @detection_plugin
     async def _load_connectors(self, plugin):
         for filename in glob.iglob('%s/connectors/*.yml' % plugin.data_dir, recursive=True):
            await self.load_connector_file(filename, plugin.access)
@@ -490,6 +493,7 @@ class DataService(DataServiceInterface, BaseService):
         plugin_path = pathlib.PurePath(filename).parts
         return plugin_path[1] if 'plugins' in plugin_path else ''
 
+    @detection_plugin
     async def load_connector_file(self, filename, access):
         for entries in self.strip_yml(filename):
             for connector in entries:
@@ -497,6 +501,7 @@ class DataService(DataServiceInterface, BaseService):
                 connector_id = connector.pop('id', None)
                 await self._create_connector(connector_class=connector_class, connector_id=connector_id, **connector)
 
+    @detection_plugin
     async def _create_connector(self, connector_class, connector_id, **kwargs):
         connector = getattr(connectors, connector_class)(connector_id=connector_id, **kwargs)
         return await self.store(connector)

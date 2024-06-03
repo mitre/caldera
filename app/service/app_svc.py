@@ -20,6 +20,8 @@ from app.utility.base_service import BaseService
 
 Error = namedtuple('Error', ['name', 'msg', 'optional'])
 
+def detection_plugin(func):
+    return func
 
 class AppService(AppServiceInterface, BaseService):
 
@@ -232,6 +234,7 @@ class AppService(AppServiceInterface, BaseService):
             if exists:
                 return exists
 
+    @detection_plugin
     async def watch_connector_files(self):
         await asyncio.sleep(int(self.get_config('connector_refresh')))
         plugins = [p for p in await self.get_service('data_svc').locate('plugins', dict(enabled=True)) if p.data_dir]
