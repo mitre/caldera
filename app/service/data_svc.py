@@ -337,7 +337,7 @@ class DataService(DataServiceInterface, BaseService):
         print(f'### _load_alert_association_rules for plugin {plugin.name} ###')
         for filename in glob.iglob('%s/alert_association_rules/*.yml' % plugin.data_dir, recursive=True):
            print(f'\tfile: {filename}')
-           await self.load_yaml_file(AlertAssociationRule, filename, plugin.access)       
+           await self.load_alert_association_rule_file(filename, plugin.access)       
 
     @staticmethod
     async def _load_ability_requirements(requirements):
@@ -524,3 +524,18 @@ class DataService(DataServiceInterface, BaseService):
         connector = getattr(connectors, connector_class)(connector_id=connector_id, **kwargs)
         print(f'\tconnector: {connector}')
         return await self.store(connector)
+
+    @detection_plugin
+    async def load_alert_association_rule_file(self, filename, access):
+        print(f'### load_alert_association_rule_file on {filename}')
+        for entries in self.strip_yml(filename):
+            for rule in entries:
+                rule_id = rule.pop('id', None)
+                await self._create_alert_association_rule(rule_id=rule_id, **rule)
+
+    @detection_plugin
+    async def _create_alert_association_rule(self, rule_id, **kwargs):
+        print('\t_create_alert_association_rule')
+        alert_association_rule = AlertAssociationRule (rule_id=rule_id, **kwargs)
+        print(f'\trule: {alert_association_rule}')
+        return await self.store(alert_association_rule)
