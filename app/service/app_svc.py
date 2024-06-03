@@ -247,3 +247,17 @@ class AppService(AppServiceInterface, BaseService):
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
                     await self.get_service('data_svc').load_connector_file(filename=f, access=p.access)
             await asyncio.sleep(int(self.get_config('connector_refresh')))
+
+    @detection_plugin
+    async def watch_alert_association_rule_files(self):
+        await asyncio.sleep(int(self.get_config('alert_association_refresh')))
+        plugins = [p for p in await self.get_service('data_svc').locate('plugins', dict(enabled=True)) if p.data_dir]
+        plugins.append(Plugin(data_dir='data'))
+        while True:
+            for p in plugins:
+                files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir+'/alert_association_rules') for fle in f if
+                            time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(self.get_config('alert_association_refresh')))
+                for f in files:
+                    self.log.debug('[%s] Reloading %s' % (p.name, f))
+                    await self.get_service('data_svc').load_alert_association_file(filename=f, access=p.access)
+            await asyncio.sleep(int(self.get_config('alert_association_refresh')))

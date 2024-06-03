@@ -25,6 +25,7 @@ from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
 import plugins.detection.app.objects.c_connector as connectors 
+from plugins.detection.app.objets.c_alert_association_rule import AlertAssociationRule
 
 MIN_MODULE_LEN = 1
 
@@ -38,7 +39,8 @@ DATA_FILE_GLOBS = (
     'data/results/*',
     'data/sources/*',
     'data/object_store',
-    'data/connectors/*'
+    'data/connectors/*',
+    'data/alert_association_rules/*'
 )
 
 PAYLOADS_CONFIG_STANDARD_KEY = 'standard_payloads'
@@ -55,7 +57,8 @@ class DataService(DataServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[], connectors=[])
+                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[],
+                           connectors=[], alert_association_rules=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
@@ -302,6 +305,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_sources(plug)
                 await self._load_packers(plug)
                 await self._load_connectors(plug)
+                await self._load_alert_association_rules(plug)
             for task in async_tasks:
                 await task
             await self._load_extensions()
@@ -327,6 +331,13 @@ class DataService(DataServiceInterface, BaseService):
         for filename in glob.iglob('%s/connectors/*.yml' % plugin.data_dir, recursive=True):
            print(f'\tfile: {filename}')
            await self.load_connector_file(filename, plugin.access)
+
+    @detection_plugin
+    async def _load_alert_association_rules(self, plugin):
+        print(f'### _load_alert_association_rules for plugin {plugin.name} ###')
+        for filename in glob.iglob('%s/alert_association_rules/*.yml' % plugin.data_dir, recursive=True):
+           print(f'\tfile: {filename}')
+           await self.load_yaml_file(AlertAssociationRule, filename, plugin.access)       
 
     @staticmethod
     async def _load_ability_requirements(requirements):
