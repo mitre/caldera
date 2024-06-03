@@ -52,7 +52,7 @@ class DataService(DataServiceInterface, BaseService):
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
-                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
+                           schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[], connectors=[])
         self.ram = copy.deepcopy(self.schema)
 
     @staticmethod
