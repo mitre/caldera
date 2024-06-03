@@ -296,6 +296,7 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_planners(plug)
                 await self._load_sources(plug)
                 await self._load_packers(plug)
+                await self._load_connectors(plug)
             for task in async_tasks:
                 await task
             await self._load_extensions()
@@ -314,10 +315,9 @@ class DataService(DataServiceInterface, BaseService):
         for filename in glob.iglob('%s/abilities/**/*.yml' % plugin.data_dir, recursive=True):
             tasks.append(asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access)))
 
-    async def _load_connectors(self, plugin, tasks=None):
-        tasks = [] if tasks is None else tasks
+    async def _load_connectors(self, plugin):
         for filename in glob.iglob('%s/connectors/**/*.yml' % plugin.data_dir, recursive=True):
-            tasks.append(asyncio.get_event_loop().create_task(self.load_connector_file(filename, plugin.access)))
+           await self.load_connector_file(filename, plugin.access)
 
     @staticmethod
     async def _load_ability_requirements(requirements):
