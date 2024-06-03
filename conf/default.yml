@@ -1,5 +1,6 @@
 ability_refresh: 60
 connector_refresh: 60
+alert_association_rule_refresh: 60
 api_key_blue: BLUEADMIN123
 api_key_red: ADMIN123
 app.contact.dns.domain: mycaldera.caldera
