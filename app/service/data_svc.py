@@ -316,7 +316,7 @@ class DataService(DataServiceInterface, BaseService):
             tasks.append(asyncio.get_event_loop().create_task(self.load_ability_file(filename, plugin.access)))
 
     async def _load_connectors(self, plugin):
-        for filename in glob.iglob('%s/connectors/**/*.yml' % plugin.data_dir, recursive=True):
+        for filename in glob.iglob('%s/connectors/*.yml' % plugin.data_dir, recursive=True):
            await self.load_connector_file(filename, plugin.access)
 
     @staticmethod
