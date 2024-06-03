@@ -25,7 +25,7 @@ from app.service.interfaces.i_data_svc import DataServiceInterface
 from app.utility.base_service import BaseService
 
 import plugins.detection.app.objects.c_connector as connectors 
-from plugins.detection.app.objets.c_alert_association_rule import AlertAssociationRule
+from plugins.detection.app.objects.c_alert_association_rule import AlertAssociationRule
 
 MIN_MODULE_LEN = 1
 
