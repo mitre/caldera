@@ -6,24 +6,10 @@ from io import IOBase
 
 import aiohttp_apispec
 from aiohttp import web
-from marshmallow import fields, schema
 
 from app.api.v2.handlers.base_api import BaseApi
-
-
-class PayloadQuerySchema(schema.Schema):
-    sort = fields.Boolean(required=False, default=False)
-    exclude_plugins = fields.Boolean(required=False, default=False)
-    add_path = fields.Boolean(required=False, default=False)
-
-class PayloadSchema(schema.Schema):
-    payloads = fields.List(fields.String())
-
-class PayloadCreateRequestSchema(schema.Schema):
-    file = fields.Raw(type="file", required=True)
-
-class PayloadDeleteRequestSchema(schema.Schema):
-    name = fields.String(required=True)
+from app.api.v2.schemas.payload_schemas import PayloadQuerySchema, PayloadSchema, PayloadCreateRequestSchema, \
+    PayloadDeleteRequestSchema
 
 
 class PayloadApi(BaseApi):
@@ -83,18 +69,7 @@ class PayloadApi(BaseApi):
         # accessing the file using the prefilled request["form"] dictionary.
         file_field: web.FileField = request["form"]["file"]
 
-        file_name_candidate: str = file_field.filename
-        file_path: str = os.path.join('data/payloads/', file_name_candidate)
-        suffix: int = 1
-
-        # Generating a file suffix in the case it already exists.
-        while os.path.exists(file_path):
-            file_name_candidate = f"{pathlib.Path(file_field.filename).stem}_" \
-                                  f"{suffix}{pathlib.Path(file_field.filename).suffix}"
-            file_path = os.path.join('data/payloads/', file_name_candidate)
-            suffix += 1
-
-        file_name: str = file_name_candidate
+        file_name, file_path = await self.__generate_file_name_and_path(file_field)
 
         # The file_field.file is of type IOBase: It uses blocking methods.
         # Putting blocking code into a dedicated method and thread...
@@ -136,3 +111,26 @@ class PayloadApi(BaseApi):
         except FileNotFoundError:
             response = web.HTTPNotFound()
         return response
+
+    @classmethod
+    async def __generate_file_name_and_path(cls, file_field: web.FileField) -> [str, str]:
+        """
+        Finds whether an uploaded file already exists in the payload directory.
+        In the case, generates a new file name with an incremental suffix to avoid overriding the existing one.
+        Otherwise, the original file name is used.
+
+        :param file_field: The upload payload object.
+        :return: A tuple containing the generated file name and path for future storage.
+        """
+        file_name_candidate: str = file_field.filename
+        file_path: str = os.path.join('data/payloads/', file_name_candidate)
+        suffix: int = 1
+
+        # Generating a file suffix in the case it already exists.
+        while os.path.exists(file_path):
+            file_name_candidate = f"{pathlib.Path(file_field.filename).stem}_" \
+                                  f"{suffix}{pathlib.Path(file_field.filename).suffix}"
+            file_path = os.path.join('data/payloads/', file_name_candidate)
+            suffix += 1
+        file_name: str = file_name_candidate
+        return file_name, file_path
