@@ -22,6 +22,9 @@ class PayloadSchema(schema.Schema):
 class PayloadCreateRequestSchema(schema.Schema):
     file = fields.Raw(type="file", required=True)
 
+class PayloadDeleteRequestSchema(schema.Schema):
+    name = fields.String(required=True)
+
 
 class PayloadApi(BaseApi):
     def __init__(self, services):
@@ -33,6 +36,7 @@ class PayloadApi(BaseApi):
         router = app.router
         router.add_get('/payloads', self.get_payloads)
         router.add_post("/payloads", self.post_payloads)
+        router.add_delete("/payloads/{name}", self.delete_payloads)
 
     @aiohttp_apispec.docs(tags=['payloads'],
                           summary='Retrieve payloads',
@@ -111,3 +115,24 @@ class PayloadApi(BaseApi):
 
         body: dict[list[str]] = {"payloads": [file_name]}
         return web.json_response(body)
+
+    @aiohttp_apispec.docs(
+        tags=['payloads'],
+        summary='Delete a payload',
+        description='Deletes a given payload.',
+        responses = {
+            204: {"description": "Payload has been properly deleted."},
+            404: {"description": "Payload not found."},
+        })
+    @aiohttp_apispec.match_info_schema(PayloadDeleteRequestSchema)
+    async def delete_payloads(self, request: web.Request):
+        file_name: str = request.match_info.get("name")
+        file_path: str = os.path.join('data/payloads/', file_name)
+
+        response: web.HTTPException = None
+        try:
+            os.remove(file_path)
+            response = web.HTTPNoContent()
+        except FileNotFoundError:
+            response = web.HTTPNotFound()
+        return response
