@@ -3,14 +3,17 @@ import pathlib
 
 import aiohttp_apispec
 from aiohttp import web
-import marshmallow as ma
+from marshmallow import fields, schema
 
 from app.api.v2.handlers.base_api import BaseApi
-from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema
 
 
-class PayloadSchema(ma.Schema):
-    payloads = ma.fields.List(ma.fields.String())
+class PayloadQuerySchema(schema.Schema):
+    sort = fields.Boolean(required=False, default=False)
+    exclude_plugins = fields.Boolean(required=False, default=False)
+
+class PayloadSchema(schema.Schema):
+    payloads = fields.List(fields.String())
 
 
 class PayloadApi(BaseApi):
@@ -26,18 +29,28 @@ class PayloadApi(BaseApi):
     @aiohttp_apispec.docs(tags=['payloads'],
                           summary='Retrieve payloads',
                           description='Retrieves all stored payloads.')
-    @aiohttp_apispec.querystring_schema(BaseGetAllQuerySchema)
+    @aiohttp_apispec.querystring_schema(PayloadQuerySchema)
     @aiohttp_apispec.response_schema(PayloadSchema(),
                                      description='Returns a list of all payloads in PayloadSchema format.')
     async def get_payloads(self, request: web.Request):
+        sort: bool = request['querystring'].get('sort')
+        exclude_plugins: bool = request['querystring'].get('exclude_plugins')
+
         cwd = pathlib.Path.cwd()
         payload_dirs = [cwd / 'data' / 'payloads']
-        payload_dirs.extend(cwd / 'plugins' / plugin.name / 'payloads'
-                            for plugin in await self.data_svc.locate('plugins') if plugin.enabled)
+
+        if not exclude_plugins:
+            payload_dirs.extend(cwd / 'plugins' / plugin.name / 'payloads'
+                                for plugin in await self.data_svc.locate('plugins') if plugin.enabled)
+
         payloads = {
             self.file_svc.remove_xored_extension(p.name)
             for p in itertools.chain.from_iterable(p_dir.glob('[!.]*') for p_dir in payload_dirs)
             if p.is_file()
         }
 
-        return web.json_response(list(payloads))
+        payloads = list(payloads)
+        if sort:
+            payloads.sort()
+
+        return web.json_response(payloads)
