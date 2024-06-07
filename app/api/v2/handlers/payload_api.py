@@ -73,20 +73,8 @@ class PayloadApi(BaseApi):
 
         # The file_field.file is of type IOBase: It uses blocking methods.
         # Putting blocking code into a dedicated method and thread...
-        def save_file(target_file_path: str, io_base_src: IOBase):
-            size: int = 0
-            read_chunk: bool = True
-            with open(target_file_path, 'wb') as buffered_io_base_dest:
-                while read_chunk:
-                    chunk: bytes = io_base_src.read(8192)
-                    if chunk:
-                        size += len(chunk)
-                        buffered_io_base_dest.write(chunk)
-                    else:
-                        read_chunk = False
-
         loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, save_file, file_path, file_field.file)
+        await loop.run_in_executor(None, self.__save_file, file_path, file_field.file)
 
         body: dict[list[str]] = {"payloads": [file_name]}
         return web.json_response(body)
@@ -134,3 +122,23 @@ class PayloadApi(BaseApi):
             suffix += 1
         file_name: str = file_name_candidate
         return file_name, file_path
+
+    @staticmethod
+    def __save_file(target_file_path: str, io_base_src: IOBase):
+        """
+        Save an uploaded file content into a targeted file path.
+        Note this method calls blocking methods and must be run into a dedicated thread.
+
+        :param target_file_path: The destination path to write to.
+        :param io_base_src: The stream with file content to read from.
+        """
+        size: int = 0
+        read_chunk: bool = True
+        with open(target_file_path, 'wb') as buffered_io_base_dest:
+            while read_chunk:
+                chunk: bytes = io_base_src.read(8192)
+                if chunk:
+                    size += len(chunk)
+                    buffered_io_base_dest.write(chunk)
+                else:
+                    read_chunk = False
