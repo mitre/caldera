@@ -11,6 +11,7 @@ from app.api.v2.handlers.base_api import BaseApi
 class PayloadQuerySchema(schema.Schema):
     sort = fields.Boolean(required=False, default=False)
     exclude_plugins = fields.Boolean(required=False, default=False)
+    add_path = fields.Boolean(required=False, default=False)
 
 class PayloadSchema(schema.Schema):
     payloads = fields.List(fields.String())
@@ -35,6 +36,7 @@ class PayloadApi(BaseApi):
     async def get_payloads(self, request: web.Request):
         sort: bool = request['querystring'].get('sort')
         exclude_plugins: bool = request['querystring'].get('exclude_plugins')
+        add_path: bool = request['querystring'].get('add_path')
 
         cwd = pathlib.Path.cwd()
         payload_dirs = [cwd / 'data' / 'payloads']
@@ -44,7 +46,9 @@ class PayloadApi(BaseApi):
                                 for plugin in await self.data_svc.locate('plugins') if plugin.enabled)
 
         payloads = {
-            self.file_svc.remove_xored_extension(p.name)
+            str(p.parent.relative_to(cwd) / self.file_svc.remove_xored_extension(p.name))
+            if add_path
+            else self.file_svc.remove_xored_extension(p.name)
             for p in itertools.chain.from_iterable(p_dir.glob('[!.]*') for p_dir in payload_dirs)
             if p.is_file()
         }
