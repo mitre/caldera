@@ -129,8 +129,8 @@ To gracefully terminate your docker container, do the following:
 # Find the container ID for your docker container running Caldera
 docker ps
 
-# Send interrupt signal, e.g. "docker kill --signal=SIGINT 5b9220dd9c0f"
-docker kill --signal=SIGINT [container ID]
+# Stop the container
+docker stop [container ID]
 ```
 
 ## Contributing

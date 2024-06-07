@@ -91,6 +91,8 @@ RUN apt-get update && \
 
 WORKDIR /usr/src/app
 
+STOPSIGNAL SIGINT
+
 # Default HTTP port for web interface and agent beacons over HTTP
 EXPOSE 8888
 
