@@ -75,7 +75,7 @@ python3 server.py --insecure --build
 Full steps:
 Start by cloning this repository recursively, passing the desired version/release in x.x.x format. This will pull in all available plugins.
 ```Bash
-git clone https://github.com/mitre/caldera.git --recursive --branch x.x.x
+git clone https://github.com/mitre/caldera.git --recursive --tag x.x.x
 ```
 
 Next, install the PIP requirements:
@@ -129,8 +129,8 @@ To gracefully terminate your docker container, do the following:
 # Find the container ID for your docker container running Caldera
 docker ps
 
-# Send interrupt signal, e.g. "docker kill --signal=SIGINT 5b9220dd9c0f"
-docker kill --signal=SIGINT [container ID]
+# Stop the container
+docker stop [container ID]
 ```
 
 ## Contributing
