@@ -84,6 +84,10 @@ class AppService(AppServiceInterface, BaseService):
             interval = 60
             for s in await self.get_service('data_svc').locate('schedules'):
                 now = datetime.now(timezone.utc)
+                if not croniter.croniter.is_valid(s.schedule):
+                    self.log.warning(f"The schedule {s.id} with the format `{s.schedule}` is incompatible with cron!")
+                    continue
+
                 cron = croniter.croniter(s.schedule, now)
                 diff = now - cron.get_prev(datetime)
                 if interval > diff.total_seconds() > 0:
