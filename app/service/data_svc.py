@@ -487,6 +487,6 @@ class DataService(DataServiceInterface, BaseService):
         if len(fact_sources) == 0:
             return []
         elif len(fact_sources) > 1:
-            self.log.error('Found multiple fact sources with the same id')
+            self.log.error('Found multiple fact sources with the same id', fact_source_id)
             return []
         return fact_sources[0].facts
