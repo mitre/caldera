@@ -132,6 +132,9 @@ class OperationApi(BaseObjectApi):
                                      description='There is an empty response from a successful delete request.')
     async def delete_operation(self, request: web.Request):
         await self.delete_object(request)
+        knowledge_svc_handle = self._api_manager.knowledge_svc
+        await knowledge_svc_handle.delete_fact(criteria=dict(source=request.match_info.get('id')))
+        await knowledge_svc_handle.delete_relationship(criteria=dict(origin=request.match_info.get('id')))
         return web.HTTPNoContent()
 
     @aiohttp_apispec.docs(tags=['operations'],

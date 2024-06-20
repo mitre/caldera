@@ -21,6 +21,7 @@ class OperationApiManager(BaseApiManager):
     def __init__(self, services):
         super().__init__(data_svc=services['data_svc'], file_svc=services['file_svc'])
         self.services = services
+        self.knowledge_svc = services['knowledge_svc']
 
     async def get_operation_report(self, operation_id: str, access: dict, output: bool):
         operation = await self.get_operation_object(operation_id, access)
