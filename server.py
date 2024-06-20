@@ -149,10 +149,9 @@ async def start_vue_dev_server():
 
 def configure_magma_env_file():
     logging.info("Setting VueJS environment file.")
-    host = BaseWorld.get_config("host")
-    port = BaseWorld.get_config("port")
+    url = BaseWorld.get_config("app.frontend.api_base_url")
     with open(f"{MAGMA_PATH}/.env", "w") as fp:
-        fp.write(f"VITE_CALDERA_URL=http://{host}:{port}")
+        fp.write(f"VITE_CALDERA_URL={url}")
 
 
 def _get_parser():
