@@ -6,3 +6,5 @@ pre-commit
 safety
 bandit
 dnspython==2.1.0
+aiohttp>=3.9.4 # not directly required, pinned by Snyk to avoid a vulnerability
+setuptools>=65.5.1 # not directly required, pinned by Snyk to avoid a vulnerability
