@@ -6,6 +6,7 @@ import json
 import os
 import re
 import time
+import uuid
 from collections import namedtuple
 from datetime import datetime, timezone
 from importlib import import_module
@@ -100,6 +101,8 @@ class AppService(AppServiceInterface, BaseService):
                 if interval > diff.total_seconds() > 0:
                     self.log.debug('Pulling %s off the scheduler' % s.id)
                     sop = copy.deepcopy(s.task)
+                    sop.id = str(uuid.uuid4())
+                    sop.name += f" ({datetime.now(timezone.utc).replace(microsecond=0).isoformat()})"
                     sop.set_start_details()
                     await sop.update_operation_agents(self.get_services())
                     await self._services.get('data_svc').store(sop)
