@@ -47,7 +47,7 @@ class OperationSchema(ma.Schema):
     planner = ma.fields.Nested(PlannerSchema())
     start = ma.fields.DateTime(format=BaseObject.TIME_FORMAT, dump_only=True)
     state = ma.fields.String()
-    obfuscator = ma.fields.String()
+    obfuscator = ma.fields.String(required=True)
     autonomous = ma.fields.Integer()
     chain = ma.fields.Function(lambda obj: [lnk.display for lnk in obj.chain])
     auto_close = ma.fields.Boolean()
