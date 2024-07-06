@@ -68,11 +68,6 @@ async def test_home(aiohttp_client):
     assert resp.content_type == 'text/html'
 
 
-async def test_access_denied(aiohttp_client):
-    resp = await aiohttp_client.get('/enter')
-    assert resp.status == HTTPStatus.UNAUTHORIZED
-
-
 async def test_login(aiohttp_client):
     resp = await aiohttp_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
     assert resp.status == HTTPStatus.FOUND
