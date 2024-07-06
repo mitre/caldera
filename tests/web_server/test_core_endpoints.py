@@ -147,7 +147,7 @@ async def test_custom_rejecting_login_handler(aiohttp_client):
     assert resp.status == HTTPStatus.UNAUTHORIZED
     assert await resp.text() == 'Automatic rejection'
 
-    resp = await aiohttp_client.get('/', allow_redirects=False)
+    resp = await aiohttp_client.get('/api/v2', allow_redirects=False)
     assert resp.status == HTTPStatus.UNAUTHORIZED
     assert await resp.text() == 'Automatic rejection'
 
