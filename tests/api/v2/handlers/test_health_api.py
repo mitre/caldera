@@ -7,6 +7,7 @@ from http import HTTPStatus
 @pytest.fixture
 def expected_caldera_info():
     return {
+        'access': 'RED',
         'application': 'Caldera',
         'plugins': [],
         'version': app.get_version()
