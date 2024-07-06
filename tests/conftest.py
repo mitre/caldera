@@ -1,6 +1,7 @@
 import asyncio
 import os.path
 
+import jinja2
 import pytest
 import random
 import string
@@ -14,8 +15,8 @@ from base64 import b64encode
 from unittest import mock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
+import aiohttp_jinja2
 from pathlib import Path
-
 from app.api.v2.handlers.agent_api import AgentApi
 from app.api.v2.handlers.ability_api import AbilityApi
 from app.api.v2.handlers.objective_api import ObjectiveApi
@@ -392,6 +393,10 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         )
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
+        templates = ['plugins/%s/templates' % p.lower() for p in app_svc.get_config('plugins')]
+        templates.append('plugins/magma/dist')
+        templates.append("templates")
+        aiohttp_jinja2.setup(app_svc.application, loader=jinja2.FileSystemLoader(templates))
         return app_svc
 
     app_svc = await initialize()
