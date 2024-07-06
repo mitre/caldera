@@ -30,6 +30,7 @@ from app.api.v2.handlers.fact_api import FactApi
 from app.api.v2.handlers.planner_api import PlannerApi
 from app.api.v2.handlers.health_api import HealthApi
 from app.api.v2.handlers.schedule_api import ScheduleApi
+from app.api.v2.handlers.payload_api import PayloadApi
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_objective import Objective
 from app.objects.c_planner import PlannerSchema
@@ -357,6 +358,7 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         PlannerApi(svcs).add_routes(app)
         HealthApi(svcs).add_routes(app)
         ScheduleApi(svcs).add_routes(app)
+        PayloadApi(svcs).add_routes(app)
         return app
 
     async def initialize():
