@@ -43,7 +43,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
         self.app_svc.application.router.add_route('GET', '/api/{index}', self.rest_core_info)
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
-        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/).*}', self.handle_catch)
+        self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/|api/v2/).*}', self.handle_catch)
 
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
