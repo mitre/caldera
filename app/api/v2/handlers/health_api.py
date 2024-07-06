@@ -29,7 +29,7 @@ class HealthApi(BaseApi):
         mapping = {
             'application': 'Caldera',
             'version': app.get_version(),
-            'access': access[0].name,
+            'access': access[0].name if len(access) > 0 else None,  # 0 when not authenticated.
             'plugins': loaded_plugins_sorted
         }
 
