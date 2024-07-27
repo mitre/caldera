@@ -77,6 +77,27 @@ Start by cloning this repository recursively, passing the desired version/releas
 ```Bash
 git clone https://github.com/mitre/caldera.git --recursive --tag x.x.x
 ```
+This was an npm issue. If you need to the guide on a Linux machine follow these steps if yo have similar issues. 
+
+# Ensure that Node.js and npm are installed and accessible from your path
+node -v 
+npm -v
+
+# Clear npm cache 
+sudo npm cache clean -f 
+
+# Installing nvm if needed
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+
+# Adding nvm to the current shell
+source ~/.[Your Shell]
+
+# LTS support version of node.js
+nvm install --lts
+nvm use --lts
+
+# Reinstall npm globally
+npm install -g npm@latest 
 
 Next, install the PIP requirements:
 ```Bash
