@@ -12,7 +12,7 @@ ADD . .
 RUN if [ -z "$(ls plugins/stockpile)" ]; then echo "stockpile plugin not downloaded - please ensure you recursively cloned the caldera git repository and try again."; exit 1; fi
 
 RUN apt-get update && \
-    apt-get -y install python3 python3-pip python3-venv git curl golang-go
+    apt-get -y install python3 python3-pip python3-venv git curl golang-go upx
 
 
 #WIN_BUILD is used to enable windows build in sandcat plugin
@@ -70,9 +70,17 @@ WORKDIR /usr/src/app/plugins/emu
 
 # If emu is enabled, complete necessary installation steps
 RUN if [ $(grep -c "\- emu" ../../conf/local.yml)  ]; then \
-    apt-get -y install zlib1g unzip;                \
-    pip3 install -r requirements.txt;               \
-    ./download_payloads.sh;                         \
+    apt-get -y install zlib1g unzip;                       \
+    pip3 install --no-cache-dir -r requirements.txt;       \
+    ./download_payloads.sh;                                \
+fi
+
+WORKDIR /usr/src/app/plugins/human
+
+  # If human is enabled, complete necessary installation steps
+RUN if [ $(grep -c "\- human" ../../conf/local.yml)  ]; then \
+    apt-get -y install xvfb python3-tk python3-dev;          \
+    pip3 install --no-cache-dir -r requirements.txt;         \
 fi
 
 WORKDIR /usr/src/app
@@ -83,8 +91,7 @@ RUN apt-get update && \
     # Directly use npm to install dependencies and build the application
     (cd plugins/magma && npm install) && \
     (cd plugins/magma && npm run build) && \
-    # Remove Node.js, npm, and other unnecessary packages
-    apt-get remove -y nodejs npm && \
+    # Remove other unnecessary packages and general cleanup
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -115,4 +122,4 @@ EXPOSE 8022
 # Default FTP port for FTP C2 channel
 EXPOSE 2222
 
-ENTRYPOINT ["python3", "server.py"]
+ENTRYPOINT ["/usr/src/app/entrypoint.sh"]
