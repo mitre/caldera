@@ -17,6 +17,7 @@ class PlannerApi(BaseObjectApi):
         router = app.router
         router.add_get('/planners', self.get_planners)
         router.add_get('/planners/{planner_id}', self.get_planner_by_id)
+        router.add_patch('/planners/{planner_id}', self.update_planner)
 
     @aiohttp_apispec.docs(tags=['planners'],
                           summary='Retrieve planners',
@@ -49,3 +50,20 @@ class PlannerApi(BaseObjectApi):
     async def get_planner_by_id(self, request: web.Request):
         planner = await self.get_object(request)
         return web.json_response(planner)
+
+    @aiohttp_apispec.docs(tags=['planners'],
+                          summary='Updates an existing planner.',
+                          description='Updates a planner based on the `PlannerSchema` value provided in the message body.',
+                          parameters=[{
+                              'in': 'path',
+                              'name': 'planner_id',
+                              'schema': {'type': 'string'},
+                              'required': 'true',
+                              'description': 'UUID of the Planner to be updated'
+                          }])
+    @aiohttp_apispec.request_schema(PlannerSchema(partial=True))
+    @aiohttp_apispec.response_schema(PlannerSchema(partial=True),
+                                     description='JSON dictionary representation of the replaced Planner.')
+    async def update_planner(self, request: web.Request):
+        planner = await self.update_on_disk_object(request)
+        return web.json_response(planner.display)
