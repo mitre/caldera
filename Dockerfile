@@ -83,8 +83,7 @@ RUN apt-get update && \
     # Directly use npm to install dependencies and build the application
     (cd plugins/magma && npm install) && \
     (cd plugins/magma && npm run build) && \
-    # Remove Node.js, npm, and other unnecessary packages
-    apt-get remove -y nodejs npm && \
+    # Remove unnecessary packages (excluding nodejs and npm)
     apt-get autoremove -y && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
