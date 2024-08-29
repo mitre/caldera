@@ -150,6 +150,7 @@ async def start_vue_dev_server():
 def configure_magma_env_file():
     logging.info("Setting VueJS environment file.")
     url = BaseWorld.get_config("app.frontend.api_base_url")
+    logging.info(f"Successfuly set {url} as base url.")
     with open(f"{MAGMA_PATH}/.env", "w") as fp:
         fp.write(f"VITE_CALDERA_URL={url}")
 
