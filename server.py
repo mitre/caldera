@@ -266,10 +266,9 @@ if __name__ == "__main__":
             subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
             logging.info("VueJS front-end build complete.")
         app_svc.application.on_response_prepare.append(enable_cors)
-
+    configure_magma_env_file()
     if args.build:
         if len(os.listdir(MAGMA_PATH)) > 0:
-            configure_magma_env_file()
             logging.info("Building VueJS front-end.")
             subprocess.run(["npm", "install"], cwd=MAGMA_PATH, check=True)
             subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
