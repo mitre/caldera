@@ -27,9 +27,9 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install pip requirements
 RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Set up config file and disable atomic by default
-RUN python3 -c "import app; import app.utility.config_generator; app.utility.config_generator.ensure_local_config();"; \
-    sed -i '/\- atomic/d' conf/local.yml;
+# Set up config file and dont disable atomic by default
+RUN python3 -c "import app; import app.utility.config_generator; app.utility.config_generator.ensure_local_config();"
+
 
 # Compile default sandcat agent binaries, which will download basic golang dependencies.
 
