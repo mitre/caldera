@@ -4,6 +4,7 @@ import glob
 import hashlib
 import json
 import os
+import re
 import time
 from collections import namedtuple
 from datetime import datetime, timezone
@@ -13,6 +14,7 @@ import aiohttp_jinja2
 import jinja2
 import yaml
 from aiohttp import web
+import croniter
 
 from app.objects.c_plugin import Plugin
 from app.service.interfaces.i_app_svc import AppServiceInterface
@@ -82,9 +84,19 @@ class AppService(AppServiceInterface, BaseService):
         while True:
             interval = 60
             for s in await self.get_service('data_svc').locate('schedules'):
-                now = datetime.now(timezone.utc).time()
-                today_utc = datetime.now(timezone.utc).date()
-                diff = datetime.combine(today_utc, now) - datetime.combine(today_utc, s.schedule)
+                if not croniter.croniter.is_valid(s.schedule):
+                    match = re.match(r'^(\d{2}):(\d{2}):\d{2}\.\d{6}$', s.schedule)
+                    if match:
+                        hour, minute = match.groups()
+                        s.schedule = f"{minute} {hour} * * *"
+                        self.log.info(f"Converted time schedule {s.id} to cron format: {s.schedule}")
+                    else:
+                        self.log.warning(f"The schedule {s.id} with the format `{s.schedule}` is incompatible with cron!")
+                        continue
+
+                now = datetime.now()
+                cron = croniter.croniter(s.schedule, now)
+                diff = now - cron.get_prev(datetime)
                 if interval > diff.total_seconds() > 0:
                     self.log.debug('Pulling %s off the scheduler' % s.id)
                     sop = copy.deepcopy(s.task)
