@@ -2,9 +2,9 @@ from marshmallow import fields, schema
 
 
 class PayloadQuerySchema(schema.Schema):
-    sort = fields.Boolean(required=False, default=False)
-    exclude_plugins = fields.Boolean(required=False, default=False)
-    add_path = fields.Boolean(required=False, default=False)
+    sort = fields.Boolean(required=False, load_default=False)
+    exclude_plugins = fields.Boolean(required=False, load_default=False)
+    add_path = fields.Boolean(required=False, load_default=False)
 
 
 class PayloadSchema(schema.Schema):
@@ -12,7 +12,7 @@ class PayloadSchema(schema.Schema):
 
 
 class PayloadCreateRequestSchema(schema.Schema):
-    file = fields.Raw(type="file", required=True)
+    file = fields.Raw(required=True, metadata={'type': 'file'})
 
 
 class PayloadDeleteRequestSchema(schema.Schema):
