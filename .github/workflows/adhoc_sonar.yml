@@ -1,7 +1,9 @@
 name: Adhoc Sonar
 
 on:
-  workflow_dispatch:
+  push:
+    branches:
+    - adhoc-sonarcloud
         
 permissions:
   contents: read
