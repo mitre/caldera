@@ -22,6 +22,9 @@ jobs:
           repository: jbaptperez/caldera
           ref: fix/tests
           path: caldera3013
+      - run: |
+          pwd;
+          ls;
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@49e6cd3b187936a73b8280d59ffd9da69df63ec9
         env:
