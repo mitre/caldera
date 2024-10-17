@@ -150,6 +150,7 @@ async def start_vue_dev_server():
 def configure_magma_env_file():
     logging.info("Setting VueJS environment file.")
     url = BaseWorld.get_config("app.frontend.api_base_url")
+    logging.info(f"Successfuly set {url} as base url.")
     with open(f"{MAGMA_PATH}/.env", "w") as fp:
         fp.write(f"VITE_CALDERA_URL={url}")
 
@@ -265,8 +266,7 @@ if __name__ == "__main__":
             logging.info("Building VueJS front-end.")
             subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
             logging.info("VueJS front-end build complete.")
-        app_svc.application.on_response_prepare.append(enable_cors)
-
+        app_svc.application.on_response_prepare.append(enable_cors)  
     if args.build:
         if len(os.listdir(MAGMA_PATH)) > 0:
             configure_magma_env_file()
