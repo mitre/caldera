@@ -83,7 +83,7 @@ class PayloadApi(BaseApi):
         tags=['payloads'],
         summary='Delete a payload',
         description='Deletes a given payload.',
-        responses = {
+        responses={
             204: {"description": "Payload has been properly deleted."},
             404: {"description": "Payload not found."},
         })

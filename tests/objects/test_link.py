@@ -138,7 +138,7 @@ class TestLink:
         knowledge_base_r = event_loop.run_until_complete(knowledge_svc.get_relationships(dict(edge='has_admin')))
         assert len(knowledge_base_r) == 1
 
-    def test_create_relationship_source_fact(self, event_loop, ability, executor, operation, knowledge_svc, fire_event_mock):
+    def test_create_relationship_source_fact(self, event_loop, ability, executor, operation, data_svc, knowledge_svc, fire_event_mock):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
@@ -149,6 +149,7 @@ class TestLink:
                               adversary=Adversary(name='sample', adversary_id='XYZ', atomic_ordering=[],
                                                   description='test'),
                               source=Source(id='test-source', facts=[fact1]))
+        event_loop.run_until_complete(data_svc.store(operation.source))
         event_loop.run_until_complete(operation._init_source())
         event_loop.run_until_complete(link1.create_relationships([relationship], operation))
 
@@ -161,7 +162,7 @@ class TestLink:
         assert len(fact_store_operation) == 1
         assert len(fact_store_operation_source[0].collected_by) == 2
 
-    def test_save_discover_seeded_fact_not_in_command(self, event_loop, ability, executor, operation, knowledge_svc, fire_event_mock):
+    def test_save_discover_seeded_fact_not_in_command(self, event_loop, ability, executor, operation, knowledge_svc, data_svc, fire_event_mock):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
@@ -172,6 +173,7 @@ class TestLink:
                               adversary=Adversary(name='sample', adversary_id='XYZ', atomic_ordering=[],
                                                   description='test'),
                               source=Source(id='test-source', facts=[fact1, fact2]))
+        event_loop.run_until_complete(data_svc.store(operation.source))
         event_loop.run_until_complete(operation._init_source())
         event_loop.run_until_complete(link.save_fact(operation, fact2, 1, relationship))
 
