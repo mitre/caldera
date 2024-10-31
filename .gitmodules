@@ -49,3 +49,6 @@
 [submodule "plugins/magma"]
 	path = plugins/magma
 	url = https://github.com/mitre/magma.git
+[submodule "plugins/bountyhunter"]
+	path = plugins/bountyhunter
+	url = https://github.com/fkie-cad/bountyhunter.git
