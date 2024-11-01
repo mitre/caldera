@@ -11,7 +11,7 @@ from app.utility.base_service import BaseService
 @pytest.fixture
 def updated_schedule_payload():
     payload = {
-        'schedule': '01:00:00.000000',
+        'schedule': '0 1 * * *',
         'task': {
             'autonomous': 1,
             'obfuscator': 'base64',
@@ -40,7 +40,7 @@ def expected_updated_schedule_dump(test_schedule, updated_schedule_payload):
 @pytest.fixture
 def replaced_schedule_payload():
     payload = {
-        'schedule': '12:12:00.000000',
+        'schedule': '0 12 12 * *',
         'task': {
             'autonomous': 1,
             'obfuscator': 'base64',
@@ -57,7 +57,7 @@ def replaced_schedule_payload():
 
 @pytest.fixture
 def new_schedule_payload(test_planner, test_adversary, test_source):
-    payload = dict(schedule='00:00:00.000000',
+    payload = dict(schedule='0 0 * * *',
                    id='456',
                    task={
                        'name': 'new_scheduled_operation',
@@ -80,7 +80,7 @@ def expected_new_schedule_dump(new_schedule_payload):
 def test_schedule(test_operation, event_loop):
     operation = OperationSchema().load(test_operation)
     schedule = ScheduleSchema().load(dict(id='123',
-                                          schedule='03:00:00.000000',
+                                          schedule='0 3 * * *',
                                           task=operation.schema.dump(operation)))
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(schedule))
     return schedule
