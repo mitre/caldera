@@ -100,10 +100,11 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
-        for hook, fcall in executor.HOOKS.items():
+        """This dictionary provides plugins a way to hook into abilities at runtime"""
+        for _hook, fcall in executor.HOOKS.items():
             await fcall(ability, executor)
         encoded_command = self._encode_string(agent.replace(self._encode_string(data['executor']['command']),
-                                        file_svc=self.services['file_svc']))
+                                              file_svc=self.services['file_svc']))
         link = Link.load(dict(command=encoded_command, plaintext_command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
                               cleanup=data.get('cleanup', 0), pin=data.get('pin', 0),

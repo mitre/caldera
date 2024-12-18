@@ -351,8 +351,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             executor = await agent.get_preferred_executor(ability)
             if not executor:
                 continue
-
-            for hook, fcall in executor.HOOKS.items():
+            """This dictionary provides plugins a way to hook into abilities at runtime"""
+            for _hook, fcall in executor.HOOKS.items():
                 await fcall(ability, executor)
             if executor.command:
                 link = Link.load(dict(command=self.encode_string(executor.test), paw=agent.paw, score=0,
