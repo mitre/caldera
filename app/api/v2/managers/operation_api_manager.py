@@ -100,9 +100,7 @@ class OperationApiManager(BaseApiManager):
             raise JsonHttpBadRequest(f'Agent {agent.paw} missing specified executor')
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
-        """This dictionary provides plugins a way to hook into abilities at runtime"""
-        for _hook, fcall in executor.HOOKS.items():
-            await fcall(ability, executor)
+        self._call_ability_plugin_hooks(ability, executor)
         encoded_command = self._encode_string(agent.replace(self._encode_string(data['executor']['command']),
                                               file_svc=self.services['file_svc']))
         link = Link.load(dict(command=encoded_command, plaintext_command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
@@ -173,6 +171,11 @@ class OperationApiManager(BaseApiManager):
         if not source:
             source = (await self.services['data_svc'].locate('sources', match=dict(name='basic')))
         return SourceSchema().dump(source[0])
+    
+    async def _call_ability_plugin_hooks(self, ability, executor):
+        """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
+        for _hook, fcall in executor.HOOKS.items():
+            await fcall(ability, executor)
 
     async def validate_operation_state(self, data: dict, existing: Operation = None):
         if not existing:
