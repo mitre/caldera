@@ -389,7 +389,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                     lnk.apply_id(agent.host)
                     links.append(lnk)
         return links
-    
+
     async def _call_ability_plugin_hooks(self, ability, executor):
         """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
         for _hook, fcall in executor.HOOKS.items():

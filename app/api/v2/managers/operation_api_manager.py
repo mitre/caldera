@@ -171,7 +171,7 @@ class OperationApiManager(BaseApiManager):
         if not source:
             source = (await self.services['data_svc'].locate('sources', match=dict(name='basic')))
         return SourceSchema().dump(source[0])
-    
+
     async def _call_ability_plugin_hooks(self, ability, executor):
         """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
         for _hook, fcall in executor.HOOKS.items():
