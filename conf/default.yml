@@ -28,20 +28,21 @@ crypt_salt: REPLACE_WITH_RANDOM_VALUE
 encryption_key: ADMIN123
 exfil_dir: /tmp/caldera
 reachable_host_traits:
-- remote.host.fqdn
-- remote.host.ip
+  - remote.host.fqdn
+  - remote.host.ip
 host: 0.0.0.0
 plugins:
-- access
-- atomic
-- compass
-- debrief
-- fieldmanual
-- manx
-- response
-- sandcat
-- stockpile
-- training
+  - access
+  - atomic
+  - bountyhunter
+  - compass
+  - debrief
+  - fieldmanual
+  - manx
+  - response
+  - sandcat
+  - stockpile
+  - training
 port: 8888
 reports_dir: /tmp
 auth.login.handler.module: default
