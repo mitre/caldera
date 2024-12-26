@@ -1,63 +1,132 @@
-ability_refresh: 60
-api_key_blue: BLUEADMIN123
-api_key_red: ADMIN123
-app.contact.dns.domain: mycaldera.caldera
-app.contact.dns.socket: 0.0.0.0:8853
-app.contact.gist: API_KEY
-app.contact.html: /weather
-app.contact.http: http://0.0.0.0:8888
-app.contact.slack.api_key: SLACK_TOKEN
-app.contact.slack.bot_id: SLACK_BOT_ID
-app.contact.slack.channel_id: SLACK_CHANNEL_ID
-app.contact.tunnel.ssh.host_key_file: REPLACE_WITH_KEY_FILE_PATH
-app.contact.tunnel.ssh.host_key_passphrase: REPLACE_WITH_KEY_FILE_PASSPHRASE
-app.contact.tunnel.ssh.socket: 0.0.0.0:8022
-app.contact.tunnel.ssh.user_name: sandcat
-app.contact.tunnel.ssh.user_password: s4ndc4t!
-app.contact.ftp.host: 0.0.0.0
-app.contact.ftp.port: 2222
-app.contact.ftp.pword: caldera
-app.contact.ftp.server.dir: ftp_dir
-app.contact.ftp.user: caldera_user
-app.contact.tcp: 0.0.0.0:7010
-app.contact.udp: 0.0.0.0:7011
-app.contact.websocket: 0.0.0.0:7012
-app.frontend.api_base_url: http://localhost:8888
-objects.planners.default: atomic
-crypt_salt: REPLACE_WITH_RANDOM_VALUE
-encryption_key: ADMIN123
-exfil_dir: /tmp/caldera
-reachable_host_traits:
-- remote.host.fqdn
-- remote.host.ip
-host: 0.0.0.0
-plugins:
-- access
-- atomic
-- compass
-- debrief
-- fieldmanual
-- manx
-- response
-- sandcat
-- stockpile
-- training
-port: 8888
-reports_dir: /tmp
-auth.login.handler.module: default
-requirements:
-  go:
-    command: go version
-    type: installed_program
-    version: 1.19
-  python:
-    attr: version
-    module: sys
-    type: python_module
-    version: 3.8.0
-users:
-  blue:
-    blue: admin
-  red:
-    admin: admin
-    red: admin
+name: Code Quality
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: 3.9
+            toxenv: py39,style,coverage-ci
+            os: ubuntu-latest
+          - python-version: 3.10
+            toxenv: py310,style,coverage-ci
+            os: ubuntu-latest
+          - python-version: 3.11
+            toxenv: py311,style,coverage-ci
+            os: macos-latest
+          - python-version: 3.12
+            toxenv: py312,style,coverage-ci
+            os: windows-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Cache Python Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: python-${{ matrix.python-version }}-pip-${{ runner.os }}-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            python-${{ matrix.python-version }}-pip-${{ runner.os }}-
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Cache Node.js Dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: node-${{ matrix.os }}-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            node-${{ matrix.os }}-
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade virtualenv
+          pip install tox
+          npm --prefix plugins/magma install
+          npm --prefix plugins/magma run build
+
+      - name: Run Tests
+        env:
+          TOXENV: ${{ matrix.toxenv }}
+        run: tox
+
+      - name: Log Build Matrix
+        run: echo "Running with Python version ${{ matrix.python-version }} on ${{ matrix.os }}"
+
+      - name: Override Coverage Source Path for Sonar
+        run: sed -i "s/<source>\/home\/runner\/work\/caldera\/caldera/<source>\/github\/workspace/g" /home/runner/work/caldera/caldera/coverage.xml
+
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+
+  notify-success:
+    runs-on: ubuntu-latest
+    needs: build
+    if: success()
+    steps:
+      - name: Send Success Notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "GitHub Actions Succeeded"
+          body: |
+            Job Name: Code Quality
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+          to: your-email@example.com
+
+  notify-failure:
+    runs-on: ubuntu-latest
+    needs: build
+    if: failure()
+    steps:
+      - name: Send Failure Notification
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: "GitHub Actions Failed"
+          body: |
+            Job Name: Code Quality
+            Repository: ${{ github.repository }}
+            Branch: ${{ github.ref }}
+            Commit: ${{ github.sha }}
+          to: your-email@example.com
