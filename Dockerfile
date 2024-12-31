@@ -1,4 +1,4 @@
-FROM ubuntu:23.04
+FROM ubuntu:24.04
 SHELL ["/bin/bash", "-c"]
 
 ARG TZ="UTC"
