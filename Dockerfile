@@ -12,12 +12,12 @@ ADD . .
 RUN if [ -z "$(ls plugins/stockpile)" ]; then echo "stockpile plugin not downloaded - please ensure you recursively cloned the caldera git repository and try again."; exit 1; fi
 
 RUN apt-get update && \
-    apt-get -y install python3 python3-pip python3-venv git curl golang-go
+    apt-get -y --no-install-recommends install python3 python3-pip python3-venv git curl golang-go
 
 
 #WIN_BUILD is used to enable windows build in sandcat plugin
 ARG WIN_BUILD=false
-RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y install mingw-w64; fi
+RUN if [ "$WIN_BUILD" = "true" ] ; then apt-get -y --no-install-recommends install mingw-w64; fi
 
 # Set up python virtualenv
 ENV VIRTUAL_ENV=/opt/venv/caldera
@@ -69,17 +69,17 @@ fi
 WORKDIR /usr/src/app/plugins/emu
 
 # If emu is enabled, complete necessary installation steps
-RUN if [ $(grep -c "\- emu" ../../conf/local.yml)  ]; then \
-    apt-get -y install zlib1g unzip;                \
-    pip3 install -r requirements.txt;               \
-    ./download_payloads.sh;                         \
+RUN if [ $(grep -c "\- emu" ../../conf/local.yml)  ]; then   \
+    apt-get -y --no-install-recommends install zlib1g unzip; \
+    pip3 install -r --no-cache-dir requirements.txt;         \
+    ./download_payloads.sh;                                  \
 fi
 
 WORKDIR /usr/src/app
 
 # Install Node.js, npm, and other build VueJS front-end
 RUN apt-get update && \
-    apt-get install -y nodejs npm && \
+    apt-get install -y --no-install-recommends nodejs npm && \
     # Directly use npm to install dependencies and build the application
     (cd plugins/magma && npm install) && \
     (cd plugins/magma && npm run build) && \
