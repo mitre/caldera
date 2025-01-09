@@ -48,8 +48,8 @@ These plugins are supported and maintained by the Caldera team.
 ### More
 These plugins are ready to use but are not included by default and are not maintained by the Caldera team.
 - **[Arsenal](https://github.com/mitre-atlas/arsenal)** (MITRE ATLAS techniques and profiles)
+- **[BountyHunter](https://github.com/fkie-cad/bountyhunter)** (The Bounty Hunter)
 - **[CalTack](https://github.com/mitre/caltack.git)** (embedded ATT&CK website)
-- **[Pathfinder](https://github.com/center-for-threat-informed-defense/caldera_pathfinder)** (vulnerability scanning)
 - **[SAML](https://github.com/mitre/saml)** (SAML authentication)
 
 ## Requirements
@@ -60,7 +60,7 @@ These requirements are for the computer running the core framework:
 * Python 3.8+ (with Pip3)
 * Recommended hardware to run on is 8GB+ RAM and 2+ CPUs
 * Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
-* NodeJS (v16+ recommended for v5 VueJS UI) 
+* NodeJS (v16+ recommended for v5 VueJS UI)
 
 ## Installation
 
@@ -88,7 +88,7 @@ Finally, start the server.
 ```Bash
 python3 server.py --insecure --build
 ```
-The --build flag automatically installs any VueJS UI dependencies, bundles the UI into a dist directory, writes the Magma plugin's `.env` file, and is served by the Caldera server. You will only have to use the --build flag again if you add any plugins or make any changes to the UI.
+The `--build` flag automatically installs any VueJS UI dependencies, bundles the UI into a dist directory, writes the Magma plugin's `.env` file, and is served by the Caldera server. You will only have to use the `--build` flag again if you add any plugins or make any changes to the UI.
 Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
 
 In some situations the default configuration values can cause the UI to appear unresponsive due to misrouted requests. Modify the `app.frontend.api_base_url` config value and start the server using the --build flag to update the UI's request URL environment variable.
