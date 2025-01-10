@@ -123,7 +123,7 @@ cd caldera
 docker build . --build-arg WIN_BUILD=true -t caldera:latest
 
 # Run the image. Change port forwarding configuration as desired.
-docker run -p 8888:8888 caldera:latest
+docker run -p 8888:8888 caldera:latest --build
 ```
 
 To gracefully terminate your docker container, do the following:
