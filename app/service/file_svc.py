@@ -20,7 +20,7 @@ from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
-ALLOWED_SERVER_LDFLAG_REGEX = re.compile(r'^[\w\-\.:%+]+$')
+ALLOWED_SERVER_LDFLAG_REGEX = re.compile(r'^[\w\-\.:%+/]+$')
 ALLOWED_DEFAULT_LDFLAG_REGEX = re.compile(r'^[\w\-\.]+$')
 
 class FileSvc(FileServiceInterface, BaseService):
