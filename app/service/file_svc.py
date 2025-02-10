@@ -23,6 +23,7 @@ FILE_ENCRYPTION_FLAG = '%encrypted%'
 ALLOWED_SERVER_LDFLAG_REGEX = re.compile(r'^[\w\-\.:%+/]+$')
 ALLOWED_DEFAULT_LDFLAG_REGEX = re.compile(r'^[\w\-\.]+$')
 
+
 class FileSvc(FileServiceInterface, BaseService):
 
     def __init__(self):
