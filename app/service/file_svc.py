@@ -181,7 +181,7 @@ class FileSvc(FileServiceInterface, BaseService):
         Raises a ValueError if disallowed characters are found.
         """
         if not ALLOWED_DEFAULT_LDFLAG_REGEX.fullmatch(value):
-            ValueError('Invalid characters in LDFLAG value: %s' % value)
+            raise ValueError('Invalid characters in LDFLAG value: %s' % value)
         return value
 
     @staticmethod
@@ -191,7 +191,7 @@ class FileSvc(FileServiceInterface, BaseService):
         Raises a ValueError if disallowed characters are found.
         """
         if not ALLOWED_SERVER_LDFLAG_REGEX.fullmatch(value):
-            ValueError('Invalid characters in server LDFLAG value: %s' % value)
+            raise ValueError('Invalid characters in server LDFLAG value: %s' % value)
         return value
 
     def get_payload_name_from_uuid(self, payload):
