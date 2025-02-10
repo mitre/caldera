@@ -242,6 +242,60 @@ class TestFileService:
         ret = file_svc.is_extension_xored(test_value)
         assert ret is False
 
+    def test_sanitize_ldflag_value(self, file_svc):
+        safe_values = [
+            'safevalue',
+            'SAFE29VALUE',
+            '_safe_',
+            's-a-f-e.s_a_f_e.2',
+            '1234567890'
+        ]
+        for value in safe_values:
+            assert value == file_svc.sanitize_ldflag_value(value)
+
+        safe_server_values = [
+            'http://localhost',
+            'https://localhost:8443',
+            'https://127.0.0.1:8443/home.html',
+            'https://some.domain.net:8443/home%20test.html',
+            'https://_underscore.domain-with-dash.net:8443/home+test.html',
+        ]
+        for value in safe_server_values:
+            assert value == file_svc.sanitize_server_ldflag_value(value)
+
+        unsafe_values = [
+            'unsafe with spaces',
+            'unsafe,comma',
+            'unsafe;semicolon',
+            'unsafe!',
+            'unsafe&&test',
+            'unsafe||test',
+            'unsafe>test',
+            'unsafe<test',
+            'unsafe$(test)',
+            'unsafe~/test',
+            'unsafe%test+',
+        ]
+        for value in unsafe_values:
+            with pytest.raises(Exception) as e_info:
+                file_svc.sanitize_ldflag_value(value)
+            assert str(e_info.value) == 'Invalid characters in LDFLAG value: {}'.format(value)
+
+        unsafe_server_values = [
+            'http://localhost||test',
+            'https://localhost:8443 space',
+            'https://localhost:8443@',
+            'https://localhost:8443"test',
+            'https://localhost:8443\'test',
+            'https://127.0.0.1:8443/home.html$(test)',
+            'https://some.domain.net:8443/home%20test.html && test',
+            'https://_underscore.domain-with-dash.net:8443/home+test.html; test',
+        ]
+        for value in unsafe_server_values:
+            with pytest.raises(Exception) as e_info:
+                file_svc.sanitize_server_ldflag_value(value)
+            assert str(e_info.value) == 'Invalid characters in server LDFLAG value: {}'.format(value)
+
     @staticmethod
     def _test_download_file_with_encoding(event_loop, file_svc, data_svc, encoding, original_content, encoded_content):
         filename = 'testencodedpayload.txt'
