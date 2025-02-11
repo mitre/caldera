@@ -20,8 +20,13 @@ from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
-ALLOWED_SERVER_LDFLAG_REGEX = re.compile(r'^[\w\-\.:%+/]+$')
+URL_SANITIZATION_REGEX = re.compile(r'^[\w\-\.:%+/]+$')
 ALLOWED_DEFAULT_LDFLAG_REGEX = re.compile(r'^[\w\-\.]+$')
+ALLOWED_LDFLAG_REGEXES = {
+    'server': URL_SANITIZATION_REGEX,
+    'http': URL_SANITIZATION_REGEX,
+    'socket': re.compile(r'^[\w\-\.:]+$')
+}
 
 
 class FileSvc(FileServiceInterface, BaseService):
@@ -176,23 +181,14 @@ class FileSvc(FileServiceInterface, BaseService):
             self.log.warning('Problem building golang executable {}: {} '.format(src_fle, e))
 
     @staticmethod
-    def sanitize_ldflag_value(value):
+    def sanitize_ldflag_value(param, value):
         """
-        Validate that the specified LDFLAG value only contains safe characters.
+        Validate that the specified LDFLAG value for the given parameter
+        only contains safe characters.
         Raises a ValueError if disallowed characters are found.
         """
-        if not ALLOWED_DEFAULT_LDFLAG_REGEX.fullmatch(value):
-            raise ValueError('Invalid characters in LDFLAG value: %s' % value)
-        return value
-
-    @staticmethod
-    def sanitize_server_ldflag_value(value):
-        """
-        Validate that the specified server LDFLAG value only contains safe characters.
-        Raises a ValueError if disallowed characters are found.
-        """
-        if not ALLOWED_SERVER_LDFLAG_REGEX.fullmatch(value):
-            raise ValueError('Invalid characters in server LDFLAG value: %s' % value)
+        if not ALLOWED_LDFLAG_REGEXES.get(param, ALLOWED_DEFAULT_LDFLAG_REGEX).fullmatch(value):
+            raise ValueError('Invalid characters in %s LDFLAG value: %s' % (param, value))
         return value
 
     def get_payload_name_from_uuid(self, payload):
