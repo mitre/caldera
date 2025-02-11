@@ -322,14 +322,10 @@ class TestFileService:
             'some.domain.net:8443 && test',
             'domain-with-dash.net:8443; test',
         ]
-        for value in unsafe_server_values:
+        for value in unsafe_socket_values:
             with pytest.raises(Exception) as e_info:
-                file_svc.sanitize_ldflag_value('server', value)
-            assert str(e_info.value) == 'Invalid characters in server LDFLAG value: {}'.format(value)
-
-            with pytest.raises(Exception) as e_info:
-                file_svc.sanitize_ldflag_value('http', value)
-            assert str(e_info.value) == 'Invalid characters in http LDFLAG value: {}'.format(value)
+                file_svc.sanitize_ldflag_value('socket', value)
+            assert str(e_info.value) == 'Invalid characters in socket LDFLAG value: {}'.format(value)
 
     @staticmethod
     def _test_download_file_with_encoding(event_loop, file_svc, data_svc, encoding, original_content, encoded_content):
