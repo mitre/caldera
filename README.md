@@ -18,6 +18,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 
 ## Resources & Socials
 * 📜 [Documentation, training, and use-cases](https://caldera.readthedocs.io/en/latest/)
+* 🎬 [Tutorial Videos](https://www.youtube.com/playlist?list=PLF2bj1pw7-ZvLTjIwSaTXNLN2D2yx-wXH)
 * ✍️ [Caldera's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
 * 🌐 [Homepage](https://caldera.mitre.org)
 
