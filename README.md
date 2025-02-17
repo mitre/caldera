@@ -6,7 +6,7 @@
 
 # MITRE Caldera&trade;
 
-🚨`Security Notice`🚨 : (17 Feb 2025 10:00 EST) Please pull or repull the main branch for a recent RCE security patch. MITRE Caldera team will provide a CVE and writeup on the RCE soon, but in the mean time please update your Caldera instance, especially if you host Caldera on a publicly accessible network.
+`🚨Security Notice🚨 : (17 Feb 2025 10:00 EST) Please pull or repull the main branch for a recent RCE security patch. MITRE Caldera team will provide a CVE and writeup on the RCE soon, but in the mean time please update your Caldera instance, especially if you host Caldera on a publicly accessible network.`
 
 MITRE Caldera&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
