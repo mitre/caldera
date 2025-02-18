@@ -6,6 +6,8 @@
 
 # MITRE Caldera&trade;
 
+`🚨Security Notice🚨 : (17 Feb 2025 10:00 EST) Please pull or repull the main branch for a recent RCE security patch. MITRE Caldera team will provide a CVE and writeup on the RCE soon, but in the mean time please update your Caldera instance, especially if you host Caldera on a publicly accessible network.`
+
 MITRE Caldera&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
@@ -18,6 +20,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 
 ## Resources & Socials
 * 📜 [Documentation, training, and use-cases](https://caldera.readthedocs.io/en/latest/)
+* 🎬 [Tutorial Videos](https://www.youtube.com/playlist?list=PLF2bj1pw7-ZvLTjIwSaTXNLN2D2yx-wXH)
 * ✍️ [Caldera's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
 * 🌐 [Homepage](https://caldera.mitre.org)
 
