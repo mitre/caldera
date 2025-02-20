@@ -38,6 +38,6 @@ class Handler:
         try:
             path = connection.request.path
             for handle in [h for h in self.handles if path.split('/', 1)[1].startswith(h.tag)]:
-                await handle.run(socket, path, self.services)
+                await handle.run(connection, path, self.services)
         except Exception as e:
             self.log.debug(e)
