@@ -242,6 +242,91 @@ class TestFileService:
         ret = file_svc.is_extension_xored(test_value)
         assert ret is False
 
+    def test_sanitize_ldflag_value(self, file_svc):
+        safe_values = [
+            'safevalue',
+            'SAFE29VALUE',
+            '_safe_',
+            's-a-f-e.s_a_f_e.2',
+            '1234567890'
+        ]
+        for value in safe_values:
+            assert value == file_svc.sanitize_ldflag_value('contact', value)
+            assert value == file_svc.sanitize_ldflag_value('group', value)
+            assert value == file_svc.sanitize_ldflag_value('genericparam', value)
+
+        safe_server_values = [
+            'http://localhost',
+            'https://localhost:8443',
+            'https://127.0.0.1:8443/home.html',
+            'https://some.domain.net:8443/home%20test.html',
+            'https://_underscore.domain-with-dash.net:8443/home+test.html',
+        ]
+        for value in safe_server_values:
+            assert value == file_svc.sanitize_ldflag_value('server', value)
+            assert value == file_svc.sanitize_ldflag_value('http', value)
+
+        safe_socket_values = [
+            'localhost:1234',
+            '10.10.10.10.:8888',
+            'f.q.d.n:443',
+            'domain-with-dash.net:443',
+        ]
+        for value in safe_socket_values:
+            assert value == file_svc.sanitize_ldflag_value('socket', value)
+
+        unsafe_values = [
+            'unsafe with spaces',
+            'unsafe,comma',
+            'unsafe;semicolon',
+            'unsafe!',
+            'unsafe&&test',
+            'unsafe||test',
+            'unsafe>test',
+            'unsafe<test',
+            'unsafe$(test)',
+            'unsafe~/test',
+            'unsafe%test+',
+        ]
+        for value in unsafe_values:
+            with pytest.raises(Exception) as e_info:
+                file_svc.sanitize_ldflag_value('group', value)
+            assert str(e_info.value) == 'Invalid characters in group LDFLAG value: {}'.format(value)
+
+        unsafe_server_values = [
+            'http://localhost||test',
+            'https://localhost:8443 space',
+            'https://localhost:8443@',
+            'https://localhost:8443"test',
+            'https://localhost:8443\'test',
+            'https://127.0.0.1:8443/home.html$(test)',
+            'https://some.domain.net:8443/home%20test.html && test',
+            'https://_underscore.domain-with-dash.net:8443/home+test.html; test',
+        ]
+        for value in unsafe_server_values:
+            with pytest.raises(Exception) as e_info:
+                file_svc.sanitize_ldflag_value('server', value)
+            assert str(e_info.value) == 'Invalid characters in server LDFLAG value: {}'.format(value)
+
+            with pytest.raises(Exception) as e_info:
+                file_svc.sanitize_ldflag_value('http', value)
+            assert str(e_info.value) == 'Invalid characters in http LDFLAG value: {}'.format(value)
+
+        unsafe_socket_values = [
+            'localhost:8888||test',
+            '127.0.0.1:8443 space',
+            'domain.com:8443@',
+            'localhost:8443"test',
+            'localhost:8443\'test',
+            '127.0.0.1:8443$(test)',
+            'some.domain.net:8443 && test',
+            'domain-with-dash.net:8443; test',
+        ]
+        for value in unsafe_socket_values:
+            with pytest.raises(Exception) as e_info:
+                file_svc.sanitize_ldflag_value('socket', value)
+            assert str(e_info.value) == 'Invalid characters in socket LDFLAG value: {}'.format(value)
+
     @staticmethod
     def _test_download_file_with_encoding(event_loop, file_svc, data_svc, encoding, original_content, encoded_content):
         filename = 'testencodedpayload.txt'
