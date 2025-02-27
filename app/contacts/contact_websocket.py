@@ -20,16 +20,21 @@ class Contact(BaseWorld):
     async def start(self):
         websocket_config = self.get_config('app.contact.websocket')
         try:
-            host, port = websocket_config.split(':')
-        except ValueError:
-            self.log.error("Invalid websocket config format: {}".format(websocket_config))
+            host, port_str = websocket_config.split(':')
+            port = int(port_str)  # Convert port to integer during validation
+            
+            if not (1 <= port <= 65535):
+                raise ValueError("Port number must be between 1 and 65535.")
+        
+        except ValueError as e:
+            self.log.error(f"Invalid websocket config format or port: {websocket_config} - Error: {e}")
             return
 
         try:
-            async with websockets.serve(self.handler.handle, host, int(port), logger=self.log):
+            async with websockets.serve(self.handler.handle, host, port, logger=self.log):
                 await self.stop_future
         except OSError as e:
-            self.log.error("WebSocket error: {}".format(e))
+            self.log.error(f"WebSocket error: {e}")
 
     async def stop(self):
         self.stop_future.set_result('')
@@ -50,11 +55,11 @@ class Handler:
             path = connection.request.path
             parts = path.split('/', 1)
             if len(parts) < 2:
-                self.log.error("Invalid path format: {}".format(path))
+                self.log.error(f"Invalid path format: {path}")
                 return
 
             tag_part = parts[1]
             for handle in [h for h in self.handles if tag_part.startswith(h.tag)]:
                 await handle.run(connection, path, self.services)
         except Exception as e:
-            self.log.error("Handler error: {}".format(e), exc_info=True)
+            self.log.error(f"Handler error: {e}", exc_info=True)
