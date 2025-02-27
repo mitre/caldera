@@ -1,65 +1,119 @@
 import asyncio
+import json
 import websockets
+import inspect
 
-from app.utility.base_world import BaseWorld
+from datetime import datetime, timezone
+
+from app.service.interfaces.i_event_svc import EventServiceInterface
+from app.utility.base_service import BaseService
 
 
-class Contact(BaseWorld):
-    """
-    A class that handles receiving data through web sockets.
-    """
+class EventService(EventServiceInterface, BaseService):
 
-    def __init__(self, services):
-        self.name = 'websocket'
-        self.description = 'Accept data through web sockets'
-        self.log = self.create_logger('contact_websocket')
-        self.log.level = 100
-        self.handler = Handler(services)
-        self.stop_future = asyncio.Future()
+    def __init__(self):
+        self.log = self.add_service('event_svc', self)
+        self.contact_svc = self.get_service('contact_svc')
 
-    async def start(self):
-        websocket_config = self.get_config('app.contact.websocket')
+        # Ensure WebSocket URI is properly configured
         try:
-            host, port_str = websocket_config.split(':')
-            port = int(port_str)  # Convert port to integer during validation
-            
-            if not (1 <= port <= 65535):
-                raise ValueError("Port number must be between 1 and 65535.")
-        
-        except ValueError as e:
-            self.log.error(f"Invalid websocket config format or port: {websocket_config} - Error: {e}")
-            return
-
-        try:
-            async with websockets.serve(self.handler.handle, host, port, logger=self.log):
-                await self.stop_future
-        except OSError as e:
-            self.log.error(f"WebSocket error: {e}")
-
-    async def stop(self):
-        self.stop_future.set_result('')
-
-
-class Handler:
-    """
-    A handler class to process incoming websocket connections.
-    """
-
-    def __init__(self, services):
-        self.services = services
-        self.handles = []
-        self.log = BaseWorld.create_logger('websocket_handler')
-
-    async def handle(self, connection):
-        try:
-            path = connection.request.path
-            parts = path.split('/', 1)
-            if len(parts) < 2:
-                self.log.error(f"Invalid path format: {path}")
-                return
-
-            tag_part = parts[1]
-            for handle in [h for h in self.handles if tag_part.startswith(h.tag)]:
-                await handle.run(connection, path, self.services)
+            ws_config = self.get_config('app.contact.websocket')
+            if not ws_config:
+                raise ValueError("WebSocket URI is not properly configured.")
+            self.ws_uri = f'ws://{ws_config}'
         except Exception as e:
-            self.log.error(f"Handler error: {e}", exc_info=True)
+            self.log.error(f"Error setting WebSocket URI: {e}", exc_info=True)
+            self.ws_uri = 'ws://localhost:8888'  # Fallback URI
+
+        self.global_listeners = []
+        self.default_exchange = 'caldera'
+        self.default_queue = 'general'
+
+    async def observe_event(self, callback, exchange=None, queue=None):
+        """
+        Register a callback for a specific event. The callback is triggered 
+        when an event of the specified type occurs.
+
+        :param callback: Callback function
+        :param exchange: Event exchange (default: caldera)
+        :param queue: Event queue (default: general)
+        """
+        exchange = exchange or self.default_exchange
+        queue = queue or self.default_queue
+        path = '/'.join([exchange, queue])
+        handle = _Handle(path, callback)
+        ws_contact = await self.contact_svc.get_contact('websocket')
+        ws_contact.handler.handles.append(handle)
+
+    async def register_global_event_listener(self, callback):
+        """
+        Register a global event listener that triggers whenever any event occurs.
+
+        :param callback: Callback function
+        """
+        self.global_listeners.append(callback)
+
+    async def notify_global_event_listeners(self, event, **callback_kwargs):
+        """
+        Notify all registered global event listeners when an event is triggered.
+
+        :param event: Event string (format: '<exchange>/<queue>')
+        """
+        for callback in self.global_listeners:
+            try:
+                if inspect.iscoroutinefunction(callback):
+                    await callback(event, **callback_kwargs)
+                else:
+                    callback(event, **callback_kwargs)
+            except Exception as e:
+                self.log.error(f"Error in global callback: {e}", exc_info=True)
+
+    async def handle_exceptions(self, awaitable):
+        """
+        Handle WebSocket exceptions to prevent crashes.
+        """
+        try:
+            return await awaitable
+        except websockets.exceptions.ConnectionClosedOK:
+            pass  # No handler was registered for this event
+        except Exception as e:
+            self.log.error(f"WebSocket error: {e}", exc_info=True)
+
+    async def fire_event(self, exchange=None, queue=None, timestamp=True, **callback_kwargs):
+        """
+        Fire an event to the WebSocket server.
+
+        :param exchange: Exchange name (default: caldera)
+        :param queue: Queue name (default: general)
+        :param timestamp: Include timestamp in event metadata (default: True)
+        """
+        exchange = exchange or self.default_exchange
+        queue = queue or self.default_queue
+        metadata = {}
+        if timestamp:
+            metadata['timestamp'] = datetime.now(timezone.utc).timestamp()
+        callback_kwargs['metadata'] = metadata
+        uri = '/'.join([self.ws_uri, exchange, queue])
+
+        if self.global_listeners:
+            asyncio.create_task(
+                self.notify_global_event_listeners('/'.join([exchange, queue]), **callback_kwargs)
+            )
+
+        d = json.dumps(callback_kwargs)
+        try:
+            async with websockets.connect(uri) as websocket:
+                asyncio.create_task(self.handle_exceptions(websocket.send(d)))
+                await asyncio.sleep(0)  # Yield control to the event loop
+        except Exception as e:
+            self.log.error(f"Failed to connect to WebSocket server at {uri}: {e}", exc_info=True)
+
+
+class _Handle:
+
+    def __init__(self, tag, callback):
+        self.tag = tag
+        self.callback = callback
+
+    async def run(self, socket, path, services):
+        return await self.callback(socket, path, services)
