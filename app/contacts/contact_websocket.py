@@ -23,7 +23,7 @@ class EventService(EventServiceInterface, BaseService):
             self.ws_uri = f'ws://{ws_config}'
         except Exception as e:
             self.log.error(f"Error setting WebSocket URI: {e}", exc_info=True)
-            self.ws_uri = 'ws://localhost:8888'  # Fallback URI
+            self.ws_uri = 'ws://localhost:7012'  # Fallback URI
 
         self.global_listeners = []
         self.default_exchange = 'caldera'
