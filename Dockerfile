@@ -13,7 +13,7 @@ RUN (cd plugins/magma; npm install && npm run build)
 FROM debian:bookworm-slim as runtime
 
 # There are two variants - slim and full
-# The slim variant excludes some dependencies of *emu* and *slim* that can be downloaded on-demand if needed
+# The slim variant excludes some dependencies of *emu* and *atomic* that can be downloaded on-demand if needed
 # They are very large
 ARG VARIANT=full
 ENV VARIANT=${VARIANT}
