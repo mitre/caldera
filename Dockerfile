@@ -24,7 +24,7 @@ RUN if [ "$VARIANT" = "full" ]; then \
     elif [ "$VARIANT" = "slim" ]; then \
         echo "Building slim container - some plugins (emu, atomic) may not be available without an internet connection!"; \
     else \
-        echo "Invalid Docker build-arg!"; \
+        echo "Invalid Docker build-arg for VARIANT! Please provide either \"full\" or \"slim\"."; \
         exit 1; \
 fi
 
