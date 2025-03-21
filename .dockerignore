@@ -21,3 +21,27 @@ tests/
 **/release.sh
 **/requirements-dev.txt
 **/tox.ini
+
+# Artifacts from previous use/compilation
+**/__pycache__/
+**/node_modules/
+**/plugins/magma/dist/
+
+# Artifacts from previous caldera use
+data/*_store
+data/abilities/*
+data/adversaries/*
+data/results/*
+data/payloads/*
+data/facts/*
+data/sources/*
+data/objectives/*
+data/backup/*
+data/planners/*
+!data/planners/aaa7c857-37a0-4c4a-85f7-4e9f7f30e31a.yml
+conf/local.yml
+conf/ssh_keys/*
+ftp_dir/*
+**/plugins/atomic/data/atomic-red-team
+**/plugins/emu/data/adversary-emulation-plans
+**/plugins/emu/payloads/*
