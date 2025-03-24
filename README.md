@@ -90,7 +90,7 @@ Local build:
 git clone https://github.com/mitre/caldera.git --recursive
 cd caldera
 docker build --build-arg VARIANT=full -t caldera .
-docker run -p 8888:8888 caldera
+docker run -it -p 8888:8888 caldera
 ```
 
 Adjust the port forwarding (`-p`) and build args (`--build-arg`) as desired to make ports accessible or change the caldera variant.
@@ -98,7 +98,7 @@ The ports that you expose depend on which contacts you plan on using (see `Docke
 
 Pre-Built Image (from GitHub Container Registry):
 ```sh
-docker run -p 8888:8888 ghcr.io/mitre/caldera:latest
+docker run -it -p 8888:8888 ghcr.io/mitre/caldera:latest
 ```
 This container may be slightly outdated, we recommend building the container yourself.
 
