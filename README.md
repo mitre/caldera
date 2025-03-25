@@ -92,8 +92,7 @@ Finally, start the server.
 python3 server.py --insecure --build
 ```
 
-The --build flag automatically installs any VueJS UI dependencies, bundles the UI into a dist directory and is served by the Caldera server. You will only have to use the --build flag again if you add any plugins or make any changes to the UI.
-Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
+The `--build` flag automatically installs any VueJS UI dependencies, bundles the UI into a dist directory and is served by the Caldera server. You will only have to use the `--build flag` again if you add any plugins or make any changes to the UI. Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
 
 If you prefer to not use the new VueJS UI, revert to Caldera v4.2.0. Correspondingly, do not use the `--build` flag for earlier versions as not required.
 
@@ -124,12 +123,12 @@ docker ps
 docker stop <container ID>
 ```
 
-There are two variants available, *full* and *slim*. The *slim* variant doesn't include files necessary for the *emu* and *atomic* plugins, which will be downloaded on-demand if the plugins are ever enabled. The *full* variant is suitable for operation in environments without an internet connection. Slim images on GHCR are prefixed with "slim".
+There are two variants available, *full* and *slim*. The *slim* variant doesn't include files necessary for the `emu` and `atomic` plugins, which will be downloaded on-demand if the plugins are ever enabled. The *full* variant is suitable for operation in environments without an internet connection. Slim images on GHCR are prefixed with "slim".
 
 **Docker Container Notes**
 - The Caldera container will automatically generate keys/usernames/password on first start.
 - If you wish to override the default configuration or avoid automatically generated keys/passwords, consider bind-mounting your own configuration file with the `-v <your_path>/conf.yml:/usr/src/app/conf/local.yml` flag.
-- Data stored by Caldera is ephermal by default. If you wish to make it persistent, use docker volumes and/or bind mounts (`-v <path_to_your_data_or_volume_name>:/usr/src/app/data/`). Ensure that the directory structure is the same as in the `data/` directory on GitHub, as Caldera will refuse to create these sub-directories if they are missing. Lastly, make sure that the configuration file is also made persistent to prevent issues with encryption keys.
+- Data stored by Caldera is ephemeral by default. If you wish to make it persistent, use docker volumes and/or bind mounts (`-v <path_to_your_data_or_volume_name>:/usr/src/app/data/`). Ensure that the directory structure is the same as in the `data/` directory on GitHub, as Caldera will refuse to create these sub-directories if they are missing. Lastly, make sure that the configuration file is also made persistent to prevent issues with encryption keys.
 - The `builder` plugin will not work within Docker.
 - If you wish to modify data used by the `atomic` plugin, clone the `Atomic Red Team` repository outside the container, apply your modifications and bind-mount it (`-v`) to `/usr/src/app/plugins/atomic/data/atomic-red-team` within the container.
 - If you wish to modify data used by `emu`, clone the `adversary_emulation_library` repository locally and bind-mount it (`-v`) to `/usr/src/app/plugins/emu/data/adversary-emulation-plans`.
