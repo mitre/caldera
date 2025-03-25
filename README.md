@@ -65,56 +65,6 @@ These requirements are for the computer running the core framework:
 * Recommended: GoLang 1.17+ to dynamically compile GoLang-based agents.
 * NodeJS (v16+ recommended for v5 VueJS UI)
 
-## Docker Installation (Recommended)
-**Note 1: The image on DockerHub is outdated, please do not use it for the time being!**
-
-**Note 2: The builder plugin will not work within Docker**
-
-**Note 3: The caldera container will automatically generate keys/usernames/password on first start.**
-**If you wish to override the default configuration or avoid automatically generated keys/passwords, consider bind-mounting your own**
-**configuration file with the `-v <your_path>/conf.yml:/usr/src/app/conf/local.yml` flag**
-
-**Note 4: Data stored by caldera is ephermal by default.**
-**If you wish to make it persistent, use docker volumes and/or bind mounts (`-v <path_to_your_data_or_volume_name>:/usr/src/app/data/`).**
-**Ensure that the directory structure is the same as in the `data/` directory on GitHub, as caldera will refuse to create these sub-directories if they are missing.**
-**Lastly, make sure that the configuration file (Note #3) is also made persistent to prevent issues with encryption keys.**
-
-**Note 5: If you wish to modify data used by the `atomic` plugin, clone the `Atomic Red Team` repository outside the container, apply your modifications and bind-mount it (`-v`) to `/usr/src/app/plugins/atomic/data/atomic-red-team` within the container.**
-
-**Note 6: If you wish to modify data used by `emu`,**
-**clone the `adversary_emulation_library` repository locally and bind-mount it (`-v`) to**
-**`/usr/src/app/plugins/emu/data/adversary-emulation-plans`**
-
-Local build:
-```sh
-git clone https://github.com/mitre/caldera.git --recursive
-cd caldera
-docker build --build-arg VARIANT=full -t caldera .
-docker run -it -p 8888:8888 caldera
-```
-
-Adjust the port forwarding (`-p`) and build args (`--build-arg`) as desired to make ports accessible or change the caldera variant.
-The ports that you expose depend on which contacts you plan on using (see `Dockerfile` and `docker-compose.yml` for reference).
-
-Pre-Built Image (from GitHub Container Registry):
-```sh
-docker run -it -p 8888:8888 ghcr.io/mitre/caldera:latest
-```
-This container may be slightly outdated, we recommend building the container yourself.
-
-To gracefully terminate your docker container, do the following:
-```Bash
-# Find the container ID for your docker container running Caldera
-docker ps
-
-# Stop the container
-docker stop [container ID]
-```
-
-There are two variants available, *full* and *slim*.
-The *slim* variant doesn't include files necessary for the *emu* and *atomic* plugins, which will be downloaded on-demand if the plugins are ever enabled. The *full* variant is suitable for operation in environments without an internet connection. Slim images on GHCR are prefixed with "slim".
-
-
 ## Installation
 
 Concise installation steps:
@@ -146,6 +96,43 @@ The --build flag automatically installs any VueJS UI dependencies, bundles the U
 Once started, log into http://localhost:8888 using the default credentials red/admin. Then go into Plugins -> Training and complete the capture-the-flag style training course to learn how to use Caldera.
 
 If you prefer to not use the new VueJS UI, revert to Caldera v4.2.0. Correspondingly, do not use the `--build` flag for earlier versions as not required.
+
+## Docker Installation
+
+Local build:
+```sh
+git clone https://github.com/mitre/caldera.git --recursive
+cd caldera
+docker build --build-arg VARIANT=full -t caldera .
+docker run -it -p 8888:8888 caldera
+```
+
+Adjust the port forwarding (`-p`) and build args (`--build-arg`) as desired to make ports accessible or change the Caldera variant. The ports that you expose depend on which contacts you plan on using (see `Dockerfile` and `docker-compose.yml` for reference).
+
+Pre-Built Image (from GitHub Container Registry):
+```sh
+docker run -p 8888:8888 ghcr.io/mitre/caldera:latest
+```
+This container may be slightly outdated, we recommend building the container yourself.
+
+To gracefully terminate your docker container, do the following:
+```sh
+# Find the container ID for your docker container running Caldera
+docker ps
+
+# Stop the container
+docker stop <container ID>
+```
+
+There are two variants available, *full* and *slim*. The *slim* variant doesn't include files necessary for the *emu* and *atomic* plugins, which will be downloaded on-demand if the plugins are ever enabled. The *full* variant is suitable for operation in environments without an internet connection. Slim images on GHCR are prefixed with "slim".
+
+**Docker Container Notes**
+- The Caldera container will automatically generate keys/usernames/password on first start.
+- If you wish to override the default configuration or avoid automatically generated keys/passwords, consider bind-mounting your own configuration file with the `-v <your_path>/conf.yml:/usr/src/app/conf/local.yml` flag.
+- Data stored by Caldera is ephermal by default. If you wish to make it persistent, use docker volumes and/or bind mounts (`-v <path_to_your_data_or_volume_name>:/usr/src/app/data/`). Ensure that the directory structure is the same as in the `data/` directory on GitHub, as Caldera will refuse to create these sub-directories if they are missing. Lastly, make sure that the configuration file is also made persistent to prevent issues with encryption keys.
+- The `builder` plugin will not work within Docker.
+- If you wish to modify data used by the `atomic` plugin, clone the `Atomic Red Team` repository outside the container, apply your modifications and bind-mount it (`-v`) to `/usr/src/app/plugins/atomic/data/atomic-red-team` within the container.
+- If you wish to modify data used by `emu`, clone the `adversary_emulation_library` repository locally and bind-mount it (`-v`) to `/usr/src/app/plugins/emu/data/adversary-emulation-plans`.
 
 ### User Interface Development
 
