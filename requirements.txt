@@ -3,7 +3,7 @@ aiohttp==3.10.8
 aiohttp_session==2.12.0
 aiohttp-security==0.4.0
 aiohttp-apispec==3.0.0b2
-jinja2==3.1.3
+jinja2==3.1.6
 pyyaml==6.0.1
 cryptography==44.0.1
 websockets==15.0
@@ -24,3 +24,4 @@ asyncssh==2.14.1
 aioftp~=0.20.0
 packaging==23.2
 croniter~=3.0.3
+setuptools==75.6.0
