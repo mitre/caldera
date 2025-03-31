@@ -24,3 +24,4 @@ asyncssh==2.14.1
 aioftp~=0.20.0
 packaging==23.2
 croniter~=3.0.3
+setuptools==75.6.0
