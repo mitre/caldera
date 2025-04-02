@@ -70,9 +70,14 @@ RUN if [ ! -d "/usr/src/app/plugins/emu/data/adversary-emulation-plans" ] && [ "
             /usr/src/app/plugins/emu/data/adversary-emulation-plans;                  \
 fi
 
-# Download emu payloads
-# emu doesn't seem capable of running this itself - always download
-RUN cd /usr/src/app/plugins/emu; ./download_payloads.sh
+# Ensure emu payloads are always downloaded during the build process.
+# This is necessary because emu does not handle downloading payloads dynamically at runtime.
+# By downloading them here, we ensure the container is fully prepared for emu usage.
+RUN if grep -q "\- emu" ../../conf/local.yml; then \
+    apt-get -y install zlib1g unzip;              \
+    pip3 install -r requirements.txt;             \
+    ./download_payloads.sh;                       \
+fi
 
 # The commands above (git clone) will generate *huge* .git folders - remove them
 RUN (find . -type d -name ".git") | xargs rm -rf
