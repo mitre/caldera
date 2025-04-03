@@ -22,7 +22,7 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 * ✍️ [Caldera's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
 * 🌐 [Homepage](https://caldera.mitre.org)
 
-## User Survey
+### User Survey
 
 It is always incredibly helpful for our team to hear from users about their Caldera use cases and the value that Caldera provides for their learning, research, or cyber security work. If you or your team uses Caldera significantly, we would greatly appreciate hearing from you.
 
