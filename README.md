@@ -6,8 +6,6 @@
 
 # MITRE Caldera&trade;
 
-`🚨Security Notice🚨`: (17 Feb 2025 10:00 EST) Please pull v5.1.0+ for a recent security patch for [CVE-2025-27364](https://www.cve.org/CVERecord?id=CVE-2025-27364). Please update your Caldera instance, especially if you host Caldera on a publicly accessible network. [Vulnerability walkthrough.](https://medium.com/@mitrecaldera/mitre-caldera-security-advisory-remote-code-execution-cve-2025-27364-5f679e2e2a0e)
-
 MITRE Caldera&trade; is a cyber security platform designed to easily automate adversary emulation, assist manual red-teams, and automate incident response.
 
 It is built on the [MITRE ATT&CK™ framework](https://attack.mitre.org/) and is an active research project at MITRE.
@@ -23,6 +21,12 @@ an asynchronous command-and-control (C2) server with a REST API and a web interf
 * 🎬 [Tutorial Videos](https://www.youtube.com/playlist?list=PLF2bj1pw7-ZvLTjIwSaTXNLN2D2yx-wXH)
 * ✍️ [Caldera's blog](https://medium.com/@mitrecaldera/welcome-to-the-official-mitre-caldera-blog-page-f34c2cdfef09)
 * 🌐 [Homepage](https://caldera.mitre.org)
+
+## User Survey
+
+It is always incredibly helpful for our team to hear from users about their Caldera use cases and the value that Caldera provides for their learning, research, or cyber security work. If you or your team uses Caldera significantly, we would greatly appreciate hearing from you.
+
+📋 **Survey** - https://forms.office.com/g/ByBWxYTf8e
 
 ## Plugins
 
@@ -96,6 +100,8 @@ The `--build` flag automatically installs any VueJS UI dependencies, bundles the
 
 If you prefer to not use the new VueJS UI, revert to Caldera v4.2.0. Correspondingly, do not use the `--build` flag for earlier versions as not required.
 
+Additionally, please note [security recommendations](##Security) for deploying Caldera.
+
 ## Docker Installation
 
 Local build:
@@ -133,6 +139,8 @@ There are two variants available, *full* and *slim*. The *slim* variant doesn't 
 - If you wish to modify data used by the `atomic` plugin, clone the `Atomic Red Team` repository outside the container, apply your modifications and bind-mount it (`-v`) to `/usr/src/app/plugins/atomic/data/atomic-red-team` within the container.
 - If you wish to modify data used by `emu`, clone the `adversary_emulation_library` repository locally and bind-mount it (`-v`) to `/usr/src/app/plugins/emu/data/adversary-emulation-plans`.
 
+Additionally, please note [security recommendations](##Security) for deploying Caldera.
+
 ### User Interface Development
 
 If you'll be developing the UI, there are a few more additional installation steps.
@@ -148,13 +156,21 @@ If you'll be developing the UI, there are a few more additional installation ste
 
 Your Caldera server is available at http://localhost:8888 as usual, but there will now be a hot-reloading development server for the VueJS front-end available at http://localhost:3000. Both logs from the server and the front-end will display in the terminal you launched the server from.
 
+## Security
+
+The Caldera team highly reccommends standing up the Caldera server on a secure environment/network, and not exposing it to the internet. The Caldera server does not have a hardened and thoroughly pentested web application interface, but only basic authentication and security features. Both MITRE and MITRE's US Government sponsors nearly exclusively only use Caldera on secure environments and do not rely on Caldera's own security protocols for proper cyber security.
+
+### Vulnerability Disclosures
+
+Refer to our [Vulnerability Disclosure Documentation](SECURITY.md) for submitting bugs.
+
+#### Recent Vulnerability Disclosures
+
+`🚨Security Notice🚨`: (17 Feb 2025 10:00 EST) Please pull v5.1.0+ for a recent security patch for [CVE-2025-27364](https://www.cve.org/CVERecord?id=CVE-2025-27364). Please update your Caldera instance, especially if you host Caldera on a publicly accessible network. [Vulnerability walkthrough.](https://medium.com/@mitrecaldera/mitre-caldera-security-advisory-remote-code-execution-cve-2025-27364-5f679e2e2a0e)
+
 ## Contributing
 
 Refer to our [contributor documentation](CONTRIBUTING.md).
-
-## Vulnerability Disclosures
-
-Refer to our [Vulnerability Disclosure Documentation](SECURITY.md) for submitting bugs.
 
 ## Licensing
 
