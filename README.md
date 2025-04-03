@@ -100,7 +100,7 @@ The `--build` flag automatically installs any VueJS UI dependencies, bundles the
 
 If you prefer to not use the new VueJS UI, revert to Caldera v4.2.0. Correspondingly, do not use the `--build` flag for earlier versions as not required.
 
-Additionally, please note [security recommendations](#Security) for deploying Caldera.
+**Additionally, please note [security recommendations](#Security) for deploying Caldera.**
 
 ## Docker Installation
 
@@ -139,7 +139,7 @@ There are two variants available, *full* and *slim*. The *slim* variant doesn't 
 - If you wish to modify data used by the `atomic` plugin, clone the `Atomic Red Team` repository outside the container, apply your modifications and bind-mount it (`-v`) to `/usr/src/app/plugins/atomic/data/atomic-red-team` within the container.
 - If you wish to modify data used by `emu`, clone the `adversary_emulation_library` repository locally and bind-mount it (`-v`) to `/usr/src/app/plugins/emu/data/adversary-emulation-plans`.
 
-Additionally, please note [security recommendations](#Security) for deploying Caldera.
+**Additionally, please note [security recommendations](#Security) for deploying Caldera.**
 
 ### User Interface Development
 
