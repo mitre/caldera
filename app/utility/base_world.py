@@ -60,7 +60,7 @@ class BaseWorld:
         i = fraction.split('/')
         min, max = int(i[0]), int(i[1])
         if min > max:
-            logging.warn(f'Jitter range max value (max={max}) less than min value (min={min}). Using min={max} and max={min}.')
+            logging.warning(f'Jitter range max value (max={max}) less than min value (min={min}). Using min={max} and max={min}.')
             min, max = max, min
         return randint(min, max)
 
