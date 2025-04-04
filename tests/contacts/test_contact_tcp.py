@@ -13,7 +13,7 @@ class TestTcpSessionHandler:
         handler = TcpSessionHandler(services=None, log=logger)
 
         session_with_socket_error = mock.Mock()
-        session_with_socket_error.connection.send.side_effect = socket.error()
+        session_with_socket_error.writer.write.side_effect = socket.error()
 
         handler.sessions = [
             session_with_socket_error,
