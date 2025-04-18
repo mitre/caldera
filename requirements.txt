@@ -19,8 +19,8 @@ reportlab==4.0.4  # debrief
 rich==13.7.0
 svglib==1.5.1  # debrief
 Markdown==3.4.4  # training
-dnspython==2.4.2
-asyncssh==2.14.1
+dnspython==2.6.1
+asyncssh==2.20.0
 aioftp~=0.20.0
 packaging==23.2
 croniter~=3.0.3
