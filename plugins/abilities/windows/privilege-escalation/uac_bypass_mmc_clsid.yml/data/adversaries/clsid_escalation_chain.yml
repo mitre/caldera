@@ -1,0 +1,12 @@
+id: 204820f1-d333-4f08-bc09-078bf16dbdca
+name: CLSID Escalation & Recon Chain
+description: Emulates a threat actor who leverages a UAC bypass via CLSID hijack,
+  followed by host and domain reconnaissance, user privilege escalation, and lateral
+  movement using built-in Windows utilities.
+atomic_ordering:
+- a3f94b9c-1cc2-4a64-9092-7c0e3ae2f99a
+- 75869467-7c9c-4432-9a19-029082cd4176
+- 6295e328-ebd8-470a-b7c6-59e5ec02adb1
+- 0aed311e-630f-4a6b-8811-f8ff10436e4d
+- c54da140-7f1c-406d-bb6a-20e4c4839db9
+- f497196e-ad8c-459e-95ea-12f51ee35f05
