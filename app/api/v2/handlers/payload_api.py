@@ -154,16 +154,13 @@ class PayloadApi(BaseApi):
         :return: The canonicalized absolute path if valid.
         :raises ValueError: If the path resolves outside the base directory.
         """
-        # Resolve the base directory to an absolute path
         base_dir = pathlib.Path(base_directory).resolve()
 
-        # Sanitize and resolve the input path to prevent traversal
         try:
             resolved_path = (base_dir / pathlib.Path(input_path).name).resolve()
         except Exception as e:
             raise ValueError(f"Invalid path: {input_path}. Error: {e}")
 
-        # Ensure the resolved path is within the base directory
         if not str(resolved_path).startswith(str(base_dir)):
             raise ValueError(f"Invalid path: {input_path} resolves outside the designated directory {base_directory}")
 
