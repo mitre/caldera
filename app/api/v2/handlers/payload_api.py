@@ -90,14 +90,14 @@ class PayloadApi(BaseApi):
     @aiohttp_apispec.match_info_schema(PayloadDeleteRequestSchema)
     async def delete_payloads(self, request: web.Request):
         file_name: str = request.match_info.get("name")
-        file_path: str = os.path.join('data/payloads/', file_name)
-
-        response: web.HTTPException = None
         try:
-            os.remove(file_path)
+            safe_path = self.validate_and_canonicalize_path(file_name)
+            os.remove(safe_path)
             response = web.HTTPNoContent()
+        except ValueError as e:
+            response = web.HTTP.NotFound(reason=str(e))
         except FileNotFoundError:
-            response = web.HTTPNotFound()
+            response = web.HTTPNotFound()    
         return response
 
     @classmethod
@@ -142,3 +142,29 @@ class PayloadApi(BaseApi):
                     buffered_io_base_dest.write(chunk)
                 else:
                     read_chunk = False
+
+
+    @staticmethod
+    def validate_and_canonicalize_path(input_path: str, base_directory: str = "data/payloads/") -> str:
+        """
+        Validates and canonicalizes a file path to ensure it is within the designated directory.
+
+        :param input_path: The input file path to validate.
+        :param base_directory: The base directory to constrain paths to.
+        :return: The canonicalized absolute path if valid.
+        :raises ValueError: If the path resolves outside the base directory.
+        """
+        # Resolve the base directory to an absolute path
+        base_dir = pathlib.Path(base_directory).resolve()
+
+        # Sanitize and resolve the input path to prevent traversal
+        try:
+            resolved_path = (base_dir / pathlib.Path(input_path).name).resolve()
+        except Exception as e:
+            raise ValueError(f"Invalid path: {input_path}. Error: {e}")
+
+        # Ensure the resolved path is within the base directory
+        if not str(resolved_path).startswith(str(base_dir)):
+            raise ValueError(f"Invalid path: {input_path} resolves outside the designated directory {base_directory}")
+
+        return str(resolved_path)
