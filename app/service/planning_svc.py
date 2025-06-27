@@ -351,7 +351,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             executor = await agent.get_preferred_executor(ability)
             if not executor:
                 continue
-            await self._call_ability_plugin_hooks(ability, executor)
+            if executor.HOOKS and executor.language and executor.language in executor.HOOKS:
+                await self._call_ability_plugin_hooks(ability, executor)
             if executor.command:
                 link = Link.load(dict(command=self.encode_string(executor.test), paw=agent.paw, score=0,
                                       ability=ability, executor=executor, status=link_status,
