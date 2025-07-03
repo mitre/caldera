@@ -83,7 +83,7 @@ class PayloadApi(BaseApi):
 
         # Validate the saved file to ensure it is not a symbolic link
         if temp_file_path.is_symlink():
-            temp_file_path.unlink()  
+            temp_file_path.unlink()
             raise web.HTTPBadRequest(reason="Uploaded file is a symbolic link and is not allowed.")
 
         # Move the validated file to the final destination
