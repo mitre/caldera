@@ -41,3 +41,5 @@ htmlcov/
 .coverage.*
 *,cover
 _*/
+plugins/*
+
