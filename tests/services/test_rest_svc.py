@@ -74,7 +74,7 @@ class TestRestSvc:
         expected_operation = {'name': 'My Test Operation',
                               'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc',
                                             'adversary_id': 'ad-hoc', 'atomic_ordering': [],
-                                            'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
+                                            'objective': uuid.UUID('495a9828-cab1-44dd-a0ca-66e58177d8cc'),
                                             'tags': [], 'has_repeatable_abilities': False, 'plugin': None}, 'state': 'finished',
                               'planner': {'name': 'test', 'description': None, 'module': 'test',
                                           'stopping_conditions': [], 'params': {}, 'allow_repeatable_abilities': False,

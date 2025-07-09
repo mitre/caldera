@@ -1,0 +1,10 @@
+id: '123'
+name: 123test planner
+module: ''
+params: {}
+description: a test planner with updated description
+stopping_conditions: []
+ignore_enforcement_modules: []
+allow_repeatable_abilities: false
+plugin: planner
+planner_id: '123'

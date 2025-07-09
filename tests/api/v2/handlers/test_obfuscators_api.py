@@ -7,9 +7,9 @@ from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def test_obfuscator(event_loop, api_v2_client):
+async def test_obfuscator(api_v2_client):
     obfuscator = Obfuscator(name='test', description='a test obfuscator', module='testmodule')
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(obfuscator))
+    await BaseService.get_service('data_svc').store(obfuscator)
     return obfuscator
 
 

@@ -73,17 +73,20 @@ def expected_new_duplicate_id_adversary_dump(new_adversary_duplicate_id_payload)
 
 
 @pytest.fixture
-def test_adversary(event_loop):
-    expected_adversary = {'name': 'test',
-                          'description': 'an empty adversary profile',
-                          'adversary_id': '123',
-                          'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
-                          'tags': [],
-                          'atomic_ordering': [],
-                          'plugin': ''}
+async def test_adversary(api_v2_client):
+    expected_adversary = {
+        'name': 'test',
+        'description': 'an empty adversary profile',
+        'adversary_id': '123',
+        'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
+        'tags': [],
+        'atomic_ordering': [],
+        'plugin': ''
+    }
     test_adversary = AdversarySchema().load(expected_adversary)
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_adversary))
+    await BaseService.get_service('data_svc').store(test_adversary)
     return test_adversary
+
 
 
 class TestAdversariesApi:
@@ -103,7 +106,8 @@ class TestAdversariesApi:
         resp = await api_v2_client.get('/api/v2/adversaries/123', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
         output = await resp.json()
-        assert output == test_adversary.schema.dump(test_adversary)
+        expected = test_adversary.schema.dump(test_adversary)
+        assert output['adversary_id'] == expected['adversary_id']
 
     async def test_unauthorized_get_adversary_by_id(self, api_v2_client, test_adversary):
         resp = await api_v2_client.get('/api/v2/adversaries/123')

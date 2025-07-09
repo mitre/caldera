@@ -8,7 +8,7 @@ from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def new_objective_payload():
+async def new_objective_payload():
     test_goal = Goal(target='new goal', value='in_progress')
     return {
         'id': '456',
@@ -50,9 +50,9 @@ def test_goal():
 
 
 @pytest.fixture
-def test_objective(event_loop, test_goal):
+async def test_objective(api_v2_client, test_goal):
     objective = Objective(id='123', name='test objective', description='a test objective', goals=[test_goal])
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(objective))
+    await BaseService.get_service('data_svc').store(objective)
     return objective
 
 

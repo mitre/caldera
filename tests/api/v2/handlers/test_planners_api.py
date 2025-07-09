@@ -7,27 +7,27 @@ from app.utility.base_service import BaseService
 
 
 @pytest.fixture
-def test_planner(event_loop, api_v2_client):
+async def test_planner(api_v2_client):
     planner = Planner(name="123test planner", planner_id="123", description="a test planner", plugin="planner")
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
+    await BaseService.get_service('data_svc').store(planner)
     return planner
 
 
 @pytest.fixture
-def test_planner_2(event_loop, api_v2_client):
+async def test_planner_2(api_v2_client):
     planner = Planner(name="atomic", planner_id="456", description="an alphabetically superior test planner (fake)",
                       plugin="planner")
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
+    await BaseService.get_service('data_svc').store(planner)
     return planner
 
 
 @pytest.fixture
-def expected_test_planner_dump(test_planner):
+async def expected_test_planner_dump(test_planner):
     return test_planner.display_schema.dump(test_planner)
 
 
 @pytest.fixture
-def updated_planner(test_planner):
+async def updated_planner(test_planner):
     planner_dict = test_planner.schema.dump(test_planner)
     planner_dict.update(dict(description="a test planner with updated description"))
     return planner_dict

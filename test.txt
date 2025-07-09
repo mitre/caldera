@@ -1,0 +1,21 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.1, pluggy-1.6.0
+rootdir: /home/caldera/Desktop/CalderaVENV/caldera/tests
+configfile: pytest.ini
+plugins: anyio-4.9.0, aiohttp-1.1.0, asyncio-1.0.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 14 items
+
+tests/api/v2/handlers/test_sources_api.py ..............                 [100%]
+
+=============================== warnings summary ===============================
+../lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952
+  /home/caldera/Desktop/CalderaVENV/lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: tagMap is deprecated. Please use TAG_MAP instead.
+    warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
+
+../lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952
+  /home/caldera/Desktop/CalderaVENV/lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: typeMap is deprecated. Please use TYPE_MAP instead.
+    warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 14 passed, 2 warnings in 18.43s ========================

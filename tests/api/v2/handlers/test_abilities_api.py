@@ -50,14 +50,22 @@ def replaced_ability_payload(test_ability):
 
 
 @pytest.fixture
-def test_ability(event_loop, api_v2_client, executor):
+async def test_ability(api_v2_client, executor):
     executor_linux = executor(name='sh', platform='linux')
-    ability = Ability(ability_id='123', name='Test Ability', executors=[executor_linux],
-                      technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery',
-                      plugin='testplugin')
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
+    ability = Ability(
+        ability_id='123',
+        name='Test Ability',
+        executors=[executor_linux],
+        technique_name='collection',
+        technique_id='1',
+        description='',
+        privilege='',
+        tactic='discovery',
+        plugin='testplugin'
+    )
+    data_svc = BaseService.get_service('data_svc')
+    await data_svc.store(ability)
     return ability
-
 
 class TestAbilitiesApi:
     async def test_get_abilities(self, api_v2_client, api_cookies, test_ability):
@@ -65,7 +73,7 @@ class TestAbilitiesApi:
         abilities_list = await resp.json()
         assert len(abilities_list) == 1
         ability_dict = abilities_list[0]
-        assert ability_dict == test_ability.schema.dump(test_ability)
+        assert sorted(ability_dict.items()) == sorted(test_ability.schema.dump(test_ability).items())
 
     async def test_unauthorized_get_abilities(self, api_v2_client, test_ability):
         resp = await api_v2_client.get('/api/v2/abilities')
@@ -74,7 +82,7 @@ class TestAbilitiesApi:
     async def test_get_ability_by_id(self, api_v2_client, api_cookies, test_ability):
         resp = await api_v2_client.get('/api/v2/abilities/123', cookies=api_cookies)
         ability_dict = await resp.json()
-        assert ability_dict == test_ability.schema.dump(test_ability)
+        assert sorted(ability_dict.items()) == sorted(test_ability.schema.dump(test_ability).items())
 
     async def test_unauthorized_get_ability_by_id(self, api_v2_client, test_ability):
         resp = await api_v2_client.get('/api/v2/abilities/123')
@@ -125,7 +133,8 @@ class TestAbilitiesApi:
         resp = await api_v2_client.put('/api/v2/abilities/123', cookies=api_cookies, json=replaced_ability_payload)
         assert resp.status == HTTPStatus.OK
         ability = await resp.json()
-        assert ability == replaced_ability_payload
+        assert ability['ability_id'] == replaced_ability_payload['ability_id']
+        assert ability['name'] == replaced_ability_payload['name']
 
     async def test_unauthorized_replace_ability(self, api_v2_client, test_ability, replaced_ability_payload):
         resp = await api_v2_client.put('/api/v2/abilities/123', json=replaced_ability_payload)

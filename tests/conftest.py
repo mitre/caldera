@@ -1,6 +1,6 @@
 import asyncio
 import os.path
-
+import copy
 import jinja2
 import pytest
 import random
@@ -50,6 +50,7 @@ from app.objects.c_ability import Ability, AbilitySchema
 from app.objects.c_operation import Operation, OperationSchema
 from app.objects.c_plugin import Plugin
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_executor import Executor, ExecutorSchema
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
@@ -69,40 +70,24 @@ from tests import AsyncMock
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
 
-
-@pytest.fixture(scope='session')
-def init_base_world():
-    with open(os.path.join(CONFIG_DIR, 'default.yml')) as c:
-        BaseWorld.apply_config('main', yaml.load(c, Loader=yaml.FullLoader))
-    BaseWorld.apply_config('agents', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'agents.yml'))[0])
-    BaseWorld.apply_config('payloads', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'payloads.yml'))[0])
-
+@pytest.fixture
+def event_svc():
+    return BaseService.get_service('event_svc')
 
 @pytest.fixture
-async def app_svc():
-    # async def _init_app_svc():
-    #     return AppService(None)
-
-    # def _app_svc(event_loop):
-    #     return event_loop.run_until_complete(_init_app_svc())
-    # return _app_svc
-    return AppService(None)
-
-
-@pytest.fixture(scope='class')
 def data_svc():
-    return DataService()
-
-
-@pytest.fixture(scope='class')
-def knowledge_svc():
+    svc = BaseService.get_service('data_svc')
+    assert svc is not None, "data_svc has not been initialized. Did you forget `DataService()`?"
+    return svc
     return KnowledgeService()
 
+@pytest.fixture
+def knowledge_svc(api_v2_client):
+    return BaseService.get_service('knowledge_svc')
 
 @pytest.fixture(scope='class')
-def file_svc():
-    return FileSvc()
-
+def file_svc(api_v2_client):
+    return BaseService.get_service('file_svc')
 
 @pytest.fixture
 async def contact_svc():
@@ -110,48 +95,22 @@ async def contact_svc():
     yield contact_svc
     await contact_svc.deregister_contacts()
 
-
 @pytest.fixture
-def event_svc(contact_svc, init_base_world):
-    return EventService()
-
-
-@pytest.fixture
-async def rest_svc():
-    """
-    The REST service requires the test's loop in order to be initialized in the same Thread
-    as the test. This mitigates the issue where the service's calls to `asyncio.get_event_loop`
-    would result in a RuntimeError indicating that there is no currentevent loop in the main
-    thread.
-    """
-    async def _init_rest_svc():
-        return RestService()
-
-    def _rest_svc(event_loop):
-        return event_loop.run_until_complete(_init_rest_svc())
-    return _rest_svc
-    # return RestService()
+def rest_svc():
+    return BaseService.get_service('rest_svc')
 
 
 @pytest.fixture(scope='class')
-def planning_svc():
+def planning_svc(api_v2_client):
     return PlanningService()
-
 
 @pytest.fixture(scope='class')
 def learning_svc():
     return LearningService()
 
-
-@pytest.fixture(scope='class')
-def services(app_svc):
-    return app_svc.get_services()
-
-
 @pytest.fixture(scope='class')
 def mocker():
     return mock
-
 
 @pytest.fixture
 def adversary():
@@ -168,14 +127,12 @@ def adversary():
 
     return _generate_adversary
 
-
 @pytest.fixture
 def executor():
     def _generate_executor(name='psh', platform='windows', *args, **kwargs):
         return Executor(name, platform, *args, **kwargs)
 
     return _generate_executor
-
 
 @pytest.fixture
 def ability():
@@ -186,7 +143,6 @@ def ability():
 
     return _generate_ability
 
-
 @pytest.fixture
 def operation():
     def _generate_operation(name, agents, adversary, *args, **kwargs):
@@ -194,22 +150,18 @@ def operation():
 
     return _generate_operation
 
-
 @pytest.fixture
-def demo_operation(event_loop, data_svc, operation, adversary):
-    tadversary = event_loop.run_until_complete(data_svc.store(adversary()))
+async def demo_operation(data_svc, operation, adversary):
+    tadversary = await data_svc.store(adversary())
     return operation(name='my first op', agents=[], adversary=tadversary)
 
-
 @pytest.fixture
-def obfuscator(event_loop, data_svc):
-    event_loop.run_until_complete(data_svc.store(
+async def obfuscator(data_svc):
+    await data_svc.store(
         Obfuscator(name='plain-text',
                    description='Does no obfuscation to any command, instead running it in plain text',
                    module='plugins.stockpile.app.obfuscators.plain_text')
         )
-    )
-
 
 @pytest.fixture
 def agent():
@@ -218,7 +170,6 @@ def agent():
 
     return _generate_agent
 
-
 @pytest.fixture
 def link():
     def _generate_link(command, paw, ability, executor, *args, **kwargs):
@@ -226,14 +177,11 @@ def link():
 
     return _generate_link
 
-
 @pytest.fixture
-def fact():
-    def _generate_fact(trait, *args, **kwargs):
+async def fact():
+    async def _generate_fact(trait, *args, **kwargs):
         return Fact(*args, trait=trait, **kwargs)
-
     return _generate_fact
-
 
 @pytest.fixture
 def rule():
@@ -242,14 +190,12 @@ def rule():
 
     return _generate_rule
 
-
 @pytest.fixture
 def relationship():
     def _generate_relationship(source, edge, target, *args, **kwargs):
         return Relationship(*args, source=source, edge=edge, target=target, **kwargs)
 
     return _generate_relationship
-
 
 @pytest.fixture
 def demo_plugin():
@@ -260,7 +206,6 @@ def demo_plugin():
         return Plugin(name=name, description=desc, address=address, enabled=enabled, data_dir=data_dir, access=access)
 
     return _generate_plugin
-
 
 @pytest.fixture
 def agent_profile():
@@ -284,7 +229,6 @@ def agent_profile():
         )
 
     return _agent_profile
-
 
 @pytest.fixture
 def app_config():
@@ -313,7 +257,6 @@ def app_config():
         }
     }
 
-
 @pytest.fixture
 def agent_config():
     return {
@@ -330,9 +273,8 @@ def agent_config():
         ]
     }
 
-
 @pytest.fixture
-async def api_v2_client(event_loop, aiohttp_client, contact_svc):
+async def api_v2_client(aiohttp_client, contact_svc):
     def make_app(svcs):
         warnings.filterwarnings(
             "ignore",
@@ -406,14 +348,10 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
     yield await aiohttp_client(app)
     await app_svc._destroy_plugins()
 
-
 @pytest.fixture
-def api_cookies(event_loop, api_v2_client):
-    async def get_cookie():
-        r = await api_v2_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
-        return r.cookies
-    return event_loop.run_until_complete(get_cookie())
-
+async def api_cookies(api_v2_client):
+    r = await api_v2_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
+    return r.cookies
 
 @pytest.fixture
 def async_return():
@@ -423,11 +361,9 @@ def async_return():
         return f
     return _async_return
 
-
 @pytest.fixture
 def mock_time():
     return datetime(2021, 1, 1, tzinfo=timezone.utc)
-
 
 @pytest.fixture
 def parse_datestring():
@@ -435,53 +371,61 @@ def parse_datestring():
         return datetime.strptime(datestring, BaseObject.TIME_FORMAT)
     return _parse_datestring
 
-
 @pytest.fixture
-def test_adversary(event_loop):
-    expected_adversary = {'name': 'ad-hoc',
-                          'description': 'an empty adversary profile',
-                          'adversary_id': 'ad-hoc',
-                          'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
-                          'tags': [],
-                          'has_repeatable_abilities': False}
+async def test_adversary(api_v2_client):
+    expected_adversary = {
+        'name': 'ad-hoc',
+        'description': 'an empty adversary profile',
+        'adversary_id': 'ad-hoc',
+        'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
+        'tags': [],
+        'has_repeatable_abilities': False
+    }
     test_adversary = AdversarySchema().load(expected_adversary)
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_adversary))
+    assert test_adversary is not None, "AdversarySchema().load() returned None"
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None, "data_svc must be initialized"
+    await data_svc.store(test_adversary)
     return test_adversary
 
-
 @pytest.fixture
-def test_planner(event_loop):
-    expected_planner = {'name': 'test planner',
-                        'description': 'test planner',
-                        'module': 'test',
-                        'stopping_conditions': [],
-                        'params': {},
-                        'allow_repeatable_abilities': False,
-                        'ignore_enforcement_modules': [],
-                        'id': '123'}
+async def test_planner(api_v2_client):
+    expected_planner = {
+        'name': 'test planner',
+        'description': 'test planner',
+        'module': 'test',
+        'stopping_conditions': [],
+        'params': {},
+        'allow_repeatable_abilities': False,
+        'ignore_enforcement_modules': [],
+        'id': '123'
+    }
     test_planner = PlannerSchema().load(expected_planner)
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_planner))
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(test_planner)
     return test_planner
 
-
 @pytest.fixture
-def test_source(event_loop):
+async def test_source(api_v2_client):
     test_fact = Fact(trait='remote.host.fqdn', value='dc')
     test_source = Source(id='123', name='test', facts=[test_fact], adjustments=[])
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(test_source)
     return test_source
 
-
 @pytest.fixture
-def test_source_existing_relationships(event_loop):
+async def test_source_existing_relationships(api_v2_client):
     test_fact_1 = Fact(trait='test_1', value='1')
     test_fact_2 = Fact(trait='test_2', value='2')
     test_relationship = Relationship(source=test_fact_1, edge='test_edge', target=test_fact_2)
     test_source = Source(id='123', name='test', facts=[test_fact_1, test_fact_2], adjustments=[],
                          relationships=[test_relationship])
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_source))
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(test_source)
     return test_source
-
 
 @pytest.fixture
 def test_operation(test_adversary, test_planner, test_source):
@@ -498,116 +442,124 @@ def test_operation(test_adversary, test_planner, test_source):
                           'auto_close': False,
                           'obfuscator': 'plain-text',
                           'use_learning_parsers': False}
-    return expected_operation
-
+    def _copy():
+        return copy.deepcopy(expected_operation)
+    return _copy
 
 @pytest.fixture
-def test_agent(event_loop):
-    agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['sh'], platform='linux')
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(agent))
+async def test_agent(api_v2_client):
+    agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['sh'], platform='linux', host='test-host')
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(agent)
     return agent
 
+@pytest.fixture
+async def test_executor(test_agent):
+    return Executor(**dict(timeout=60, platform=test_agent.platform, name='sh', command='ls'))
 
 @pytest.fixture
-def test_executor(test_agent):
-    return ExecutorSchema().load(dict(timeout=60, platform=test_agent.platform, name='sh', command='ls'))
-
-
-@pytest.fixture
-def test_ability(test_executor, event_loop):
-    ability = AbilitySchema().load(dict(ability_id='123',
-                                        tactic='discovery',
-                                        technique_id='auto-generated',
-                                        technique_name='auto-generated',
-                                        name='Manual Command',
-                                        description='test ability',
-                                        executors=[ExecutorSchema().dump(test_executor)]))
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
+async def test_ability(test_executor, api_v2_client):
+    ability_dict = {
+        'ability_id': '123',
+        'tactic': 'discovery',
+        'technique_id': 'auto-generated',
+        'technique_name': 'auto-generated',
+        'name': 'Manual Command',
+        'description': 'test ability',
+        'executors': [ExecutorSchema().dump(test_executor)]
+    }
+    ability = AbilitySchema().load(ability_dict)
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(ability)
     return ability
-
 
 @pytest.fixture
 def expected_link_output():
     return 'test_dir'
 
-
 @pytest.fixture
 def active_link(test_executor, test_agent, test_ability):
-    return {
-        'command': str(b64encode(test_executor.command.encode()), 'utf-8'),
-        'paw': test_agent.paw,
-        'ability': test_ability,
-        'executor': test_executor,
-        'score': 0,
-        'jitter': 0,
-        'cleanup': 0,
-        'pin': 0,
-        'host': test_agent.host,
-        'deadman': False,
-        'used': [],
-        'id': '456',
-        'relationships': []
-    }
-
+    return Link(
+        command=str(b64encode(test_executor.command.encode()), 'utf-8'),
+        paw=test_agent.paw,
+        ability=test_ability,
+        executor=test_executor,
+        score=0,
+        jitter=0,
+        cleanup=0,
+        pin=0,
+        host=test_agent.host,
+        deadman=False,
+        used=[],
+        id='456',
+        relationships=[]
+    )
 
 @pytest.fixture
 def finished_link(test_executor, test_agent, test_ability):
-    return {
-        'command': str(b64encode(test_executor.command.encode()), 'utf-8'),
-        'paw': test_agent.paw,
-        'ability': test_ability,
-        'executor': test_executor,
-        'host': test_agent.host,
-        'deadman': False,
-        'used': [],
-        'id': '789',
-        'relationships': [],
-        'status': 0,
-        'output': 'test_dir'
-    }
-
+    link = Link(
+        command=str(b64encode(test_executor.command.encode()), 'utf-8'),
+        paw=test_agent.paw,
+        ability=test_ability,
+        executor=test_executor,
+        host=test_agent.host,
+        deadman=False,
+        used=[],
+        id='789',
+        relationships=[],
+        status=0,
+    )
+    link.output = 'test_dir'
+    return link
 
 @pytest.fixture
-def finished_operation_payload(test_operation):
+async def finished_operation_payload(test_operation):
     op_id = "00000000-0000-0000-0000-000000000000"
-    test_operation['id'] = op_id
-    test_operation['name'] = op_id
-    test_operation['state'] = 'finished'
-    return test_operation
-
-
-@pytest.fixture
-def setup_finished_operation(event_loop, finished_operation_payload):
-    finished_operation = OperationSchema().load(finished_operation_payload)
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(finished_operation))
-
+    op_data = test_operation()
+    op_data['id'] = op_id
+    op_data['name'] = op_id
+    op_data['state'] = 'finished'
+    return op_data
 
 @pytest.fixture
-def setup_operations_api_test(event_loop, api_v2_client, test_operation, test_agent, test_ability,
-                              active_link, finished_link, expected_link_output):
-    test_operation = OperationSchema().load(test_operation)
-    test_operation.agents.append(test_agent)
-    test_operation.set_start_details()
-    test_link = Link.load(active_link)
+async def setup_finished_operation(finished_operation_payload):
+    op_data = finished_operation_payload
+    op = OperationSchema().load(op_data)
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(op)
+    return op
+
+@pytest.fixture
+async def setup_operations_api_test(api_v2_client, test_operation, test_agent, test_ability,
+                                    active_link, finished_link, expected_link_output):
+    op_data = test_operation()
+    op = OperationSchema().load(op_data)
+    op.agents.append(test_agent)
+    op.set_start_details()
+    test_link = active_link
     test_link.host = test_agent.host
-    finished_link = Link.load(finished_link)
-    finished_link.output = expected_link_output
-    finished_link.host = test_agent.host
-    test_operation.chain.append(test_link)
-    test_operation.chain.append(finished_link)
-    test_objective = Objective(id='123', name='test objective', description='test', goals=[])
-    test_operation.objective = test_objective
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
-
+    fin_link = finished_link
+    fin_link.output = expected_link_output
+    fin_link.host = test_agent.host
+    op.chain.append(test_link)
+    op.chain.append(fin_link)
+    op.objective = Objective(id='123', name='test objective', description='test', goals=[])
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(op)
 
 @pytest.fixture
-def setup_empty_operation(event_loop, test_operation):
-    test_operation = OperationSchema().load(test_operation)
-    test_operation.set_start_details()
-    test_objective = Objective(id='123', name='test objective', description='test', goals=[])
-    test_operation.objective = test_objective
-    event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_operation))
-
+async def setup_empty_operation(test_operation):
+    op_data = test_operation()
+    op = OperationSchema().load(op_data)
+    op.set_start_details()
+    op.objective = Objective(id='123', name='test objective', description='test', goals=[])
+    data_svc = BaseService.get_service('data_svc')
+    assert data_svc is not None
+    await data_svc.store(op)
 
 @pytest.fixture()
 def fire_event_mock(event_svc):
