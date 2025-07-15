@@ -29,6 +29,7 @@ exfil_dir: /tmp/caldera
 host: 0.0.0.0
 objects.planners.default: atomic
 plugins:
+- automation
 - fieldmanual
 - manx
 - range

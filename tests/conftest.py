@@ -52,7 +52,6 @@ from app.objects.c_plugin import Plugin
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_executor import Executor, ExecutorSchema
-from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_relationship import Relationship
 from app.objects.secondclass.c_rule import Rule
@@ -69,7 +68,23 @@ from tests import AsyncMock
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
+pytest_plugins = 'pytest_asyncio'
 
+
+@pytest.fixture
+def app_svc():
+    app = web.Application()
+    app_svc_instance = AppService(app)
+    # Use instance method, NOT BaseService.add_service(...)
+    app_svc_instance.add_service('app_svc', app_svc_instance)
+    return app_svc_instance
+
+@pytest.fixture(scope='session', autouse=True)
+def initialize_data_service():
+    # Only set if not already initialized
+    if BaseService.get_service('data_svc') is None:
+        DataService()
+        
 @pytest.fixture
 def event_svc():
     return BaseService.get_service('event_svc')
@@ -79,13 +94,12 @@ def data_svc():
     svc = BaseService.get_service('data_svc')
     assert svc is not None, "data_svc has not been initialized. Did you forget `DataService()`?"
     return svc
-    return KnowledgeService()
 
 @pytest.fixture
 def knowledge_svc(api_v2_client):
     return BaseService.get_service('knowledge_svc')
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope='function')
 def file_svc(api_v2_client):
     return BaseService.get_service('file_svc')
 
@@ -100,15 +114,15 @@ def rest_svc():
     return BaseService.get_service('rest_svc')
 
 
-@pytest.fixture(scope='class')
+@pytest.fixture(scope='function')
 def planning_svc(api_v2_client):
     return PlanningService()
 
-@pytest.fixture(scope='class')
+@pytest.fixture()
 def learning_svc():
     return LearningService()
 
-@pytest.fixture(scope='class')
+@pytest.fixture()
 def mocker():
     return mock
 
@@ -560,6 +574,7 @@ async def setup_empty_operation(test_operation):
     data_svc = BaseService.get_service('data_svc')
     assert data_svc is not None
     await data_svc.store(op)
+    return op
 
 @pytest.fixture()
 def fire_event_mock(event_svc):

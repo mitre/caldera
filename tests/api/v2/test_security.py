@@ -27,7 +27,7 @@ def base_world():
 
 
 @pytest.fixture
-def simple_webapp(event_loop, base_world):
+async def simple_webapp(base_world):
     async def index(request):
         return web.Response(status=200, text='hello!')
 
@@ -50,13 +50,11 @@ def simple_webapp(event_loop, base_world):
 
     auth_svc = AuthService()
 
-    event_loop.run_until_complete(
-        auth_svc.apply(
-            app=app,
-            users=base_world.get_config('users')
-        )
+    await auth_svc.apply(
+    app=app,
+    users=base_world.get_config('users')
     )
-    event_loop.run_until_complete(auth_svc.set_login_handlers(auth_svc.get_services()))
+    await auth_svc.set_login_handlers(auth_svc.get_services())
 
     # The authentication_required middleware needs to run after the session middleware.
     # AuthService.apply(...) adds session middleware to the app, so we can append the

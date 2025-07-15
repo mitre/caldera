@@ -110,24 +110,26 @@ def test_find_object(agent):
     assert agent == test_agent
 
 
-def test_dump(data_svc, agent):
+def test_dump(agent):
+    stub_data_svc = StubDataService()
     test_agent = agent(sleep_min=2, sleep_max=5, watchdog=0)
     dumped_agent = test_agent.schema.dump(test_agent)
 
-    manager = BaseApiManager(data_svc=data_svc, file_svc=None)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
     manager_dumped_agent = manager.dump_object_with_filters(test_agent)
 
     for key in manager_dumped_agent:
         assert manager_dumped_agent[key] == dumped_agent[key]
 
 
-def test_dump_with_exclude(data_svc, agent):
+def test_dump_with_exclude(agent):
+    stub_data_svc = StubDataService()
     exclude_key = 'paw'
 
     test_agent = agent(sleep_min=2, sleep_max=5, watchdog=0)
     dumped_agent = test_agent.schema.dump(test_agent)
 
-    manager = BaseApiManager(data_svc=data_svc, file_svc=None)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
     manager_dumped_agent = manager.dump_object_with_filters(test_agent, exclude=[exclude_key])
 
     assert exclude_key in dumped_agent
@@ -136,13 +138,14 @@ def test_dump_with_exclude(data_svc, agent):
         assert manager_dumped_agent[key] == dumped_agent[key]
 
 
-def test_dump_with_include(data_svc, agent):
+def test_dump_with_include(agent):
+    stub_data_svc = StubDataService()
     include_key = 'paw'
 
     test_agent = agent(sleep_min=2, sleep_max=5, watchdog=0)
     dumped_agent = test_agent.schema.dump(test_agent)
 
-    manager = BaseApiManager(data_svc=data_svc, file_svc=None)
+    manager = BaseApiManager(data_svc=stub_data_svc, file_svc=None)
     manager_dumped_agent = manager.dump_object_with_filters(test_agent, include=[include_key])
 
     assert include_key in dumped_agent

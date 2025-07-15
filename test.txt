@@ -1,0 +1,38 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.1, pluggy-1.6.0
+rootdir: /home/caldera/Desktop/CalderaVENV/caldera
+configfile: pytest.ini
+plugins: anyio-4.9.0, aiohttp-1.1.0, asyncio-1.0.0
+asyncio: mode=Mode.AUTO, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collected 10 items
+
+tests/contacts/test_contact_dns.py ........F.                            [100%]
+
+=================================== FAILURES ===================================
+_______________________________ test_file_upload _______________________________
+tests/contacts/test_contact_dns.py:284: in test_file_upload
+    assert os.path.isfile(target_path)
+E   AssertionError: assert False
+E    +  where False = <function isfile at 0x73828cd18360>('/tmp/testhost-asdasd/testupload.txt-92811837')
+E    +    where <function isfile at 0x73828cd18360> = <module 'posixpath' (frozen)>.isfile
+E    +      where <module 'posixpath' (frozen)> = os.path
+------------------------------ Captured log setup ------------------------------
+ERROR    asyncio:base_events.py:1821 Task was destroyed but it is pending!
+task: <Task pending name='Task-246' coro=<Contact.operation_loop() done, defined at /home/caldera/Desktop/CalderaVENV/caldera/app/contacts/contact_tcp.py:27> wait_for=<Future pending cb=[Task.task_wakeup()]>>
+=============================== warnings summary ===============================
+../lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952
+  /home/caldera/Desktop/CalderaVENV/lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: tagMap is deprecated. Please use TAG_MAP instead.
+    warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
+
+../lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952
+  /home/caldera/Desktop/CalderaVENV/lib/python3.12/site-packages/pyasn1/codec/ber/encoder.py:952: DeprecationWarning: typeMap is deprecated. Please use TYPE_MAP instead.
+    warnings.warn(f"{attr} is deprecated. Please use {newAttr} instead.", DeprecationWarning)
+
+tests/contacts/test_contact_dns.py::test_config
+  /home/caldera/Desktop/CalderaVENV/caldera/app/service/app_svc.py:36: DeprecationWarning: There is no current event loop
+    self.loop = asyncio.get_event_loop()
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/contacts/test_contact_dns.py::test_file_upload - AssertionError:...
+=================== 1 failed, 9 passed, 3 warnings in 16.57s ===================
