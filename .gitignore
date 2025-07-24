@@ -33,8 +33,12 @@ data/objectives/*
 data/backup/*
 !data/backup/.gitkeep
 data/adversaries/*
+data/adversaries/**/*.yml
+!data/adversaries/.gitkeep
 !data/adversaries/.gitkeep
 data/operations/*
+data/abilities/**/*.yml
+!data/abilities/.gitkeep
 !data/operations/.gitkeep
 .tox/
 node_modules/
