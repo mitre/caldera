@@ -35,6 +35,7 @@ class OperationApiManager(BaseApiManager):
 
     async def create_object_from_schema(self, schema: SchemaMeta, data: dict,
                                         access: BaseWorld.Access, existing_operation: Operation = None):
+        print('[create_object_from_schema] called with data:', data)
         if data.get('state'):
             await self.validate_operation_state(data, existing_operation)
         operation = await self.setup_operation(data, access)
@@ -137,11 +138,14 @@ class OperationApiManager(BaseApiManager):
         raise JsonHttpForbidden(f'Cannot view operation due to insufficient permissions: {operation_id}')
 
     async def setup_operation(self, data: dict, access: BaseWorld.Access):
+        print(f'*********** SETUP_OPERATION CALLED ***********')
+
         """Applies default settings to an operation if data is missing."""
         planner_id = data.pop('planner', {}).get('id', '')
         data['planner'] = await self._construct_and_dump_planner(planner_id)
         adversary_id = data.pop('adversary', {}).get('adversary_id', '')
         data['adversary'] = await self._construct_and_dump_adversary(adversary_id)
+        adversary = data['adversary']
         fact_source_id = data.pop('source', {}).get('id', '')
         data['source'] = await self._construct_and_dump_source(fact_source_id)
         operation = OperationSchema().load(data)

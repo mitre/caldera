@@ -1,0 +1,12 @@
+adversary_id: c8feaa9b-ea1f-4f68-a24e-093d74056314
+name: Example Operation
+description: This is a demonstration of the Automation plugin
+objective: 495a9828-cab1-44dd-a0ca-66e58177d8cc
+atomic_ordering:
+- ability_id: 90c2efaa-8205-480d-8bb6-61d90dbaf81b
+  metadata:
+    executor_facts:
+      linux:
+      - trait: file.sensitive.extension
+        value: txt
+- ability_id: 90c2efaa-8205-480d-8bb6-61d90dbaf81b

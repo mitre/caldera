@@ -32,12 +32,22 @@ data/objectives/*
 !data/objectives/.gitkeep
 data/backup/*
 !data/backup/.gitkeep
+data/adversaries/*
+!data/adversaries/.gitkeep
+data/operations/*
+!data/operations/.gitkeep
 .tox/
 node_modules/
-
+plugins/mcp
+plugins/automation
+plugins/range
+plugins/spp
+mlruns
+mlruns.db
 # coverage reports
 htmlcov/
 .coverage
 .coverage.*
+.coveragerc
 *,cover
 _*/

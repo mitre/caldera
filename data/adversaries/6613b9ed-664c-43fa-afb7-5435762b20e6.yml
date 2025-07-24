@@ -1,0 +1,7 @@
+adversary_id: 6613b9ed-664c-43fa-afb7-5435762b20e6
+name: WMI Persistence Adversary
+description: An adversary emulating persistence techniques using WMI event subscriptions
+  on Windows systems.
+atomic_ordering:
+- 06b7177d-4d40-4b58-a5b5-0d5e0e400c3b
+- 72ca2e38-fcd7-42b5-944c-e96c97edce34

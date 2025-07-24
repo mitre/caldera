@@ -259,6 +259,8 @@ class DataService(DataServiceInterface, BaseService):
             obj.access = access
             obj.plugin = self._get_plugin_name(filename)
             await self.store(obj)
+            if filename == "data/adversaries/aaec272a-475e-423d-83b1-f2816d7a06ad.yml":
+                self.log.debug('Loaded default objective: %s', obj.display)
 
     async def create_or_update_everything_adversary(self):
         everything = {

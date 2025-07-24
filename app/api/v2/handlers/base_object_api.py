@@ -1,6 +1,6 @@
 import abc
 import json
-
+import os
 from aiohttp import web
 
 from app.api.v2.handlers.base_api import BaseApi
@@ -65,11 +65,19 @@ class BaseObjectApi(BaseApi):
         return obj
 
     async def _error_if_object_with_id_exists(self, obj_id: str):
-        """Throw an error if an object (of the same type) exists with the given id"""
+        """Throw an error if an object exists both in memory and on disk."""
         if obj_id:
+            self.log.debug('[BaseObjectApi] Checking for existing ID: %s', obj_id)
             search = {self.id_property: obj_id}
-            if self._api_manager.find_object(self.ram_key, search):
-                raise JsonHttpBadRequest(f'{self.description.capitalize()} with given id already exists: {obj_id}')
+            obj = self._api_manager.find_object(self.ram_key, search)
+
+            if obj:
+                # Also check if it is persisted to disk
+                file_path = f'data/{self.ram_key}/{obj_id}.yml'
+                if os.path.exists(file_path):
+                    raise JsonHttpBadRequest(f'{self.description.capitalize()} with given id already exists: {obj_id}')
+                else:
+                    self.log.warning('[BaseObjectApi] Adversary found in memory but missing on disk: %s', file_path)
 
     async def update_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
@@ -80,13 +88,27 @@ class BaseObjectApi(BaseApi):
         return obj
 
     async def update_on_disk_object(self, request: web.Request):
-        data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+        try:
+            data, access, obj_id, query, search = await self._parse_common_data_from_request(request)
+            self.log.debug('[update_on_disk_object] Parsed data: %s', json.dumps(data, indent=2))
+            sanitized = {k: (v if isinstance(v, (str, int, float, bool, list, dict, type(None))) else repr(v))
+             for k, v in search.items()}
+            self.log.debug('[update_on_disk_object] Search query: %s', json.dumps(sanitized, indent=2))
 
-        obj = await self._api_manager.find_and_update_on_disk_object(data, search, self.ram_key, self.id_property,
-                                                                     self.obj_class)
-        if not obj:
-            raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
-        return obj
+
+            obj = await self._api_manager.find_and_update_on_disk_object(
+                data, search, self.ram_key, self.id_property, self.obj_class
+            )
+
+            if not obj:
+                self.log.warning('[update_on_disk_object] Object not found for ID: %s', obj_id)
+                # raise JsonHttpNotFound(f'{self.description.capitalize()} not found: {obj_id}')
+            return obj
+
+        except Exception as e:
+            self.log.exception('[update_on_disk_object] Exception occurred: %s', str(e))
+            raise web.HTTPInternalServerError(reason='Internal error during adversary update')
+
 
     async def create_or_update_object(self, request: web.Request):
         data, access, obj_id, query, search = await self._parse_common_data_from_request(request)

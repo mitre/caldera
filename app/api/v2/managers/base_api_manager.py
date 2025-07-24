@@ -65,7 +65,7 @@ class BaseApiManager(BaseWorld):
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         obj_id = data.get(id_property) or str(uuid.uuid4())
         data[id_property] = obj_id
-
+        self.log.debug('Saving new object to disk [%s]: metadata = %s', obj_id, data.get('metadata'))
         file_path = await self._get_new_object_file_path(data[id_property], ram_key)
         allowed = self._get_allowed_from_access(access)
         await self._save_and_reload_object(file_path, data, obj_class, allowed)
@@ -98,21 +98,42 @@ class BaseApiManager(BaseWorld):
     async def find_and_update_on_disk_object(self, data: dict, search: dict, ram_key: str, id_property: str, obj_class: type):
         for obj in self.find_objects(ram_key, search):
             new_obj = await self.update_on_disk_object(obj, data, ram_key, id_property, obj_class)
-            return new_obj
+            if new_obj:
+                return new_obj
+        return None
 
     async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
         obj_id = getattr(obj, id_property)
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
 
-        existing_obj_data = dict(self.strip_yml(file_path)[0])
+        try:
+            existing_obj_data = dict(self.strip_yml(file_path)[0])
+        except (FileNotFoundError, IndexError) as e:
+            self.log.warning(f'[update_on_disk_object] Missing file or malformed YAML for {obj_id}: {e}')
+            return None  # allow the calling handler to fallback to POST
+
         existing_obj_data.update(data)
 
         await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
-        return next(self.find_objects(ram_key, {id_property: obj_id}))
+
+        updated_obj = next(self.find_objects(ram_key, {id_property: obj_id}), None)
+        if not updated_obj:
+            self.log.warning(f'[update_on_disk_object] Object {obj_id} not found in RAM after reload')
+        return updated_obj
+
 
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
         obj_id = getattr(obj, id_property)
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
+        # 🧠 Update in-memory object fields
+        obj.update('name', data.get('name'))
+        obj.update('description', data.get('description'))
+        obj.update('atomic_ordering', data.get('atomic_ordering', []))
+        obj.update('objective', data.get('objective'))
+        obj.update('tags', set(data.get('tags', [])))
+        obj.update('plugin', data.get('plugin'))
+        if 'metadata' in data and hasattr(obj, 'metadata'):
+            obj.metadata = data['metadata']
 
         await self._save_and_reload_object(file_path, data, type(obj), obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
@@ -140,6 +161,8 @@ class BaseApiManager(BaseWorld):
 
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
         """Save data as YAML and reload from disk into memory"""
+        self.log.debug('Writing object to file: %s', file_path)
+        self.log.debug('Metadata during save: %s', data.get('metadata'))
         await self._file_svc.save_file(file_path, yaml.dump(data, encoding='utf-8', sort_keys=False), '', encrypt=False)
         await self._data_svc.load_yaml_file(obj_type, file_path, access)
 

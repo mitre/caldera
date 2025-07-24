@@ -1,6 +1,8 @@
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_planning_svc import BasePlanningService
+from app.objects.secondclass.c_fact import Fact
+
 
 
 class PlanningService(PlanningServiceInterface, BasePlanningService):
@@ -40,7 +42,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         while True:
             links = await self.get_links(operation, [bucket], agent)
             if len(links) == 0:
-                break
+                break  
             for s_link in links:
                 l_id = await operation.apply(s_link)
                 if batch:
@@ -51,6 +53,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             if batch:
                 if await self.wait_for_links_and_monitor(planner, operation, l_ids, condition_stop):
                     return
+            
 
     async def wait_for_links_and_monitor(self, planner, operation, link_ids, condition_stop):
         """Wait for link completion, update stopping conditions and
@@ -158,26 +161,72 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         :type trim: bool, optional
         :return: a list of links sorted by score and atomic ordering
         """
-        ao = operation.adversary.atomic_ordering
-        abilities = await self.get_service('data_svc') \
-                              .locate('abilities', match=dict(ability_id=tuple(ao)))
+        self.log.debug(
+            'Generating links for operation %s, agent %s, buckets %s, trim %s',
+            operation.name, getattr(agent, "paw", None), buckets, trim
+        )
+
+        raw_steps = operation.adversary.atomic_ordering
+        step_entries = []
+        unique_ids = set()
+        print(f' Raw steps from adversary profile: {raw_steps}')
+
+        for idx, step in enumerate(raw_steps):
+            if isinstance(step, str):
+                ability_id = step
+                metadata = {}
+            else:
+                ability_id = step.get('ability_id')
+                metadata = step.get('metadata', {})
+
+            step_entries.append({
+                'step_idx': idx,
+                'ability_id': ability_id,
+                'metadata': metadata
+            })
+            unique_ids.add(ability_id)
+            print(f' Processed step entry: {step_entries[-1]}')
+
+        all_abilities = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=tuple(unique_ids)))
+        ability_map = {a.ability_id: a for a in all_abilities}
+
+        # Build step objects with resolved abilities
+        steps_with_abilities = []
+        for step in step_entries:
+            ability = ability_map.get(step['ability_id'])
+            if not ability:
+                continue
+            steps_with_abilities.append({
+                'step_idx': step['step_idx'],
+                'ability': ability,
+                'metadata': step['metadata']
+            })
+            print(f' Processed step with ability: {steps_with_abilities[-1]}')
+
+        # Optionally filter by buckets
         if buckets:
-            # buckets specified - get all links for given buckets,
-            # (still in underlying atomic adversary order)
-            t = []
-            for bucket in buckets:
-                t.extend([ab for ab in abilities for b in ab.buckets if b == bucket])
-            abilities = t
+            steps_with_abilities = [
+                s for s in steps_with_abilities
+                if any(bucket in s['ability'].buckets for bucket in buckets)
+            ]
+
         links = []
         if agent:
-            links.extend(await self.generate_and_trim_links(agent, operation, abilities, trim))
+            links.extend(await self.generate_and_trim_links(agent, operation, steps_with_abilities, trim))
+            self.log.debug('Generated %s links for operation %s (agent: %s)', len(links), operation.name, agent.paw)
         else:
             agent_links = []
-            for agent in operation.agents:
-                agent_links.append(await self.generate_and_trim_links(agent, operation, abilities, trim))
+            for ag in operation.agents:
+                agent_links.append(await self.generate_and_trim_links(ag, operation, steps_with_abilities, trim))
+            self.log.debug('Generated %s link groups for operation %s', len(agent_links), operation.name)
             links = await self._remove_links_of_duplicate_singletons(agent_links)
-        self.log.debug('Generated %s usable links' % (len(links)))
-        return await self.sort_links(links)
+            self.log.debug('Removed duplicate singleton links, %s links remain for operation %s', len(links), operation.name)
+
+        self.log.debug('Generated %s usable links', len(links))
+        self.log.debug('Final link list: %s', [link.ability.ability_id for link in links])
+        sorted_links = await self.sort_links(links)
+        print(f' Sorted links: {[link.ability.ability_id for link in sorted_links]}')
+        return sorted_links
 
     async def get_cleanup_links(self, operation, agent=None):
         """Generate cleanup links
@@ -200,7 +249,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 links.extend(await self._check_and_generate_cleanup_links(agent, operation))
         return reversed(links)
 
-    async def generate_and_trim_links(self, agent, operation, abilities, trim=True):
+    async def generate_and_trim_links(self, agent, operation, steps_with_abilities, trim=True):
         """Generate new links based on abilities
 
         Creates new links based on given operation, agent, and
@@ -221,10 +270,15 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         """
         agent_links = []
         if agent.trusted:
-            agent_links = await self._generate_new_links(operation, agent, abilities, operation.link_status())
+            self.log.debug('Generating and trimming links for agent: %s', agent.paw)
+
+            agent_links = await self._generate_new_links(operation, agent, steps_with_abilities, operation.link_status())
+            self.log.debug('Generated %s links for agent: %s', len(agent_links), agent.paw)
             await self._apply_adjustments(operation, agent_links)
             if trim:
                 agent_links = await self.trim_links(operation, agent_links, agent)
+                self.log.debug('Trimmed to %s usable links for agent: %s', len(agent_links), agent.paw)
+            self.log.debug('Final link list for agent %s: %s', agent.paw, [link.ability.ability_id for link in agent_links])
         return agent_links
 
     async def check_stopping_conditions(self, stopping_conditions, operation):
@@ -332,35 +386,132 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                                                                      link_status=operation.link_status())
         return agent_cleanup_links
 
-    async def _generate_new_links(self, operation, agent, abilities, link_status):
-        """Generate links with given status
-
-        :param operation: Operation to generate links on
-        :type operation: Operation
-        :param agent: Agent to generate links on
-        :type agent: Agent
-        :param agent: Abilities to generate links for
-        :type agent: list(Ability)
-        :param link_status: Link status, referencing link state dict
-        :type link_status: int
-        :return: Links for agent
-        :rtype: list(Link)
-        """
+    async def _generate_new_links(self, operation, agent, steps_with_abilities, link_status):
+        self.log.debug('[link_gen] Using adversary metadata: %s', operation.adversary.metadata)
+        # Normalize metadata from atomic_ordering into .metadata if not already present
+        step_metadata = {}
+        for idx, step in enumerate(operation.adversary.atomic_ordering):
+            if isinstance(step, dict):
+                meta = step.get('metadata')
+                if meta:
+                    step_metadata[str(idx)] = meta
+        operation.adversary.metadata = step_metadata
+        self.log.debug('[link_gen] Normalized adversary metadata: %s', operation.adversary.metadata)
         links = []
-        for ability in await agent.capabilities(abilities):
-            executor = await agent.get_preferred_executor(ability)
-            if not executor:
+
+        for step in steps_with_abilities:
+            idx = step['step_idx']
+            ability = step['ability']
+            step_meta = step.get('metadata', {})
+
+            self.log.debug('Processing step idx %s with ability_id %s', idx, ability.ability_id)
+
+            supported_abilities = await agent.capabilities([ability])
+            if ability.ability_id not in [a.ability_id for a in supported_abilities]:
+                self.log.debug('Ability_id %s not supported by agent %s', ability.ability_id, agent.paw)
                 continue
 
-            if executor.HOOKS and executor.language and executor.language in executor.HOOKS:
+            executor = await agent.get_preferred_executor(ability)
+            if not executor:
+                self.log.debug('No executor found for ability_id %s on agent %s', ability.ability_id, agent.paw)
+                continue
+
+            self.log.debug('Using executor %s for ability_id %s on agent %s', executor.name, ability.ability_id, agent.paw)
+            if executor.HOOKS and executor.language in executor.HOOKS:
                 await executor.HOOKS[executor.language](ability, executor)
-            if executor.command:
-                link = Link.load(dict(command=self.encode_string(executor.test), paw=agent.paw, score=0,
-                                      ability=ability, executor=executor, status=link_status,
-                                      jitter=self.jitter(operation.jitter)))
-                links.append(link)
+
+            # --- Collect metadata facts (if any) ---
+            fact_strings = []
+            fact_strings.extend(step_meta.get('facts', []))  # legacy flat format
+            executor_platform = executor.platform
+            self.log.debug('Executor platform: %s', executor_platform)
+            exec_facts = step_meta.get('executor_facts', {}).get(executor_platform, [])
+            self.log.debug('Executor facts: %s', exec_facts)
+            fact_strings.extend(exec_facts)
+
+            facts = []
+            for f in fact_strings:
+                try:
+                    trait = f['trait']
+                    value = f['value']
+                    facts.append({trait.strip(): value.strip('" ')})
+                except Exception as e:
+                    self.log.warning('Skipping malformed fact: %s (%s)', f, e)
+            self.log.debug('Using facts for step idx %s: %s', idx, facts)
+
+            # --- Build the link ---
+            link = Link.load(dict(
+                paw=agent.paw,
+                score=0,
+                ability=ability,
+                executor=executor,
+                status=link_status,
+                jitter=self.jitter(operation.jitter)
+            ))
+            link.step_idx = idx
+
+            injected = None
+
+            if facts:
+                self.log.debug('Injecting using metadata facts for step idx %s', idx)
+                for f in facts:
+                    for trait, value in f.items():
+                        link.used.append(Fact(trait=trait, value=value, source=operation.id))
+                injected = await self.inject_facts(executor.test, facts)
+            else:
+                self.log.debug('No metadata facts found; falling back to legacy fact injection for step idx %s', idx)
+                injected, _, used = await self._build_single_test_variant(executor.test, [], executor.name)
+                self.log.debug('after build_single_test injected command: %s', injected)
+                for f in used:
+                    link.used.append(f)
+
+            # # If unresolved placeholders still exist, skip this step
+            # if '#{' in injected:
+            #     self.log.debug('Unresolved placeholders remain after injection for step idx %s; skipping', idx)
+            #     continue
+
+            link.command = self.encode_string(injected)
+            self.log.debug('Injected command template: %s', executor.test)
+            self.log.debug('Final injected command: %s', injected)
+            self.log.debug('Final command: %s', link.command)
+
+            links.append(link)
+
         return links
 
+    
+    async def inject_facts(self, template, fact_strings):
+        """Replace #{trait} placeholders in the template using trait:value fact strings or dicts"""
+        self.log.debug('Injecting facts into template: %s with fact strings: %s', template, fact_strings)
+        substitutions = {}
+
+        for entry in fact_strings:
+            try:
+                if isinstance(entry, dict):
+                    trait, value = next(iter(entry.items()))
+                elif isinstance(entry, str):
+                    trait, value = entry.split(':', 1)
+                else:
+                    continue
+                substitutions[trait.strip()] = value.strip()
+            except Exception as e:
+                self.log.warning('Failed to parse fact: %s (%s)', entry, e)
+
+        self.log.debug('Fact substitutions: %s', substitutions)
+        self.log.debug('Original template: %s', template)
+
+        for trait, value in substitutions.items():
+            placeholder = f'#{{{trait}}}'
+            if placeholder in template:
+                self.log.debug('[inject_facts] Replacing %s with %s', placeholder, value)
+            else:
+                self.log.debug('[inject_facts] Warning: placeholder %s not found in template', placeholder)
+            template = template.replace(placeholder, value)
+
+        self.log.debug('Final injected template: %s', template)
+        return template
+
+    
     async def _generate_cleanup_links(self, operation, agent, link_status):
         """Generate cleanup links with given status
 

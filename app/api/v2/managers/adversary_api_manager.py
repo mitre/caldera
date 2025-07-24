@@ -7,6 +7,16 @@ class AdversaryApiManager(BaseApiManager):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
 
     async def verify_adversary(self, adversary: Adversary):
-        adversary.verify(log=self.log, abilities=self._data_svc.ram['abilities'],
-                         objectives=self._data_svc.ram['objectives'])
-        return adversary
+        try:
+            self.log.debug('[verify_adversary] Verifying adversary: %s', adversary.display)
+            adversary.verify(
+                log=self.log,
+                abilities=self._data_svc.ram['abilities'],
+                objectives=self._data_svc.ram['objectives']
+            )
+            self.log.debug('[verify_adversary] Successfully verified adversary: %s', adversary.display)
+            return adversary
+        except Exception as e:
+            self.log.exception('[verify_adversary] Exception during verify: %s', str(e))
+            raise
+

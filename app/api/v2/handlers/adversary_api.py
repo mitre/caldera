@@ -83,26 +83,6 @@ class AdversaryApi(BaseObjectApi):
         adversary = await self._api_manager.verify_adversary(adversary)
         return web.json_response(adversary.display)
 
-    @aiohttp_apispec.docs(tags=['adversaries'],
-                          summary='Create or update an adversary',
-                          description='Attempt to update an adversaries using fields from the `AdversarySchema` '
-                          'in the request body. If the adversary does not already exist, '
-                          'then create a new one using the `AdversarySchema` format.',
-                          parameters=[{
-                            'in': 'path',
-                            'name': 'adversary_id',
-                            'schema': {'type': 'string'},
-                            'required': 'true',
-                            'description': 'UUID of the adversary to be created or updated'
-                          }])
-    @aiohttp_apispec.request_schema(AdversarySchema(partial=True))
-    @aiohttp_apispec.response_schema(AdversarySchema,
-                                     description='A single adversary, either newly created or updated, in AdversarySchema format.')
-    async def create_or_update_adversary(self, request: web.Request):
-        adversary = await self.create_or_update_on_disk_object(request)
-        adversary = await self._api_manager.verify_adversary(adversary)
-        return web.json_response(adversary.display)
-
     @aiohttp_apispec.docs(tags=['adversaries'], summary='Deletes an adversary.',
                           description='Deletes an existing adversary.',
                           parameters=[{
@@ -118,14 +98,42 @@ class AdversaryApi(BaseObjectApi):
         await self.delete_on_disk_object(request)
         return web.HTTPNoContent()
 
-    async def create_on_disk_object(self, request: web.Request):
-        data = await request.json()
-        data.pop('id', None)
-        await self._error_if_object_with_id_exists(data.get(self.id_property))
-        access = await self.get_request_permissions(request)
-        obj = await self._api_manager.create_on_disk_object(data, access, self.ram_key, self.id_property,
-                                                            self.obj_class)
-        return obj
+    @aiohttp_apispec.docs(tags=['adversaries'],
+                        summary='Create or update an adversary',
+                        description='Attempt to update an adversary using fields from the `AdversarySchema` '
+                                    'in the request body. If the adversary does not already exist, '
+                                    'then create a new one using the `AdversarySchema` format.',
+                        parameters=[{
+                            'in': 'path',
+                            'name': 'adversary_id',
+                            'schema': {'type': 'string'},
+                            'required': 'true',
+                            'description': 'UUID of the adversary to be created or updated'
+                        }])
+    @aiohttp_apispec.request_schema(AdversarySchema(partial=True))
+    @aiohttp_apispec.response_schema(AdversarySchema,
+                                    description='A single adversary, either newly created or updated, in AdversarySchema format.')
+
+    async def create_or_update_adversary(self, request: web.Request):
+        try:
+            # Let the base class handle payload parsing, access, ID setting, and validation
+            obj = await self.create_on_disk_object(request)
+
+            # Post-creation verification step (e.g., backfilling metadata, default objectives)
+            obj = await self._api_manager.verify_adversary(obj)
+
+            self.log.debug('[create_on_disk_adversary] Final object: %s', obj.display)
+            self.log.debug('[create_on_disk_adversary] Metadata: %s', getattr(obj, 'metadata', {}))
+            return obj
+
+        except web.HTTPException:
+            raise  # Preserve existing behavior for known HTTP exceptions
+
+        except Exception as e:
+            self.log.exception('[create_on_disk_adversary] Unexpected error: %s', str(e))
+            raise web.HTTPInternalServerError(reason='Internal error during adversary creation')
+
+
 
     async def _parse_common_data_from_request(self, request) -> (dict, dict, str, dict, dict):
         data = {}
