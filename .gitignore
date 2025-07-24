@@ -46,7 +46,7 @@ plugins/mcp
 plugins/automation
 plugins/range
 plugins/spp
-mlruns
+mlruns/
 mlruns.db
 # coverage reports
 htmlcov/
