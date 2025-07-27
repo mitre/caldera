@@ -72,28 +72,11 @@ class FileSvc(FileServiceInterface, BaseService):
         return file_path, contents, display_name
 
     async def save_file(self, filename, payload, target_dir, encrypt=True, encoding=None):
-        self.log.debug('[save_file] Start')
-        self.log.debug('[save_file] filename: %s', filename)
-        self.log.debug('[save_file] target_dir: %s', target_dir)
-        self.log.debug('[save_file] encrypt: %s', encrypt)
-        self.log.debug('[save_file] encoding: %s', encoding)
-       
         if encoding:
-            self.log.debug('[save_file] Decoding payload with encoding: %s', encoding)
             payload = await self._decode_contents(payload, encoding)
-            self.log.debug(payload)
-        else:
-            self.log.debug('[save_file] Raw payload type: %s', type(payload))
-
         final_path = os.path.join(target_dir, filename)
-        self.log.debug('[save_file] Final path: %s', final_path)
-        self.log.debug('[save_file] Payload preview:\n%s', str(payload)[:500])  # truncate large payloads
-
         self._save(final_path, payload, encrypt)
-
-        self.log.debug('[save_file] File saved.')
-
-
+        
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
         if not os.path.exists(path):
