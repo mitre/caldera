@@ -31,7 +31,6 @@ objects.planners.default: atomic
 plugins:
 - automation
 - manx
-- mcp
 - sandcat
 - spp
 - stockpile

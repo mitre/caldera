@@ -1,5 +1,6 @@
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.objects.c_adversary import Adversary
+import traceback
 
 
 class AdversaryApiManager(BaseApiManager):
@@ -7,8 +8,9 @@ class AdversaryApiManager(BaseApiManager):
         super().__init__(data_svc=data_svc, file_svc=file_svc)
 
     async def verify_adversary(self, adversary: Adversary):
+        if not adversary:
+            self.log.warning('call stack verify_adversary: %s',''.join(traceback.format_stack()))
         try:
-            self.log.debug('[verify_adversary] Verifying adversary: %s', adversary.display)
             adversary.verify(
                 log=self.log,
                 abilities=self._data_svc.ram['abilities'],

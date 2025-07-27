@@ -61,6 +61,7 @@ class AdversaryApi(BaseObjectApi):
     @aiohttp_apispec.response_schema(AdversarySchema, description='A single adversary in AdversarySchema format.')
     async def create_adversary(self, request: web.Request):
         adversary = await self.create_on_disk_object(request)
+        print(f'verifing adverary: {adversary}')
         adversary = await self._api_manager.verify_adversary(adversary)
         return web.json_response(adversary.display)
 
@@ -80,7 +81,15 @@ class AdversaryApi(BaseObjectApi):
                                      description='The updated adversary in AdversarySchema format.')
     async def update_adversary(self, request: web.Request):
         adversary = await self.update_on_disk_object(request)
-        adversary = await self._api_manager.verify_adversary(adversary)
+        if adversary is None:
+            raise web.HTTPNotFound(reason='Adversary not found. Try creating it instead.')
+            return None
+        try:
+            adversary = await self._api_manager.verify_adversary(adversary)
+        except Exception as e:
+            self.log.debug('[update_adversary] No adversary found failed verify')
+            raise web.HTTPInternalServerError(reason='Adversary verification failed')
+        
         return web.json_response(adversary.display)
 
     @aiohttp_apispec.docs(tags=['adversaries'], summary='Deletes an adversary.',

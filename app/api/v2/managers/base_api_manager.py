@@ -65,7 +65,7 @@ class BaseApiManager(BaseWorld):
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         obj_id = data.get(id_property) or str(uuid.uuid4())
         data[id_property] = obj_id
-        self.log.debug('Saving new object to disk [%s]: metadata = %s', obj_id, data.get('metadata'))
+        
         file_path = await self._get_new_object_file_path(data[id_property], ram_key)
         allowed = self._get_allowed_from_access(access)
         await self._save_and_reload_object(file_path, data, obj_class, allowed)
@@ -161,10 +161,29 @@ class BaseApiManager(BaseWorld):
 
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
         """Save data as YAML and reload from disk into memory"""
+        self.log.debug('--- _save_and_reload_object START ---')
+        self.log.debug('File path: %s', file_path)
+        self.log.debug('Object type: %s', obj_type)
+        self.log.debug('Access level: %s', access)
         self.log.debug('Writing object to file: %s', file_path)
-        self.log.debug('Metadata during save: %s', data.get('metadata'))
-        await self._file_svc.save_file(file_path, yaml.dump(data, encoding='utf-8', sort_keys=False), '', encrypt=False)
-        await self._data_svc.load_yaml_file(obj_type, file_path, access)
+        try:
+            yaml_data = yaml.dump(data, encoding='utf-8', sort_keys=False)
+            self.log.debug('YAML data prepared for write:\n%s', yaml_data.decode('utf-8'))
+
+            await self._file_svc.save_file(file_path, yaml_data, '', encrypt=False)
+            self.log.debug('File written to disk: %s', file_path)
+        except Exception as e:
+            self.log.exception('Exception during file write: %s', str(e))
+            raise
+        try:
+            await self._data_svc.load_yaml_file(obj_type, file_path, access)
+            self.log.debug('Reloaded object from disk into memory: %s', file_path)
+
+        except Exception as e:
+            self.log.exception('Exception during YAML load: %s', str(e))
+            raise
+
+        self.log.debug('--- _save_and_reload_object END ---')
 
     @staticmethod
     def _create_default_logger():

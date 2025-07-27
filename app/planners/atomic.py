@@ -20,8 +20,7 @@ class LogicalPlanner:
             next_link = await self._get_next_atomic_link(possible_agent_links)
             print(f'[Atomic] Next atomic link for agent {agent.paw} is {next_link}')
             if next_link:
-                for link in possible_agent_links:
-                    links_to_use.append(await self.operation.apply(link))
+                links_to_use.append(await self.operation.apply(next_link))
 
         if links_to_use:
             # Each agent will run the next available step.
