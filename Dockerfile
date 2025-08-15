@@ -112,3 +112,4 @@ EXPOSE 8022
 EXPOSE 2222
 
 ENTRYPOINT ["python3", "server.py"]
+#end
