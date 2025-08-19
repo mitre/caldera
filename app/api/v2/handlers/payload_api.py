@@ -107,10 +107,10 @@ class PayloadApi(BaseApi):
         # Filename Input Validation
         if not file_name:
             return web.HTTPBadRequest(reason="File name is required.")
-        
+
         # Sanitize the filename
         sanitized_filename = self.sanitize_filename(file_name)
-        
+
         # Additional safety checks
         if not sanitized_filename or sanitized_filename in ['.', '..']:
             return web.HTTPBadRequest(reason="Invalid file name.")
