@@ -351,9 +351,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             executor = await agent.get_preferred_executor(ability)
             if not executor:
                 continue
-
-            if executor.HOOKS and executor.language and executor.language in executor.HOOKS:
-                await executor.HOOKS[executor.language](ability, executor)
+            await self._call_ability_plugin_hooks(ability, executor)
             if executor.command:
                 link = Link.load(dict(command=self.encode_string(executor.test), paw=agent.paw, score=0,
                                       ability=ability, executor=executor, status=link_status,
@@ -392,6 +390,12 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                     links.append(lnk)
         return links
 
+    async def _call_ability_plugin_hooks(self, ability, executor):
+        """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
+        if executor.HOOKS and executor.language and executor.language in executor.HOOKS:
+            for _hook, fcall in executor.HOOKS.items():
+                await fcall(ability, executor)
+
     @staticmethod
     async def _apply_adjustments(operation, links):
         """Apply operation source ability adjustments to links
@@ -406,3 +410,4 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
                     a_link.visibility.apply(adjustment)
                     a_link.status = a_link.states['HIGH_VIZ']
+    
