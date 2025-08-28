@@ -40,8 +40,14 @@ COPY --from=ui-build /usr/src/app/plugins/magma/dist /usr/src/app/plugins/magma/
 # From https://docs.docker.com/build/building/best-practices/
 # Install caldera dependencies
 RUN apt-get update && \
-apt-get --no-install-recommends -y install git curl unzip python3-dev python3-pip golang-go mingw-w64 zlib1g gcc && \
+apt-get --no-install-recommends -y install git curl unzip python3-dev python3-pip mingw-w64 zlib1g gcc && \
 rm -rf /var/lib/apt/lists/*
+
+# Install Golang from source (apt version is too out-of-date)
+RUN curl -k -L https://go.dev/dl/go1.25.0.linux-amd64.tar.gz -o go1.25.0.linux-amd64.tar.gz && \
+tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
+ENV PATH="$PATH:/usr/local/go/bin"
+RUN go version
 
 # Fix line ending error that can be caused by cloning the project in a Windows environment
 RUN cd /usr/src/app/plugins/sandcat; tr -d '\15\32' < ./update-agents.sh > ./update-agents.sh
@@ -52,7 +58,7 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
 # Install pip requirements
-RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt 
+RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
 
 # For offline atomic (disable it by default in slim image)
 # Disable atomic if this is not downloaded
