@@ -50,7 +50,9 @@ ENV PATH="$PATH:/usr/local/go/bin"
 RUN go version
 
 # Fix line ending error that can be caused by cloning the project in a Windows environment
-RUN cd /usr/src/app/plugins/sandcat; tr -d '\15\32' < ./update-agents.sh > ./update-agents.sh
+# RUN cd /usr/src/app/plugins/sandcat && \
+cp ./update-agents.sh ./update-agents_orig.sh && \
+tr -d '\15\32' < ./update-agents_orig.sh > ./update-agents.sh
 
 # Set timezone (default to UTC)
 ARG TZ="UTC"
