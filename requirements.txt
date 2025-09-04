@@ -1,5 +1,5 @@
 aiohttp-jinja2==1.5.1
-aiohttp==3.10.8
+aiohttp==3.12.14
 aiohttp_session==2.12.0
 aiohttp-security==0.4.0
 aiohttp-apispec==3.0.0b2
@@ -19,9 +19,9 @@ reportlab==4.0.4  # debrief
 rich==13.7.0
 svglib==1.5.1  # debrief
 Markdown==3.4.4  # training
-dnspython==2.4.2
-asyncssh==2.14.1
+dnspython==2.6.1
+asyncssh==2.20.0
 aioftp~=0.20.0
 packaging==23.2
 croniter~=3.0.3
-setuptools==75.6.0
+setuptools==78.1.1
