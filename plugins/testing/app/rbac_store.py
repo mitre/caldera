@@ -59,11 +59,20 @@ class RbacStore:
     # --- resolution ---
     async def resolve_allowed_abilities_for_user(self, username: str):
         d = self._data
-        user = d["users"].get(username)
-        if not user:
-            return []
-        # start with per-user overrides
+        user = d["users"].get(username) or {}
+        # start with per-user overrides (from testing store)
         allowed = set(user.get("allowed_abilities", []))
+        # also merge allowances from RBAC plugin if present
+        try:
+            rbac_path = Path(__file__).resolve().parents[2] / 'rbac' / 'state' / 'allowed.json'
+            if rbac_path.exists():
+                rd = json.loads(rbac_path.read_text(encoding='utf-8') or '{}')
+                if isinstance(rd.get('users'), dict):
+                    allowed.update(rd['users'].get(username, []) or [])
+                elif 'allowed_student_abilities' in rd and username == 'student':
+                    allowed.update(rd.get('allowed_student_abilities', []) or [])
+        except Exception:
+            pass
         # add role abilities
         for r in user.get("roles", []):
             allowed.update(d["roles"].get(r, {}).get("allowed_abilities", []))

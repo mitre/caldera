@@ -82,6 +82,31 @@ class Rbac:
         tmp = self._state_file().with_suffix(".json.tmp")
         tmp.write_text(json.dumps(payload, indent=2))
         tmp.replace(self._state_file())
+        # Best-effort sync to testing plugin's RBAC store so Magma UI reflects changes
+        try:
+            testing_path = Path(__file__).resolve().parents[1] / 'testing' / 'data' / 'rbac.json'
+            testing_path.parent.mkdir(parents=True, exist_ok=True)
+            if testing_path.exists():
+                tdata = json.loads(testing_path.read_text(encoding='utf-8') or '{}')
+            else:
+                tdata = {"roles": {}, "users": {}, "groups": {}}
+            tdata.setdefault('roles', {})
+            tdata.setdefault('users', {})
+            tdata.setdefault('groups', {})
+            # merge/update users' allowed_abilities from our per-user map
+            for u, ids in self._allowed_map().items():
+                user = tdata['users'].get(u, {"group": "red", "roles": [], "allowed_abilities": []})
+                user['allowed_abilities'] = sorted(list(set(ids)))
+                # ensure minimal keys exist
+                user.setdefault('group', 'red')
+                user.setdefault('roles', [])
+                tdata['users'][u] = user
+            testing_tmp = testing_path.with_suffix('.json.tmp')
+            testing_tmp.write_text(json.dumps(tdata, indent=2), encoding='utf-8')
+            testing_tmp.replace(testing_path)
+        except Exception:
+            # Non-fatal: if testing plugin not present, ignore
+            pass
 
     # ---------- GUI ----------
     @check_authorization
