@@ -63,6 +63,8 @@ async def enable(services):
     app["rbac_allowed_map"] = {}
     # Initialize mapping: username -> set(blocked_plugin_names)
     app["rbac_plugin_blocks"] = {}
+    # Initialize mapping: group_name -> {members:[], color:'red'|'blue'}
+    app["rbac_groups"] = {}
     if state_file.exists():
         try:
             data = json.loads(state_file.read_text() or "{}")
@@ -82,9 +84,20 @@ async def enable(services):
             blocks_map = data.get("plugin_blocks")
             if isinstance(blocks_map, dict):
                 app["rbac_plugin_blocks"] = {u: set(map(str, names or [])) for u, names in blocks_map.items()}
+            # Groups map
+            groups_map = data.get("groups")
+            if isinstance(groups_map, dict):
+                norm = {}
+                for gname, g in groups_map.items():
+                    if isinstance(g, dict):
+                        members = set(map(str, (g.get("members") or [])))
+                        color = (g.get("color") or "red").lower()
+                        norm[str(gname)] = {"members": members, "color": color if color in {"red","blue"} else "red"}
+                app["rbac_groups"] = norm
         except Exception:
             app["rbac_allowed_map"] = {}
             app["rbac_plugin_blocks"] = {}
+            app["rbac_groups"] = {}
     else:
         state_file.write_text(json.dumps({"users": {}}, indent=2))
 
@@ -121,6 +134,8 @@ class Rbac:
         payload = {
             "users": {u: sorted(list(ids)) for u, ids in self._allowed_map().items()},
             "plugin_blocks": {u: sorted(list(names)) for u, names in self.app.get('rbac_plugin_blocks', {}).items()},
+            "groups": {g: {"members": sorted(list(v.get("members", []))), "color": v.get("color", "red")}
+                       for g, v in self.app.get('rbac_groups', {}).items()},
         }
         tmp = self._state_file().with_suffix(".json.tmp")
         tmp.write_text(json.dumps(payload, indent=2))
@@ -302,6 +317,51 @@ class Rbac:
             u = None
         return web.json_response({"username": u})
 
+    # ---------- Groups (Roles) ----------
+    def _groups_map(self) -> dict:
+        return self.app.setdefault('rbac_groups', {})
+
+    @check_authorization
+    async def get_groups(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        # return { name: { members: [...], color: 'red'|'blue' } }
+        g = self._groups_map()
+        # convert sets to lists for JSON
+        out = {name: {"members": sorted(list(v.get("members", []))), "color": v.get("color", "red")}
+               for name, v in g.items()}
+        return web.json_response({"groups": out})
+
+    @check_authorization
+    async def upsert_group(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        body = await request.json()
+        name = (body.get('name') or '').strip()
+        color = (body.get('color') or 'red').strip().lower()
+        members = set(map(str, (body.get('members') or [])))
+        if not name:
+            raise web.HTTPBadRequest(text='name is required')
+        if color not in {'red','blue'}:
+            raise web.HTTPBadRequest(text='color must be red or blue')
+        m = self._groups_map()
+        m[name] = {"members": members, "color": color}
+        # apply color to auth_svc groups for member users, if they exist
+        for uname in members:
+            u = self.auth_svc.user_map.get(uname)
+            if u:
+                self.auth_svc.user_map[uname] = self.auth_svc.User(uname, u.password, (color, 'app'))
+        self._persist()
+        return web.json_response({"ok": True, "group": name, "color": color, "members": sorted(list(members))})
+
+    @check_authorization
+    async def delete_group(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        name = request.match_info.get('name', '').strip()
+        if not name:
+            raise web.HTTPBadRequest(text='name required')
+        self._groups_map().pop(name, None)
+        self._persist()
+        return web.json_response({"ok": True})
+
     def _plugin_blocks(self) -> dict:
         return self.app.setdefault('rbac_plugin_blocks', {})
 
@@ -400,6 +460,10 @@ class RbacUiMiddleware:
         return False
 
     @web.middleware
+    # Role/Group management APIs
+    app.router.add_route("GET",  "/api/rbac/groups", r.get_groups)
+    app.router.add_route("POST", "/api/rbac/groups", r.upsert_group)
+    app.router.add_route("DELETE", "/api/rbac/groups/{name}", r.delete_group)
     async def handle(self, request, handler):
         method = request.method.upper()
         path = request.rel_url.path

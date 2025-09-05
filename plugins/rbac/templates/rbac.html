@@ -81,16 +81,50 @@
 
           <button type="button" class="rbac-tab-btn" data-target="tabRole">Role</button>
           <div id="tabRole" class="rbac-collapse">
-            <select class="rbac-select rbac-big-select" size="16">
-              <option>Role</option>
-            </select>
+            <!-- Create Group (Role) -->
+            <div class="rbac-form">
+              <input id="grpName" class="rbac-input rbac-input-small" type="text" placeholder="group name">
+              <select id="grpColor" class="rbac-user-select">
+                <option value="red">red</option>
+                <option value="blue">blue</option>
+              </select>
+              <button id="btnGroupCreate" class="rbac-btn">Create Group</button>
+              <span id="grpMsg" class="rbac-msg"></span>
+            </div>
+
+            <!-- Manage Group: pick, set color, manage members -->
+            <div class="rbac-form">
+              <label for="grpSelect"><strong>Group:</strong></label>
+              <select id="grpSelect" class="rbac-user-select"></select>
+              <label for="grpEditColor"><strong>Color:</strong></label>
+              <select id="grpEditColor" class="rbac-user-select">
+                <option value="red">red</option>
+                <option value="blue">blue</option>
+              </select>
+              <button id="btnGroupSave" class="rbac-btn">Save</button>
+              <button id="btnGroupDelete" class="rbac-btn">Delete</button>
+              <span id="grpEditMsg" class="rbac-msg"></span>
+            </div>
+
+            <!-- Members multi-select -->
+            <div>
+              <h4>Members</h4>
+              <select id="grpMembersSelect" class="rbac-select rbac-big-select" multiple size="14"></select>
+            </div>
           </div>
 
           <button type="button" class="rbac-tab-btn" data-target="tabTeam">Team</button>
           <div id="tabTeam" class="rbac-collapse">
-            <select class="rbac-select rbac-big-select" size="16">
-              <option>Team</option>
-            </select>
+            <div class="rbac-two-col">
+              <div>
+                <h4>Red</h4>
+                <select id="teamRedSelect" class="rbac-select rbac-big-select" size="16"></select>
+              </div>
+              <div>
+                <h4>Blue</h4>
+                <select id="teamBlueSelect" class="rbac-select rbac-big-select" size="16"></select>
+              </div>
+            </div>
           </div>
 
           <button type="button" class="rbac-tab-btn" data-target="tabControl">Control</button>
@@ -177,6 +211,20 @@
   const regGroup= document.getElementById('regGroup');
   const btnReg  = document.getElementById('btnReg');
   const regMsg  = document.getElementById('regMsg');
+  // role/group controls
+  const grpName = document.getElementById('grpName');
+  const grpColor= document.getElementById('grpColor');
+  const btnGroupCreate = document.getElementById('btnGroupCreate');
+  const grpMsg = document.getElementById('grpMsg');
+  const grpSelect = document.getElementById('grpSelect');
+  const grpEditColor = document.getElementById('grpEditColor');
+  const btnGroupSave = document.getElementById('btnGroupSave');
+  const btnGroupDelete = document.getElementById('btnGroupDelete');
+  const grpEditMsg = document.getElementById('grpEditMsg');
+  const grpMembersSelect = document.getElementById('grpMembersSelect');
+  // team tab controls
+  const teamRedSelect = document.getElementById('teamRedSelect');
+  const teamBlueSelect = document.getElementById('teamBlueSelect');
 
   // --- render selected list ---
   function renderSelected() {
@@ -232,6 +280,40 @@
     const r = await fetch('/api/rbac/plugins', { credentials: 'same-origin' });
     if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
     return r.json(); // { plugins: [] }
+  }
+
+  async function listGroups() {
+    const r = await fetch('/api/rbac/groups', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json(); // { groups: { name: {members:[], color} } }
+  }
+
+  async function renderTeamLists(){
+    try{
+      const [usersDet, groupsDet] = await Promise.all([listUsersDetailed(), listGroups()]);
+      const users = Array.isArray(usersDet.users) ? usersDet.users : [];
+      const groups = groupsDet.groups || {};
+      // Build arrays
+      const redUsers = users.filter(u=>u.group==='red').map(u=>({type:'user', name:u.username}));
+      const blueUsers = users.filter(u=>u.group==='blue').map(u=>({type:'user', name:u.username}));
+      const redGroups = Object.entries(groups).filter(([n,g])=> (g.color||'red')==='red').map(([n])=>({type:'group', name:n}));
+      const blueGroups = Object.entries(groups).filter(([n,g])=> (g.color||'red')==='blue').map(([n])=>({type:'group', name:n}));
+      // Fill selects
+      teamRedSelect.innerHTML = '';
+      for (const it of [...redUsers, ...redGroups]){
+        const opt = document.createElement('option');
+        opt.value = `${it.type}:${it.name}`;
+        opt.textContent = `${it.type}: ${it.name}`;
+        teamRedSelect.appendChild(opt);
+      }
+      teamBlueSelect.innerHTML = '';
+      for (const it of [...blueUsers, ...blueGroups]){
+        const opt = document.createElement('option');
+        opt.value = `${it.type}:${it.name}`;
+        opt.textContent = `${it.type}: ${it.name}`;
+        teamBlueSelect.appendChild(opt);
+      }
+    }catch(e){ console.error(e); }
   }
 
   async function loadBlockedFor(user) {
@@ -361,6 +443,7 @@
             const r = await fetch('/api/rbac/users/group', { method:'PUT', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: uname, group: val })});
             if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
             btn.textContent = 'Saved ✓';
+            await renderTeamLists();
           }catch(e){ console.error(e); btn.textContent = 'Failed'; }
           finally{ setTimeout(()=>btn.textContent='Save', 1200); btn.disabled = false; }
         });
@@ -396,6 +479,85 @@
     finally { pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = false; setTimeout(()=>pmsg.textContent='',1200); }
   }
 
+  // --- role/group handlers ---
+  async function refreshGroupsUI(selectName){
+    const data = await listGroups();
+    const groups = data.groups || {};
+    grpSelect.innerHTML = '';
+    const names = Object.keys(groups).sort();
+    for (const name of names){
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = name;
+      grpSelect.appendChild(opt);
+    }
+    const chosen = selectName && names.includes(selectName) ? selectName : (names[0] || '');
+    grpSelect.value = chosen;
+    // fill color + members
+    if (chosen){
+      grpEditColor.value = (groups[chosen].color || 'red');
+      // fill members list from users list
+      const ures = await listUsers();
+      const all = Array.isArray(ures.users) ? ures.users : [];
+      grpMembersSelect.innerHTML = '';
+      const membersSet = new Set(groups[chosen].members || []);
+      for (const u of all){
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = u;
+        opt.selected = membersSet.has(u);
+        grpMembersSelect.appendChild(opt);
+      }
+    } else {
+      grpEditColor.value = 'red';
+      grpMembersSelect.innerHTML = '';
+    }
+  }
+
+  async function createGroup(){
+    const name = (grpName.value||'').trim();
+    const color = (grpColor.value||'red').trim();
+    if (!name){ grpMsg.textContent = 'Enter group name'; return; }
+    btnGroupCreate.disabled = true; grpMsg.textContent = 'Saving...';
+    try{
+      const r = await fetch('/api/rbac/groups', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, color, members: [] })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      grpMsg.textContent = 'Created ✓';
+      grpName.value='';
+      await refreshGroupsUI(name);
+      await renderTeamLists();
+    }catch(e){ console.error(e); grpMsg.textContent = 'Failed: ' + (e && e.message || ''); }
+    finally{ btnGroupCreate.disabled = false; setTimeout(()=>grpMsg.textContent='', 1200); }
+  }
+
+  async function saveGroup(){
+    const name = grpSelect.value || '';
+    if (!name) return;
+    const color = grpEditColor.value || 'red';
+    const members = Array.from(grpMembersSelect.selectedOptions).map(o=>o.value);
+    btnGroupSave.disabled = btnGroupDelete.disabled = true; grpEditMsg.textContent = 'Saving...';
+    try{
+      const r = await fetch('/api/rbac/groups', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, color, members })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      grpEditMsg.textContent = 'Saved ✓';
+      await refreshGroupsUI(name);
+      await renderTeamLists();
+    }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
+    finally{ btnGroupSave.disabled = btnGroupDelete.disabled = false; setTimeout(()=>grpEditMsg.textContent='', 1200); }
+  }
+
+  async function deleteGroup(){
+    const name = grpSelect.value || '';
+    if (!name) return;
+    btnGroupSave.disabled = btnGroupDelete.disabled = true; grpEditMsg.textContent = 'Deleting...';
+    try{
+      const r = await fetch(`/api/rbac/groups/${encodeURIComponent(name)}`, { method:'DELETE', credentials:'same-origin' });
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      grpEditMsg.textContent = 'Deleted ✓';
+      await refreshGroupsUI('');
+      await renderTeamLists();
+    }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
+    finally{ btnGroupSave.disabled = btnGroupDelete.disabled = false; setTimeout(()=>grpEditMsg.textContent='', 1200); }
+  }
+
   // Hook up events
   sel.addEventListener('change', renderSelected);
   search.addEventListener('input', debounce(()=>{ filterOptions(); /* keep selection list visible */ }, 150));
@@ -406,6 +568,9 @@
   pbtnA.addEventListener('click', pAddSelected);
   pbtnD.addEventListener('click', pDelSelected);
   btnReg.addEventListener('click', registerUser);
+  btnGroupCreate.addEventListener('click', createGroup);
+  btnGroupSave.addEventListener('click', saveGroup);
+  btnGroupDelete.addEventListener('click', deleteGroup);
   // Toggle collapsible panels for the top-level tabs
   document.querySelectorAll('.rbac-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -446,6 +611,8 @@
       await loadAllowedFor(currentUser);
       await loadBlockedFor(currentUser);
       await renderUserTable();
+      await refreshGroupsUI('');
+      await renderTeamLists();
     } catch(e){ console.error(e); }
     renderSelected();
   })();
