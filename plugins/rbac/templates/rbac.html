@@ -1,37 +1,63 @@
-<div class="section-profile">
-  <div class="row">
-    <div class="column" style="flex:25%;padding:15px;">
-      <h1>RBAC</h1>
+<style>
+  /* Scoped styles for RBAC page */
+  .rbac-page { color: #e6e6e6; }
+  .rbac-grid { display: grid; grid-template-columns: 1fr 3fr; gap: 16px; align-items: start; }
+  .rbac-title { margin: 0; font-size: 28px; letter-spacing: 0.5px; }
+  .rbac-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 16px; box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+  .rbac-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top: 10px; }
+  .rbac-msg { min-height: 1.2em; color: #a0e7a0; margin-left: 6px; }
+  .rbac-input { width: 100%; padding: 10px 12px; border-radius: 6px; background: #121212; border: 1px solid #303030; color: #e6e6e6; margin: 6px 0; }
+  .rbac-input:focus { outline: none; border-color: var(--primary-color,#7e57c2); box-shadow: 0 0 0 2px rgba(126,87,194,.25); }
+  .rbac-select { width: 100%; height: 60vh; border-radius: 6px; background: #121212; border: 1px solid #303030; color: #e6e6e6; line-height: 1.35; font-size: 14px; padding: 8px; }
+  .rbac-select option { padding: 4px 6px; }
+  .rbac-select option[hidden] { display: none; }
+  .rbac-btn { background: linear-gradient(#2a2a2a,#222); color:#fff; border:1px solid #3a3a3a; border-radius:6px; padding:8px 12px; font-weight:600; cursor:pointer; transition: border-color .15s, transform .02s, background .15s; }
+  .rbac-btn:hover { border-color: var(--primary-color,#7e57c2); background: linear-gradient(#2f2f2f,#262626); }
+  .rbac-btn:active { transform: translateY(1px); }
+  .rbac-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .rbac-subtle { color: #bdbdbd; }
+  .rbac-selected { margin-top: 12px; }
+  .rbac-selected ul { margin: 8px 0 0 18px; }
+  @media (max-width: 900px) {
+    .rbac-grid { grid-template-columns: 1fr; }
+    .rbac-select { height: 50vh; }
+  }
+</style>
+
+<div class="section-profile rbac-page">
+  <div class="rbac-grid">
+    <div class="rbac-card">
+      <h1 class="rbac-title">RBAC</h1>
     </div>
 
-    <div class="column" style="flex:75%;padding:15px;">
-      <p><strong>Total abilities:</strong> {{ ability_count }}</p>
+    <div>
+      <div class="rbac-card">
+        <p><strong>Total abilities:</strong> {{ ability_count }}</p>
 
-      <h3>All Abilities</h3>
-      <!-- Search bar -->
-      <input id="abilitySearch" type="search" placeholder="Search by name or ID..."
-             style="width:100%;max-width:1000px;padding:8px 10px;margin:6px 0;">
+        <h3>All Abilities</h3>
+        <!-- Search bar -->
+        <input id="abilitySearch" class="rbac-input" type="search" placeholder="Search by name or ID...">
 
-      <!-- Bigger multi-select -->
-      <select id="abilitySelect" multiple size="22"
-              style="width:100%;max-width:1000px;height:60vh;line-height:1.4;font-size:14px;">
-        {% for opt in ability_options %}
-          <option value="{{ opt.id }}" data-name="{{ opt.name }}" {% if opt.id in allowed_ids %}selected{% endif %}>
-            {{ opt.name }} ({{ opt.id[:8] }})
-          </option>
-        {% endfor %}
-      </select>
+        <!-- Larger multi-select -->
+        <select id="abilitySelect" class="rbac-select" multiple size="22">
+          {% for opt in ability_options %}
+            <option value="{{ opt.id }}" data-name="{{ opt.name }}" {% if opt.id in allowed_ids %}selected{% endif %}>
+              {{ opt.name }} ({{ opt.id[:8] }})
+            </option>
+          {% endfor %}
+        </select>
 
-      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <button id="btnSave">Save (replace)</button>
-        <button id="btnAdd">Add selected</button>
-        <button id="btnDel">Delete selected</button>
-        <span id="msg" style="margin-left:6px;"></span>
-      </div>
+        <div class="rbac-toolbar">
+          <button id="btnSave" class="rbac-btn">Save (replace)</button>
+          <button id="btnAdd" class="rbac-btn">Add selected</button>
+          <button id="btnDel" class="rbac-btn">Delete selected</button>
+          <span id="msg" class="rbac-msg"></span>
+        </div>
 
-      <div style="margin-top:12px;">
-        <strong>Selected (<span id="selCount">0</span>):</strong>
-        <div id="selectedList" style="margin-top:6px;">Nothing selected</div>
+        <div class="rbac-selected">
+          <strong>Selected (<span id="selCount">0</span>):</strong>
+          <div id="selectedList" class="rbac-subtle">Nothing selected</div>
+        </div>
       </div>
     </div>
   </div>
