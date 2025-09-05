@@ -12,13 +12,21 @@ name = "RBAC"
 description = "Role Based Access Control"
 address = "/plugin/rbac/gui"
 
-async def _forbid_student(request):
+async def _ensure_plugin_access(request, plugin_name: str = 'rbac'):
+    """Dynamically forbid access to a plugin based on per-user block list."""
     try:
         u = await authorized_userid(request)
     except Exception:
         u = None
-    if u == 'student':
-        raise web.HTTPForbidden(text="RBAC plugin is not available for your role.")
+    # admins bypass
+    if u and u.lower() in {'admin', 'red'}:
+        return
+    # consult RBAC plugin block map
+    app = request.app
+    blocks = app.get('rbac_plugin_blocks', {}) or {}
+    user_blocks = set(blocks.get(u, []) if u else [])
+    if plugin_name in user_blocks:
+        raise web.HTTPForbidden(text=f"Plugin '{plugin_name}' is not available for your role.")
 
 async def enable(services):
     app = services.get("app_svc").application
@@ -34,6 +42,13 @@ async def enable(services):
     app.router.add_route("POST",   "/api/rbac/allowed", r.post_allowed)       # body: {username, ability_ids}
     app.router.add_route("DELETE", "/api/rbac/allowed/{id}", r.delete_allowed)# ?username=alice
 
+    # Plugin access (per-user block list)
+    app.router.add_route("GET",  "/api/rbac/plugins", r.get_all_plugins)
+    app.router.add_route("GET",  "/api/rbac/blocked", r.get_blocked_plugins)     # ?username=alice
+    app.router.add_route("PUT",  "/api/rbac/blocked", r.put_blocked_plugins)     # body: {username, plugin_names}
+    app.router.add_route("POST", "/api/rbac/blocked", r.post_blocked_plugins)    # body: {username, plugin_names}
+    app.router.add_route("DELETE", "/api/rbac/blocked/{plugin}", r.del_blocked_plugin) # ?username=alice
+
     # Minimal state + persistence
     plugin_root = Path(__file__).resolve().parent
     state_file = plugin_root / "state" / "allowed.json"
@@ -42,6 +57,8 @@ async def enable(services):
     app["rbac_state_file"] = str(state_file)
     # Initialize mapping: username -> set(ability_id)
     app["rbac_allowed_map"] = {}
+    # Initialize mapping: username -> set(blocked_plugin_names)
+    app["rbac_plugin_blocks"] = {}
     if state_file.exists():
         try:
             data = json.loads(state_file.read_text() or "{}")
@@ -57,8 +74,13 @@ async def enable(services):
                 old_generic = set(map(str, data.get("allowed_abilities", [])))
                 merged = old_student or old_generic
                 app["rbac_allowed_map"] = {"student": merged} if merged else {}
+            # Plugin blocks in new format
+            blocks_map = data.get("plugin_blocks")
+            if isinstance(blocks_map, dict):
+                app["rbac_plugin_blocks"] = {u: set(map(str, names or [])) for u, names in blocks_map.items()}
         except Exception:
             app["rbac_allowed_map"] = {}
+            app["rbac_plugin_blocks"] = {}
     else:
         state_file.write_text(json.dumps({"users": {}}, indent=2))
 
@@ -92,7 +114,10 @@ class Rbac:
         return Path(self.app["rbac_state_file"])
 
     def _persist(self):
-        payload = {"users": {u: sorted(list(ids)) for u, ids in self._allowed_map().items()}}
+        payload = {
+            "users": {u: sorted(list(ids)) for u, ids in self._allowed_map().items()},
+            "plugin_blocks": {u: sorted(list(names)) for u, names in self.app.get('rbac_plugin_blocks', {}).items()},
+        }
         tmp = self._state_file().with_suffix(".json.tmp")
         tmp.write_text(json.dumps(payload, indent=2))
         tmp.replace(self._state_file())
@@ -126,7 +151,7 @@ class Rbac:
     @check_authorization
     @template("rbac.html")
     async def gui(self, request):
-        await _forbid_student(request)
+        await _ensure_plugin_access(request, 'rbac')
         abilities = await self.data_svc.locate("abilities", match={})
         # Normalize to simple {id,name}
         options = []
@@ -147,7 +172,7 @@ class Rbac:
     # ---------- APIs ----------
     @check_authorization
     async def get_users(self, request):
-        await _forbid_student(request)
+        await _ensure_plugin_access(request, 'rbac')
         # Gather users from auth service and from stored RBAC state
         from_auth = set(self.auth_svc.user_map.keys())
         from_state = set(self._allowed_map().keys())
@@ -156,7 +181,7 @@ class Rbac:
 
     @check_authorization
     async def get_allowed(self, request):
-        await _forbid_student(request)
+        await _ensure_plugin_access(request, 'rbac')
         username = request.rel_url.query.get("username")
         if not username:
             raise web.HTTPBadRequest(text="username is required")
@@ -164,7 +189,7 @@ class Rbac:
 
     @check_authorization
     async def put_allowed(self, request):
-        await _forbid_student(request)
+        await _ensure_plugin_access(request, 'rbac')
         data = await request.json()
         username = (data.get("username") or "").strip()
         if not username:
@@ -178,7 +203,7 @@ class Rbac:
 
     @check_authorization
     async def post_allowed(self, request):
-        await _forbid_student(request)
+        await _ensure_plugin_access(request, 'rbac')
         data = await request.json()
         username = (data.get("username") or "").strip()
         if not username:
@@ -190,7 +215,7 @@ class Rbac:
 
     @check_authorization
     async def delete_allowed(self, request):
-        await _forbid_student(request)
+        await _ensure_plugin_access(request, 'rbac')
         ability_id = request.match_info.get("id", "")
         username = request.rel_url.query.get("username", "").strip()
         if not username:
@@ -198,6 +223,72 @@ class Rbac:
         self._allowed_for(username).discard(str(ability_id))
         self._persist()
         return web.json_response({"ok": True, "username": username, "allowed": sorted(self._allowed_for(username))})
+
+    # ---------- Plugin access APIs ----------
+    @check_authorization
+    async def get_all_plugins(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        # list plugin directory names
+        plugins_root = Path(__file__).resolve().parents[1]
+        names = []
+        for p in plugins_root.iterdir():
+            if p.is_dir() and not p.name.startswith('.'):
+                names.append(p.name)
+        names.sort()
+        return web.json_response({"plugins": names})
+
+    def _plugin_blocks(self) -> dict:
+        return self.app.setdefault('rbac_plugin_blocks', {})
+
+    def _blocked_for(self, username: str) -> set:
+        m = self._plugin_blocks()
+        if username not in m:
+            m[username] = set()
+        return m[username]
+
+    @check_authorization
+    async def get_blocked_plugins(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        username = request.rel_url.query.get('username', '').strip()
+        if not username:
+            raise web.HTTPBadRequest(text='username is required')
+        return web.json_response({"username": username, "blocked": sorted(self._blocked_for(username))})
+
+    @check_authorization
+    async def put_blocked_plugins(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        data = await request.json()
+        username = (data.get('username') or '').strip()
+        if not username:
+            raise web.HTTPBadRequest(text='username is required')
+        names = set(map(str, data.get('plugin_names', []) or []))
+        s = self._blocked_for(username)
+        s.clear(); s.update(names)
+        self._persist()
+        return web.json_response({"ok": True, "username": username, "blocked": sorted(self._blocked_for(username))})
+
+    @check_authorization
+    async def post_blocked_plugins(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        data = await request.json()
+        username = (data.get('username') or '').strip()
+        if not username:
+            raise web.HTTPBadRequest(text='username is required')
+        names = set(map(str, data.get('plugin_names', []) or []))
+        self._blocked_for(username).update(names)
+        self._persist()
+        return web.json_response({"ok": True, "username": username, "blocked": sorted(self._blocked_for(username))})
+
+    @check_authorization
+    async def del_blocked_plugin(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        username = request.rel_url.query.get('username', '').strip()
+        if not username:
+            raise web.HTTPBadRequest(text='username is required')
+        plugin = request.match_info.get('plugin', '')
+        self._blocked_for(username).discard(plugin)
+        self._persist()
+        return web.json_response({"ok": True, "username": username, "blocked": sorted(self._blocked_for(username))})
 
 
 class RbacUiMiddleware:
@@ -247,6 +338,20 @@ class RbacUiMiddleware:
     async def handle(self, request, handler):
         method = request.method.upper()
         path = request.rel_url.path
+        # Dynamic plugin blocking on all /plugin/<name> routes
+        if path.startswith('/plugin/'):
+            username = await self._username(request)
+            if username and not self._is_admin(username):
+                parts = path.split('/')
+                if len(parts) > 2:
+                    plugin_name = parts[2]
+                    blocks = self.app.get('rbac_plugin_blocks', {}) or {}
+                    if plugin_name in set(blocks.get(username, set())):
+                        # Return HTML or JSON depending on path
+                        if request.path.startswith('/plugin/'):
+                            return web.Response(text=f"Plugin '{plugin_name}' is not available for your role.", status=403, content_type='text/html')
+                        return web.json_response({"error": "Forbidden for your role"}, status=403)
+
         if method != 'GET' or not path.startswith('/api/v2/'):
             return await handler(request)
 
