@@ -338,8 +338,8 @@ class RbacUiMiddleware:
     async def handle(self, request, handler):
         method = request.method.upper()
         path = request.rel_url.path
-        # Dynamic plugin blocking on all /plugin/<name> routes
-        if path.startswith('/plugin/'):
+        # Dynamic plugin blocking on all /plugin/<name> and /plugins/<name> routes
+        if path.startswith('/plugin/') or path.startswith('/plugins/'):
             username = await self._username(request)
             if username and not self._is_admin(username):
                 parts = path.split('/')
@@ -348,7 +348,7 @@ class RbacUiMiddleware:
                     blocks = self.app.get('rbac_plugin_blocks', {}) or {}
                     if plugin_name in set(blocks.get(username, set())):
                         # Return HTML or JSON depending on path
-                        if request.path.startswith('/plugin/'):
+                        if request.path.startswith('/plugin/') or request.path.startswith('/plugins/'):
                             return web.Response(text=f"Plugin '{plugin_name}' is not available for your role.", status=403, content_type='text/html')
                         return web.json_response({"error": "Forbidden for your role"}, status=403)
 
@@ -395,5 +395,4 @@ class RbacUiMiddleware:
             pass
 
         return await handler(request)
-
 

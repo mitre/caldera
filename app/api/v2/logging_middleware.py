@@ -137,12 +137,12 @@ async def log_all_requests(request, handler):
         is_admin = user and user.lower() in {"admin", "red"}
 
         # Dynamic plugin GUI blocking
-        if not is_admin and path.startswith('/plugin/') and user:
+        if not is_admin and (path.startswith('/plugin/') or path.startswith('/plugins/')) and user:
             parts = path.split('/')
             plugin_name = parts[2] if len(parts) > 2 else ''
             blocked = _get_blocked_plugins_for_user(request, user)
             if plugin_name and plugin_name in blocked:
-                if path.startswith('/plugin/'):
+                if path.startswith('/plugin/') or path.startswith('/plugins/'):
                     return web.Response(text=f"Plugin '{plugin_name}' is not available for your role.", status=403, content_type='text/html')
                 return web.json_response({"error": "Forbidden for your role"}, status=403)
 
