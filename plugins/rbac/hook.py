@@ -1,6 +1,7 @@
 "Edited"
 
 from aiohttp import web
+import logging
 from aiohttp_jinja2 import template
 from app.service.auth_svc import check_authorization
 from pathlib import Path
@@ -61,8 +62,14 @@ async def enable(services):
     else:
         state_file.write_text(json.dumps({"users": {}}, indent=2))
 
-    # Attach RBAC UI filtering middleware at the FRONT so it takes precedence
+    # Attach RBAC UI filtering middleware at the FRONT so it takes precedence on the main app
     app.middlewares.insert(0, RbacUiMiddleware(services, app).handle)
+    # Also attach to sub-apps (e.g., /api/v2) so it applies there as well
+    for sub in getattr(app, '_subapps', []):
+        try:
+            sub.middlewares.insert(0, RbacUiMiddleware(services, app).handle)
+        except Exception:
+            pass
 
 
 class Rbac:
@@ -249,6 +256,7 @@ class RbacUiMiddleware:
             return await handler(request)
 
         allowed = self._allowed(username)
+        logging.info(f"[RBAC] filter user=%s path=%s allowed=%d", username, path, len(allowed))
         try:
             if path.startswith('/api/v2/abilities'):
                 abilities = await self.data_svc.locate('abilities')
@@ -256,6 +264,7 @@ class RbacUiMiddleware:
                     a.display for a in abilities
                     if (a.display.get('ability_id') or a.display.get('id')) in allowed
                 ]
+                logging.info("[RBAC] abilities filtered=%d", len(filtered))
                 return web.json_response({'total': len(filtered), 'abilities': filtered})
 
             if path.startswith('/api/v2/adversaries'):
@@ -274,6 +283,7 @@ class RbacUiMiddleware:
                     adv.display for adv in adversaries
                     if set(adv_ability_ids(adv.display)).issubset(allowed)
                 ]
+                logging.info("[RBAC] adversaries filtered=%d", len(filtered))
                 return web.json_response({'total': len(filtered), 'adversaries': filtered})
         except Exception:
             # On any exception, fall back to default behavior

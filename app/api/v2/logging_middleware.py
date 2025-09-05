@@ -13,7 +13,15 @@ _ALLOWED_CACHE = {"ids": set(), "mtime": None}
 def _load_allowed_from_json(path: Path) -> set:
     try:
         data = json.loads(path.read_text() or "{}")
-        return set(map(str, data.get("allowed_student_abilities", [])))
+        # Prefer new format: per-user mapping
+        if isinstance(data.get("users"), dict):
+            return set(map(str, (data["users"].get("student") or [])))
+        # Legacy keys
+        if "allowed_student_abilities" in data:
+            return set(map(str, data.get("allowed_student_abilities", [])))
+        if "allowed_abilities" in data:
+            return set(map(str, data.get("allowed_abilities", [])))
+        return set()
     except FileNotFoundError:
         return set()
     except Exception as e:
@@ -33,7 +41,24 @@ def _get_allowed_cached() -> set:
     return _ALLOWED_CACHE["ids"]
 
 def get_allowed_from_request(request) -> set:
-    # prefer live set from RBAC plugin; else JSON
+    """Return allowed set for the student user.
+
+    This middleware only applies to user == 'student' below, so it's safe
+    to pull the 'student' entry from the RBAC plugin map if present.
+    """
+    # Prefer live per-user map published by RBAC plugin
+    try:
+        live_map = request.app.get("rbac_allowed_map")
+        if isinstance(live_map, dict):
+            s = live_map.get("student")
+            if isinstance(s, set):
+                return s
+            if s:
+                return set(s)
+    except Exception:
+        pass
+
+    # Fallback to legacy single set if present
     try:
         live = request.app.get("rbac_allowed")
         if isinstance(live, set):
@@ -42,6 +67,8 @@ def get_allowed_from_request(request) -> set:
             return set(live)
     except Exception:
         pass
+
+    # Finally, read from JSON on disk (supports both new and legacy formats)
     return _get_allowed_cached()
 
 @web.middleware
