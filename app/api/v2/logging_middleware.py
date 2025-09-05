@@ -116,6 +116,25 @@ def _get_blocked_plugins_for_user(request, username: str) -> set:
     # fallback to JSON
     return _load_plugin_blocks_from_json(ALLOWED_JSON_PATH).get(username, set())
 
+
+def _extract_plugin_name(path: str) -> str | None:
+    """Return plugin name if the path targets a plugin UI or plugin API.
+
+    Matches:
+      - /plugin/<name>[/*]
+      - /plugins/<name>[/*]
+      - /api/<name>[/*]   (plugin REST endpoints)
+    """
+    if not path:
+        return None
+    for prefix in ("/plugin/", "/plugins/", "/api/"):
+        if path.startswith(prefix):
+            parts = path.split('/')
+            # ['', 'plugin(s)|api', '<name>', ...]
+            if len(parts) > 2 and parts[2]:
+                return parts[2]
+    return None
+
 @web.middleware
 async def log_all_requests(request, handler):
     """Dynamic RBAC enforcement in v2 API layer.
@@ -136,19 +155,18 @@ async def log_all_requests(request, handler):
         # Admin bypass
         is_admin = user and user.lower() in {"admin", "red"}
 
-        # Dynamic plugin GUI blocking (also logs for debugging)
-        if (path.startswith('/plugin/') or path.startswith('/plugins/')):
-            if not user:
-                # not logged-in: let auth middleware redirect
-                return await handler(request)
-            if not is_admin:
-                parts = path.split('/')
-                plugin_name = parts[2] if len(parts) > 2 else ''
-                blocked = _get_blocked_plugins_for_user(request, user)
-                if plugin_name:
-                    print(f"[RBAC] user={user} path={path} plugin={plugin_name} blocked_list={sorted(blocked)}")
-                if plugin_name and plugin_name in blocked:
+        # Dynamic plugin blocking for GUI and plugin APIs
+        plugin_name = _extract_plugin_name(path)
+        if plugin_name and user and not is_admin:
+            blocked = _get_blocked_plugins_for_user(request, user)
+            if plugin_name in blocked:
+                # Return HTML for GUI routes, JSON for APIs
+                if path.startswith('/plugin/') or path.startswith('/plugins/'):
+                    print(f"[RBAC] BLOCK GUI user={user} plugin={plugin_name} path={path}")
                     return web.Response(text=f"Plugin '{plugin_name}' is not available for your role.", status=403, content_type='text/html')
+                if path.startswith('/api/'):
+                    print(f"[RBAC] BLOCK API user={user} plugin={plugin_name} path={path}")
+                    return web.json_response({"error": "Forbidden for your role"}, status=403)
             parts = path.split('/')
             plugin_name = parts[2] if len(parts) > 2 else ''
             blocked = _get_blocked_plugins_for_user(request, user)

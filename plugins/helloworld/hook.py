@@ -23,9 +23,8 @@ async def enable(services):
     
     abilities = await data_svc.locate('abilities')
     auth = await auth_svc.create_user('student', 'student', 'red')
-    print(auth, 'created new user dum')
-    print(f"✅ Abilities loaded: {len(abilities)}")
- 
+    auth = await auth_svc.create_user('student1', 'student1', 'red')
+
     app.router.add_route('GET', '/plugin/helloworld/gui', landing)
     logger.warning('Hello world is now enabled')
 
