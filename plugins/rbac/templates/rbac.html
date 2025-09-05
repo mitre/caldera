@@ -1,0 +1,130 @@
+<div class="section-profile">
+  <div class="row">
+    <div class="column" style="flex:25%;padding:15px;">
+      <h1>RBAC</h1>
+    </div>
+
+    <div class="column" style="flex:75%;padding:15px;">
+      <p><strong>Total abilities:</strong> {{ ability_count }}</p>
+
+      <h3>All Abilities</h3>
+      <!-- Search bar -->
+      <input id="abilitySearch" type="search" placeholder="Search by name or ID..."
+             style="width:100%;max-width:1000px;padding:8px 10px;margin:6px 0;">
+
+      <!-- Bigger multi-select -->
+      <select id="abilitySelect" multiple size="22"
+              style="width:100%;max-width:1000px;height:60vh;line-height:1.4;font-size:14px;">
+        {% for opt in ability_options %}
+          <option value="{{ opt.id }}" data-name="{{ opt.name }}" {% if opt.id in allowed_ids %}selected{% endif %}>
+            {{ opt.name }} ({{ opt.id[:8] }})
+          </option>
+        {% endfor %}
+      </select>
+
+      <div style="margin-top:10px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button id="btnSave">Save (replace)</button>
+        <button id="btnAdd">Add selected</button>
+        <button id="btnDel">Delete selected</button>
+        <span id="msg" style="margin-left:6px;"></span>
+      </div>
+
+      <div style="margin-top:12px;">
+        <strong>Selected (<span id="selCount">0</span>):</strong>
+        <div id="selectedList" style="margin-top:6px;">Nothing selected</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const sel  = document.getElementById('abilitySelect');
+  const search = document.getElementById('abilitySearch');
+  const btnS = document.getElementById('btnSave');
+  const btnA = document.getElementById('btnAdd');
+  const btnD = document.getElementById('btnDel');
+  const msg  = document.getElementById('msg');
+  const selCount = document.getElementById('selCount');
+  const list = document.getElementById('selectedList');
+
+  // --- render selected list ---
+  function renderSelected() {
+    const items = Array.from(sel.selectedOptions).map(o => ({ id:o.value, name:o.dataset.name || o.textContent }));
+    selCount.textContent = items.length;
+    list.innerHTML = items.length ? '' : 'Nothing selected';
+    if (!items.length) return;
+    const ul = document.createElement('ul'); ul.style.margin='8px 0'; ul.style.paddingLeft='18px';
+    for (const it of items.slice(0, 25)) {
+      const li = document.createElement('li'); li.textContent = `${it.name} (${it.id.slice(0,8)})`; ul.appendChild(li);
+    }
+    list.appendChild(ul);
+    if (items.length > 25) { const more = document.createElement('p'); more.textContent = `…and ${items.length-25} more`; list.appendChild(more); }
+  }
+
+  // --- client-side search (filters visible options) ---
+  function filterOptions() {
+    const q = search.value.trim().toLowerCase();
+    const opts = Array.from(sel.options);
+    if (!q) { opts.forEach(o => o.hidden = false); return; }
+    for (const o of opts) {
+      const name = (o.dataset.name || o.textContent || '').toLowerCase();
+      const id   = (o.value || '').toLowerCase();
+      o.hidden = !(name.includes(q) || id.includes(q));
+    }
+  }
+  const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; };
+
+  // --- API helper ---
+  async function call(method, body) {
+    const r = await fetch('/api/rbac/allowed', {
+      method, credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body: body ? JSON.stringify(body) : null
+    });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json();
+  }
+
+  async function saveReplace() {
+    const selected = Array.from(sel.selectedOptions).map(o => o.value);
+    btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Saving...';
+    try { await call('PUT',  { ability_ids: selected }); msg.textContent = 'Saved ✓'; }
+    catch(e){ console.error(e); msg.textContent = 'Save failed'; }
+    finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
+  }
+
+  async function addSelected() {
+    const selected = Array.from(sel.selectedOptions).map(o => o.value);
+    if (!selected.length) return;
+    btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Adding...';
+    try { await call('POST', { ability_ids: selected }); msg.textContent = 'Added ✓'; }
+    catch(e){ console.error(e); msg.textContent = 'Add failed'; }
+    finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
+  }
+
+  async function deleteSelected() {
+    const selected = Array.from(sel.selectedOptions).map(o => o.value);
+    if (!selected.length) return;
+    btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Deleting...';
+    try {
+      for (const id of selected) {
+        const r = await fetch(`/api/rbac/allowed/${encodeURIComponent(id)}`, { method:'DELETE', credentials:'same-origin' });
+        if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      }
+      msg.textContent = 'Deleted ✓';
+    } catch(e){ console.error(e); msg.textContent = 'Delete failed'; }
+    finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
+  }
+
+  // Hook up events
+  sel.addEventListener('change', renderSelected);
+  search.addEventListener('input', debounce(()=>{ filterOptions(); /* keep selection list visible */ }, 150));
+  btnS.addEventListener('click', saveReplace);
+  btnA.addEventListener('click', addSelected);
+  btnD.addEventListener('click', deleteSelected);
+
+  // Initial render
+  renderSelected();
+})();
+</script>
