@@ -19,7 +19,7 @@ async def _ensure_plugin_access(request, plugin_name: str = 'rbac'):
     except Exception:
         u = None
     # admins bypass
-    if u and u.lower() in {'admin', 'red'}:
+    if u and u.lower() in {'admin', 'red', 'blue'}:
         return
     # consult RBAC plugin block map
     app = request.app
