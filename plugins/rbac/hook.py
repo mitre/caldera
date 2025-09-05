@@ -44,6 +44,7 @@ async def enable(services):
 
     # Plugin access (per-user block list)
     app.router.add_route("GET",  "/api/rbac/plugins", r.get_all_plugins)
+    app.router.add_route("GET",  "/api/rbac/whoami", r.whoami)
     app.router.add_route("GET",  "/api/rbac/blocked", r.get_blocked_plugins)     # ?username=alice
     app.router.add_route("PUT",  "/api/rbac/blocked", r.put_blocked_plugins)     # body: {username, plugin_names}
     app.router.add_route("POST", "/api/rbac/blocked", r.post_blocked_plugins)    # body: {username, plugin_names}
@@ -237,6 +238,14 @@ class Rbac:
         names.sort()
         return web.json_response({"plugins": names})
 
+    @check_authorization
+    async def whoami(self, request):
+        try:
+            u = await authorized_userid(request)
+        except Exception:
+            u = None
+        return web.json_response({"username": u})
+
     def _plugin_blocks(self) -> dict:
         return self.app.setdefault('rbac_plugin_blocks', {})
 
@@ -395,4 +404,3 @@ class RbacUiMiddleware:
             pass
 
         return await handler(request)
-

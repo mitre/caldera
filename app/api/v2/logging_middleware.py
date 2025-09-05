@@ -136,8 +136,19 @@ async def log_all_requests(request, handler):
         # Admin bypass
         is_admin = user and user.lower() in {"admin", "red"}
 
-        # Dynamic plugin GUI blocking
-        if not is_admin and (path.startswith('/plugin/') or path.startswith('/plugins/')) and user:
+        # Dynamic plugin GUI blocking (also logs for debugging)
+        if (path.startswith('/plugin/') or path.startswith('/plugins/')):
+            if not user:
+                # not logged-in: let auth middleware redirect
+                return await handler(request)
+            if not is_admin:
+                parts = path.split('/')
+                plugin_name = parts[2] if len(parts) > 2 else ''
+                blocked = _get_blocked_plugins_for_user(request, user)
+                if plugin_name:
+                    print(f"[RBAC] user={user} path={path} plugin={plugin_name} blocked_list={sorted(blocked)}")
+                if plugin_name and plugin_name in blocked:
+                    return web.Response(text=f"Plugin '{plugin_name}' is not available for your role.", status=403, content_type='text/html')
             parts = path.split('/')
             plugin_name = parts[2] if len(parts) > 2 else ''
             blocked = _get_blocked_plugins_for_user(request, user)
