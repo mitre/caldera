@@ -49,16 +49,20 @@ async def enable(services):
             if isinstance(users_map, dict):
                 app["rbac_allowed_map"] = {u: set(map(str, ids or [])) for u, ids in users_map.items()}
             else:
-                # Back-compat: old single list for student
-                old = set(map(str, data.get("allowed_student_abilities", [])))
-                app["rbac_allowed_map"] = {"student": old}
+                # Back-compat: support legacy root keys
+                # 1) allowed_student_abilities → student only
+                old_student = set(map(str, data.get("allowed_student_abilities", [])))
+                # 2) allowed_abilities (generic) → treat as student fallback
+                old_generic = set(map(str, data.get("allowed_abilities", [])))
+                merged = old_student or old_generic
+                app["rbac_allowed_map"] = {"student": merged} if merged else {}
         except Exception:
             app["rbac_allowed_map"] = {}
     else:
         state_file.write_text(json.dumps({"users": {}}, indent=2))
 
-    # Attach RBAC UI filtering middleware so the main UI reflects per-user limits
-    app.middlewares.append(RbacUiMiddleware(services, app).handle)
+    # Attach RBAC UI filtering middleware at the FRONT so it takes precedence
+    app.middlewares.insert(0, RbacUiMiddleware(services, app).handle)
 
 
 class Rbac:
@@ -207,7 +211,13 @@ class RbacUiMiddleware:
 
     def _allowed(self, username: str) -> set:
         try:
-            return set(self.app.get("rbac_allowed_map", {}).get(username, set()))
+            m = self.app.get("rbac_allowed_map", {}) or {}
+            s = set(m.get(username, set()))
+            if s:
+                return s
+            # Back-compat: if no per-user entry, fall back to student mapping
+            # to support legacy files using allowed_abilities/allowed_student_abilities
+            return set(m.get('student', set()))
         except Exception:
             return set()
 
