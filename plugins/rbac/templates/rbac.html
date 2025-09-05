@@ -146,7 +146,7 @@
     const selected = Array.from(sel.selectedOptions).map(o => o.value);
     btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Saving...';
     try { await call('PUT',  { username: currentUser, ability_ids: selected }); msg.textContent = 'Saved ✓'; await loadAllowedFor(currentUser); }
-    catch(e){ console.error(e); msg.textContent = 'Save failed'; }
+    catch(e){ console.error(e); msg.textContent = 'Save failed: ' + (e && e.message || ''); }
     finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
   }
 
@@ -156,7 +156,7 @@
     if (!selected.length) return;
     btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Adding...';
     try { await call('POST', { username: currentUser, ability_ids: selected }); msg.textContent = 'Added ✓'; await loadAllowedFor(currentUser); }
-    catch(e){ console.error(e); msg.textContent = 'Add failed'; }
+    catch(e){ console.error(e); msg.textContent = 'Add failed: ' + (e && e.message || ''); }
     finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
   }
 
@@ -172,7 +172,7 @@
       }
       msg.textContent = 'Deleted ✓';
       await loadAllowedFor(currentUser);
-    } catch(e){ console.error(e); msg.textContent = 'Delete failed'; }
+    } catch(e){ console.error(e); msg.textContent = 'Delete failed: ' + (e && e.message || ''); }
     finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
   }
 

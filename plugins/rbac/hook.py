@@ -109,8 +109,10 @@ class Rbac:
     @check_authorization
     async def get_users(self, request):
         await _forbid_student(request)
-        # prefer auth_svc user list
-        users = sorted(list(self.auth_svc.user_map.keys()))
+        # Gather users from auth service and from stored RBAC state
+        from_auth = set(self.auth_svc.user_map.keys())
+        from_state = set(self._allowed_map().keys())
+        users = sorted(list(from_auth.union(from_state)))
         return web.json_response({"users": users})
 
     @check_authorization
