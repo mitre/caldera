@@ -24,6 +24,13 @@
   .rbac-card h3 { margin-top: 6px; }
   .rbac-form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin: 8px 0 12px; }
   .rbac-input-small { width:auto; min-width: 180px; }
+  /* Tabs (User, Role, Team, Control) */
+  .rbac-tabs { display:flex; flex-direction:column; gap:10px; margin: 10px 0 16px; }
+  .rbac-tab-btn { width:100%; padding:12px 14px; border-radius:8px; border:1px solid #3a3a3a; background:#1f1f1f; color:#eee; font-weight:700; letter-spacing:0.4px; cursor:pointer; text-align:left; }
+  .rbac-tab-btn:hover { border-color: var(--primary-color,#7e57c2); background:#242424; }
+  .rbac-collapse { display:none; padding:8px 0 0; }
+  .rbac-collapse.open { display:block; }
+  .rbac-big-select { height: 40vh; }
   @media (max-width: 900px) {
     .rbac-grid { grid-template-columns: 1fr; }
     .rbac-select { height: 50vh; }
@@ -40,6 +47,37 @@
     <div>
       <div class="rbac-card">
         <p><strong>Total abilities:</strong> {{ ability_count }}</p>
+
+        <!-- Top-level tabs: User / Role / Team / Control -->
+        <div class="rbac-tabs">
+          <button type="button" class="rbac-tab-btn" data-target="tabUser">User</button>
+          <div id="tabUser" class="rbac-collapse">
+            <select class="rbac-select rbac-big-select" size="16">
+              <option>User</option>
+            </select>
+          </div>
+
+          <button type="button" class="rbac-tab-btn" data-target="tabRole">Role</button>
+          <div id="tabRole" class="rbac-collapse">
+            <select class="rbac-select rbac-big-select" size="16">
+              <option>Role</option>
+            </select>
+          </div>
+
+          <button type="button" class="rbac-tab-btn" data-target="tabTeam">Team</button>
+          <div id="tabTeam" class="rbac-collapse">
+            <select class="rbac-select rbac-big-select" size="16">
+              <option>Team</option>
+            </select>
+          </div>
+
+          <button type="button" class="rbac-tab-btn" data-target="tabControl">Control</button>
+          <div id="tabControl" class="rbac-collapse">
+            <select class="rbac-select rbac-big-select" size="16">
+              <option>Control</option>
+            </select>
+          </div>
+        </div>
 
         <h3>Create User</h3>
         <div class="rbac-form">
@@ -310,6 +348,14 @@
   pbtnA.addEventListener('click', pAddSelected);
   pbtnD.addEventListener('click', pDelSelected);
   btnReg.addEventListener('click', registerUser);
+  // Toggle collapsible panels for the top-level tabs
+  document.querySelectorAll('.rbac-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-target');
+      const panel = document.getElementById(id);
+      if (panel) panel.classList.toggle('open');
+    });
+  });
   userSel.addEventListener('change', async ()=>{
     currentUser = userSel.value || '';
     await loadAllowedFor(currentUser);
