@@ -57,6 +57,9 @@ async def enable(services):
     else:
         state_file.write_text(json.dumps({"users": {}}, indent=2))
 
+    # Attach RBAC UI filtering middleware so the main UI reflects per-user limits
+    app.middlewares.append(RbacUiMiddleware(services, app).handle)
+
 
 class Rbac:
     def __init__(self, services):
@@ -184,3 +187,86 @@ class Rbac:
         self._allowed_for(username).discard(str(ability_id))
         self._persist()
         return web.json_response({"ok": True, "username": username, "allowed": sorted(self._allowed_for(username))})
+
+
+class RbacUiMiddleware:
+    """
+    Read-filter for Caldera v2 list endpoints based on RBAC plugin per-user assignments.
+    Only affects read endpoints to reflect in the Magma UI; admins are not filtered.
+    """
+    def __init__(self, services, app):
+        self.services = services
+        self.app = app
+        self.data_svc = services.get('data_svc')
+
+    async def _username(self, request):
+        try:
+            return await authorized_userid(request)
+        except Exception:
+            return None
+
+    def _allowed(self, username: str) -> set:
+        try:
+            return set(self.app.get("rbac_allowed_map", {}).get(username, set()))
+        except Exception:
+            return set()
+
+    def _is_admin(self, username: str) -> bool:
+        if not username:
+            return False
+        uname = username.lower()
+        if uname in {"admin", "red"}:  # simple built-in bypass
+            return True
+        # allow config-based groups if available
+        try:
+            user = self.services.get('auth_svc').user_map.get(username)
+            if user and any(p.lower() == 'admin' for p in (user.permissions or [])):
+                return True
+        except Exception:
+            pass
+        return False
+
+    @web.middleware
+    async def handle(self, request, handler):
+        method = request.method.upper()
+        path = request.rel_url.path
+        if method != 'GET' or not path.startswith('/api/v2/'):
+            return await handler(request)
+
+        username = await self._username(request)
+        # If not logged in or admin, do not filter
+        if not username or self._is_admin(username):
+            return await handler(request)
+
+        allowed = self._allowed(username)
+        try:
+            if path.startswith('/api/v2/abilities'):
+                abilities = await self.data_svc.locate('abilities')
+                filtered = [
+                    a.display for a in abilities
+                    if (a.display.get('ability_id') or a.display.get('id')) in allowed
+                ]
+                return web.json_response({'total': len(filtered), 'abilities': filtered})
+
+            if path.startswith('/api/v2/adversaries'):
+                adversaries = await self.data_svc.locate('adversaries')
+
+                def adv_ability_ids(disp):
+                    ids = []
+                    if disp.get('atomic_ordering'):
+                        ids += disp['atomic_ordering']
+                    if disp.get('phases'):
+                        for chunk in (disp['phases'] or {}).values():
+                            ids += chunk or []
+                    return [x for x in ids if x]
+
+                filtered = [
+                    adv.display for adv in adversaries
+                    if set(adv_ability_ids(adv.display)).issubset(allowed)
+                ]
+                return web.json_response({'total': len(filtered), 'adversaries': filtered})
+        except Exception:
+            # On any exception, fall back to default behavior
+            pass
+
+        return await handler(request)
