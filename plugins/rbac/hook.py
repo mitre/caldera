@@ -53,6 +53,11 @@ async def enable(services):
     app.router.add_route("POST", "/api/rbac/blocked", r.post_blocked_plugins)    # body: {username, plugin_names}
     app.router.add_route("DELETE", "/api/rbac/blocked/{plugin}", r.del_blocked_plugin) # ?username=alice
 
+    # Role/Group management APIs
+    app.router.add_route("GET",  "/api/rbac/groups", r.get_groups)
+    app.router.add_route("POST", "/api/rbac/groups", r.upsert_group)
+    app.router.add_route("DELETE", "/api/rbac/groups/{name}", r.delete_group)
+
     # Minimal state + persistence
     plugin_root = Path(__file__).resolve().parent
     state_file = plugin_root / "state" / "allowed.json"
@@ -460,10 +465,6 @@ class RbacUiMiddleware:
         return False
 
     @web.middleware
-    # Role/Group management APIs
-    app.router.add_route("GET",  "/api/rbac/groups", r.get_groups)
-    app.router.add_route("POST", "/api/rbac/groups", r.upsert_group)
-    app.router.add_route("DELETE", "/api/rbac/groups/{name}", r.delete_group)
     async def handle(self, request, handler):
         method = request.method.upper()
         path = request.rel_url.path
