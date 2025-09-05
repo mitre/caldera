@@ -37,6 +37,7 @@ async def enable(services):
 
     # Users + Allowed-IDs API (per-user)
     app.router.add_route("GET",    "/api/rbac/users", r.get_users)            # list known users
+    app.router.add_route("POST",   "/api/rbac/users/register", r.register_user) # create auth user
     app.router.add_route("GET",    "/api/rbac/allowed", r.get_allowed)        # ?username=alice
     app.router.add_route("PUT",    "/api/rbac/allowed", r.put_allowed)        # body: {username, ability_ids}
     app.router.add_route("POST",   "/api/rbac/allowed", r.post_allowed)       # body: {username, ability_ids}
@@ -179,6 +180,25 @@ class Rbac:
         from_state = set(self._allowed_map().keys())
         users = sorted(list(from_auth.union(from_state)))
         return web.json_response({"users": users})
+
+    @check_authorization
+    async def register_user(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        body = await request.json()
+        username = (body.get('username') or '').strip()
+        password = (body.get('password') or '').strip()
+        group = (body.get('group') or '').strip().lower() or 'red'
+        if not username or not password:
+            raise web.HTTPBadRequest(text='username and password are required')
+        if group not in {'red','blue'}:
+            raise web.HTTPBadRequest(text='group must be red or blue')
+        if username in self.auth_svc.user_map:
+            return web.json_response({"ok": False, "error": "user already exists"}, status=409)
+        await self.auth_svc.create_user(username, password, group)
+        # ensure user appears in our maps
+        self._allowed_for(username)  # creates empty set if absent
+        self._persist()
+        return web.json_response({"ok": True, "username": username, "group": group})
 
     @check_authorization
     async def get_allowed(self, request):

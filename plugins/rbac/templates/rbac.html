@@ -22,6 +22,8 @@
   .rbac-selected ul { margin: 8px 0 0 18px; }
   .rbac-two-col { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
   .rbac-card h3 { margin-top: 6px; }
+  .rbac-form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin: 8px 0 12px; }
+  .rbac-input-small { width:auto; min-width: 180px; }
   @media (max-width: 900px) {
     .rbac-grid { grid-template-columns: 1fr; }
     .rbac-select { height: 50vh; }
@@ -38,6 +40,18 @@
     <div>
       <div class="rbac-card">
         <p><strong>Total abilities:</strong> {{ ability_count }}</p>
+
+        <h3>Create User</h3>
+        <div class="rbac-form">
+          <input id="regUser" class="rbac-input rbac-input-small" type="text" placeholder="username">
+          <input id="regPass" class="rbac-input rbac-input-small" type="password" placeholder="password">
+          <select id="regGroup" class="rbac-user-select">
+            <option value="red">red</option>
+            <option value="blue">blue</option>
+          </select>
+          <button id="btnReg" class="rbac-btn">Register</button>
+          <span id="regMsg" class="rbac-msg"></span>
+        </div>
 
         <div class="rbac-user-row">
           <label for="userSelect"><strong>User:</strong></label>
@@ -107,6 +121,12 @@
   const pbtnD = document.getElementById('pbtnDel');
   const pmsg  = document.getElementById('pmsg');
   const pcount= document.getElementById('pcount');
+  // register controls
+  const regUser = document.getElementById('regUser');
+  const regPass = document.getElementById('regPass');
+  const regGroup= document.getElementById('regGroup');
+  const btnReg  = document.getElementById('btnReg');
+  const regMsg  = document.getElementById('regMsg');
 
   // --- render selected list ---
   function renderSelected() {
@@ -228,6 +248,30 @@
     finally { pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = false; setTimeout(()=>pmsg.textContent='',1200); }
   }
 
+  // --- user registration ---
+  async function registerUser(){
+    const u = (regUser.value||'').trim();
+    const p = (regPass.value||'').trim();
+    const g = (regGroup.value||'red').trim();
+    if (!u || !p) { regMsg.textContent = 'Enter username and password'; return; }
+    btnReg.disabled = true; regMsg.textContent = 'Registering...';
+    try{
+      const r = await fetch('/api/rbac/users/register', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username:u, password:p, group:g })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      regMsg.textContent = 'Registered ✓';
+      // refresh user list and select the new user
+      const ures = await listUsers();
+      const users = Array.isArray(ures.users) ? ures.users : [];
+      userSel.innerHTML = '';
+      for (const name of users) { const opt=document.createElement('option'); opt.value=opt.textContent=name; userSel.appendChild(opt); }
+      currentUser = u; userSel.value = u;
+      await loadAllowedFor(currentUser);
+      await loadBlockedFor(currentUser);
+      regUser.value = regPass.value = '';
+    }catch(e){ console.error(e); regMsg.textContent = 'Register failed: ' + (e && e.message || ''); }
+    finally{ btnReg.disabled = false; setTimeout(()=>regMsg.textContent='', 1500); }
+  }
+
   async function pAddSelected() {
     if (!currentUser) { pmsg.textContent = 'Choose a user'; return; }
     const selected = Array.from(pSel.selectedOptions).map(o => o.value);
@@ -265,6 +309,7 @@
   pbtnS.addEventListener('click', pSaveReplace);
   pbtnA.addEventListener('click', pAddSelected);
   pbtnD.addEventListener('click', pDelSelected);
+  btnReg.addEventListener('click', registerUser);
   userSel.addEventListener('change', async ()=>{
     currentUser = userSel.value || '';
     await loadAllowedFor(currentUser);
