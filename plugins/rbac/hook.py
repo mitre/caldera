@@ -37,7 +37,9 @@ async def enable(services):
 
     # Users + Allowed-IDs API (per-user)
     app.router.add_route("GET",    "/api/rbac/users", r.get_users)            # list known users
+    app.router.add_route("GET",    "/api/rbac/users/list", r.get_users_detailed) # list with groups
     app.router.add_route("POST",   "/api/rbac/users/register", r.register_user) # create auth user
+    app.router.add_route("PUT",    "/api/rbac/users/group", r.update_user_group) # change group
     app.router.add_route("GET",    "/api/rbac/allowed", r.get_allowed)        # ?username=alice
     app.router.add_route("PUT",    "/api/rbac/allowed", r.put_allowed)        # body: {username, ability_ids}
     app.router.add_route("POST",   "/api/rbac/allowed", r.post_allowed)       # body: {username, ability_ids}
@@ -182,6 +184,24 @@ class Rbac:
         return web.json_response({"users": users})
 
     @check_authorization
+    async def get_users_detailed(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        users = []
+        # from auth service (authoritative)
+        for uname, u in self.auth_svc.user_map.items():
+            try:
+                grp = (u.permissions[0] if u.permissions else '').lower() or 'red'
+            except Exception:
+                grp = 'red'
+            users.append({"username": uname, "group": grp})
+        # include any users present only in RBAC state
+        for uname in self._allowed_map().keys():
+            if not any(x['username'] == uname for x in users):
+                users.append({"username": uname, "group": 'red'})
+        users.sort(key=lambda x: x['username'].lower())
+        return web.json_response({"users": users})
+
+    @check_authorization
     async def register_user(self, request):
         await _ensure_plugin_access(request, 'rbac')
         body = await request.json()
@@ -198,6 +218,22 @@ class Rbac:
         # ensure user appears in our maps
         self._allowed_for(username)  # creates empty set if absent
         self._persist()
+        return web.json_response({"ok": True, "username": username, "group": group})
+
+    @check_authorization
+    async def update_user_group(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        body = await request.json()
+        username = (body.get('username') or '').strip()
+        group = (body.get('group') or '').strip().lower()
+        if not username or group not in {'red','blue'}:
+            raise web.HTTPBadRequest(text='username and valid group (red/blue) are required')
+        u = self.auth_svc.user_map.get(username)
+        if not u:
+            raise web.HTTPNotFound(text='user not found')
+        # rebuild the namedtuple preserving password and setting new group
+        new_u = self.auth_svc.User(username, u.password, (group, 'app'))
+        self.auth_svc.user_map[username] = new_u
         return web.json_response({"ok": True, "username": username, "group": group})
 
     @check_authorization

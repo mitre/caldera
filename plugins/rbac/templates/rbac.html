@@ -52,9 +52,31 @@
         <div class="rbac-tabs">
           <button type="button" class="rbac-tab-btn" data-target="tabUser">User</button>
           <div id="tabUser" class="rbac-collapse">
-            <select class="rbac-select rbac-big-select" size="16">
-              <option>User</option>
-            </select>
+            <!-- Create User inside User tab -->
+            <div class="rbac-form">
+              <input id="regUser" class="rbac-input rbac-input-small" type="text" placeholder="username">
+              <input id="regPass" class="rbac-input rbac-input-small" type="password" placeholder="password">
+              <select id="regGroup" class="rbac-user-select">
+                <option value="red">red</option>
+                <option value="blue">blue</option>
+              </select>
+              <button id="btnReg" class="rbac-btn">Register</button>
+              <span id="regMsg" class="rbac-msg"></span>
+            </div>
+
+            <!-- List current users and assign group -->
+            <div style="margin-top:8px;">
+              <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left; padding:6px 4px; border-bottom:1px solid #333;">User</th>
+                    <th style="text-align:left; padding:6px 4px; border-bottom:1px solid #333;">Group</th>
+                    <th style="text-align:left; padding:6px 4px; border-bottom:1px solid #333;"></th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+              </table>
+            </div>
           </div>
 
           <button type="button" class="rbac-tab-btn" data-target="tabRole">Role</button>
@@ -79,17 +101,7 @@
           </div>
         </div>
 
-        <h3>Create User</h3>
-        <div class="rbac-form">
-          <input id="regUser" class="rbac-input rbac-input-small" type="text" placeholder="username">
-          <input id="regPass" class="rbac-input rbac-input-small" type="password" placeholder="password">
-          <select id="regGroup" class="rbac-user-select">
-            <option value="red">red</option>
-            <option value="blue">blue</option>
-          </select>
-          <button id="btnReg" class="rbac-btn">Register</button>
-          <span id="regMsg" class="rbac-msg"></span>
-        </div>
+        <!-- Create User moved into User tab above -->
 
         <div class="rbac-user-row">
           <label for="userSelect"><strong>User:</strong></label>
@@ -210,6 +222,12 @@
     return r.json(); // { users: [] }
   }
 
+  async function listUsersDetailed() {
+    const r = await fetch('/api/rbac/users/list', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json(); // { users: [{username, group}] }
+  }
+
   async function listPlugins() {
     const r = await fetch('/api/rbac/plugins', { credentials: 'same-origin' });
     if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
@@ -306,8 +324,48 @@
       await loadAllowedFor(currentUser);
       await loadBlockedFor(currentUser);
       regUser.value = regPass.value = '';
+      await renderUserTable();
     }catch(e){ console.error(e); regMsg.textContent = 'Register failed: ' + (e && e.message || ''); }
     finally{ btnReg.disabled = false; setTimeout(()=>regMsg.textContent='', 1500); }
+  }
+
+  async function renderUserTable(){
+    try{
+      const data = await listUsersDetailed();
+      const tbody = document.getElementById('userTableBody');
+      const users = Array.isArray(data.users) ? data.users : [];
+      tbody.innerHTML = '';
+      for (const u of users){
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:6px 4px; border-bottom:1px solid #222;">${u.username}</td>
+          <td style="padding:6px 4px; border-bottom:1px solid #222;">
+            <select data-user="${u.username}" class="rbac-user-select rbac-input-small">
+              <option value="red" ${u.group==='red'?'selected':''}>red</option>
+              <option value="blue" ${u.group==='blue'?'selected':''}>blue</option>
+            </select>
+          </td>
+          <td style="padding:6px 4px; border-bottom:1px solid #222;">
+            <button class="rbac-btn" data-action="save" data-user="${u.username}">Save</button>
+          </td>`;
+        tbody.appendChild(tr);
+      }
+      // attach listeners for save buttons
+      tbody.querySelectorAll('button[data-action="save"]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          const uname = btn.getAttribute('data-user');
+          const sel = tbody.querySelector(`select[data-user="${uname}"]`);
+          const val = sel ? sel.value : 'red';
+          btn.disabled = true; btn.textContent = 'Saving...';
+          try{
+            const r = await fetch('/api/rbac/users/group', { method:'PUT', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: uname, group: val })});
+            if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+            btn.textContent = 'Saved ✓';
+          }catch(e){ console.error(e); btn.textContent = 'Failed'; }
+          finally{ setTimeout(()=>btn.textContent='Save', 1200); btn.disabled = false; }
+        });
+      });
+    }catch(e){ console.error(e); }
   }
 
   async function pAddSelected() {
@@ -387,6 +445,7 @@
       if (def) userSel.value = def;
       await loadAllowedFor(currentUser);
       await loadBlockedFor(currentUser);
+      await renderUserTable();
     } catch(e){ console.error(e); }
     renderSelected();
   })();
