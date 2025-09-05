@@ -397,4 +397,3 @@ class RbacUiMiddleware:
         return await handler(request)
 
 
-# Assigning ability per user final code 
