@@ -60,6 +60,8 @@
                 <option value="red">red</option>
                 <option value="blue">blue</option>
               </select>
+              <label class="rbac-subtle">Groups:</label>
+              <select id="regGroups" class="rbac-user-select" multiple size="3" style="min-width:200px"></select>
               <button id="btnReg" class="rbac-btn">Register</button>
               <span id="regMsg" class="rbac-msg"></span>
             </div>
@@ -111,6 +113,15 @@
               <h4>Members</h4>
               <select id="grpMembersSelect" class="rbac-select rbac-big-select" multiple size="14"></select>
             </div>
+
+            <!-- Group Members Matrix -->
+            <div style="margin-top:12px;">
+              <h4>Group Members Matrix</h4>
+              <table id="grpMembersTable" style="width:100%; border-collapse:collapse; margin-top:6px;">
+                <thead id="grpMembersThead"></thead>
+                <tbody id="grpMembersTbody"></tbody>
+              </table>
+            </div>
           </div>
 
           <button type="button" class="rbac-tab-btn" data-target="tabTeam">Team</button>
@@ -119,10 +130,22 @@
               <div>
                 <h4>Red</h4>
                 <select id="teamRedSelect" class="rbac-select rbac-big-select" size="16"></select>
+                <div style="margin-top:12px;">
+                  <table style="width:100%; border-collapse:collapse;">
+                    <thead id="teamRedThead"></thead>
+                    <tbody id="teamRedTbody"></tbody>
+                  </table>
+                </div>
               </div>
               <div>
                 <h4>Blue</h4>
                 <select id="teamBlueSelect" class="rbac-select rbac-big-select" size="16"></select>
+                <div style="margin-top:12px;">
+                  <table style="width:100%; border-collapse:collapse;">
+                    <thead id="teamBlueThead"></thead>
+                    <tbody id="teamBlueTbody"></tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>
@@ -209,6 +232,7 @@
   const regUser = document.getElementById('regUser');
   const regPass = document.getElementById('regPass');
   const regGroup= document.getElementById('regGroup');
+  const regGroups= document.getElementById('regGroups');
   const btnReg  = document.getElementById('btnReg');
   const regMsg  = document.getElementById('regMsg');
   // role/group controls
@@ -288,6 +312,44 @@
     return r.json(); // { groups: { name: {members:[], color} } }
   }
 
+  async function renderGroupsMatrix(){
+    try{
+      const data = await listGroups();
+      const groups = data.groups || {};
+      const names = Object.keys(groups).sort();
+      const thead = document.getElementById('grpMembersThead');
+      const tbody = document.getElementById('grpMembersTbody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+      if (!names.length){ return; }
+      // Header
+      const hr = document.createElement('tr');
+      for (const n of names){
+        const th = document.createElement('th');
+        th.textContent = n;
+        th.style.padding = '6px 4px';
+        th.style.borderBottom = '1px solid #333';
+        th.style.textAlign = 'left';
+        hr.appendChild(th);
+      }
+      thead.appendChild(hr);
+      // Determine max rows
+      const lists = names.map(n => (groups[n].members || []).slice().sort());
+      const maxLen = Math.max(0, ...lists.map(a => a.length));
+      for (let i=0; i<maxLen; i++){
+        const tr = document.createElement('tr');
+        for (let c=0; c<names.length; c++){
+          const td = document.createElement('td');
+          td.style.padding = '6px 4px';
+          td.style.borderBottom = '1px solid #222';
+          td.textContent = lists[c][i] || '';
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }catch(e){ console.error(e); }
+  }
+
   async function renderTeamLists(){
     try{
       const [usersDet, groupsDet] = await Promise.all([listUsersDetailed(), listGroups()]);
@@ -313,6 +375,47 @@
         opt.textContent = `${it.type}: ${it.name}`;
         teamBlueSelect.appendChild(opt);
       }
+
+      // Fill tables
+      const redThead = document.getElementById('teamRedThead');
+      const redTbody = document.getElementById('teamRedTbody');
+      const blueThead = document.getElementById('teamBlueThead');
+      const blueTbody = document.getElementById('teamBlueTbody');
+      redThead.innerHTML = blueThead.innerHTML = '';
+      redTbody.innerHTML = blueTbody.innerHTML = '';
+
+      function buildHeader(thead){
+        const tr = document.createElement('tr');
+        ['Users','Groups'].forEach(h=>{
+          const th = document.createElement('th');
+          th.textContent = h;
+          th.style.padding = '6px 4px';
+          th.style.borderBottom = '1px solid #333';
+          th.style.textAlign = 'left';
+          tr.appendChild(th);
+        });
+        thead.appendChild(tr);
+      }
+
+      function fillBody(tbody, usersArr, groupsArr){
+        const maxLen = Math.max(usersArr.length, groupsArr.length);
+        for (let i=0;i<maxLen;i++){
+          const tr = document.createElement('tr');
+          const tdU = document.createElement('td');
+          const tdG = document.createElement('td');
+          tdU.style.padding = tdG.style.padding = '6px 4px';
+          tdU.style.borderBottom = tdG.style.borderBottom = '1px solid #222';
+          tdU.textContent = usersArr[i] ? usersArr[i].name : '';
+          tdG.textContent = groupsArr[i] ? groupsArr[i].name : '';
+          tr.appendChild(tdU); tr.appendChild(tdG);
+          tbody.appendChild(tr);
+        }
+      }
+
+      buildHeader(redThead);
+      buildHeader(blueThead);
+      fillBody(redTbody, redUsers, redGroups);
+      fillBody(blueTbody, blueUsers, blueGroups);
     }catch(e){ console.error(e); }
   }
 
@@ -391,10 +494,11 @@
     const u = (regUser.value||'').trim();
     const p = (regPass.value||'').trim();
     const g = (regGroup.value||'red').trim();
+    const gs = Array.from(regGroups.selectedOptions).map(o=>o.value);
     if (!u || !p) { regMsg.textContent = 'Enter username and password'; return; }
     btnReg.disabled = true; regMsg.textContent = 'Registering...';
     try{
-      const r = await fetch('/api/rbac/users/register', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username:u, password:p, group:g })});
+      const r = await fetch('/api/rbac/users/register', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username:u, password:p, group:g, groups: gs })});
       if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
       regMsg.textContent = 'Registered ✓';
       // refresh user list and select the new user
@@ -406,7 +510,10 @@
       await loadAllowedFor(currentUser);
       await loadBlockedFor(currentUser);
       regUser.value = regPass.value = '';
+      regGroups.selectedIndex = -1;
       await renderUserTable();
+      await refreshGroupsUI('');
+      await renderTeamLists();
     }catch(e){ console.error(e); regMsg.textContent = 'Register failed: ' + (e && e.message || ''); }
     finally{ btnReg.disabled = false; setTimeout(()=>regMsg.textContent='', 1500); }
   }
@@ -418,6 +525,7 @@
       const users = Array.isArray(data.users) ? data.users : [];
       tbody.innerHTML = '';
       for (const u of users){
+        const isCore = (u.username === 'red' || u.username === 'blue');
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td style="padding:6px 4px; border-bottom:1px solid #222;">${u.username}</td>
@@ -428,13 +536,15 @@
             </select>
           </td>
           <td style="padding:6px 4px; border-bottom:1px solid #222;">
-            <button class="rbac-btn" data-action="save" data-user="${u.username}">Save</button>
+            <button class="rbac-btn" data-action="save" data-user="${u.username}" ${isCore?'disabled':''}>Save</button>
+            <button class="rbac-btn" data-action="delete" data-user="${u.username}" ${isCore?'disabled':''} style="margin-left:6px;">Delete</button>
           </td>`;
         tbody.appendChild(tr);
       }
       // attach listeners for save buttons
       tbody.querySelectorAll('button[data-action="save"]').forEach(btn=>{
         btn.addEventListener('click', async ()=>{
+          if (btn.disabled) return;
           const uname = btn.getAttribute('data-user');
           const sel = tbody.querySelector(`select[data-user="${uname}"]`);
           const val = sel ? sel.value : 'red';
@@ -446,6 +556,28 @@
             await renderTeamLists();
           }catch(e){ console.error(e); btn.textContent = 'Failed'; }
           finally{ setTimeout(()=>btn.textContent='Save', 1200); btn.disabled = false; }
+        });
+      });
+      // attach listeners for delete buttons
+      tbody.querySelectorAll('button[data-action="delete"]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          if (btn.disabled) return;
+          const uname = btn.getAttribute('data-user');
+          if (!confirm(`Delete user ${uname}?`)) return;
+          btn.disabled = true; btn.textContent = 'Deleting...';
+          try{
+            const r = await fetch(`/api/rbac/users/${encodeURIComponent(uname)}`, { method:'DELETE', credentials:'same-origin' });
+            if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+            await renderUserTable();
+            const ures = await listUsers();
+            const users = Array.isArray(ures.users) ? ures.users : [];
+            userSel.innerHTML = '';
+            for (const name of users) { const opt=document.createElement('option'); opt.value=opt.textContent=name; userSel.appendChild(opt); }
+            if (users.length){ currentUser = users[0]; userSel.value = currentUser; await loadAllowedFor(currentUser); await loadBlockedFor(currentUser); }
+            await refreshGroupsUI('');
+            await renderTeamLists();
+          }catch(e){ console.error(e); btn.textContent = 'Failed'; }
+          finally{ setTimeout(()=>btn.textContent='Delete', 1200); btn.disabled = false; }
         });
       });
     }catch(e){ console.error(e); }
@@ -523,6 +655,7 @@
       grpMsg.textContent = 'Created ✓';
       grpName.value='';
       await refreshGroupsUI(name);
+      await renderGroupsMatrix();
       await renderTeamLists();
     }catch(e){ console.error(e); grpMsg.textContent = 'Failed: ' + (e && e.message || ''); }
     finally{ btnGroupCreate.disabled = false; setTimeout(()=>grpMsg.textContent='', 1200); }
@@ -539,6 +672,7 @@
       if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
       grpEditMsg.textContent = 'Saved ✓';
       await refreshGroupsUI(name);
+      await renderGroupsMatrix();
       await renderTeamLists();
     }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
     finally{ btnGroupSave.disabled = btnGroupDelete.disabled = false; setTimeout(()=>grpEditMsg.textContent='', 1200); }
@@ -553,6 +687,7 @@
       if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
       grpEditMsg.textContent = 'Deleted ✓';
       await refreshGroupsUI('');
+      await renderGroupsMatrix();
       await renderTeamLists();
     }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
     finally{ btnGroupSave.disabled = btnGroupDelete.disabled = false; setTimeout(()=>grpEditMsg.textContent='', 1200); }
@@ -588,7 +723,7 @@
   // Initial render: populate users then load their assignments
   (async function init(){
     try {
-      const [ures, pres] = await Promise.all([listUsers(), listPlugins()]);
+      const [ures, pres, gres] = await Promise.all([listUsers(), listPlugins(), listGroups()]);
       const users = Array.isArray(ures.users) ? ures.users : [];
       userSel.innerHTML = '';
       for (const u of users) {
@@ -604,6 +739,14 @@
         opt.value = opt.textContent = p;
         pSel.appendChild(opt);
       }
+      // fill group list for registration
+      regGroups.innerHTML = '';
+      const gm = gres.groups || {};
+      Object.keys(gm).sort().forEach(name=>{
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = name;
+        regGroups.appendChild(opt);
+      });
       // pick default: student if present else first
       const def = users.includes('student') ? 'student' : (users[0] || '');
       currentUser = def;
@@ -612,6 +755,7 @@
       await loadBlockedFor(currentUser);
       await renderUserTable();
       await refreshGroupsUI('');
+      await renderGroupsMatrix();
       await renderTeamLists();
     } catch(e){ console.error(e); }
     renderSelected();

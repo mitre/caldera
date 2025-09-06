@@ -1,5 +1,3 @@
-"Edited"
-
 from aiohttp import web
 import logging
 from aiohttp_jinja2 import template
@@ -40,6 +38,7 @@ async def enable(services):
     app.router.add_route("GET",    "/api/rbac/users/list", r.get_users_detailed) # list with groups
     app.router.add_route("POST",   "/api/rbac/users/register", r.register_user) # create auth user
     app.router.add_route("PUT",    "/api/rbac/users/group", r.update_user_group) # change group
+    app.router.add_route("DELETE", "/api/rbac/users/{username}", r.delete_user)  # delete auth user
     app.router.add_route("GET",    "/api/rbac/allowed", r.get_allowed)        # ?username=alice
     app.router.add_route("PUT",    "/api/rbac/allowed", r.put_allowed)        # body: {username, ability_ids}
     app.router.add_route("POST",   "/api/rbac/allowed", r.post_allowed)       # body: {username, ability_ids}
@@ -228,6 +227,7 @@ class Rbac:
         username = (body.get('username') or '').strip()
         password = (body.get('password') or '').strip()
         group = (body.get('group') or '').strip().lower() or 'red'
+        groups = set(map(str, (body.get('groups') or [])))
         if not username or not password:
             raise web.HTTPBadRequest(text='username and password are required')
         if group not in {'red','blue'}:
@@ -237,8 +237,15 @@ class Rbac:
         await self.auth_svc.create_user(username, password, group)
         # ensure user appears in our maps
         self._allowed_for(username)  # creates empty set if absent
+        # Optionally add to groups
+        if groups:
+            gm = self._groups_map()
+            for gname in groups:
+                if gname not in gm:
+                    gm[gname] = {"members": set(), "color": group}
+                gm[gname].setdefault("members", set()).add(username)
         self._persist()
-        return web.json_response({"ok": True, "username": username, "group": group})
+        return web.json_response({"ok": True, "username": username, "group": group, "groups": sorted(list(groups))})
 
     @check_authorization
     async def update_user_group(self, request):
@@ -255,6 +262,27 @@ class Rbac:
         new_u = self.auth_svc.User(username, u.password, (group, 'app'))
         self.auth_svc.user_map[username] = new_u
         return web.json_response({"ok": True, "username": username, "group": group})
+
+    @check_authorization
+    async def delete_user(self, request):
+        await _ensure_plugin_access(request, 'rbac')
+        username = (request.match_info.get('username') or '').strip()
+        if not username:
+            raise web.HTTPBadRequest(text='username required')
+        # protect core accounts
+        if username.lower() in {'red', 'blue', 'admin'}:
+            return web.json_response({"ok": False, "error": "cannot delete core user"}, status=400)
+        # remove from auth map
+        self.auth_svc.user_map.pop(username, None)
+        # remove from RBAC maps
+        self._allowed_map().pop(username, None)
+        self.app.get('rbac_plugin_blocks', {}).pop(username, None)
+        # remove from groups memberships
+        for g in self._groups_map().values():
+            if 'members' in g and isinstance(g['members'], set):
+                g['members'].discard(username)
+        self._persist()
+        return web.json_response({"ok": True, "username": username})
 
     @check_authorization
     async def get_allowed(self, request):
