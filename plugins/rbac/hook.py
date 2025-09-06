@@ -376,14 +376,17 @@ class Rbac:
         if color not in {'red','blue'}:
             raise web.HTTPBadRequest(text='color must be red or blue')
         m = self._groups_map()
-        m[name] = {"members": members, "color": color}
-        # apply color to auth_svc groups for member users, if they exist
-        for uname in members:
+        # Merge: keep existing members and add new ones (no deletions)
+        existing = m.get(name, {"members": set(), "color": color})
+        final_members = set(existing.get("members", set())) | members
+        m[name] = {"members": final_members, "color": color}
+        # apply color to all current members of the group
+        for uname in final_members:
             u = self.auth_svc.user_map.get(uname)
             if u:
                 self.auth_svc.user_map[uname] = self.auth_svc.User(uname, u.password, (color, 'app'))
         self._persist()
-        return web.json_response({"ok": True, "group": name, "color": color, "members": sorted(list(members))})
+        return web.json_response({"ok": True, "group": name, "color": color, "members": sorted(list(final_members))})
 
     @check_authorization
     async def delete_group(self, request):

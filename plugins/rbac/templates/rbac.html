@@ -61,7 +61,11 @@
                 <option value="blue">blue</option>
               </select>
               <label class="rbac-subtle">Groups:</label>
-              <select id="regGroups" class="rbac-user-select" multiple size="3" style="min-width:200px"></select>
+              <select id="regGroupPicker" class="rbac-user-select" style="min-width:220px">
+                <option value="" selected>— select group —</option>
+              </select>
+              <button id="btnRegAddGroup" class="rbac-btn" type="button">Add</button>
+              <div id="regGroupsChips" class="rbac-form" style="gap:6px;"></div>
               <button id="btnReg" class="rbac-btn">Register</button>
               <span id="regMsg" class="rbac-msg"></span>
             </div>
@@ -128,46 +132,30 @@
           <div id="tabTeam" class="rbac-collapse">
             <div class="rbac-two-col">
               <div>
-                <h4>Red</h4>
-                <select id="teamRedSelect" class="rbac-select rbac-big-select" size="16"></select>
-                <div style="margin-top:12px;">
-                  <table style="width:100%; border-collapse:collapse;">
-                    <thead id="teamRedThead"></thead>
-                    <tbody id="teamRedTbody"></tbody>
-                  </table>
-                </div>
+                <h3>Red</h3>
+                <table style="width:100%; border-collapse:collapse; margin-top:6px;">
+                  <thead id="teamRedThead"></thead>
+                  <tbody id="teamRedTbody"></tbody>
+                </table>
               </div>
               <div>
-                <h4>Blue</h4>
-                <select id="teamBlueSelect" class="rbac-select rbac-big-select" size="16"></select>
-                <div style="margin-top:12px;">
-                  <table style="width:100%; border-collapse:collapse;">
-                    <thead id="teamBlueThead"></thead>
-                    <tbody id="teamBlueTbody"></tbody>
-                  </table>
-                </div>
+                <h3>Blue</h3>
+                <table style="width:100%; border-collapse:collapse; margin-top:6px;">
+                  <thead id="teamBlueThead"></thead>
+                  <tbody id="teamBlueTbody"></tbody>
+                </table>
               </div>
             </div>
           </div>
 
           <button type="button" class="rbac-tab-btn" data-target="tabControl">Control</button>
           <div id="tabControl" class="rbac-collapse">
-            <select class="rbac-select rbac-big-select" size="16">
-              <option>Control</option>
-            </select>
-          </div>
-        </div>
+            <div class="rbac-user-row">
+              <label for="userSelect"><strong>User:</strong></label>
+              <select id="userSelect" class="rbac-user-select"></select>
+              <span class="rbac-subtle" id="userHint"></span>
+            </div>
 
-        <!-- Create User moved into User tab above -->
-
-        <div class="rbac-user-row">
-          <label for="userSelect"><strong>User:</strong></label>
-          <select id="userSelect" class="rbac-user-select"></select>
-          <span class="rbac-subtle" id="userHint"></span>
-        </div>
-
-        <div class="rbac-two-col">
-          <div>
             <h3>All Abilities</h3>
             <input id="abilitySearch" class="rbac-input" type="search" placeholder="Search by name or ID...">
             <select id="abilitySelect" class="rbac-select" multiple size="22">
@@ -188,19 +176,20 @@
               <div id="selectedList" class="rbac-subtle">Nothing selected</div>
             </div>
           </div>
-          <div>
-            <h3>Plugin Access (blocklist)</h3>
-            <select id="pluginSelect" class="rbac-select" multiple size="22"></select>
-            <div class="rbac-toolbar">
-              <button id="pbtnSave" class="rbac-btn">Save blocks</button>
-              <button id="pbtnAdd" class="rbac-btn">Block selected</button>
-              <button id="pbtnDel" class="rbac-btn">Unblock selected</button>
-              <span id="pmsg" class="rbac-msg"></span>
-            </div>
-            <div class="rbac-selected">
-              <strong>Blocked count:</strong>
-              <span id="pcount">0</span>
-            </div>
+        </div>
+        <!-- Plugin Access (blocklist) -->
+        <div>
+          <h3>Plugin Access (blocklist)</h3>
+          <select id="pluginSelect" class="rbac-select" multiple size="22"></select>
+          <div class="rbac-toolbar">
+            <button id="pbtnSave" class="rbac-btn">Save blocks</button>
+            <button id="pbtnAdd" class="rbac-btn">Block selected</button>
+            <button id="pbtnDel" class="rbac-btn">Unblock selected</button>
+            <span id="pmsg" class="rbac-msg"></span>
+          </div>
+          <div class="rbac-selected">
+            <strong>Blocked count:</strong>
+            <span id="pcount">0</span>
           </div>
         </div>
       </div>
@@ -232,7 +221,9 @@
   const regUser = document.getElementById('regUser');
   const regPass = document.getElementById('regPass');
   const regGroup= document.getElementById('regGroup');
-  const regGroups= document.getElementById('regGroups');
+  const regGroupPicker = document.getElementById('regGroupPicker');
+  const btnRegAddGroup = document.getElementById('btnRegAddGroup');
+  const regGroupsChips = document.getElementById('regGroupsChips');
   const btnReg  = document.getElementById('btnReg');
   const regMsg  = document.getElementById('regMsg');
   // role/group controls
@@ -246,9 +237,7 @@
   const btnGroupDelete = document.getElementById('btnGroupDelete');
   const grpEditMsg = document.getElementById('grpEditMsg');
   const grpMembersSelect = document.getElementById('grpMembersSelect');
-  // team tab controls
-  const teamRedSelect = document.getElementById('teamRedSelect');
-  const teamBlueSelect = document.getElementById('teamBlueSelect');
+  // team tab tables (no selects)
 
   // --- render selected list ---
   function renderSelected() {
@@ -360,22 +349,6 @@
       const blueUsers = users.filter(u=>u.group==='blue').map(u=>({type:'user', name:u.username}));
       const redGroups = Object.entries(groups).filter(([n,g])=> (g.color||'red')==='red').map(([n])=>({type:'group', name:n}));
       const blueGroups = Object.entries(groups).filter(([n,g])=> (g.color||'red')==='blue').map(([n])=>({type:'group', name:n}));
-      // Fill selects
-      teamRedSelect.innerHTML = '';
-      for (const it of [...redUsers, ...redGroups]){
-        const opt = document.createElement('option');
-        opt.value = `${it.type}:${it.name}`;
-        opt.textContent = `${it.type}: ${it.name}`;
-        teamRedSelect.appendChild(opt);
-      }
-      teamBlueSelect.innerHTML = '';
-      for (const it of [...blueUsers, ...blueGroups]){
-        const opt = document.createElement('option');
-        opt.value = `${it.type}:${it.name}`;
-        opt.textContent = `${it.type}: ${it.name}`;
-        teamBlueSelect.appendChild(opt);
-      }
-
       // Fill tables
       const redThead = document.getElementById('teamRedThead');
       const redTbody = document.getElementById('teamRedTbody');
@@ -490,11 +463,38 @@
   }
 
   // --- user registration ---
+  const selectedRegGroups = new Set();
+
+  function renderRegGroupChips(){
+    regGroupsChips.innerHTML = '';
+    if (!selectedRegGroups.size){
+      const span = document.createElement('span'); span.className='rbac-subtle'; span.textContent='No groups selected';
+      regGroupsChips.appendChild(span);
+      return;
+    }
+    for (const name of Array.from(selectedRegGroups).sort()){
+      const chip = document.createElement('button');
+      chip.type='button';
+      chip.className='rbac-btn';
+      chip.textContent = name + ' ×';
+      chip.addEventListener('click', ()=>{ selectedRegGroups.delete(name); renderRegGroupChips(); });
+      regGroupsChips.appendChild(chip);
+    }
+  }
+
+  function fillRegGroupPicker(groupsMap){
+    regGroupPicker.innerHTML = '';
+    const def = document.createElement('option'); def.value=''; def.textContent='— select group —'; regGroupPicker.appendChild(def);
+    Object.keys(groupsMap||{}).sort().forEach(n=>{
+      const opt = document.createElement('option'); opt.value = opt.textContent = n; regGroupPicker.appendChild(opt);
+    });
+  }
+
   async function registerUser(){
     const u = (regUser.value||'').trim();
     const p = (regPass.value||'').trim();
     const g = (regGroup.value||'red').trim();
-    const gs = Array.from(regGroups.selectedOptions).map(o=>o.value);
+    const gs = Array.from(selectedRegGroups);
     if (!u || !p) { regMsg.textContent = 'Enter username and password'; return; }
     btnReg.disabled = true; regMsg.textContent = 'Registering...';
     try{
@@ -510,10 +510,11 @@
       await loadAllowedFor(currentUser);
       await loadBlockedFor(currentUser);
       regUser.value = regPass.value = '';
-      regGroups.selectedIndex = -1;
+      selectedRegGroups.clear(); renderRegGroupChips();
       await renderUserTable();
       await refreshGroupsUI('');
       await renderTeamLists();
+      await renderGroupsMatrix();
     }catch(e){ console.error(e); regMsg.textContent = 'Register failed: ' + (e && e.message || ''); }
     finally{ btnReg.disabled = false; setTimeout(()=>regMsg.textContent='', 1500); }
   }
@@ -554,6 +555,7 @@
             if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
             btn.textContent = 'Saved ✓';
             await renderTeamLists();
+            await renderGroupsMatrix();
           }catch(e){ console.error(e); btn.textContent = 'Failed'; }
           finally{ setTimeout(()=>btn.textContent='Save', 1200); btn.disabled = false; }
         });
@@ -576,6 +578,7 @@
             if (users.length){ currentUser = users[0]; userSel.value = currentUser; await loadAllowedFor(currentUser); await loadBlockedFor(currentUser); }
             await refreshGroupsUI('');
             await renderTeamLists();
+            await renderGroupsMatrix();
           }catch(e){ console.error(e); btn.textContent = 'Failed'; }
           finally{ setTimeout(()=>btn.textContent='Delete', 1200); btn.disabled = false; }
         });
@@ -655,6 +658,8 @@
       grpMsg.textContent = 'Created ✓';
       grpName.value='';
       await refreshGroupsUI(name);
+      const gres2 = await listGroups();
+      fillRegGroupPicker(gres2.groups||{});
       await renderGroupsMatrix();
       await renderTeamLists();
     }catch(e){ console.error(e); grpMsg.textContent = 'Failed: ' + (e && e.message || ''); }
@@ -672,6 +677,8 @@
       if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
       grpEditMsg.textContent = 'Saved ✓';
       await refreshGroupsUI(name);
+      const gres2 = await listGroups();
+      fillRegGroupPicker(gres2.groups||{});
       await renderGroupsMatrix();
       await renderTeamLists();
     }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
@@ -687,6 +694,8 @@
       if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
       grpEditMsg.textContent = 'Deleted ✓';
       await refreshGroupsUI('');
+      const gres2 = await listGroups();
+      fillRegGroupPicker(gres2.groups||{});
       await renderGroupsMatrix();
       await renderTeamLists();
     }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
@@ -706,10 +715,19 @@
   btnGroupCreate.addEventListener('click', createGroup);
   btnGroupSave.addEventListener('click', saveGroup);
   btnGroupDelete.addEventListener('click', deleteGroup);
-  // Toggle collapsible panels for the top-level tabs
-  document.querySelectorAll('.rbac-tab-btn').forEach(btn => {
+  btnRegAddGroup.addEventListener('click', ()=>{
+    const v = regGroupPicker.value || '';
+    if (!v) return;
+    selectedRegGroups.add(v);
+    renderRegGroupChips();
+  });
+  // Toggle panels as an accordion: open one, close others
+  const tabButtons = Array.from(document.querySelectorAll('.rbac-tab-btn'));
+  const tabPanels  = Array.from(document.querySelectorAll('.rbac-collapse'));
+  tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const id = btn.getAttribute('data-target');
+      tabPanels.forEach(p => { if (p.id !== id) p.classList.remove('open'); });
       const panel = document.getElementById(id);
       if (panel) panel.classList.toggle('open');
     });
@@ -739,14 +757,9 @@
         opt.value = opt.textContent = p;
         pSel.appendChild(opt);
       }
-      // fill group list for registration
-      regGroups.innerHTML = '';
-      const gm = gres.groups || {};
-      Object.keys(gm).sort().forEach(name=>{
-        const opt = document.createElement('option');
-        opt.value = opt.textContent = name;
-        regGroups.appendChild(opt);
-      });
+      // fill group dropdown for registration
+      fillRegGroupPicker(gres.groups||{});
+      renderRegGroupChips();
       // pick default: student if present else first
       const def = users.includes('student') ? 'student' : (users[0] || '');
       currentUser = def;
