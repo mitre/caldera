@@ -9,6 +9,7 @@ services:
         TZ: "UTC" # Timezone to use in container
         VARIANT: "full"
     image: caldera:latest
+    container_name: caldera
     ports:
       - "8888:8888"
       - "8443:8443"
@@ -20,4 +21,5 @@ services:
       - "2222:2222"
     volumes:
       - ./:/usr/src/app
+      - /usr/src/app/plugins/magma # To avoid overwriting the already built UI
     command: --log DEBUG
