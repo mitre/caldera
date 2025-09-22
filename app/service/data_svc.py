@@ -280,13 +280,14 @@ class DataService(DataServiceInterface, BaseService):
         await self.store(obj)
 
     async def _load(self, plugins=()):
-        try:
-            async_tasks = []
-            if not plugins:
-                plugins = [p for p in await self.locate('plugins') if p.data_dir and p.enabled]
-            if not [plugin for plugin in plugins if plugin.data_dir == 'data']:
-                plugins.append(Plugin(data_dir='data'))
-            for plug in plugins:
+        async_tasks = []
+        if not plugins:
+            plugins = [p for p in await self.locate('plugins') if p.data_dir and p.enabled]
+        if not [plugin for plugin in plugins if plugin.data_dir == 'data']:
+            plugins.append(Plugin(data_dir='data'))
+
+        for plug in plugins:
+            try:
                 await self._load_payloads(plug)
                 await self._load_abilities(plug, async_tasks)
                 await self._load_objectives(plug)
@@ -294,14 +295,19 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_planners(plug)
                 await self._load_sources(plug)
                 await self._load_packers(plug)
-            for task in async_tasks:
+            except Exception as e:
+                self.log.debug(repr(e), exc_info=True)
+
+        for task in async_tasks:
+            try:
                 await task
-            await self._load_extensions()
-            await self._load_data_encoders(plugins)
-            await self.create_or_update_everything_adversary()
-            await self._verify_data_sets()
-        except Exception as e:
-            self.log.debug(repr(e), exc_info=True)
+            except Exception as e:
+                self.log.debug(repr(e), exc_info=True)
+
+        await self._load_extensions()
+        await self._load_data_encoders(plugins)
+        await self.create_or_update_everything_adversary()
+        await self._verify_data_sets()
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
