@@ -1,3 +1,83 @@
-special_payloads: {}
-standard_payloads: {}
-extensions: {}
+extensions:
+  .donut: plugins.stockpile.app.donut.donut_handler
+special_payloads:
+  minidump.go:
+    description: LSASS memory dump script
+    function: dynamically_compile
+    id: 734a5566-6e92-4d39-a37d-59f88ed906e2
+    service: stockpile_svc
+  mission.go:
+    description: Unknown
+    function: dynamically_compile
+    id: f9403e41-7b9a-416b-95eb-138cf1519668
+    service: stockpile_svc
+standard_payloads:
+  Akagi64.exe:
+    description: UACME compiled binary
+    id: dcb15ae4-52fb-4aed-be23-aae69b84f5ce
+  Bypass-UAC.ps1:
+    description: Invokes bypass UAC from empire scripts
+    id: 7700675a-c8f1-4634-b006-3486014535f4
+  Emulate-Administrator-Tasks.ps1:
+    description: Script to randomly perform common administrator tasks
+    id: af7f232a-6636-46f9-a10b-148b55c3277b
+  HostingCLRx64.dll:
+    description: Hosting DLL for a windows C# CLR (for use with execute-assembly)
+    id: c7841398-8728-494b-9b0c-9fe5fe2524de
+  Invoke-MemeKatz.ps1:
+    description: Random sets your desktop to a meme cat
+    id: b2dcf04d-517a-4eca-95f2-2c41bc783125
+  Invoke-ReflectivePEInjection.ps1.xored:
+    description: Invoke reflective PE injection script
+    id: 37e61603-fb0a-48c4-ae9b-f6542c6b1221
+    xored: true
+  bookmark.scpt:
+    description: Unknown
+    id: c354cac4-ac7c-4512-8a52-5faf880883bf
+  debugger.dll:
+    description: DLL versions of the minidump.go binary for reflective injection
+    id: feaf09c6-6337-49dd-b301-7cf015cc7cd4
+  debugger.exe:
+    description: Modified cmd.exe with a Bit-flipped to maintain signature and change
+      hash
+    id: 33b38fbf-5897-4021-9f27-9ae3f3f24c12
+  invoke-mimi.ps1.xored:
+    description: Invoke katz script
+    id: c1e0dda5-1f10-4895-a963-261404bae5f8
+    xored: true
+  minidump.exe:
+    description: Compiled minidump.go binary for dumping LSASS memory
+    id: 61174873-e8f8-486d-9f9f-12884370dde7
+  powerview.ps1.xored:
+    description: Powerview script from empire
+    id: 14986e59-601d-4c52-9ec1-480090ab6550
+    xored: true
+  ragdoll.py:
+    description: HTML-based implant
+    id: 2e1834cb-a599-44a3-b5c8-f58df4ab51e6
+  reflect.ps1:
+    description: PE Reflect script
+    id: 89102904-1a41-443d-b2cd-1faf2529ae20
+  scanner.py:
+    description: Python port scanner
+    id: 4318470d-715b-4355-aa1c-11c489d4c10e
+  sshpass:
+    description: Automatically pass password to ssh
+    id: df945533-2200-451a-a1a9-801b35ae21a9
+  totallylegit.exe:
+    description: Compiled minidump.go binary for dumping LSASS memory
+    id: 98c0a4cf-6fc3-446e-9857-fe396a9eafee
+  transfer_suid.sh:
+    description: Script to look for executables to abuse elevation control mechanism
+      (setuid and setgid)
+    id: be9223eb-aa91-46e8-8c32-4fecccf1c7c7
+  wifi.ps1:
+    description: Wifi manipulation script
+    id: 28f9bf43-4f14-4965-9bd9-b70fd6993d8e
+    obfuscation_name:
+    - obfuscated_payload.ps1
+  wifi.sh:
+    description: Wifi manipulation script
+    id: 9f639067-370a-40ba-b7ac-6f1c15d5a158
+    obfuscation_name:
+    - obfuscated_payload.sh
