@@ -74,56 +74,56 @@ jobs:
         #     -Dsonar.projectBaseDir=caldera
 
   # --- Sonar scan for forked PRs (runs safely with pull_request_target) ---
-sonar_fork_pr:
-  runs-on: ubuntu-latest
-  if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork }}
-  permissions:
-    contents: read
-    pull-requests: write   # remove if you don't want PR comments
-  steps:
-    - name: Checkout base repo
-      uses: actions/checkout@v4
-      with:
-        ref: ${{ github.event.pull_request.base.sha }}
-        fetch-depth: 0
-
-    - name: Checkout PR HEAD (fork)
-      uses: actions/checkout@v4
-      with:
-        repository: ${{ github.event.pull_request.head.repo.full_name }}
-        ref: ${{ github.event.pull_request.head.sha }}
-        path: pr
-        fetch-depth: 0
-        submodules: recursive
-
-    # Detect where the sonar-project.properties actually is (pr/ or pr/caldera)
-    - name: Detect Sonar base dir
-      id: detect
-      run: |
-        set -euo pipefail
-        if [ -f pr/caldera/sonar-project.properties ]; then
-          echo "base=pr/caldera" >> "$GITHUB_OUTPUT"
-        elif [ -f pr/sonar-project.properties ]; then
-          echo "base=pr" >> "$GITHUB_OUTPUT"
-        else
-          echo "No sonar-project.properties found under pr/ or pr/caldera"
-          echo "base=pr" >> "$GITHUB_OUTPUT"   # fallback to repo root
-        fi
-        echo "Using base dir: $(grep '^base=' "$GITHUB_OUTPUT" | cut -d= -f2)"
-        echo "Has SONAR_TOKEN? $([ -n "${SONAR_TOKEN:-}" ] && echo yes || echo no)"
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
-    # If your project key/org are NOT in the properties file, uncomment and set below
-    - name: SonarQube Scan (fork PR)
-      uses: SonarSource/sonarqube-scan-action@v6.0.0
-      env:
-        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # SONAR_HOST_URL: https://sonarcloud.io  # set if you’re self-hosted or non-default
-      with:
-        projectBaseDir: ${{ steps.detect.outputs.base }}
-        args: |
-          -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-          -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
-          -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+  sonar_fork_pr:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork }}
+    permissions:
+      contents: read
+      pull-requests: write   # remove if you don't want PR comments
+    steps:
+      - name: Checkout base repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+  
+      - name: Checkout PR HEAD (fork)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          fetch-depth: 0
+          submodules: recursive
+  
+      # Detect where the sonar-project.properties actually is (pr/ or pr/caldera)
+      - name: Detect Sonar base dir
+        id: detect
+        run: |
+          set -euo pipefail
+          if [ -f pr/caldera/sonar-project.properties ]; then
+            echo "base=pr/caldera" >> "$GITHUB_OUTPUT"
+          elif [ -f pr/sonar-project.properties ]; then
+            echo "base=pr" >> "$GITHUB_OUTPUT"
+          else
+            echo "No sonar-project.properties found under pr/ or pr/caldera"
+            echo "base=pr" >> "$GITHUB_OUTPUT"   # fallback to repo root
+          fi
+          echo "Using base dir: $(grep '^base=' "$GITHUB_OUTPUT" | cut -d= -f2)"
+          echo "Has SONAR_TOKEN? $([ -n "${SONAR_TOKEN:-}" ] && echo yes || echo no)"
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  
+      # If your project key/org are NOT in the properties file, uncomment and set below
+      - name: SonarQube Scan (fork PR)
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # SONAR_HOST_URL: https://sonarcloud.io  # set if you’re self-hosted or non-default
+        with:
+          projectBaseDir: ${{ steps.detect.outputs.base }}
+          args: |
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
