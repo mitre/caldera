@@ -74,47 +74,47 @@ jobs:
         #     -Dsonar.projectBaseDir=caldera
 
   # --- Sonar scan for forked PRs (runs safely with pull_request_target) ---
-  sonar_fork_pr:
-    runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork }}
-    permissions:
-      contents: read
-      pull-requests: write   # needed only for PR comments/decorations
-    steps:
-      # Checkout the base repo at the base SHA for context (not fork code)
-      - name: Checkout base repo
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.base.sha }}
-          fetch-depth: 0
+  # sonar_fork_pr:
+  #   runs-on: ubuntu-latest
+  #   if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork }}
+  #   permissions:
+  #     contents: read
+  #     pull-requests: write   # needed only for PR comments/decorations
+  #   steps:
+  #     # Checkout the base repo at the base SHA for context (not fork code)
+  #     - name: Checkout base repo
+  #       uses: actions/checkout@v4
+  #       with:
+  #         ref: ${{ github.event.pull_request.base.sha }}
+  #         fetch-depth: 0
 
-      # Checkout the fork’s PR head as data into ./pr
-      - name: Checkout PR HEAD (fork)
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
-          ref: ${{ github.event.pull_request.head.sha }}
-          path: pr
-          fetch-depth: 0
-          submodules: recursive
+  #     # Checkout the fork’s PR head as data into ./pr
+  #     - name: Checkout PR HEAD (fork)
+  #       uses: actions/checkout@v4
+  #       with:
+  #         repository: ${{ github.event.pull_request.head.repo.full_name }}
+  #         ref: ${{ github.event.pull_request.head.sha }}
+  #         path: pr
+  #         fetch-depth: 0
+  #         submodules: recursive
 
-      # Optional debug info
-      - name: Debug checkout
-        run: |
-          echo "PR #${{ github.event.pull_request.number }}"
-          echo "Head: ${{ github.event.pull_request.head.ref }} @ ${{ github.event.pull_request.head.sha }}"
-          echo "Base: ${{ github.event.pull_request.base.ref }} @ ${{ github.event.pull_request.base.sha }}"
-          ls -la pr || true
+  #     # Optional debug info
+  #     - name: Debug checkout
+  #       run: |
+  #         echo "PR #${{ github.event.pull_request.number }}"
+  #         echo "Head: ${{ github.event.pull_request.head.ref }} @ ${{ github.event.pull_request.head.sha }}"
+  #         echo "Base: ${{ github.event.pull_request.base.ref }} @ ${{ github.event.pull_request.base.sha }}"
+  #         ls -la pr || true
 
-      # Run Sonar scan against fork code
-      - name: SonarQube Scan (fork PR)
-        uses: SonarSource/sonarqube-scan-action@v6.0.0
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          projectBaseDir: pr/caldera        # <— override the action’s default "."
-          args: |
-            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
-            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
-            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+  #     # Run Sonar scan against fork code
+  #     - name: SonarQube Scan (fork PR)
+  #       uses: SonarSource/sonarqube-scan-action@v6.0.0
+  #       env:
+  #         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #       with:
+  #         projectBaseDir: pr/caldera        # <— override the action’s default "."
+  #         args: |
+  #           -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+  #           -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+  #           -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
