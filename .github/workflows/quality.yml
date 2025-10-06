@@ -112,13 +112,9 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # SONAR_HOST_URL: https://sonarcloud.io  # uncomment for self-hosted or explicit
         with:
+          projectBaseDir: pr/caldera        # <— override the action’s default "."
           args: |
-            -Dsonar.projectBaseDir=pr/caldera
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
             -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
-            # Uncomment and set if not defined in sonar-project.properties:
-            # -Dsonar.projectKey=<your-project-key>
-            # -Dsonar.organization=<your-org>
