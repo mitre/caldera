@@ -411,4 +411,3 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 if operation.has_fact(trait=adjustment.trait, value=adjustment.value):
                     a_link.visibility.apply(adjustment)
                     a_link.status = a_link.states['HIGH_VIZ']
-    
