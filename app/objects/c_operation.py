@@ -191,6 +191,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
         seeded_facts = []
         if self.source:
             seeded_facts = await data_svc_handle.get_facts_from_source(self.source.id)
+            seeded_facts = [f for f in seeded_facts if f.score > 0]
         learned_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
         learned_facts = [f for f in learned_facts if f.score > 0]
         return seeded_facts + learned_facts

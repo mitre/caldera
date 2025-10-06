@@ -481,7 +481,7 @@ class DataService(DataServiceInterface, BaseService):
     def _get_plugin_name(self, filename):
         plugin_path = pathlib.PurePath(filename).parts
         return plugin_path[1] if 'plugins' in plugin_path else ''
-    
+
     async def get_facts_from_source(self, fact_source_id):
         fact_sources = await self.locate('sources', match=dict(id=fact_source_id))
         if len(fact_sources) == 0:

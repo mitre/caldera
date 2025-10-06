@@ -190,7 +190,7 @@ def custom_agent(test_agent, test_executor):
 
 @pytest.fixture
 def op_with_learning_and_seeded(ability, adversary, operation_agent, parse_datestring):
-    sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob')])
+    sc = Source(id='3124', name='test', facts=[Fact(trait='domain.user.name', value='bob'), Fact(trait='domain.user.name', value='jane', score=0)])
     op = Operation(id='6789', name='testC', agents=[], adversary=adversary, source=sc, use_learning_parsers=True)
     # patch operation to make it 'realistic'
     op.start = parse_datestring(OP_START_TIME)
@@ -427,6 +427,7 @@ class TestOperation:
 
     def test_facts(self, event_loop, app_svc, contact_svc, file_svc, data_svc, learning_svc, fire_event_mock,
                    op_with_learning_and_seeded, make_test_link, make_test_result, knowledge_svc):
+        event_loop.run_until_complete(data_svc.store(op_with_learning_and_seeded.source))
         test_link = make_test_link(9876)
         op_with_learning_and_seeded.add_link(test_link)
 
