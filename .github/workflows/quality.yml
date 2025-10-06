@@ -6,6 +6,8 @@ on:
       - master
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]  # added for fork PRs
   workflow_dispatch:
 
 permissions:
@@ -21,8 +23,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - python-version: 3.9
-          #   toxenv: py39,style,coverage-ci
           - python-version: 3.10.9
             toxenv: py310,style,coverage-ci
           - python-version: 3.11
@@ -34,29 +34,87 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           submodules: recursive
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0  # shallow clones should be disabled for analysis
+
       - name: Setup python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+
       - name: Install dependencies
         run: |
           pip install --upgrade virtualenv
           pip install tox
           npm --prefix plugins/magma install
           npm --prefix plugins/magma run build
+
       - name: Run tests
         env:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
+
       - name: Override Coverage Source Path for Sonar
-        run: sed -i "s/<source>\/home\/runner\/work\/caldera\/caldera/<source>\/github\/workspace/g" /home/runner/work/caldera/caldera/coverage.xml
+        run: sed -i "s#<source>/home/runner/work/caldera/caldera#<source>/github/workspace#g" /home/runner/work/caldera/caldera/coverage.xml
+
+      # --- Sonar scan for pushes and same-repo PRs only ---
       - name: SonarQube Scan
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # needed for PR info
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+        # Uncomment if your sonar-project.properties is in a subfolder:
+        # with:
+        #   args: |
+        #     -Dsonar.projectBaseDir=caldera
+
+  # --- Sonar scan for forked PRs (runs safely with pull_request_target) ---
+  sonar_fork_pr:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork }}
+    permissions:
+      contents: read
+      pull-requests: write   # needed only for PR comments/decorations
+    steps:
+      # Checkout the base repo at the base SHA for context (not fork code)
+      - name: Checkout base repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      # Checkout the fork’s PR head as data into ./pr
+      - name: Checkout PR HEAD (fork)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          fetch-depth: 0
+          submodules: recursive
+
+      # Optional debug info
+      - name: Debug checkout
+        run: |
+          echo "PR #${{ github.event.pull_request.number }}"
+          echo "Head: ${{ github.event.pull_request.head.ref }} @ ${{ github.event.pull_request.head.sha }}"
+          echo "Base: ${{ github.event.pull_request.base.ref }} @ ${{ github.event.pull_request.base.sha }}"
+          ls -la pr || true
+
+      # Run Sonar scan against fork code
+      - name: SonarQube Scan (fork PR)
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectBaseDir: pr/caldera        # <— override the action’s default "."
+          args: |
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
