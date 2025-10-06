@@ -45,7 +45,7 @@ rm -rf /var/lib/apt/lists/*
 
 # Install Golang from source (apt version is too out-of-date)
 RUN curl -k -L https://go.dev/dl/go1.25.0.linux-amd64.tar.gz -o go1.25.0.linux-amd64.tar.gz && \
-tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz
+tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz && rm go1.25.0.linux-amd64.tar.gz
 ENV PATH="$PATH:/usr/local/go/bin"
 RUN go version
 
