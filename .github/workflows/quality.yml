@@ -2,18 +2,25 @@ name: Code Quality
 
 on:
   push:
-    branches:
-      - master
+    branches: [ master ]
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]   # enables Sonar on fork PRs
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
+  # -------------------------
+  # Build & tests (no secrets)
+  # Runs on pushes and pull_request (both same-repo and forks).
+  # -------------------------
   build:
     runs-on: ubuntu-latest
+    # Don't run this job for pull_request_target (we have a dedicated Sonar job there).
+    if: ${{ github.event_name != 'pull_request_target' }}
     permissions:
       contents: read
       pull-requests: read
@@ -21,8 +28,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # - python-version: 3.9
-          #   toxenv: py39,style,coverage-ci
           - python-version: 3.10.9
             toxenv: py310,style,coverage-ci
           - python-version: 3.11
@@ -34,29 +39,95 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
         with:
           submodules: recursive
-          fetch-depth: 0  # Shallow clones should be disabled for a better relevancy of analysis
+          fetch-depth: 0
+
       - name: Setup python
         uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '20'
+
       - name: Install dependencies
         run: |
           pip install --upgrade virtualenv
           pip install tox
           npm --prefix plugins/magma install
           npm --prefix plugins/magma run build
+
       - name: Run tests
         env:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
+
       - name: Override Coverage Source Path for Sonar
-        run: sed -i "s/<source>\/home\/runner\/work\/caldera\/caldera/<source>\/github\/workspace/g" /home/runner/work/caldera/caldera/coverage.xml
-      - name: SonarQube Scan
+        run: sed -i "s#<source>/home/runner/work/caldera/caldera#<source>/github/workspace#g" /home/runner/work/caldera/caldera/coverage.xml
+
+      # Sonar for same-repo pushes/PRs only (secrets available).
+      - name: SonarQube Scan (same-repo)
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
         uses: SonarSource/sonarqube-scan-action@v6.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+        # If your sonar-project.properties is not at repo root, add:
+        # with:
+        #   args: -Dsonar.projectBaseDir=caldera
+
+  # -------------------------
+  # Sonar for fork PRs (secrets allowed via pull_request_target).
+  # Checks out fork HEAD into ./pr and scans that path; does NOT run fork code with secrets.
+  # -------------------------
+  sonar_fork_pr:
+    runs-on: ubuntu-latest
+    needs: []   # independent from build
+    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.fork }}
+    permissions:
+      contents: read
+      pull-requests: write   # needed only if you want PR decorations; otherwise remove
+    steps:
+      # Base repo checkout (for workflow context)
+      - name: Checkout base repo @ base SHA
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+
+      # Checkout the PR head from the fork into ./pr
+      - name: Checkout PR HEAD (read-only to analyze)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: pr
+          fetch-depth: 0
+          submodules: recursive
+
+      # Optional: quick debug
+      - name: Debug
+        run: |
+          echo "PR #${{ github.event.pull_request.number }}"
+          echo "Head: ${{ github.event.pull_request.head.ref }} @ ${{ github.event.pull_request.head.sha }}"
+          echo "Base: ${{ github.event.pull_request.base.ref }} @ ${{ github.event.pull_request.base.sha }}"
+          ls -la pr || true
+          git -C pr rev-parse --short HEAD
+
+      - name: SonarQube Scan (fork PR)
+        uses: SonarSource/sonarqube-scan-action@v6.0.0
+        env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # If using self-hosted SonarQube, also set:
+          # SONAR_HOST_URL: https://sonar.example.com
+        with:
+          args: >
+            -Dsonar.projectBaseDir=pr
+            -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
+            -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
+            -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
+            # If your project key/organization aren't in pr/sonar-project.properties, add:
+            # -Dsonar.projectKey=<your-project-key>
+            # -Dsonar.organization=<your-org>   # SonarCloud only
