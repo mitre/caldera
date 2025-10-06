@@ -68,6 +68,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # needed for PR info
           SONAR_TOKEN:  ${{ secrets.SONAR_TOKEN }}
+        # Uncomment if your sonar-project.properties is in a subfolder:
+        # with:
+        #   args: |
+        #     -Dsonar.projectBaseDir=caldera
 
   # --- Sonar scan for forked PRs (runs safely with pull_request_target) ---
   sonar_fork_pr:
@@ -108,13 +112,13 @@ jobs:
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
+          # SONAR_HOST_URL: https://sonarcloud.io  # uncomment for self-hosted or explicit
         with:
-          args: >
-            -Dsonar.projectBaseDir=pr
+          args: |
+            -Dsonar.projectBaseDir=pr/caldera
             -Dsonar.pullrequest.key=${{ github.event.pull_request.number }}
             -Dsonar.pullrequest.branch=${{ github.event.pull_request.head.ref }}
             -Dsonar.pullrequest.base=${{ github.event.pull_request.base.ref }}
-            # Add project/organization explicitly if not in properties file
+            # Uncomment and set if not defined in sonar-project.properties:
             # -Dsonar.projectKey=<your-project-key>
             # -Dsonar.organization=<your-org>
