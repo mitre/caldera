@@ -103,11 +103,24 @@ class PayloadApi(BaseApi):
     @aiohttp_apispec.match_info_schema(PayloadDeleteRequestSchema)
     async def delete_payloads(self, request: web.Request):
         file_name: str = request.match_info.get("name")
+
+        # Filename Input Validation
+        if not file_name:
+            return web.HTTPBadRequest(reason="File name is required.")
+
+        # Sanitize the filename
+        sanitized_filename = self.sanitize_filename(file_name)
+
+        # Additional safety checks
+        if not sanitized_filename or sanitized_filename in ['.', '..']:
+            return web.HTTPBadRequest(reason="Invalid file name.")
+
         try:
-            safe_path = self.validate_and_canonicalize_path(file_name)
-            if pathlib.Path(safe_path).is_symlink():
-                raise ValueError(f"Invalid path: {file_name} is a symbolic link.")
-            os.remove(safe_path)
+            safe_path = self.validate_and_canonicalize_path(sanitized_filename)
+            safe_path_obj = pathlib.Path(safe_path)
+            if safe_path_obj.is_symlink():
+                raise ValueError(f"Invalid path: {sanitized_filename} is a symbolic link.")
+            os.remove(safe_path_obj)
             response = web.HTTPNoContent()
         except ValueError as e:
             response = web.HTTPNotFound(reason=str(e))
