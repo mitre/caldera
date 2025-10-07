@@ -406,7 +406,7 @@ class DataService(DataServiceInterface, BaseService):
 
     async def _load_extensions(self):
         payload_config = self._app_configuration.get("payloads", {})
-        extensions_config = payload_config.get("extensions", [])
+        extensions_config = payload_config.get("extensions", {})
         for entry in extensions_config:
             try:
                 await self.get_service('file_svc').add_special_payload(entry, extensions_config[entry])
