@@ -261,32 +261,44 @@ class DataService(DataServiceInterface, BaseService):
             await self.store(obj)
 
     async def create_or_update_everything_adversary(self):
+        abilities = await self.locate('abilities')
+        if abilities is None:
+            abilities = []
+
+        atomic_ordering = []
+        for ability in abilities:
+            try:
+                if ability.plugin != 'training':
+                    continue
+
+                if ability.access == self.Access.RED or ability.access == self.Access.APP:
+                    atomic_ordering.append(ability.ability_id)
+            except (AttributeError, TypeError):
+                continue
+
         everything = {
             'id': '785baa02-df5d-450a-ab3a-1a863f22b4b0',
             'name': 'Everything Bagel',
             'description': 'An adversary with all adversary abilities',
-            'atomic_ordering': [
-                ability.ability_id
-                for ability in await self.locate('abilities')
-                if (
-                    ability.access == self.Access.RED
-                    or ability.access == self.Access.APP
-                )
-                and ability.plugin != 'training'
-            ],
+            'atomic_ordering': atomic_ordering,
         }
-        obj = Adversary.load(everything)
-        obj.access = self.Access.RED
-        await self.store(obj)
+
+        try:
+            obj = Adversary.load(everything)
+            obj.access = self.Access.RED
+            await self.store(obj)
+        except Exception as e:
+            self.log.debug(f"Failed to create everything adversary: {e}")
 
     async def _load(self, plugins=()):
-        try:
-            async_tasks = []
-            if not plugins:
-                plugins = [p for p in await self.locate('plugins') if p.data_dir and p.enabled]
-            if not [plugin for plugin in plugins if plugin.data_dir == 'data']:
-                plugins.append(Plugin(data_dir='data'))
-            for plug in plugins:
+        async_tasks = []
+        if not plugins:
+            plugins = [p for p in await self.locate('plugins') if p.data_dir and p.enabled]
+        if not [plugin for plugin in plugins if plugin.data_dir == 'data']:
+            plugins.append(Plugin(data_dir='data'))
+
+        for plug in plugins:
+            try:
                 await self._load_payloads(plug)
                 await self._load_abilities(plug, async_tasks)
                 await self._load_objectives(plug)
@@ -294,14 +306,19 @@ class DataService(DataServiceInterface, BaseService):
                 await self._load_planners(plug)
                 await self._load_sources(plug)
                 await self._load_packers(plug)
-            for task in async_tasks:
+            except Exception as e:
+                self.log.debug(repr(e), exc_info=True)
+
+        for task in async_tasks:
+            try:
                 await task
-            await self._load_extensions()
-            await self._load_data_encoders(plugins)
-            await self.create_or_update_everything_adversary()
-            await self._verify_data_sets()
-        except Exception as e:
-            self.log.debug(repr(e), exc_info=True)
+            except Exception as e:
+                self.log.debug(repr(e), exc_info=True)
+
+        await self._load_extensions()
+        await self._load_data_encoders(plugins)
+        await self.create_or_update_everything_adversary()
+        await self._verify_data_sets()
 
     async def _load_adversaries(self, plugin):
         for filename in glob.iglob('%s/adversaries/**/*.yml' % plugin.data_dir, recursive=True):
@@ -388,10 +405,13 @@ class DataService(DataServiceInterface, BaseService):
             await self.load_yaml_file(Planner, filename, plugin.access)
 
     async def _load_extensions(self):
-        for entry in self._app_configuration['payloads']['extensions']:
-            await self.get_service('file_svc').add_special_payload(entry,
-                                                                   self._app_configuration['payloads']
-                                                                   ['extensions'][entry])
+        payload_config = self._app_configuration.get("payloads", {})
+        extensions_config = payload_config.get("extensions", {})
+        for entry in extensions_config:
+            try:
+                await self.get_service('file_svc').add_special_payload(entry, extensions_config[entry])
+            except Exception:
+                self.log.debug("Failed to load payload extensions")
 
     async def _load_packers(self, plugin):
         plug_packers = dict()
@@ -407,8 +427,11 @@ class DataService(DataServiceInterface, BaseService):
         for glob_path in glob_paths:
             for module_path in glob.iglob(glob_path):
                 imported_module = import_module(module_path.replace('/', '.').replace('\\', '.').replace('.py', ''))
-                encoder = imported_module.load()
-                await self.store(encoder)
+                try:
+                    encoder = imported_module.load()
+                    await self.store(encoder)
+                except Exception as e:
+                    self.log.debug(f"Error loading data encoder at {glob_path}: {e}")
 
     async def _create_ability(self, ability_id, name=None, description=None, tactic=None, technique_id=None,
                               technique_name=None, executors=None, requirements=None, privilege=None,
