@@ -265,9 +265,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or self.auto_close:
-            return True
-        return False
+        return await self.is_finished() or self.auto_close
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
