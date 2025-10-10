@@ -427,9 +427,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 cleanup_count += 1
         if cleanup_count:
             self.state = self.states['CLEANUP']
-            logging.debug('Starting operation cleanup')
+            logging.debug(f'Starting cleanup for operation {self.id}')
             await self._safely_handle_cleanup(cleanup_count)
-            logging.debug('Completed operation cleanup')
+            logging.debug(f'Completed cleanup for operation {self.id}')
 
     async def _safely_handle_cleanup(self, cleanup_link_count):
         try:
