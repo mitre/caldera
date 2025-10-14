@@ -75,7 +75,7 @@ def expected_new_schedule_dump(new_schedule_payload):
     dump['task']['id'] = mock.ANY
     if 'facts' in dump['task']['source']:
         for f in dump['task']['source']['facts']:
-            dump['task']['source']['facts']['created'] = mock.ANY
+            f['created'] = mock.ANY
     return dump
 
 
