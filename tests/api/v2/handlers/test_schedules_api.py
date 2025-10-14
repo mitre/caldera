@@ -73,6 +73,9 @@ def expected_new_schedule_dump(new_schedule_payload):
     schedule = ScheduleSchema().load(new_schedule_payload)
     dump = schedule.schema.dump(schedule)
     dump['task']['id'] = mock.ANY
+    if 'facts' in dump['task']['source']:
+        for f in dump['task']['source']['facts']:
+            f['created'] = mock.ANY
     return dump
 
 
