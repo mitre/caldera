@@ -58,9 +58,6 @@ jobs:
           TOXENV: ${{ matrix.toxenv }}
         run: tox
 
-      - name: Override Coverage Source Path for Sonar
-        run: sed -i "s#<source>/home/runner/work/caldera/caldera#<source>/github/workspace#g" /home/runner/work/caldera/caldera/coverage.xml
-
       # --- Sonar scan for pushes and same-repo PRs only ---
       - name: SonarQube Scan
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false }}
