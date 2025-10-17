@@ -17,12 +17,34 @@ class Contact(BaseWorld):
         self.log = self.create_logger('contact_tcp')
         self.contact_svc = services.get('contact_svc')
         self.tcp_handler = TcpSessionHandler(services, self.log)
+        self.server_task = None
+        self.op_loop_task = None
+        self.server = None
 
     async def start(self):
         loop = asyncio.get_event_loop()
         tcp = self.get_config('app.contact.tcp')
-        loop.create_task(asyncio.start_server(self.tcp_handler.accept, *tcp.split(':')))
-        loop.create_task(self.operation_loop())
+        self.server_task = loop.create_task(self.start_server(*tcp.split(':')))
+        self.op_loop_task = loop.create_task(self.operation_loop())
+
+    async def stop(self):
+        if self.op_loop_task:
+            self.op_loop_task.cancel()
+        if self.server_task:
+            self.server_task.cancel()
+        try:
+            await self.op_loop_task
+        except asyncio.CancelledError:
+            self.log.debug('Cancelled TCP contact operation loop task.')
+        try:
+            await self.server_task
+        except asyncio.CancelledError:
+            self.log.debug('Cancelled TCP contact server task.')
+
+    async def start_server(self, host, port):
+        self.server = await asyncio.start_server(self.tcp_handler.accept, host, port)
+        async with self.server:
+            await self.server.serve_forever()
 
     async def operation_loop(self):
         while True:
