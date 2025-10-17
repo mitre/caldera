@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 import base64
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -11,7 +11,6 @@ from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_world import BaseWorld
-from tests import AsyncMock
 
 
 stop_bucket_exhaustion_params = [
