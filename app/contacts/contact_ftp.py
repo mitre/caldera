@@ -3,7 +3,6 @@ import os
 import re
 import asyncio
 import aioftp
-import sys
 
 from app.utility.base_world import BaseWorld
 
