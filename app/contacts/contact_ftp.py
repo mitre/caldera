@@ -84,7 +84,7 @@ class Contact(BaseWorld):
         )
 
     async def ftp_server(self):
-        await self.server.run(host=self.host, port=self.port)
+        await self.server.start(host=self.host, port=self.port)
 
     def check_config(self):
         if not self.get_config(FTP_HOST_PROPERTY):
