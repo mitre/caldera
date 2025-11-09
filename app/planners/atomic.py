@@ -6,7 +6,7 @@ class LogicalPlanner:
         self.stopping_conditions = stopping_conditions
         self.stopping_condition_met = False
         self.state_machine = ['atomic']
-        self.next_bucket = 'atomic'   # repeat this bucket until we run out of links.
+        self.next_bucket = 'atomic'
 
     async def execute(self):
         await self.planning_svc.execute_planner(self)
@@ -14,11 +14,10 @@ class LogicalPlanner:
     async def atomic(self):
         links_to_use = []
 
-        # Get the first available link for each agent (make sure we maintain the order).
+        # Get the first available link for each agent
         for agent in self.operation.agents:
             possible_agent_links = await self._get_links(agent=agent)
             next_link = await self._get_next_atomic_link(possible_agent_links)
-            print(f'[Atomic] Next atomic link for agent {agent.paw} is {next_link}')
             if next_link:
                 links_to_use.append(await self.operation.apply(next_link))
 

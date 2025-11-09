@@ -17,5 +17,8 @@
     "lint-js-fix": "eslint ./static/js/*.js ./templates/*.html --fix",
     "lint-css": "stylelint static/css/*.css",
     "lint-css-fix": "stylelint static/css/*.css --fix"
+  },
+  "dependencies": {
+    "uuid": "^13.0.0"
   }
 }

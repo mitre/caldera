@@ -169,7 +169,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         raw_steps = operation.adversary.atomic_ordering
         step_entries = []
         unique_ids = set()
-        print(f' Raw steps from adversary profile: {raw_steps}')
+        self.log.debug(f' Raw steps from adversary profile: {raw_steps}')
 
         for idx, step in enumerate(raw_steps):
             if isinstance(step, str):
@@ -185,7 +185,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 'metadata': metadata
             })
             unique_ids.add(ability_id)
-            print(f' Processed step entry: {step_entries[-1]}')
+            self.log.debug(f' Processed step entry: {step_entries[-1]}')
 
         all_abilities = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=tuple(unique_ids)))
         ability_map = {a.ability_id: a for a in all_abilities}
@@ -201,7 +201,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 'ability': ability,
                 'metadata': step['metadata']
             })
-            print(f' Processed step with ability: {steps_with_abilities[-1]}')
+            self.log.debug(f' Processed step with ability: {steps_with_abilities[-1]}')
 
         # Optionally filter by buckets
         if buckets:
@@ -225,7 +225,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         self.log.debug('Generated %s usable links', len(links))
         self.log.debug('Final link list: %s', [link.ability.ability_id for link in links])
         sorted_links = await self.sort_links(links)
-        print(f' Sorted links: {[link.ability.ability_id for link in sorted_links]}')
+        self.log.debug(f' Sorted links: {[link.ability.ability_id for link in sorted_links]}')
         return sorted_links
 
     async def get_cleanup_links(self, operation, agent=None):

@@ -1,0 +1,17 @@
+adversary_id: 95cad57a-8e4f-4ba0-87cf-03d8a7cad0a0
+name: TEST
+description: ''
+objective: 495a9828-cab1-44dd-a0ca-66e58177d8cc
+atomic_ordering:
+- ability_id: 36eecb80-ede3-442b-8774-956e906aff02
+  metadata:
+    executor_facts:
+      linux:
+      - trait: time.sleep
+        value: '10'
+- ability_id: 36eecb80-ede3-442b-8774-956e906aff02
+  metadata:
+    executor_facts:
+      linux:
+      - trait: time.sleep
+        value: '3'

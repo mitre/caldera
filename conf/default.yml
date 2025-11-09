@@ -30,9 +30,8 @@ host: 0.0.0.0
 objects.planners.default: atomic
 plugins:
 - automation
-- manx
+- debrief
 - sandcat
-- spp
 - stockpile
 port: 8888
 reachable_host_traits:
