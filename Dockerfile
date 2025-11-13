@@ -61,7 +61,7 @@ ARG TARGETARCH
 ARG GO_VERSION=1.25.4
 
 RUN apt-get update -qy \
- && apt-get install -y --no-install-recommends ca-certificates curl bash build-essential python3-dev\
+ && apt-get install -y --no-install-recommends ca-certificates curl bash build-essential \
  && rm -rf /var/lib/apt/lists/*
 
 RUN set -eux; \
@@ -107,7 +107,7 @@ RUN set -eux; \
 FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
 
 COPY --from=build /usr/local/go /usr/local/go
-COPY --from=build /usr/src/app /app
+COPY --from=build /usr/src/app /usr/src/app
 
 # Set timezone (default to UTC)
 ARG TZ="UTC"
@@ -145,11 +145,11 @@ EXPOSE 2222
 
 # Run as user: app
 RUN groupadd -r app && \
-    useradd -r -d /app -g app -N app;
+    useradd -r -d /usr/src/app -g app -N app;
 
 USER app
-WORKDIR /app
+WORKDIR /usr/src/app
 ENV PATH="/usr/local/go/bin:$PATH"
-ENV PATH="/app/bin:$PATH"
+ENV PATH="/usr/src/app/bin:$PATH"
 
-CMD ["python3", "-I", "/app/server.py"]
+CMD ["python3", "-I", "/usr/src/app/server.py"]
