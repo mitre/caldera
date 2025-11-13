@@ -7,7 +7,6 @@ Dockerfile
 # git
 **/.gitattributes
 **/.gitignore
-**/.gitmodules
 **/.github
 
 # dev
