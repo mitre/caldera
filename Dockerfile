@@ -1,22 +1,13 @@
-# This file uses a staged build, using a different stage to build the UI (magma)
-# Build the UI
-FROM node:23 AS ui-build
+ARG PYTHON_VERSION=3.13
+ARG NODE_VERSION=23
 
-WORKDIR /usr/src/app
-
-ADD . .
-# Build VueJS front-end
-RUN (cd plugins/magma; npm install && npm run build)
-
-# This is the runtime stage
-# It containes all dependencies required by caldera
-FROM debian:bookworm-slim AS runtime
+#----( UI Build Stage )--------------------------------
+FROM node:${NODE_VERSION}-bookworm-slim AS ui-build
 
 # There are two variants - slim and full
-# The slim variant excludes some dependencies of *emu* and *atomic* that can be downloaded on-demand if needed
-# They are very large
+# The slim variant excludes some dependencies of *emu* and *atomic* that 
+# can be downloaded on-demand if needed.
 ARG VARIANT=full
-ENV VARIANT=${VARIANT}
 
 # Display an error if variant is set incorrectly, otherwise just print information regarding which variant is in use
 RUN if [ "$VARIANT" = "full" ]; then \
@@ -28,72 +19,105 @@ RUN if [ "$VARIANT" = "full" ]; then \
         exit 1; \
 fi
 
-WORKDIR /usr/src/app
+RUN apt-get update -qy \
+ && apt-get install -y --no-install-recommends git ca-certificates \
+ && rm -rf /var/lib/apt/lists/*
 
-# Copy in source code and compiled UI
-# IMPORTANT NOTE: the .dockerignore file is very important in preventing weird issues.
-# Especially if caldera was ever compiled outside of Docker - we don't want those files to interfere with this build process,
-# which should be repeatable.
-ADD . .
-COPY --from=ui-build /usr/src/app/plugins/magma/dist /usr/src/app/plugins/magma/dist
+ENV APP_DIR=/usr/src/app
+ADD . ${APP_DIR}
+WORKDIR ${APP_DIR}
 
-# From https://docs.docker.com/build/building/best-practices/
-# Install caldera dependencies
-RUN apt-get update && \
-apt-get --no-install-recommends -y install git curl unzip python3-dev python3-pip mingw-w64 zlib1g gcc && \
-rm -rf /var/lib/apt/lists/*
+# Ensure plugin submodules are loaded
+RUN git config --global --add safe.directory ${APP_DIR} \
+ && git submodule sync --recursive \
+ && git submodule update --init --recursive
 
-# Install Golang from source (apt version is too out-of-date)
-RUN curl -k -L https://go.dev/dl/go1.25.0.linux-amd64.tar.gz -o go1.25.0.linux-amd64.tar.gz && \
-tar -C /usr/local -xzf go1.25.0.linux-amd64.tar.gz && rm go1.25.0.linux-amd64.tar.gz
-ENV PATH="$PATH:/usr/local/go/bin"
-RUN go version
+# Fetch atomic data or disable it in slim
+RUN if [ "$VARIANT" = "full" ] && [ ! -d "${APP_DIR}/plugins/atomic/data/atomic-red-team" ]; then \
+        git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git ${APP_DIR}/plugins/atomic/data/atomic-red-team; \
+    else \
+        sed -i '/\- atomic/d' ${APP_DIR}/conf/default.yml; \
+    fi
 
-# Fix line ending error that can be caused by cloning the project in a Windows environment
-RUN cd /usr/src/app/plugins/sandcat && \
-cp ./update-agents.sh ./update-agents_orig.sh && \
-tr -d '\15\32' < ./update-agents_orig.sh > ./update-agents.sh
+# Fetch emu data
+# (Emu is not enabled by default, no need to disable it if slim variant is being built)
+RUN if [ "$VARIANT" = "full" ] && [ ! -d "${APP_DIR}/plugins/emu/data/adversary-emulation-plans" ]; then \
+        git clone --depth 1 https://github.com/center-for-threat-informed-defense/adversary_emulation_library.git ${APP_DIR}/plugins/emu/data/adversary-emulation-plans; \
+    fi
+
+# Remove .git folders
+RUN (find ${APP_DIR} -type d -name ".git") | xargs rm -rf
+
+# Build VueJS front-end
+RUN cd ${APP_DIR}/plugins/magma \
+ && npm install \
+ && npm run build
+
+#----( Python/Go Build Stage )----------------------
+FROM python:${PYTHON_VERSION}-slim-bookworm AS build
+
+# Install Go
+ARG TARGETARCH
+ARG GO_VERSION=1.25.4
+
+RUN apt-get update -qy \
+ && apt-get install -y --no-install-recommends ca-certificates curl bash build-essential python3-dev\
+ && rm -rf /var/lib/apt/lists/*
+
+RUN set -eux; \
+  case "$TARGETARCH" in \
+    amd64|arm64) \
+      echo "Installing Go ${GO_VERSION} for $TARGETARCH"; \
+      curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz" -o /tmp/go.tgz; \
+      tar -C /usr/local -xzf /tmp/go.tgz; \
+      rm -f /tmp/go.tgz ;; \
+    *) \
+      echo "Unsupported arch $TARGETARCH, ignoring Go install"; \
+      mkdir -p /usr/local/go/bin ;; \
+  esac
+
+ENV APP_DIR=/usr/src/app
+RUN python3 -m venv ${APP_DIR}
+ENV PATH="/usr/local/go/bin:$PATH"
+ENV PATH="/usr/src/app/bin:$PATH"
+
+COPY --from=ui-build /usr/src/app /usr/src/app
+WORKDIR ${APP_DIR}
+
+# Install Python dependencies, allowing failed installs for plugin requirements
+RUN pip install --upgrade pip \
+ && sed -i '/^lxml.*/d' ${APP_DIR}/requirements.txt \
+ && pip install -r ${APP_DIR}/requirements.txt \
+ && find ${APP_DIR}/plugins/ -type f -name 'requirements.txt' -print0 | xargs -0 -n1 pip install --no-cache-dir -r || true
+
+# Rebuild Sandcat agents if Go is installed
+RUN set -eux; \
+  if [ -x /usr/local/go/bin/go ]; then \
+    echo "Building Sandcat agents"; \
+    cd ${APP_DIR}/plugins/sandcat/gocat; \
+    go mod tidy; \
+    go mod download; \
+    cd ${APP_DIR}/plugins/sandcat; \
+    sed -i 's/\r$//' update-agents.sh; \
+    chmod +x update-agents.sh; \
+    ./update-agents.sh; \
+  fi
+
+#----( Runtime Stage )-------------------------------------------
+FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
+
+COPY --from=build /usr/local/go /usr/local/go
+COPY --from=build /usr/src/app /app
 
 # Set timezone (default to UTC)
 ARG TZ="UTC"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
-# Install pip requirements
-RUN pip3 install --break-system-packages --no-cache-dir -r requirements.txt
-
-# For offline atomic (disable it by default in slim image)
-# Disable atomic if this is not downloaded
-RUN if [ ! -d "/usr/src/app/plugins/atomic/data/atomic-red-team" ] && [ "$VARIANT" = "full" ]; then   \
-        git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git \
-            /usr/src/app/plugins/atomic/data/atomic-red-team;                  \
-    else \
-        sed -i '/\- atomic/d' conf/default.yml; \
-fi
-
-# For offline emu
-# (Emu is disabled by default, no need to disable it if slim variant is being built)
-RUN if [ ! -d "/usr/src/app/plugins/emu/data/adversary-emulation-plans" ] && [ "$VARIANT" = "full" ]; then   \
-        git clone --depth 1 https://github.com/center-for-threat-informed-defense/adversary_emulation_library \
-            /usr/src/app/plugins/emu/data/adversary-emulation-plans;                  \
-fi
-
-# Download emu payloads
-# emu doesn't seem capable of running this itself - always download
-RUN cd /usr/src/app/plugins/emu; ./download_payloads.sh
-
-# The commands above (git clone) will generate *huge* .git folders - remove them
-RUN (find . -type d -name ".git") | xargs rm -rf
-
-# Install Go dependencies
-RUN cd /usr/src/app/plugins/sandcat/gocat; go mod tidy && go mod download
-
-# Update sandcat agents
-RUN cd /usr/src/app/plugins/sandcat; ./update-agents.sh
-
-# Make sure emu can always be used in container (even if not enabled right now)
-RUN cd /usr/src/app/plugins/emu; \
-    pip3 install --break-system-packages -r requirements.txt
+# Install caldera dependencies TODO: what are the actual requirements?
+RUN apt-get update -qy \
+ && apt-get --no-install-recommends -y install git curl ca-certificates unzip mingw-w64 zlib1g gcc \
+ && rm -rf /var/lib/apt/lists/*
 
 STOPSIGNAL SIGINT
 
@@ -119,4 +143,13 @@ EXPOSE 8022
 # Default FTP port for FTP C2 channel
 EXPOSE 2222
 
-ENTRYPOINT ["python3", "server.py"]
+# Run as user: app
+RUN groupadd -r app && \
+    useradd -r -d /app -g app -N app;
+
+USER app
+WORKDIR /app
+ENV PATH="/usr/local/go/bin:$PATH"
+ENV PATH="/app/bin:$PATH"
+
+CMD ["python3", "-I", "/app/server.py"]
