@@ -152,4 +152,4 @@ WORKDIR /usr/src/app
 ENV PATH="/usr/local/go/bin:$PATH"
 ENV PATH="/usr/src/app/bin:$PATH"
 
-CMD ["python3", "-I", "/usr/src/app/server.py"]
+CMD ["python3", "-I", "/usr/src/app/server.py", "--insecure"]
