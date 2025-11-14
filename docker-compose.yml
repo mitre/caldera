@@ -1,14 +1,12 @@
-version: '3'
-
 services:
   caldera:
     build:
       context: .
       dockerfile: Dockerfile
+      target: dev
       args:
         TZ: "UTC" # Timezone to use in container
-        VARIANT: "full"
-    image: caldera:latest
+        VARIANT: "slim"
     ports:
       - "8888:8888"
       - "8443:8443"
@@ -20,4 +18,4 @@ services:
       - "2222:2222"
     volumes:
       - ./:/usr/src/app
-    command: --log DEBUG
+    command: ["python", "/usr/src/app/server.py", "--build"]

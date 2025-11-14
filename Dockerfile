@@ -54,9 +54,10 @@ RUN set -eux; \
   esac
 
 ENV APP_DIR=/usr/src/app
-RUN python3 -m venv ${APP_DIR}
+ENV VENV_DIR=/usr/local/venv
+RUN python3 -m venv ${VENV_DIR}
 ENV PATH="/usr/local/go/bin:${PATH}"
-ENV PATH="${APP_DIR}/bin:$PATH"
+ENV PATH="${VENV_DIR}/bin:$PATH"
 
 ADD . ${APP_DIR}
 WORKDIR ${APP_DIR}
@@ -66,9 +67,7 @@ RUN git config --global --add safe.directory ${APP_DIR} \
  && git submodule sync --recursive \
  && git submodule update --init --recursive
 
-# Install Python dependencies 
-# Note: Ignoring core lxml version due to failed builds 
-# Note: Allowing failed installs for plugin requirements
+# Install Python dependencies, allowing failed installs for plugin requirements
 RUN pip install --upgrade pip \
  && sed -i '/^lxml.*/d' ${APP_DIR}/requirements.txt \
  && pip install -r ${APP_DIR}/requirements.txt \
@@ -105,50 +104,74 @@ RUN (find ${APP_DIR} -type d -name ".git") | xargs rm -rf \
  && rm ${APP_DIR}/.gitmodules
 
 
-#----( Runtime Stage )--------------------------------
-FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
-
-ENV APP_DIR=/usr/src/app
-
-# Create runtime user: app
-RUN groupadd --system app \
- && useradd --system --home-dir ${APP_DIR} --uid 1001 --gid app -N app
-
-COPY --from=build /usr/local/go /usr/local/go
-COPY --from=build /usr/local/lib/node /usr/local/lib/node
-COPY --from=build --chown=app:app /usr/src/app ${APP_DIR}
+#----( Dev Stage )--------------------------------
+FROM python:${PYTHON_VERSION}-slim-bookworm AS dev
 
 # Set timezone (default to UTC)
 ARG TZ="UTC"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
-# Install Caldera runtime dependencies
+# Install caldera dependencies
 RUN apt-get update -qy \
  && apt-get --no-install-recommends -y install git curl ca-certificates unzip mingw-w64 zlib1g \
  && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /usr/local/go /usr/local/go
+COPY --from=build /usr/local/lib/node /usr/local/lib/node
+COPY --from=build /usr/local/venv /usr/local/venv
+
+ENV APP_DIR=/usr/src/app
+ENV VENV_DIR=/usr/local/venv
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV PATH="${VENV_DIR}/bin:${PATH}"
+ENV PATH="/usr/local/lib/node/bin:${PATH}"
+
+WORKDIR ${APP_DIR}
+
+
+#----( Production Stage )--------------------------
+FROM python:${PYTHON_VERSION}-slim-bookworm AS prod
+
+# Set timezone (default to UTC)
+ARG TZ="UTC"
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
+    echo $TZ > /etc/timezone
+
+# Install caldera dependencies
+RUN apt-get update -qy \
+ && apt-get --no-install-recommends -y install git curl ca-certificates unzip mingw-w64 zlib1g \
+ && rm -rf /var/lib/apt/lists/*
+
+ARG APP_UID=1001
+ARG APP_GID=1001
+ENV APP_DIR=/usr/src/app
+ENV VENV_DIR=/usr/local/venv
+
+# Create runtime user: app
+RUN groupadd --system --gid ${APP_GID} app \
+  && useradd --system --home-dir ${APP_DIR} --uid ${APP_UID} --gid ${APP_GID} -N app
+
+COPY --from=build /usr/local/go /usr/local/go
+COPY --from=build /usr/local/lib/node /usr/local/lib/node
+COPY --from=build /usr/local/venv /usr/local/venv
+COPY --from=build --chown=app:app /usr/src/app ${APP_DIR}
 
 STOPSIGNAL SIGINT
 
 # Default HTTP port for web interface and agent beacons over HTTP
 EXPOSE 8888
-
 # Default HTTPS port for web interface and agent beacons over HTTPS (requires SSL plugin to be enabled)
 EXPOSE 8443
-
 # TCP and UDP contact ports
 EXPOSE 7010
 EXPOSE 7011/udp
-
 # Websocket contact port
 EXPOSE 7012
-
 # Default port to listen for DNS requests for DNS tunneling C2 channel
 EXPOSE 8853
-
 # Default port to listen for SSH tunneling requests
 EXPOSE 8022
-
 # Default FTP port for FTP C2 channel
 EXPOSE 2222
 
@@ -156,7 +179,7 @@ EXPOSE 2222
 USER app
 WORKDIR ${APP_DIR}
 ENV PATH="/usr/local/go/bin:${PATH}"
-ENV PATH="${APP_DIR}/bin:${PATH}"
+ENV PATH="${VENV_DIR}/bin:${PATH}"
 ENV PATH="/usr/local/lib/node/bin:${PATH}"
 
 # Build VueJS front-end
