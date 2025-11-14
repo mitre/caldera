@@ -164,4 +164,4 @@ RUN cd ${APP_DIR}/plugins/magma \
  && npm install \
  && npm run build
 
-CMD ["python3", "-I", "/usr/bin/app/server.py", "--insecure"]
+CMD ["python3", "/usr/src/app/server.py", "--insecure"]
