@@ -66,7 +66,9 @@ RUN git config --global --add safe.directory ${APP_DIR} \
  && git submodule sync --recursive \
  && git submodule update --init --recursive
 
-# Install Python dependencies, allowing failed installs for plugin requirements
+# Install Python dependencies 
+# Note: Ignoring core lxml version due to failed builds 
+# Note: Allowing failed installs for plugin requirements
 RUN pip install --upgrade pip \
  && sed -i '/^lxml.*/d' ${APP_DIR}/requirements.txt \
  && pip install -r ${APP_DIR}/requirements.txt \
@@ -103,34 +105,28 @@ RUN (find ${APP_DIR} -type d -name ".git") | xargs rm -rf \
  && rm ${APP_DIR}/.gitmodules
 
 
-#----( Runtime Stage )-------------------------------------------
+#----( Runtime Stage )--------------------------------
 FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
 
 ENV APP_DIR=/usr/src/app
 
 # Create runtime user: app
-RUN groupadd -r app \
- && useradd -r -d ${APP_DIR} -g app -N app
+RUN groupadd --system app \
+ && useradd --system --home-dir ${APP_DIR} --uid 1001 --gid app -N app
 
 COPY --from=build /usr/local/go /usr/local/go
 COPY --from=build /usr/local/lib/node /usr/local/lib/node
 COPY --from=build --chown=app:app /usr/src/app ${APP_DIR}
-ENV PATH="/usr/local/lib/node/bin:${PATH}"
 
 # Set timezone (default to UTC)
 ARG TZ="UTC"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone
 
-# Install caldera dependencies TODO: what are the actual requirements?
+# Install Caldera runtime dependencies
 RUN apt-get update -qy \
  && apt-get --no-install-recommends -y install git curl ca-certificates unzip mingw-w64 zlib1g \
  && rm -rf /var/lib/apt/lists/*
-
-# Build VueJS front-end
-RUN cd ${APP_DIR}/plugins/magma \
- && npm install \
- && npm run build
 
 STOPSIGNAL SIGINT
 
@@ -162,5 +158,10 @@ WORKDIR ${APP_DIR}
 ENV PATH="/usr/local/go/bin:${PATH}"
 ENV PATH="${APP_DIR}/bin:${PATH}"
 ENV PATH="/usr/local/lib/node/bin:${PATH}"
+
+# Build VueJS front-end
+RUN cd ${APP_DIR}/plugins/magma \
+ && npm install \
+ && npm run build
 
 CMD ["python3", "-I", "/usr/bin/app/server.py", "--insecure"]
