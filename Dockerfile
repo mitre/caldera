@@ -1,36 +1,89 @@
 ARG PYTHON_VERSION=3.13
-ARG NODE_VERSION=23
+ARG GO_VERSION=1.25.4
+ARG NODE_VERSION=23.9.0
 
-#----( UI Build Stage )--------------------------------
-FROM node:${NODE_VERSION}-bookworm-slim AS ui-build
+#----( Build Stage )--------------------------------
+FROM python:${PYTHON_VERSION}-slim-bookworm AS build
 
 # There are two variants - slim and full
 # The slim variant excludes some dependencies of *emu* and *atomic* that 
 # can be downloaded on-demand if needed.
 ARG VARIANT=full
-
-# Display an error if variant is set incorrectly, otherwise just print information regarding which variant is in use
 RUN if [ "$VARIANT" = "full" ]; then \
-        echo "Building \"full\" container suitable for offline use!"; \
+        echo "Building full Caldera container - downloading emu and atomic dependencies for offline use"; \
     elif [ "$VARIANT" = "slim" ]; then \
-        echo "Building slim container - some plugins (emu, atomic) may not be available without an internet connection!"; \
+        echo "Building slim Caldera container - emu and atomic may not be available without an internet connection"; \
     else \
         echo "Invalid Docker build-arg for VARIANT! Please provide either \"full\" or \"slim\"."; \
         exit 1; \
 fi
 
 RUN apt-get update -qy \
- && apt-get install -y --no-install-recommends git ca-certificates \
+ && apt-get install -y --no-install-recommends git ca-certificates curl bash xz-utils build-essential \
  && rm -rf /var/lib/apt/lists/*
 
+# Install Node
+ARG TARGETARCH
+ARG NODE_VERSION
+RUN set -eux; \
+    arch="${TARGETARCH:-amd64}"; \
+    case "$arch" in \
+      amd64) node_arch="x64" ;; \
+      arm64) node_arch="arm64" ;; \
+      *) node_arch="x64" ;; \
+    esac; \
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" -o /tmp/node.tar.xz; \
+    mkdir -p /usr/local/lib/node; \
+    tar -xJf /tmp/node.tar.xz -C /usr/local/lib/node --strip-components=1; \
+    rm -f /tmp/node.tar.xz
+
+# Install Go
+ARG GO_VERSION
+RUN set -eux; \
+  arch="${TARGETARCH:-amd64}"; \
+  case "$arch" in \
+    amd64|arm64) \
+      go_arch="$arch"; \
+      echo "Installing Go ${GO_VERSION} for ${go_arch}"; \
+      curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${go_arch}.tar.gz" -o /tmp/go.tgz; \
+      tar -C /usr/local -xzf /tmp/go.tgz; \
+      rm -f /tmp/go.tgz ;; \
+    *) \
+      echo "Unsupported arch ${arch}, ignoring Go install"; \
+      mkdir -p /usr/local/go/bin && touch /usr/local/go/bin/.install_failed ;; \
+  esac
+
 ENV APP_DIR=/usr/src/app
+RUN python3 -m venv ${APP_DIR}
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV PATH="${APP_DIR}/bin:$PATH"
+
 ADD . ${APP_DIR}
 WORKDIR ${APP_DIR}
 
-# Ensure plugin submodules are loaded
+# Ensure plugin submodules have been cloned
 RUN git config --global --add safe.directory ${APP_DIR} \
  && git submodule sync --recursive \
  && git submodule update --init --recursive
+
+# Install Python dependencies, allowing failed installs for plugin requirements
+RUN pip install --upgrade pip \
+ && sed -i '/^lxml.*/d' ${APP_DIR}/requirements.txt \
+ && pip install -r ${APP_DIR}/requirements.txt \
+ && find ${APP_DIR}/plugins/ -type f -name 'requirements.txt' -print0 | xargs -0 -n1 pip install --no-cache-dir -r || true
+
+# Rebuild Sandcat agents if Go is installed
+RUN set -eux; \
+  if command -v go >/dev/null 2>&1; then \
+    echo "Building Sandcat agents"; \
+    cd ${APP_DIR}/plugins/sandcat/gocat; \
+    go mod tidy; \
+    go mod download; \
+    cd ${APP_DIR}/plugins/sandcat; \
+    sed -i 's/\r$//' update-agents.sh; \
+    chmod +x update-agents.sh; \
+    ./update-agents.sh; \
+  fi
 
 # Fetch atomic data or disable it in slim
 RUN if [ "$VARIANT" = "full" ] && [ ! -d "${APP_DIR}/plugins/atomic/data/atomic-red-team" ]; then \
@@ -46,68 +99,23 @@ RUN if [ "$VARIANT" = "full" ] && [ ! -d "${APP_DIR}/plugins/emu/data/adversary-
     fi
 
 # Remove .git folders
-RUN (find ${APP_DIR} -type d -name ".git") | xargs rm -rf
+RUN (find ${APP_DIR} -type d -name ".git") | xargs rm -rf \
+ && rm ${APP_DIR}/.gitmodules
 
-# Build VueJS front-end
-RUN cd ${APP_DIR}/plugins/magma \
- && npm install \
- && npm run build
-
-#----( Python/Go Build Stage )----------------------
-FROM python:${PYTHON_VERSION}-slim-bookworm AS build
-
-# Install Go
-ARG TARGETARCH
-ARG GO_VERSION=1.25.4
-
-RUN apt-get update -qy \
- && apt-get install -y --no-install-recommends ca-certificates curl bash build-essential \
- && rm -rf /var/lib/apt/lists/*
-
-RUN set -eux; \
-  case "$TARGETARCH" in \
-    amd64|arm64) \
-      echo "Installing Go ${GO_VERSION} for $TARGETARCH"; \
-      curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${TARGETARCH}.tar.gz" -o /tmp/go.tgz; \
-      tar -C /usr/local -xzf /tmp/go.tgz; \
-      rm -f /tmp/go.tgz ;; \
-    *) \
-      echo "Unsupported arch $TARGETARCH, ignoring Go install"; \
-      mkdir -p /usr/local/go/bin ;; \
-  esac
-
-ENV APP_DIR=/usr/src/app
-RUN python3 -m venv ${APP_DIR}
-ENV PATH="/usr/local/go/bin:$PATH"
-ENV PATH="/usr/src/app/bin:$PATH"
-
-COPY --from=ui-build /usr/src/app /usr/src/app
-WORKDIR ${APP_DIR}
-
-# Install Python dependencies, allowing failed installs for plugin requirements
-RUN pip install --upgrade pip \
- && sed -i '/^lxml.*/d' ${APP_DIR}/requirements.txt \
- && pip install -r ${APP_DIR}/requirements.txt \
- && find ${APP_DIR}/plugins/ -type f -name 'requirements.txt' -print0 | xargs -0 -n1 pip install --no-cache-dir -r || true
-
-# Rebuild Sandcat agents if Go is installed
-RUN set -eux; \
-  if [ -x /usr/local/go/bin/go ]; then \
-    echo "Building Sandcat agents"; \
-    cd ${APP_DIR}/plugins/sandcat/gocat; \
-    go mod tidy; \
-    go mod download; \
-    cd ${APP_DIR}/plugins/sandcat; \
-    sed -i 's/\r$//' update-agents.sh; \
-    chmod +x update-agents.sh; \
-    ./update-agents.sh; \
-  fi
 
 #----( Runtime Stage )-------------------------------------------
 FROM python:${PYTHON_VERSION}-slim-bookworm AS runtime
 
+ENV APP_DIR=/usr/src/app
+
+# Create runtime user: app
+RUN groupadd -r app \
+ && useradd -r -d ${APP_DIR} -g app -N app
+
 COPY --from=build /usr/local/go /usr/local/go
-COPY --from=build /usr/src/app /usr/src/app
+COPY --from=build /usr/local/lib/node /usr/local/lib/node
+COPY --from=build --chown=app:app /usr/src/app ${APP_DIR}
+ENV PATH="/usr/local/lib/node/bin:${PATH}"
 
 # Set timezone (default to UTC)
 ARG TZ="UTC"
@@ -116,8 +124,13 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && \
 
 # Install caldera dependencies TODO: what are the actual requirements?
 RUN apt-get update -qy \
- && apt-get --no-install-recommends -y install git curl ca-certificates unzip mingw-w64 zlib1g gcc \
+ && apt-get --no-install-recommends -y install git curl ca-certificates unzip mingw-w64 zlib1g \
  && rm -rf /var/lib/apt/lists/*
+
+# Build VueJS front-end
+RUN cd ${APP_DIR}/plugins/magma \
+ && npm install \
+ && npm run build
 
 STOPSIGNAL SIGINT
 
@@ -144,12 +157,10 @@ EXPOSE 8022
 EXPOSE 2222
 
 # Run as user: app
-RUN groupadd -r app && \
-    useradd -r -d /usr/src/app -g app -N app;
-
 USER app
-WORKDIR /usr/src/app
-ENV PATH="/usr/local/go/bin:$PATH"
-ENV PATH="/usr/src/app/bin:$PATH"
+WORKDIR ${APP_DIR}
+ENV PATH="/usr/local/go/bin:${PATH}"
+ENV PATH="${APP_DIR}/bin:${PATH}"
+ENV PATH="/usr/local/lib/node/bin:${PATH}"
 
-CMD ["python3", "-I", "/usr/src/app/server.py", "--insecure"]
+CMD ["python3", "-I", "/usr/bin/app/server.py", "--insecure"]
