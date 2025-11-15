@@ -6069,7 +6069,7 @@ function domManip( collection, args, callback, ignored ) {
 			if ( hasScripts ) {
 				doc = scripts[ scripts.length - 1 ].ownerDocument;
 
-				// Reenable scripts
+				// Re-enable scripts
 				jQuery.map( scripts, restoreScript );
 
 				// Evaluate executable scripts on first document insertion
@@ -7118,7 +7118,7 @@ jQuery.extend( {
 				value += ret && ret[ 3 ] || ( jQuery.cssNumber[ origName ] ? "" : "px" );
 			}
 
-			// Fixes #8908, it can be done more correctly by specifing setters in cssHooks,
+			// Fixes #8908, it can be done more correctly by specifying setters in cssHooks,
 			// but it would mean to define eight
 			// (for every problematic property) identical functions
 			if ( !support.clearCloneStyle && value === "" && name.indexOf( "background" ) === 0 ) {
@@ -7705,7 +7705,7 @@ function propFilter( props, specialEasing ) {
 			value = hooks.expand( value );
 			delete props[ name ];
 
-			// not quite $.extend, this wont overwrite keys already present.
+			// not quite $.extend, this won't overwrite keys already present.
 			// also - reusing 'index' from above because we have the correct "name"
 			for ( index in value ) {
 				if ( !( index in props ) ) {
@@ -10521,7 +10521,7 @@ jQuery.ajaxPrefilter( "json jsonp", function( s, originalSettings, jqXHR ) {
 			// Save back as free
 			if ( s[ callbackName ] ) {
 
-				// make sure that re-using the options doesn't screw things around
+				// make sure that reusing the options doesn't screw things around
 				s.jsonpCallback = originalSettings.jsonpCallback;
 
 				// save the callback name for future use
