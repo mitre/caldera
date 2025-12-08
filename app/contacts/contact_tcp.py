@@ -32,14 +32,7 @@ class Contact(BaseWorld):
             self.op_loop_task.cancel()
         if self.server_task:
             self.server_task.cancel()
-        try:
-            await self.op_loop_task
-        except asyncio.CancelledError:
-            self.log.debug('Canceled TCP contact operation loop task.')
-        try:
-            await self.server_task
-        except asyncio.CancelledError:
-            self.log.debug('Canceled TCP contact server task.')
+        _ = await asyncio.gather(self.op_loop_task, self.server_task, return_exceptions=True)
 
     async def start_server(self, host, port):
         try:
