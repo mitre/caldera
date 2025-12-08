@@ -35,37 +35,48 @@ class Contact(BaseWorld):
         try:
             await self.op_loop_task
         except asyncio.CancelledError:
-            self.log.debug('Cancelled TCP contact operation loop task.')
+            self.log.debug('Canceled TCP contact operation loop task.')
         try:
             await self.server_task
         except asyncio.CancelledError:
-            self.log.debug('Cancelled TCP contact server task.')
+            self.log.debug('Canceled TCP contact server task.')
 
     async def start_server(self, host, port):
-        self.server = await asyncio.start_server(self.tcp_handler.accept, host, port)
-        async with self.server:
-            await self.server.serve_forever()
+        try:
+            self.server = await asyncio.start_server(self.tcp_handler.accept, host, port)
+            async with self.server:
+                await self.server.serve_forever()
+        except asyncio.CancelledError:
+            self.log.debug('Canceling TCP contact server task.')
+            if self.server:
+                self.server.close()
+                await self.server.wait_closed()
+            raise
 
     async def operation_loop(self):
         while True:
-            await self.tcp_handler.refresh()
-            for session in self.tcp_handler.sessions:
-                _, instructions = await self.contact_svc.handle_heartbeat(paw=session.paw)
-                for instruction in instructions:
-                    try:
-                        self.log.debug('TCP instruction: %s' % instruction.id)
-                        status, _, response, agent_reported_time = await self.tcp_handler.send(
-                            session.id,
-                            self.decode_bytes(instruction.command),
-                            timeout=instruction.timeout
-                        )
-                        beacon = dict(paw=session.paw,
-                                      results=[dict(id=instruction.id, output=self.encode_string(response), status=status, agent_reported_time=agent_reported_time)])
-                        await self.contact_svc.handle_heartbeat(**beacon)
-                        await asyncio.sleep(instruction.sleep)
-                    except Exception as e:
-                        self.log.debug('[-] operation exception: %s' % e)
-            await asyncio.sleep(20)
+            try:
+                await self.tcp_handler.refresh()
+                for session in self.tcp_handler.sessions:
+                    _, instructions = await self.contact_svc.handle_heartbeat(paw=session.paw)
+                    for instruction in instructions:
+                        try:
+                            self.log.debug('TCP instruction: %s' % instruction.id)
+                            status, _, response, agent_reported_time = await self.tcp_handler.send(
+                                session.id,
+                                self.decode_bytes(instruction.command),
+                                timeout=instruction.timeout
+                            )
+                            beacon = dict(paw=session.paw,
+                                          results=[dict(id=instruction.id, output=self.encode_string(response), status=status, agent_reported_time=agent_reported_time)])
+                            await self.contact_svc.handle_heartbeat(**beacon)
+                            await asyncio.sleep(instruction.sleep)
+                        except Exception as e:
+                            self.log.debug('[-] operation exception: %s' % e)
+                await asyncio.sleep(20)
+            except asyncio.CancelledError:
+                self.log.debug('Canceling TCP contact operation loop task.')
+                raise
 
 
 class TcpSessionHandler(BaseWorld):
