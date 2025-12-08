@@ -44,6 +44,7 @@ class Contact(BaseWorld):
             if self.server:
                 self.server.close()
                 await self.server.wait_closed()
+                self.log.debug('Closed TCP contact server.')
             raise
 
     async def operation_loop(self):
