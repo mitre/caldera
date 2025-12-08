@@ -32,7 +32,7 @@ class Contact(BaseWorld):
             self.op_loop_task.cancel()
         if self.server_task:
             self.server_task.cancel()
-        _ = await asyncio.gather(self.op_loop_task, self.server_task, return_exceptions=True)
+        _ = await asyncio.gather(self.server_task, self.op_loop_task, return_exceptions=True)
 
     async def start_server(self, host, port):
         try:
@@ -42,14 +42,15 @@ class Contact(BaseWorld):
         except asyncio.CancelledError:
             self.log.debug('Canceling TCP contact server task.')
             if self.server:
+                self.log.debug('Closing TCP contact server.')
                 self.server.close()
                 await self.server.wait_closed()
                 self.log.debug('Closed TCP contact server.')
             raise
 
     async def operation_loop(self):
-        while True:
-            try:
+        try:
+            while True:
                 await self.tcp_handler.refresh()
                 for session in self.tcp_handler.sessions:
                     _, instructions = await self.contact_svc.handle_heartbeat(paw=session.paw)
@@ -65,12 +66,19 @@ class Contact(BaseWorld):
                                           results=[dict(id=instruction.id, output=self.encode_string(response), status=status, agent_reported_time=agent_reported_time)])
                             await self.contact_svc.handle_heartbeat(**beacon)
                             await asyncio.sleep(instruction.sleep)
+                        except asyncio.CancelledError:
+                            raise
                         except Exception as e:
                             self.log.debug('[-] operation exception: %s' % e)
                 await asyncio.sleep(20)
-            except asyncio.CancelledError:
-                self.log.debug('Canceling TCP contact operation loop task.')
-                raise
+        except asyncio.CancelledError:
+            self.log.debug('Canceling TCP contact operation loop task.')
+            for sess in self.tcp_handler.sessions:
+                self.log.debug(f'Closing session {sess.id}.')
+                sess.writer.close()
+                await session.writer.wait_closed()
+            self.log.debug('Closed TCP contact sessions.')
+            raise
 
 
 class TcpSessionHandler(BaseWorld):
@@ -95,6 +103,7 @@ class TcpSessionHandler(BaseWorld):
                 index += 1
 
     async def accept(self, reader, writer):
+        self.log.debug('Accepting connection.')
         try:
             profile = await self._handshake(reader)
         except Exception as e:
@@ -139,3 +148,4 @@ class TcpSessionHandler(BaseWorld):
                 self.log.error("Timeout reached for session %s", session_id)
                 return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
         return str(data, 'utf-8')
+
