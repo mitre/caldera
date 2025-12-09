@@ -148,4 +148,3 @@ class TcpSessionHandler(BaseWorld):
                 self.log.error("Timeout reached for session %s", session_id)
                 return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
         return str(data, 'utf-8')
-
