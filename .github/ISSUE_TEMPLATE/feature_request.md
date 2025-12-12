@@ -3,7 +3,7 @@ name: "\U0001F680 New Feature Request"
 about: Propose a new feature
 title: ''
 labels: feature
-assignees: elegantmoose
+assignees: ''
 
 ---
 
