@@ -332,7 +332,7 @@ def agent_config():
 
 
 @pytest.fixture
-async def api_v2_client(event_loop, aiohttp_client, contact_svc):
+async def api_v2_client(aiohttp_client, contact_svc):
     def make_app(svcs):
         warnings.filterwarnings(
             "ignore",
