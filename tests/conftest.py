@@ -13,6 +13,7 @@ import warnings
 from datetime import datetime, timezone
 from base64 import b64encode
 from unittest import mock
+from unittest.mock import AsyncMock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
 import aiohttp_jinja2
@@ -64,7 +65,6 @@ from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.rest_api import RestApi
 
 from app import version
-from tests import AsyncMock
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
