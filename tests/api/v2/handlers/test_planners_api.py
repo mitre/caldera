@@ -13,7 +13,7 @@ def test_planner(event_loop, api_v2_client):
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
     yield planner
 
-    # Ability cleanup
+    # Planner cleanup
     if os.path.exists('data/planners/123.yml'):
         try:
             os.remove('data/planners/123.yml')
