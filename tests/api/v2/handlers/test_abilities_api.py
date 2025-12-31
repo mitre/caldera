@@ -12,23 +12,24 @@ from app.utility.base_service import BaseService
 @pytest.fixture
 def new_ability_payload():
     test_executor_linux = Executor(name='sh', platform='linux', command='whoami')
-    yield {'name': 'new test ability',
-            'ability_id': '456',
-            'tactic': 'collection',
-            'technique_name': 'collection',
-            'technique_id': '1',
-            'executors': [ExecutorSchema().dump(test_executor_linux)],
-            'access': {},
-            'additional_info': {},
-            'buckets': ['collection'],
-            'description': '',
-            'privilege': '',
-            'repeatable': False,
-            'requirements': [],
-            'singleton': False,
-            'plugin': '',
-            'delete_payload': True,
-            }
+    yield {
+        'name': 'new test ability',
+        'ability_id': '456',
+        'tactic': 'collection',
+        'technique_name': 'collection',
+        'technique_id': '1',
+        'executors': [ExecutorSchema().dump(test_executor_linux)],
+        'access': {},
+        'additional_info': {},
+        'buckets': ['collection'],
+        'description': '',
+        'privilege': '',
+        'repeatable': False,
+        'requirements': [],
+        'singleton': False,
+        'plugin': '',
+        'delete_payload': True,
+    }
 
     # Ability cleanup
     try:
@@ -64,7 +65,7 @@ def test_ability(event_loop, api_v2_client, executor):
                       plugin='testplugin')
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
     yield ability
-    
+
     # cleanup
     try:
         os.remove('data/abilities/collection/123.yml')
