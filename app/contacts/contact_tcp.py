@@ -28,11 +28,12 @@ class Contact(BaseWorld):
         self.op_loop_task = loop.create_task(self.operation_loop())
 
     async def stop(self):
-        if self.op_loop_task:
-            self.op_loop_task.cancel()
-        if self.server_task:
-            self.server_task.cancel()
-        _ = await asyncio.gather(self.server_task, self.op_loop_task, return_exceptions=True)
+        tasks_to_stop = [t for t in (self.server_task, self.op_loop_task) if t is not None]
+        for t in tasks_to_stop:
+            if t:
+                t.cancel()
+        if tasks_to_stop:
+            _ = await asyncio.gather(*tasks_to_stop, return_exceptions=True)
 
     async def start_server(self, host, port):
         try:

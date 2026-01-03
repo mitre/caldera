@@ -44,7 +44,8 @@ class Contact(BaseWorld):
         await self.ftp_server()
 
     async def stop(self):
-        await self.server.close()
+        if self.server:
+            await self.server.close()
 
     def set_up_server(self):
         user = self.setup_ftp_users()
