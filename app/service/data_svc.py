@@ -268,7 +268,7 @@ class DataService(DataServiceInterface, BaseService):
         atomic_ordering = []
         for ability in abilities:
             try:
-                if ability.plugin != 'training':
+                if ability.plugin == 'training':
                     continue
 
                 if ability.access == self.Access.RED or ability.access == self.Access.APP:
