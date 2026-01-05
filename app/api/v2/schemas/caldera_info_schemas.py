@@ -9,6 +9,3 @@ class CalderaInfoSchema(schema.Schema):
     version = fields.String()
     access = fields.String()
     plugins = fields.List(fields.Nested(Plugin.display_schema))
-
-    class Meta:
-        ordered = True
