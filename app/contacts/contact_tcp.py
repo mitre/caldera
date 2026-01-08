@@ -84,7 +84,7 @@ class TcpSessionHandler(BaseWorld):
                 msg = f'Could not find session with ID {session_id}'
                 self.log.error(msg)
                 return 1, '~$ ', msg, ''
- 
+
             session.write_bytes(str.encode(' '))
             time.sleep(0.01)
             session.write_bytes(str.encode('%s\n' % cmd))
