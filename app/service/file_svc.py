@@ -4,6 +4,7 @@ import binascii
 import copy
 import json
 import os
+import re
 import subprocess
 import sys
 
@@ -19,6 +20,13 @@ from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
 FILE_ENCRYPTION_FLAG = '%encrypted%'
+URL_SANITIZATION_REGEX = re.compile(r'^[\w\-\.:%+/]+$')
+ALLOWED_DEFAULT_LDFLAG_REGEX = re.compile(r'^[\w\-\.]+$')
+ALLOWED_LDFLAG_REGEXES = {
+    'server': URL_SANITIZATION_REGEX,
+    'http': URL_SANITIZATION_REGEX,
+    'socket': re.compile(r'^[\w\-\.:]+$')
+}
 
 
 class FileSvc(FileServiceInterface, BaseService):
@@ -171,6 +179,17 @@ class FileSvc(FileServiceInterface, BaseService):
             await loop.run_in_executor(None, lambda: subprocess.check_output(args, cwd=build_dir, env=env))
         except subprocess.CalledProcessError as e:
             self.log.warning('Problem building golang executable {}: {} '.format(src_fle, e))
+
+    @staticmethod
+    def sanitize_ldflag_value(param, value):
+        """
+        Validate that the specified LDFLAG value for the given parameter
+        only contains safe characters.
+        Raises a ValueError if disallowed characters are found.
+        """
+        if not ALLOWED_LDFLAG_REGEXES.get(param, ALLOWED_DEFAULT_LDFLAG_REGEX).fullmatch(value):
+            raise ValueError('Invalid characters in %s LDFLAG value: %s' % (param, value))
+        return value
 
     def get_payload_name_from_uuid(self, payload):
         for t in ['standard_payloads', 'special_payloads']:

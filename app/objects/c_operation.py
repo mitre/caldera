@@ -187,9 +187,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        data_svc_handle = BaseService.get_service('data_svc')
         seeded_facts = []
         if self.source:
-            seeded_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.source.id))
+            seeded_facts = await data_svc_handle.get_facts_from_source(self.source.id)
+            seeded_facts = [f for f in seeded_facts if f.score > 0]
         learned_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
         learned_facts = [f for f in learned_facts if f.score > 0]
         return seeded_facts + learned_facts
@@ -263,10 +265,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or self.auto_close:
-            self.state = self.states['FINISHED']
-            return True
-        return False
+        return await self.is_finished() or self.auto_close
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
@@ -425,7 +424,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 self.add_link(link)
                 cleanup_count += 1
         if cleanup_count:
+            self.state = self.states['CLEANUP']
+            logging.debug(f'Starting cleanup for operation {self.id}')
             await self._safely_handle_cleanup(cleanup_count)
+            logging.debug(f'Completed cleanup for operation {self.id}')
 
     async def _safely_handle_cleanup(self, cleanup_link_count):
         try:

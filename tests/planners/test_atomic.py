@@ -1,7 +1,6 @@
 
-from tests import AsyncMock
-
 import pytest
+from unittest.mock import AsyncMock
 
 from app.planners.atomic import LogicalPlanner
 
@@ -15,7 +14,10 @@ class OperationStub():
         self.adversary = AdversaryStub()
         self.agents = ['agent_1']
         self.wait_for_links_completion = AsyncMock()
-        self.apply = AsyncMock()
+        self.apply = AsyncMock(side_effect=self._apply_side_effect)
+
+    def _apply_side_effect(self, value):
+        return value.id
 
 
 class PlanningSvcStub():
@@ -34,9 +36,10 @@ class AbilityStub():
 class LinkStub():
     def __init__(self, ability_id):
         self.ability = AbilityStub(ability_id)
+        self.id = 'link_' + ability_id
 
     def __eq__(self, other):
-        return self.ability.ability_id == other.ability.ability_id
+        return self.ability.ability_id == other.ability.ability_id and self.id == other.id
 
 
 @pytest.fixture
@@ -64,8 +67,8 @@ class TestAtomic():
 
         assert atomic_planner.operation.apply.call_count == 1
         assert atomic_planner.operation.wait_for_links_completion.call_count == 1
-        atomic_planner.operation.apply.assert_called_with(LinkStub('ability_b'))
-        atomic_planner.operation.wait_for_links_completion.assert_called_with([LinkStub('ability_b')])
+        atomic_planner.operation.apply.assert_awaited_with(LinkStub('ability_b'))
+        atomic_planner.operation.wait_for_links_completion.assert_awaited_with(['link_ability_b'])
 
     def test_atomic_with_links_out_of_order(self, event_loop, atomic_planner):
 
@@ -80,8 +83,8 @@ class TestAtomic():
 
         assert atomic_planner.operation.apply.call_count == 1
         assert atomic_planner.operation.wait_for_links_completion.call_count == 1
-        atomic_planner.operation.apply.assert_called_with(LinkStub('ability_b'))
-        atomic_planner.operation.wait_for_links_completion.assert_called_with([LinkStub('ability_b')])
+        atomic_planner.operation.apply.assert_awaited_with(LinkStub('ability_b'))
+        atomic_planner.operation.wait_for_links_completion.assert_awaited_with(['link_ability_b'])
 
     def test_atomic_no_links(self, event_loop, atomic_planner):
 

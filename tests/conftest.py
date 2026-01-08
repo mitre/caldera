@@ -1,6 +1,7 @@
 import asyncio
 import os.path
 
+import jinja2
 import pytest
 import random
 import string
@@ -12,10 +13,11 @@ import warnings
 from datetime import datetime, timezone
 from base64 import b64encode
 from unittest import mock
+from unittest.mock import AsyncMock
 from aiohttp_apispec import validation_middleware
 from aiohttp import web
+import aiohttp_jinja2
 from pathlib import Path
-
 from app.api.v2.handlers.agent_api import AgentApi
 from app.api.v2.handlers.ability_api import AbilityApi
 from app.api.v2.handlers.objective_api import ObjectiveApi
@@ -29,6 +31,7 @@ from app.api.v2.handlers.fact_api import FactApi
 from app.api.v2.handlers.planner_api import PlannerApi
 from app.api.v2.handlers.health_api import HealthApi
 from app.api.v2.handlers.schedule_api import ScheduleApi
+from app.api.v2.handlers.payload_api import PayloadApi
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_objective import Objective
 from app.objects.c_planner import PlannerSchema
@@ -62,7 +65,6 @@ from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.rest_api import RestApi
 
 from app import version
-from tests import AsyncMock
 
 DIR = os.path.dirname(os.path.abspath(__file__))
 CONFIG_DIR = os.path.join(DIR, '..', 'conf')
@@ -356,6 +358,7 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         PlannerApi(svcs).add_routes(app)
         HealthApi(svcs).add_routes(app)
         ScheduleApi(svcs).add_routes(app)
+        PayloadApi(svcs).add_routes(app)
         return app
 
     async def initialize():
@@ -392,6 +395,10 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         )
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
+        templates = ['plugins/%s/templates' % p.lower() for p in app_svc.get_config('plugins')]
+        templates.append('plugins/magma/dist')
+        templates.append("templates")
+        aiohttp_jinja2.setup(app_svc.application, loader=jinja2.FileSystemLoader(templates))
         return app_svc
 
     app_svc = await initialize()

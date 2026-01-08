@@ -21,6 +21,7 @@ class OperationApiManager(BaseApiManager):
     def __init__(self, services):
         super().__init__(data_svc=services['data_svc'], file_svc=services['file_svc'])
         self.services = services
+        self.knowledge_svc = services['knowledge_svc']
 
     async def get_operation_report(self, operation_id: str, access: dict, output: bool):
         operation = await self.get_operation_object(operation_id, access)
@@ -101,6 +102,7 @@ class OperationApiManager(BaseApiManager):
                                               file_svc=self.services['file_svc']))
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
+        await self._call_ability_plugin_hooks(ability, executor)
         link = Link.load(dict(command=encoded_command, plaintext_command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
                               cleanup=data.get('cleanup', 0), pin=data.get('pin', 0),
@@ -169,6 +171,13 @@ class OperationApiManager(BaseApiManager):
         if not source:
             source = (await self.services['data_svc'].locate('sources', match=dict(name='basic')))
         return SourceSchema().dump(source[0])
+
+    async def _call_ability_plugin_hooks(self, ability, executor):
+        """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
+        if (hasattr(executor, 'HOOKS') and executor.HOOKS and
+                hasattr(executor, 'language') and executor.language and
+                executor.language in executor.HOOKS):
+            await executor.HOOKS[executor.language](ability, executor)
 
     async def validate_operation_state(self, data: dict, existing: Operation = None):
         if not existing:

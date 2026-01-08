@@ -1,5 +1,9 @@
+import json
+
 from aiohttp import web
 from json import JSONDecodeError
+
+from aiohttp.web_exceptions import HTTPUnprocessableEntity
 from marshmallow.exceptions import ValidationError
 
 from app.api.v2 import errors
@@ -51,9 +55,9 @@ async def apispec_request_validation_middleware(request, handler):
         )
     except ValidationError as ex:
         # ex: List of objects sent when single object expected
-        raise JsonHttpBadRequest(
-            error='Error parsing JSON: Could not validate Schema',
-            details=str(ex)
+        formatted_message = json.dumps({"json": ex.messages}, indent=2)
+        raise HTTPUnprocessableEntity(
+            text=formatted_message
         )
     except JSONDecodeError as ex:
         raise JsonHttpBadRequest(
