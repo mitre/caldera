@@ -78,7 +78,13 @@ class TcpSessionHandler(BaseWorld):
 
     async def send(self, session_id: int, cmd: str, timeout: int = 60) -> Tuple[int, str, str, str]:
         try:
-            session = next(i for i in self.sessions if i.id == int(session_id))
+            try:
+                session = next(i for i in self.sessions if i.id == int(session_id))
+            except StopIteration:
+                msg = f'Could not find session with ID {session_id}'
+                self.log.error(msg)
+                return 1, '~$ ', msg, ''
+ 
             session.write_bytes(str.encode(' '))
             time.sleep(0.01)
             session.write_bytes(str.encode('%s\n' % cmd))
