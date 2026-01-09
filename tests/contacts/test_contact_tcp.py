@@ -3,6 +3,7 @@ import socket
 from unittest import mock
 
 from app.contacts.contact_tcp import TcpSessionHandler
+from app.contacts.contact_tcp import Contact
 
 logger = logging.getLogger(__name__)
 
@@ -35,3 +36,9 @@ class TestTcpSessionHandler:
 
         event_loop.run_until_complete(handler.refresh())
         assert len(handler.sessions) == 3
+
+class TestContact:
+
+    def test_tcp_contact(self, event_loop):
+        tcp_c2 = Contact(services=None, log=logger)
+        return tcp_c2
