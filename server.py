@@ -102,15 +102,15 @@ def run_tasks(services, run_vue_server=False):
     loop.run_until_complete(
         data_svc.store(
             Obfuscator(name='plain-text',
-                    description='Does no obfuscation to any command, instead running it in plain text',
-                    module='app.obfuscators.plain_text')
+                       description='Does no obfuscation to any command, instead running it in plain text',
+                       module='app.obfuscators.plain_text')
         )
     )
     loop.run_until_complete(
         data_svc.store(
             Obfuscator(name='base64',
-                    description='Obfuscates commands in base64',
-                    module='app.obfuscators.base64_basic')
+                       description='Obfuscates commands in base64',
+                       module='app.obfuscators.base64_basic')
         )
     )
     if run_vue_server:
