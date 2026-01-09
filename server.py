@@ -142,7 +142,7 @@ async def enable_cors(request, response):
 
 async def start_vue_dev_server():
     await asyncio.create_subprocess_shell(
-        "npm run dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH
+        "npm run dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH, shell=True
     )
     logging.info("VueJS development server is live.")
 
@@ -256,15 +256,15 @@ if __name__ == "__main__":
     if args.uiDevHost:
         if not os.path.exists(f"{MAGMA_PATH}/dist"):
             logging.info("Building VueJS front-end.")
-            subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
+            subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True, shell=True)
             logging.info("VueJS front-end build complete.")
         app_svc.application.on_response_prepare.append(enable_cors)
 
     if args.build:
         if len(os.listdir(MAGMA_PATH)) > 0:
             logging.info("Building VueJS front-end.")
-            subprocess.run(["npm", "install"], cwd=MAGMA_PATH, check=True)
-            subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
+            subprocess.run(["npm", "install"], cwd=MAGMA_PATH, check=True, shell=True)
+            subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True, shell=True)
             logging.info("VueJS front-end build complete.")
         else:
             logging.warning(
