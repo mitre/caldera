@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from http import HTTPStatus
@@ -10,7 +11,14 @@ from app.utility.base_service import BaseService
 def test_planner(event_loop, api_v2_client):
     planner = Planner(name="123test planner", planner_id="123", description="a test planner", plugin="planner")
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
-    return planner
+    yield planner
+
+    # Planner cleanup
+    if os.path.exists('data/planners/123.yml'):
+        try:
+            os.remove('data/planners/123.yml')
+        except OSError:
+            pass
 
 
 @pytest.fixture
