@@ -160,7 +160,7 @@ class DataService(DataServiceInterface, BaseService):
                         self.log.error(f'Malformed ability file {filename}. Expected ability entry to be a dictionary, received {type(ab)} instead.')
                         continue
                     ability_id = ab.pop('id', None)
-                    if ability_id != None and type(ability_id) is not str:
+                    if ability_id is not None and type(ability_id) is not str:
                         ability_id = str(ability_id)
                     name = ab.pop('name', '')
                     description = ab.pop('description', '')
