@@ -241,3 +241,22 @@ class TestDataService:
             }
         }
         mock_apply_config2.assert_called_once_with(name='payloads', config=expected_config_part2)
+
+    def test_get_plugin_name(self, data_svc):
+        assert 'test' == data_svc._get_plugin_name('plugins/test')
+        assert 'test' == data_svc._get_plugin_name('plugins/test/')
+        assert 'test' == data_svc._get_plugin_name('plugins/test/data')
+        assert 'test' == data_svc._get_plugin_name('plugins/test/data/abilities')
+        assert 'test' == data_svc._get_plugin_name('plugins/test/data/abilities/collection/123.yml')
+        assert 'test' == data_svc._get_plugin_name('/full/path/to/plugins/test/data/abilities/collection/123.yml')
+        assert '' == data_svc._get_plugin_name('test')
+        assert '' == data_svc._get_plugin_name('plugins')
+        assert '' == data_svc._get_plugin_name('plugins/')
+        assert '' == data_svc._get_plugin_name('/full/path/to/plugins')
+        assert '' == data_svc._get_plugin_name('/full/path/to/plugins/')
+        assert '' == data_svc._get_plugin_name('plugin/test')
+        assert '' == data_svc._get_plugin_name('plugin/test/')
+        assert '' == data_svc._get_plugin_name('plugin/test/data')
+        assert '' == data_svc._get_plugin_name('plugin/test/data/abilities')
+        assert '' == data_svc._get_plugin_name('plugin/test/data/abilities/collection/123.yml')
+        assert '' == data_svc._get_plugin_name('/full/path/to/plugin/test/data/abilities/collection/123.yml')
