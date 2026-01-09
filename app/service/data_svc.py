@@ -180,10 +180,10 @@ class DataService(DataServiceInterface, BaseService):
                         self.log.warn('Please check that the ability is labeled with the correct tactic and is in the correct location.')
 
                     await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
-                                            technique_id=technique_id, technique_name=technique_name,
-                                            executors=executors, requirements=requirements, privilege=privilege,
-                                            repeatable=repeatable, buckets=buckets, access=access, singleton=singleton, plugin=plugin,
-                                            **ab)
+                                               technique_id=technique_id, technique_name=technique_name,
+                                               executors=executors, requirements=requirements, privilege=privilege,
+                                               repeatable=repeatable, buckets=buckets, access=access, singleton=singleton, plugin=plugin,
+                                               **ab)
         except Exception as e:
             self.log.exception(f'Failed to load ability file {filename}: {e}')
 
