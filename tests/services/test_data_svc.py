@@ -315,12 +315,22 @@ class TestDataService:
 
     @mock.patch.object(BaseWorld, 'strip_yml', wraps=strip_ability_yaml)
     async def test_load_ability_file(self, event_loop, data_svc):
+        want_executors = [
+            Executor(name='sh', platform='darwin', command='testcommand',
+                     code=None, language=None, build_target=None,
+                     payloads=None, uploads=None, timeout=60,
+                     parsers=[], cleanup=None, variations=[]),
+            Executor(name='sh', platform='linux', command='testcommand',
+                     code=None, language=None, build_target=None,
+                     payloads=None, uploads=None, timeout=60,
+                     parsers=[], cleanup=None, variations=[])
+        ]
         with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
             await data_svc.load_ability_file('plugins/testing/data/discovery/764efa883dda1e11db47671c4a3bbd9e.yml', BaseWorld.Access.RED)
             mock_create_ability.assert_called_once_with(ability_id='764efa883dda1e11db47671c4a3bbd9e', name='Find deletable dirs (per user)',
                                                         description='Discover all directories containing deletable files by user',
                                                         tactic='discovery', technique_id='T1082', technique_name='System Information Discovery',
-                                                        executors=mock.ANY, requirements=[], privilege=None,
+                                                        executors=want_executors, requirements=[], privilege=None,
                                                         repeatable=False, buckets=['discovery'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
 
         with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
@@ -328,7 +338,7 @@ class TestDataService:
             mock_create_ability.assert_called_once_with(ability_id='848aa201-4b00-4f08-ae3a-3e84dfb5065c', name='Find deletable dirs (per user)',
                                                         description='Discover all directories containing deletable files by user',
                                                         tactic='discovery', technique_id='T1082', technique_name='System Information Discovery',
-                                                        executors=mock.ANY, requirements=[], privilege=None,
+                                                        executors=want_executors, requirements=[], privilege=None,
                                                         repeatable=False, buckets=['discovery'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
 
         with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
@@ -336,7 +346,7 @@ class TestDataService:
             mock_create_ability.assert_called_once_with(ability_id='101', name='Find deletable dirs (per user)',
                                                         description='Discover all directories containing deletable files by user',
                                                         tactic='discovery', technique_id='T1082', technique_name='System Information Discovery',
-                                                        executors=mock.ANY, requirements=[], privilege=None,
+                                                        executors=want_executors, requirements=[], privilege=None,
                                                         repeatable=False, buckets=['discovery'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
 
         with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
