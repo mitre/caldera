@@ -10,6 +10,7 @@ import pytest
 from app.objects.c_operation import Operation
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_event_svc import EventServiceInterface
+from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_service import BaseService
 from app.objects.c_source import Source
 from app.objects.c_planner import Planner
@@ -140,15 +141,42 @@ def fake_event_svc(event_loop):
 
 
 @pytest.fixture
+def fake_planning_svc(event_loop, make_test_link, test_agent):
+    class FakePlanningService(BaseService, PlanningServiceInterface):
+        def __init__(self):
+            self.fired = {}
+
+        async def get_cleanup_links(self, operation, agent):
+            cleanup_link = make_test_link(135, link_paw=test_agent.paw, link_cleanup=1, link_status=0)
+            return [cleanup_link]
+
+        def get_links(self, operation, buckets, agent, trim):
+            pass
+
+        def generate_and_trim_links(self, agent, operation, abilities, trim):
+            pass
+
+        def sort_links(self, links):
+            pass
+
+    service = FakePlanningService()
+    service.add_service('planning_svc', service)
+
+    yield service
+
+    BaseService.remove_service('planning_svc')
+
+
+@pytest.fixture
 def test_ability(ability, executor):
     return ability(ability_id='123', executors=[executor(name='psh', platform='windows')])
 
 
 @pytest.fixture
 def make_test_link(test_ability):
-    def _make_link(link_id, link_paw='123456', link_status=-3):
+    def _make_link(link_id, link_paw='123456', link_status=-3, link_cleanup=0):
         return Link(command='', paw=link_paw, ability=test_ability, id=link_id, executor=next(test_ability.executors),
-                    status=link_status)
+                    status=link_status, cleanup=link_cleanup)
     return _make_link
 
 
@@ -597,3 +625,11 @@ class TestOperation:
         assert op.ignored_links
         assert test_link.id in op.ignored_links
         assert len(op.ignored_links) == 1
+
+    async def test_operation_cleanup_status(self, fake_planning_svc, operation_agent):
+        services = {'planning_svc': fake_planning_svc}
+        op = Operation(name='test with cleanup', agents=[operation_agent], state='running')
+        assert op.state == 'running'
+        assert await op.is_closeable()
+        await op._cleanup_operation(services)
+        assert op.state == 'cleanup'

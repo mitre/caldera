@@ -34,7 +34,10 @@ def expected_updated_schedule_dump(test_schedule, updated_schedule_payload):
         return dict2
     expected_dict = _merge_dictionaries(updated_schedule_payload, test_schedule_dump)
     schedule = ScheduleSchema().load(expected_dict)
-    return schedule.schema.dump(schedule)
+    dump = schedule.schema.dump(schedule)
+    for f in dump.get('task', {}).get('source', {}).get('facts', []):
+        f['created'] = mock.ANY
+    return dump
 
 
 @pytest.fixture
@@ -72,7 +75,10 @@ def new_schedule_payload(test_planner, test_adversary, test_source):
 def expected_new_schedule_dump(new_schedule_payload):
     schedule = ScheduleSchema().load(new_schedule_payload)
     dump = schedule.schema.dump(schedule)
-    dump['task']['id'] = mock.ANY
+    if 'task' in dump:
+        dump['task']['id'] = mock.ANY
+        for f in dump.get('task').get('source', {}).get('facts', []):
+            f['created'] = mock.ANY
     return dump
 
 
