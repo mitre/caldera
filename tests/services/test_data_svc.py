@@ -77,8 +77,79 @@ extensions:
 }
 
 
+ABILITY_YAMLS = {
+    'plugins/testing/data/discovery/764efa883dda1e11db47671c4a3bbd9e.yml': [yaml.safe_load('''
+---
+
+- id: 764efa883dda1e11db47671c4a3bbd9e
+  name: Find deletable dirs (per user)
+  description: Discover all directories containing deletable files by user
+  tactic: discovery
+  technique:
+    attack_id: T1082
+    name: System Information Discovery
+  platforms:
+    darwin:
+      sh:
+        command: |
+          testcommand
+    linux:
+      sh:
+        command: |
+          testcommand
+''')],
+    'plugins/testing/data/discovery/848aa201-4b00-4f08-ae3a-3e84dfb5065c.yml': [yaml.safe_load('''
+---
+
+- id: 848aa201-4b00-4f08-ae3a-3e84dfb5065c
+  name: Find deletable dirs (per user)
+  description: Discover all directories containing deletable files by user
+  tactic: discovery
+  technique:
+    attack_id: T1082
+    name: System Information Discovery
+  platforms:
+    darwin:
+      sh:
+        command: |
+          testcommand
+    linux:
+      sh:
+        command: |
+          testcommand
+''')],
+    'plugins/testing/data/discovery/101.yml': [yaml.safe_load('''
+---
+
+- id: 101
+  name: Find deletable dirs (per user)
+  description: Discover all directories containing deletable files by user
+  tactic: discovery
+  technique:
+    attack_id: T1082
+    name: System Information Discovery
+  platforms:
+    darwin:
+      sh:
+        command: |
+          testcommand
+    linux:
+      sh:
+        command: |
+          testcommand
+''')],
+    'plugins/testing/data/discovery/102.yml': [yaml.safe_load('''
+malformed
+''')],
+}
+
+
 def strip_payload_yaml(path):
     return PAYLOAD_CONFIG_YAMLS.get(path, [])
+
+
+def strip_ability_yaml(path):
+    return ABILITY_YAMLS.get(path, [])
 
 
 def async_mock_return(to_return):
@@ -241,6 +312,36 @@ class TestDataService:
             }
         }
         mock_apply_config2.assert_called_once_with(name='payloads', config=expected_config_part2)
+
+    @mock.patch.object(BaseWorld, 'strip_yml', wraps=strip_ability_yaml)
+    async def test_load_ability_file(self, event_loop, data_svc):
+        with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
+            await data_svc.load_ability_file('plugins/testing/data/discovery/764efa883dda1e11db47671c4a3bbd9e.yml', BaseWorld.Access.RED)
+            mock_create_ability.assert_called_once_with(ability_id='764efa883dda1e11db47671c4a3bbd9e', name='Find deletable dirs (per user)',
+                                                        description='Discover all directories containing deletable files by user',
+                                                        tactic='discovery', technique_id='T1082', technique_name='System Information Discovery',
+                                                        executors=mock.ANY, requirements=[], privilege=None,
+                                                        repeatable=False, buckets=['discovery'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
+
+        with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
+            await data_svc.load_ability_file('plugins/testing/data/discovery/848aa201-4b00-4f08-ae3a-3e84dfb5065c.yml', BaseWorld.Access.RED)
+            mock_create_ability.assert_called_once_with(ability_id='848aa201-4b00-4f08-ae3a-3e84dfb5065c', name='Find deletable dirs (per user)',
+                                                        description='Discover all directories containing deletable files by user',
+                                                        tactic='discovery', technique_id='T1082', technique_name='System Information Discovery',
+                                                        executors=mock.ANY, requirements=[], privilege=None,
+                                                        repeatable=False, buckets=['discovery'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
+
+        with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
+            await data_svc.load_ability_file('plugins/testing/data/discovery/101.yml', BaseWorld.Access.RED)
+            mock_create_ability.assert_called_once_with(ability_id='101', name='Find deletable dirs (per user)',
+                                                        description='Discover all directories containing deletable files by user',
+                                                        tactic='discovery', technique_id='T1082', technique_name='System Information Discovery',
+                                                        executors=mock.ANY, requirements=[], privilege=None,
+                                                        repeatable=False, buckets=['discovery'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
+
+        with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
+            await data_svc.load_ability_file('plugins/testing/data/discovery/102.yml', BaseWorld.Access.RED)
+            mock_create_ability.assert_not_called()
 
     def test_get_plugin_name(self, data_svc):
         assert 'test' == data_svc._get_plugin_name('plugins/test')
