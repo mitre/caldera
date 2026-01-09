@@ -30,6 +30,6 @@ class ScheduleApiManager(OperationApiManager):
         for key in dict1.keys():
             if key not in dict2:
                 dict2[key] = dict1[key]
-            elif type(dict1[key]) == dict:
+            elif isinstance(dict1[key], dict):
                 self._merge_dictionaries(dict1[key], dict2[key])
         return dict2

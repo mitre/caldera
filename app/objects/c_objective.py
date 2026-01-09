@@ -9,6 +9,9 @@ from app.utility.base_object import BaseObject
 
 class ObjectiveSchema(ma.Schema):
 
+    class Meta:
+        unknown = ma.EXCLUDE
+
     id = ma.fields.String()
     name = ma.fields.String()
     description = ma.fields.String()

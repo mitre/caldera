@@ -15,6 +15,7 @@ class ContactApi(BaseApi):
         router = app.router
         router.add_get('/contacts/{name}', self.get_contact_report)
         router.add_get('/contacts', self.get_available_contact_reports)
+        router.add_get('/contactlist', self.get_contact_list)
 
     @aiohttp_apispec.docs(tags=['contacts'],
                           summary='Retrieve a List of Beacons made by Agents to the specified Contact',
@@ -42,4 +43,8 @@ class ContactApi(BaseApi):
                                       ' will be returned here.')
     async def get_available_contact_reports(self, request: web.Request):
         contacts = self._api_manager.get_available_contact_reports()
+        return web.json_response(contacts)
+
+    async def get_contact_list(self, request: web.Request):
+        contacts = [dict(name=c.name, description=c.description) for c in self._api_manager.contact_svc.contacts]
         return web.json_response(contacts)

@@ -21,6 +21,7 @@ class OperationApiManager(BaseApiManager):
     def __init__(self, services):
         super().__init__(data_svc=services['data_svc'], file_svc=services['file_svc'])
         self.services = services
+        self.knowledge_svc = services['knowledge_svc']
 
     async def get_operation_report(self, operation_id: str, access: dict, output: bool):
         operation = await self.get_operation_object(operation_id, access)
@@ -101,6 +102,7 @@ class OperationApiManager(BaseApiManager):
                                               file_svc=self.services['file_svc']))
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
+        await self._call_ability_plugin_hooks(ability, executor)
         link = Link.load(dict(command=encoded_command, plaintext_command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
                               cleanup=data.get('cleanup', 0), pin=data.get('pin', 0),
@@ -170,6 +172,13 @@ class OperationApiManager(BaseApiManager):
             source = (await self.services['data_svc'].locate('sources', match=dict(name='basic')))
         return SourceSchema().dump(source[0])
 
+    async def _call_ability_plugin_hooks(self, ability, executor):
+        """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
+        if (hasattr(executor, 'HOOKS') and executor.HOOKS and
+                hasattr(executor, 'language') and executor.language and
+                executor.language in executor.HOOKS):
+            await executor.HOOKS[executor.language](ability, executor)
+
     async def validate_operation_state(self, data: dict, existing: Operation = None):
         if not existing:
             if data.get('state') in Operation.get_finished_states():
@@ -205,6 +214,63 @@ class OperationApiManager(BaseApiManager):
         except IndexError:
             raise JsonHttpNotFound(f'Agent {data["paw"]} was not found.')
         return agent
+
+    def get_agents(self, operation: dict):
+        agents = {}
+        chain = operation.get('chain', [])
+        for link in chain:
+            paw = link.get('paw')
+            if paw and paw not in agents:
+                tmp_agent = self.find_object('agents', {'paw': paw}).display
+                tmp_agent['links'] = []
+                agents[paw] = tmp_agent
+            agents[paw]['links'].append(link)
+        return agents
+
+    async def get_hosts(self, operation: dict):
+        hosts = {}
+        chain = operation.get('chain', [])
+        for link in chain:
+            host = link.get('host')
+            if not host:
+                continue
+            if host not in hosts:
+                tmp_agent = self.find_object('agents', {'host': host}).display
+                tmp_host = {
+                    'host': tmp_agent.get('host'),
+                    'host_ip_addrs': tmp_agent.get('host_ip_addrs'),
+                    'platform': tmp_agent.get('platform'),
+                    'reachable_hosts': await self.get_reachable_hosts(agent=tmp_agent)
+                }
+                hosts[host] = tmp_host
+        return hosts
+
+    async def get_reachable_hosts(self, agent: dict = None, operation: dict = None):
+        """
+        NOTE: When agent is supplied, only hosts discovered by agent
+        are retrieved.
+        """
+        trait_names = BaseWorld.get_config('reachable_host_traits') or []
+        paws = ()
+
+        if agent is not None:
+            paws = paws + (agent.get('paw'),)
+        else:
+            for agent in operation.get('host_group', []):
+                paw = agent.get('paw')
+                if paw:
+                    paws = paws + (paw,)
+
+        hosts = []
+        for trait in trait_names:
+            fqdns = await self.services['knowledge_svc'].get_facts({
+                'trait': trait,
+                'collected_by': paws,
+            })
+            for name in fqdns:
+                hosts.append(name.value)
+
+        return hosts
 
     def build_executor(self, data: dict, agent: Agent):
         if not data.get('timeout'):

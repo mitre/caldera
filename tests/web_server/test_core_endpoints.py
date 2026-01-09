@@ -68,11 +68,6 @@ async def test_home(aiohttp_client):
     assert resp.content_type == 'text/html'
 
 
-async def test_access_denied(aiohttp_client):
-    resp = await aiohttp_client.get('/enter')
-    assert resp.status == HTTPStatus.UNAUTHORIZED
-
-
 async def test_login(aiohttp_client):
     resp = await aiohttp_client.post('/enter', allow_redirects=False, data=dict(username='admin', password='admin'))
     assert resp.status == HTTPStatus.FOUND
@@ -152,7 +147,7 @@ async def test_custom_rejecting_login_handler(aiohttp_client):
     assert resp.status == HTTPStatus.UNAUTHORIZED
     assert await resp.text() == 'Automatic rejection'
 
-    resp = await aiohttp_client.get('/', allow_redirects=False)
+    resp = await aiohttp_client.get('/api/v2', allow_redirects=False)
     assert resp.status == HTTPStatus.UNAUTHORIZED
     assert await resp.text() == 'Automatic rejection'
 

@@ -16,6 +16,7 @@ class CampaignPack(BaseWorld):
         self.rest_svc = services.get('rest_svc')
 
     async def enable(self):
+        self.app_svc.application.router._frozen = False
         self.app_svc.application.router.add_route('GET', '/campaign/agents', self._section_agent)
         self.app_svc.application.router.add_route('GET', '/campaign/abilities', self._section_abilities)
         self.app_svc.application.router.add_route('GET', '/campaign/adversaries', self._section_profiles)

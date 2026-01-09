@@ -60,7 +60,7 @@ class TcpSessionHandler(BaseWorld):
             session = self.sessions[index]
 
             try:
-                session.connection.send(str.encode(' '))
+                session.writer.write(str.encode(' '))
             except socket.error:
                 self.log.debug('Error occurred when refreshing session %s. Removing from session pool.', session.id)
                 del self.sessions[index]
@@ -73,21 +73,20 @@ class TcpSessionHandler(BaseWorld):
         except Exception as e:
             self.log.debug('Handshake failed: %s' % e)
             return
-        connection = writer.get_extra_info('socket')
         profile['executors'] = [e for e in profile['executors'].split(',') if e]
         profile['contact'] = 'tcp'
         agent, _ = await self.services.get('contact_svc').handle_heartbeat(**profile)
-        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, connection=connection)
+        new_session = Session(id=self.generate_number(size=6), paw=agent.paw, reader=reader, writer=writer)
         self.sessions.append(new_session)
         await self.send(new_session.id, agent.paw, timeout=5)
 
     async def send(self, session_id: int, cmd: str, timeout: int = 60) -> Tuple[int, str, str, str]:
         try:
-            conn = next(i.connection for i in self.sessions if i.id == int(session_id))
-            conn.send(str.encode(' '))
+            session = next(i for i in self.sessions if i.id == int(session_id))
+            session.writer.write(str.encode(' '))
             time.sleep(0.01)
-            conn.send(str.encode('%s\n' % cmd))
-            response = await self._attempt_connection(session_id, conn, timeout=timeout)
+            session.writer.write(str.encode('%s\n' % cmd))
+            response = await self._attempt_connection(session_id, session.reader, timeout=timeout)
             response = json.loads(response)
             return response['status'], response['pwd'], response['response'], response.get('agent_reported_time', '')
         except Exception as e:
@@ -99,22 +98,17 @@ class TcpSessionHandler(BaseWorld):
         profile_bites = (await reader.readline()).strip()
         return json.loads(profile_bites)
 
-    async def _attempt_connection(self, session_id, connection, timeout):
+    async def _attempt_connection(self, session_id, reader, timeout):
         buffer = 4096
         data = b''
-        waited_seconds = 0
         time.sleep(0.1)  # initial wait for fast operations.
         while True:
             try:
-                part = connection.recv(buffer)
+                part = await reader.read(buffer)
                 data += part
                 if len(part) < buffer:
                     break
-            except BlockingIOError as err:
-                if waited_seconds < timeout:
-                    time.sleep(1)
-                    waited_seconds += 1
-                else:
-                    self.log.error("Timeout reached for session %s", session_id)
-                    return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
+            except Exception as err:
+                self.log.error("Timeout reached for session %s", session_id)
+                return json.dumps(dict(status=1, pwd='~$ ', response=str(err)))
         return str(data, 'utf-8')

@@ -32,7 +32,7 @@ class DefaultLoginHandler(LoginHandlerInterface):
                     raise Exception('Auth service not available.')
                 await auth_svc.handle_successful_login(request, username)
             self.log.debug('%s failed login attempt: ', username)
-        raise web.HTTPFound('/login')
+        raise web.HTTPFound('/')
 
     async def handle_login_redirect(self, request, **kwargs):
         """Handle login redirect.
@@ -57,7 +57,11 @@ class DefaultLoginHandler(LoginHandlerInterface):
         server = ldap3.Server(self._ldap_config.get('server'))
         dn = self._ldap_config.get('dn')
         user_attr = self._ldap_config.get('user_attr') or 'uid'
-        user_string = '%s=%s,%s' % (user_attr, username, dn)
+        user_format_string = self._ldap_config.get("user_format") or "{user_attr}={user},{dn}"
+        try:
+            user_string = user_format_string.format(user_attr=user_attr, user=username, dn=dn)
+        except KeyError:
+            user_string = '%s=%s,%s' % (user_attr, username, dn)
 
         try:
             with ldap3.Connection(server, user=user_string, password=password) as conn:

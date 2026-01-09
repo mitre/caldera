@@ -31,10 +31,14 @@ class InvalidOperationStateError(Exception):
 
 
 class OperationOutputRequestSchema(ma.Schema):
-    enable_agent_output = ma.fields.Boolean(default=False)
+    enable_agent_output = ma.fields.Boolean(dump_default=False)
 
 
 class OperationSchema(ma.Schema):
+
+    class Meta:
+        unknown = ma.EXCLUDE
+
     id = ma.fields.String()
     name = ma.fields.String(required=True)
     host_group = ma.fields.List(ma.fields.Nested(AgentSchema()), attribute='agents', dump_only=True)
@@ -64,6 +68,23 @@ class OperationSchema(ma.Schema):
     @ma.post_load
     def build_operation(self, data, **kwargs):
         return None if kwargs.get('partial') is True else Operation(**data)
+
+
+class HostSchema(ma.Schema):
+    display_name = ma.fields.String(dump_only=True)
+    host = ma.fields.String()
+    host_ip_addrs = ma.fields.List(ma.fields.String(), allow_none=True)
+    platform = ma.fields.String()
+    reachable_hosts = ma.fields.List(ma.fields.String(), allow_none=True)
+
+
+class OperationSchemaAlt(OperationSchema):
+    chain = property(lambda: AttributeError)
+    host_group = property(lambda: AttributeError)
+    source = property(lambda: AttributeError)
+    visibility = property(lambda: AttributeError)
+    agents = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.Nested(AgentSchema()))
+    hosts = ma.fields.Dict(keys=ma.fields.String(), values=ma.fields.Nested(HostSchema()))
 
 
 class Operation(FirstClassObjectInterface, BaseObject):
@@ -166,9 +187,11 @@ class Operation(FirstClassObjectInterface, BaseObject):
 
     async def all_facts(self):
         knowledge_svc_handle = BaseService.get_service('knowledge_svc')
+        data_svc_handle = BaseService.get_service('data_svc')
         seeded_facts = []
         if self.source:
-            seeded_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.source.id))
+            seeded_facts = await data_svc_handle.get_facts_from_source(self.source.id)
+            seeded_facts = [f for f in seeded_facts if f.score > 0]
         learned_facts = await knowledge_svc_handle.get_facts(criteria=dict(source=self.id))
         learned_facts = [f for f in learned_facts if f.score > 0]
         return seeded_facts + learned_facts
@@ -242,10 +265,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or self.auto_close:
-            self.state = self.states['FINISHED']
-            return True
-        return False
+        return await self.is_finished() or self.auto_close
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
@@ -404,7 +424,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 self.add_link(link)
                 cleanup_count += 1
         if cleanup_count:
+            self.state = self.states['CLEANUP']
+            logging.debug(f'Starting cleanup for operation {self.id}')
             await self._safely_handle_cleanup(cleanup_count)
+            logging.debug(f'Completed cleanup for operation {self.id}')
 
     async def _safely_handle_cleanup(self, cleanup_link_count):
         try:

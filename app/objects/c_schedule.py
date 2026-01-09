@@ -1,6 +1,7 @@
 import uuid
 
 import marshmallow as ma
+from croniter import croniter
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.objects.c_operation import OperationSchema
@@ -9,9 +10,17 @@ from app.utility.base_object import BaseObject
 
 class ScheduleSchema(ma.Schema):
 
+    class Meta:
+        unknown = ma.EXCLUDE
+
     id = ma.fields.String()
-    schedule = ma.fields.Time(required=True)
+    schedule = ma.fields.String(required=True, metadata={"example": "5 4 * * *"})
     task = ma.fields.Nested(OperationSchema())
+
+    @ma.validates('schedule')
+    def validate_schedule(self, value):
+        if not croniter.is_valid(value):
+            raise ma.ValidationError("Invalid cron syntax for schedule field.")
 
     @ma.post_load
     def build_schedule(self, data, **kwargs):
