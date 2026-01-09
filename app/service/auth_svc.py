@@ -39,7 +39,7 @@ def for_all_public_methods(decorator):
 
 
 def check_authorization(func):
-    """Authorization Decorator
+    """Authorization Decorator 
     This requires that the calling class have `self.auth_svc` set to the authentication service.
     """
     async def process(func, *args, **params):

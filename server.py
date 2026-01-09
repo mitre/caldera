@@ -35,9 +35,10 @@ from app.service.rest_svc import RestService
 from app.utility.base_object import AppConfigGlobalVariableIdentifier
 from app.utility.base_world import BaseWorld
 from app.utility.config_generator import ensure_local_config
-
+from app.api.v2.logging_middleware import log_all_requests
 
 MAGMA_PATH = "./plugins/magma"
+
 
 
 def setup_logger(level=logging.DEBUG):
@@ -125,6 +126,7 @@ def init_swagger_documentation(app):
     )
     app.middlewares.append(apispec_request_validation_middleware)
     app.middlewares.append(validation_middleware)
+    app.middlewares.append(log_all_requests)
 
 
 async def enable_cors(request, response):
@@ -251,8 +253,14 @@ if __name__ == "__main__":
             client_max_size=5120**2, middlewares=[pass_option_middleware]
         )
     )
-    app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))
+
+    # app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))    # converted into two liner below
+    v2_app = app.api.v2.make_app(app_svc.get_services())
+    v2_app.middlewares.append(log_all_requests)  # <-- add this line
+    app_svc.register_subapp("/api/v2", v2_app)
+
     init_swagger_documentation(app_svc.application)
+
     if args.uiDevHost:
         if not os.path.exists(f"{MAGMA_PATH}/dist"):
             logging.info("Building VueJS front-end.")

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Alice Abilities</title>
+</head>
+<body>
+  <h2>Alice's Allowed Abilities</h2>
+  <ul id="abilities"></ul>
+
+  <script>
+    fetch("/plugin/testing/rbac/allowed?username=alice")
+      .then(response => response.json())
+      .then(data => {
+        let list = document.getElementById("abilities");
+        if (data.allowed_abilities.length === 0) {
+          list.innerHTML = "<li>No abilities assigned</li>";
+        } else {
+          data.allowed_abilities.forEach(a => {
+            let li = document.createElement("li");
+            li.textContent = a;
+            list.appendChild(li);
+          });
+        }
+      })
+      .catch(err => console.error("Error fetching abilities:", err));
+  </script>
+</body>
+</html>

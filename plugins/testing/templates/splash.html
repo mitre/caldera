@@ -1,0 +1,93 @@
+<style>
+  /* simple dark styles for nicer dropdowns + JSON blocks */
+  .dropdown {
+    min-width: 600px;
+    padding: 40px;
+    border: 1px solid #666;
+    border-radius: 8px;
+    background: #111;
+    color: #eee;
+  }
+  .dropdown option { padding: 4px; }
+  .dropdown:focus { outline: 2px solid #00cc88; }
+
+  .pretty-json {
+    background: #1e1e1e;
+    color: #dcdcdc;
+    padding: 18px;
+    border-radius: 10px;
+    font-family: ui-monospace, Menlo, Consolas, monospace;
+    font-size: 15px;
+    max-height: 900px;
+    overflow: auto;
+    border: 1px solid #2a2a2a;
+  }
+  .key  { color: #9cdcfe; }
+  .val  { color: #ce9178; }
+  .bool { color: #569cd6; }
+  .null { color: gray; }
+
+  [v-cloak]{display:none}
+</style>
+
+<div style="padding:16px">
+  <h2>Testing RBAC</h2>
+  <p>Manage roles, users, and groups below.</p>
+
+  {% raw %}
+  <section id="rbac-app" v-cloak>
+    <p><a href="/plugin/testing/rbac/gui" class="btn">View per‑user allowed abilities</a></p>
+    <!-- ROLES -->
+    <h3>Roles</h3>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+      <input placeholder="role name" v-model="state.formRole.name" />
+      <!-- multi-select abilities pulled from /plugin/testing/abilities -->
+      <select multiple size="6" v-model="state.formRole.allowed_abilities" class="dropdown">
+        <option v-for="opt in state.optionAbilities" :key="opt.id" :value="opt.id">
+          {{ opt.label }}
+        </option>
+      </select>
+      <button @click="saveRole">Save role</button>
+    </div>
+    <div class="pretty-json" v-html="syntaxHighlight(sortObject(state.roles))"></div>
+
+    <!-- USERS -->
+    <h3 style="margin-top:18px">Users</h3>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+      <input placeholder="username" v-model="state.formUser.username" />
+      <select v-model="state.formUser.group" class="dropdown" style="min-width:120px">
+        <option value="red">red</option>
+        <option value="blue">blue</option>
+      </select>
+      <!-- multi-select roles from existing roles -->
+      <select multiple size="10" v-model="state.formUser.roles" class="dropdown" style="min-width:260px">
+        <option v-for="r in state.optionRoles" :key="r" :value="r">{{ r }}</option>
+      </select>
+      <button @click="saveUser">Save user</button>
+    </div>
+    <div class="pretty-json" v-html="syntaxHighlight(sortObject(state.users))"></div>
+
+    <!-- GROUPS -->
+    <h3 style="margin-top:18px">Groups</h3>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+      <input placeholder="group name" v-model="state.formGroup.name" />
+      <!-- members -->
+      <select multiple size="6" v-model="state.formGroup.members" class="dropdown">
+        <option v-for="u in state.optionUsers" :key="u" :value="u">{{ u }}</option>
+      </select>
+      <!-- roles -->
+      <select multiple size="4" v-model="state.formGroup.roles" class="dropdown" style="min-width:260px">
+        <option v-for="r in state.optionRoles" :key="r" :value="r">{{ r }}</option>
+      </select>
+      <button @click="saveGroup">Save group</button>
+    </div>
+    <div class="pretty-json" v-html="syntaxHighlight(sortObject(state.groups))"></div>
+
+    <p style="color:#00d084; margin-top:10px">{{ state.msg }}</p>
+  </section>
+  {% endraw %}
+
+  <!-- load Vue first, then your script -->
+  <script defer src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script defer src="/plugin/testing/static/app.js"></script>
+</div>
