@@ -18,6 +18,7 @@ from aiohttp_apispec import validation_middleware
 from aiohttp import web
 import aiohttp_jinja2
 from pathlib import Path
+from app.api.v2 import make_app
 from app.api.v2.handlers.agent_api import AgentApi
 from app.api.v2.handlers.ability_api import AbilityApi
 from app.api.v2.handlers.objective_api import ObjectiveApi
@@ -333,34 +334,6 @@ def agent_config():
 
 @pytest.fixture
 async def api_v2_client(event_loop, aiohttp_client, contact_svc):
-    def make_app(svcs):
-        warnings.filterwarnings(
-            "ignore",
-            message="Multiple schemas resolved to the name"
-        )
-
-        app = web.Application(
-            middlewares=[
-                authentication_required_middleware_factory(svcs['auth_svc']),
-                json_request_validation_middleware
-            ]
-        )
-        AgentApi(svcs).add_routes(app)
-        AbilityApi(svcs).add_routes(app)
-        OperationApi(svcs).add_routes(app)
-        AdversaryApi(svcs).add_routes(app)
-        ContactApi(svcs).add_routes(app)
-        ObjectiveApi(svcs).add_routes(app)
-        ObfuscatorApi(svcs).add_routes(app)
-        PluginApi(svcs).add_routes(app)
-        FactApi(svcs).add_routes(app)
-        FactSourceApi(svcs).add_routes(app)
-        PlannerApi(svcs).add_routes(app)
-        HealthApi(svcs).add_routes(app)
-        ScheduleApi(svcs).add_routes(app)
-        PayloadApi(svcs).add_routes(app)
-        return app
-
     async def initialize():
         with open(Path(__file__).parents[1] / 'conf' / 'default.yml', 'r') as fle:
             BaseWorld.apply_config('main', yaml.safe_load(fle))
@@ -384,7 +357,7 @@ async def api_v2_client(event_loop, aiohttp_client, contact_svc):
         await auth_svc.apply(app_svc.application, auth_svc.get_config('users'))
         await auth_svc.set_login_handlers(services)
 
-        app_svc.register_subapp('/api/v2', make_app(svcs=services))
+        app_svc.register_subapp('/api/v2', make_app(services))
         aiohttp_apispec.setup_aiohttp_apispec(
             app=app_svc.application,
             title='Caldera',
