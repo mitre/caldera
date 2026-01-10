@@ -8,7 +8,6 @@ import string
 import uuid
 import yaml
 import aiohttp_apispec
-import warnings
 
 from datetime import datetime, timezone
 from base64 import b64encode
@@ -19,20 +18,6 @@ from aiohttp import web
 import aiohttp_jinja2
 from pathlib import Path
 from app.api.v2 import make_app
-from app.api.v2.handlers.agent_api import AgentApi
-from app.api.v2.handlers.ability_api import AbilityApi
-from app.api.v2.handlers.objective_api import ObjectiveApi
-from app.api.v2.handlers.adversary_api import AdversaryApi
-from app.api.v2.handlers.operation_api import OperationApi
-from app.api.v2.handlers.contact_api import ContactApi
-from app.api.v2.handlers.obfuscator_api import ObfuscatorApi
-from app.api.v2.handlers.plugins_api import PluginApi
-from app.api.v2.handlers.fact_source_api import FactSourceApi
-from app.api.v2.handlers.fact_api import FactApi
-from app.api.v2.handlers.planner_api import PlannerApi
-from app.api.v2.handlers.health_api import HealthApi
-from app.api.v2.handlers.schedule_api import ScheduleApi
-from app.api.v2.handlers.payload_api import PayloadApi
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.c_objective import Objective
 from app.objects.c_planner import PlannerSchema
@@ -60,8 +45,6 @@ from app.objects.secondclass.c_rule import Rule
 from app.utility.base_object import BaseObject
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
-from app.api.v2.responses import json_request_validation_middleware
-from app.api.v2.security import authentication_required_middleware_factory
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.rest_api import RestApi
 
