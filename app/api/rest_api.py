@@ -156,8 +156,3 @@ class RestApi(BaseWorld):
             except Exception as e:
                 return web.HTTPNotFound(body=str(e))
         return web.HTTPBadRequest(body='A file needs to be specified for download')
-
-    @staticmethod
-    def _request_errors(request):
-        errors = []
-        return errors
