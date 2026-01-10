@@ -1,16 +1,19 @@
 import os
 from http import HTTPStatus
 from pathlib import Path
+import tempfile
+from unittest import mock
 
 import pytest
 import yaml
-from aiohttp import web
+from aiohttp import web, FormData
 
 from app.api.rest_api import RestApi
 from app.objects.c_agent import Agent
 from app.service.app_svc import AppService
 from app.service.auth_svc import AuthService
 from app.service.data_svc import DataService
+from app.service.file_svc import FileSvc
 from app.service.rest_svc import RestService
 from app.service.interfaces.i_login_handler import LoginHandlerInterface
 from app.utility.base_service import BaseService
@@ -28,6 +31,8 @@ async def aiohttp_client(aiohttp_client):
 
         app_svc = AppService(web.Application())
         _ = DataService()
+        file_svc = FileSvc()
+        file_svc.encrypt_output = False
         _ = RestService()
         auth_svc = AuthService()
         services = app_svc.get_services()
@@ -122,6 +127,25 @@ async def test_command_overwrite_failure(aiohttp_client, authorized_cookies):
     assert resp.status == HTTPStatus.OK
     config_dict = await resp.json()
     assert config_dict.get('requirements', dict()).get('go', dict()).get('command') == 'go version'
+
+
+async def test_upload_file(aiohttp_client):
+    file_data = bytes([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])
+    with tempfile.TemporaryFile(mode='w+b') as tmp_file:
+        tmp_file.write(file_data)
+        tmp_file.flush()
+        tmp_file.seek(0)
+
+        m = mock.mock_open(read_data=file_data)
+        with mock.patch('builtins.open', m):
+            upload_data = FormData()
+            upload_data.add_field('file', tmp_file, filename='testupload')
+            resp = await aiohttp_client.post('/file/upload',
+                                             headers=dict(Directory='testdir'),
+                                             data=upload_data)
+            assert resp.status == HTTPStatus.OK
+            m.assert_called_with('data/payloads/testupload', 'wb')
+            m().write.assert_called_once_with(file_data)
 
 
 async def test_custom_rejecting_login_handler(aiohttp_client):
