@@ -36,7 +36,7 @@ _BANNER_SECTION_2 = "\
 "
 
 
-BANNER_SECTION_3 = "\
+_BANNER_SECTION_3 = "\
 ╚██████╗██║  ██║███████╗██████╔╝███████╗██║  ██║██║  ██║\n\
  ╚═════╝╚═╝  ╚═╝╚══════╝╚═════╝ ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝\n\
 "
@@ -46,17 +46,18 @@ def no_color():
     return int(os.environ.get("NO_COLOR", 0)) == 1
 
 
-if no_color():
-    ASCII_BANNER = _BANNER
-else:
-    ASCII_BANNER = f"{DARK_BLUE}{_BANNER_SECTION_1}{DARK_PURPLE}{_BANNER_SECTION_2}{DARK_RED}{BANNER_SECTION_3}{END}"
+def get_ascii_banner():
+    if no_color():
+        return _BANNER
+    else:
+        return f"{DARK_BLUE}{_BANNER_SECTION_1}{DARK_PURPLE}{_BANNER_SECTION_2}{DARK_RED}{_BANNER_SECTION_3}{END}"
 
 
 def print_rich_banner():
     """Print banner using Python Rich library"""
     if no_color():
-        rich_print(f"{_BANNER_SECTION_1}{_BANNER_SECTION_2}{BANNER_SECTION_3}")
+        rich_print(f"{_BANNER_SECTION_1}{_BANNER_SECTION_2}{_BANNER_SECTION_3}")
     else:
         rich_print(
-            f"[blue]{_BANNER_SECTION_1}[/blue][purple]{_BANNER_SECTION_2}[/purple][red]{BANNER_SECTION_3}[/red]"
+            f"[blue]{_BANNER_SECTION_1}[/blue][purple]{_BANNER_SECTION_2}[/purple][red]{_BANNER_SECTION_3}[/red]"
         )
