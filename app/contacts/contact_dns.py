@@ -82,8 +82,9 @@ class DnsPacket:
     def __str__(self):
         return '\n'.join([
             'Qname: %s' % self.qname,
+            'Is query: %s' % self.is_query(),
             'Is response: %s' % self.is_response(),
-            'Transaction ID: 0x%02x' % self.transaction_id,
+            'Transaction ID: 0x%04x' % self.transaction_id,
             'Flags: 0x%04x' % self.flags,
             'Num questions: %d' % self.num_questions,
             'Num answer resource records: %d' % self.num_answer_rrs,
@@ -92,8 +93,8 @@ class DnsPacket:
             'Record type: %d' % self.record_type.value,
             'Class: %d' % self.dns_class,
             'Standard query: %s' % self.has_standard_query(),
-            'Opcode: 0x%03x' % self.get_opcode(),
-            'Response code: 0x%02x' % self.get_response_code(),
+            'Opcode: 0x%04x' % self.get_opcode(),
+            'Response code: 0x%04x' % self.get_response_code(),
             'Recursion desired: %s' % self.recursion_desired(),
             'Recursion available: %s' % self.recursion_available(),
             'Truncated: %s' % self.truncated(),
@@ -191,9 +192,10 @@ class DnsResponse(DnsPacket):
             + self._get_answer_bytes(byteorder=byteorder)
 
     def __str__(self):
-        output = [super().__str__(), 'Answers: ']
+        output = [super().__str__(), 'Answers:']
         for answer in self.answers:
-            output.append(str(answer))
+            answer_str_tabbed = '\n    '.join(str(answer).split('\n'))
+            output.append('    ' + answer_str_tabbed + '\n')
         return '\n'.join(output)
 
     def _get_answer_bytes(self, byteorder='big'):

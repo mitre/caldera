@@ -8,6 +8,7 @@ from base64 import b64decode
 from dns import message, rdatatype
 
 from app.contacts.contact_dns import Contact as DnsContact
+from app.contacts.contact_dns import DnsPacket, DnsResponse, DnsAnswerObj, DnsRecordType, DnsResponseCodes
 from app.utility.base_world import BaseWorld
 from app.utility.file_decryptor import read as decrypt_read, get_encryptor
 
@@ -122,6 +123,96 @@ def get_file_upload_data_qnames():
                 for i in range(0, num_chunks)]
     return _get_file_upload_data_qnames
 
+
+class TestDnsAuxiliary:
+    def test_generate_packets_from_bytes(self):
+        # Request
+        packet_bytes = bytes([
+            0x02, 0x83, 0x01, 0x00, 0x00, 0x01, 0x00, 0x00, 
+            0x00, 0x00, 0x00, 0x00, 0x06, 0x67, 0x6f, 0x6f, 
+            0x67, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 
+            0x00, 0x01, 0x00, 0x01
+        ])
+
+        query_packet = DnsPacket.generate_packet_from_bytes(packet_bytes)
+        want_str = '''Qname: google.com
+Is query: True
+Is response: False
+Transaction ID: 0x0283
+Flags: 0x0100
+Num questions: 1
+Num answer resource records: 0
+Num auth resource records: 0
+Num additional resource records: 0
+Record type: 1
+Class: 1
+Standard query: True
+Opcode: 0x0000
+Response code: 0x0000
+Recursion desired: True
+Recursion available: False
+Truncated: False'''
+        assert str(query_packet) == want_str
+
+        # Response
+        packet_bytes = bytes([
+            0x02, 0x83, 0x81, 0x80, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00, 0x00, 0x00, 0x06, 0x67, 0x6f, 0x6f, 
+            0x67, 0x6c, 0x65, 0x03, 0x63, 0x6f, 0x6d, 0x00, 0x00, 0x01, 0x00, 0x01, 0xc0, 0x0c, 0x00, 0x01, 
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x69, 0x00, 0x04, 0xac, 0xfd, 0x8b, 0x8a, 0xc0, 0x0c, 0x00, 0x01, 
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x69, 0x00, 0x04, 0xac, 0xfd, 0x8b, 0x71, 0xc0, 0x0c, 0x00, 0x01, 
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x69, 0x00, 0x04, 0xac, 0xfd, 0x8b, 0x64, 0xc0, 0x0c, 0x00, 0x01, 
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x69, 0x00, 0x04, 0xac, 0xfd, 0x8b, 0x65, 0xc0, 0x0c, 0x00, 0x01, 
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x69, 0x00, 0x04, 0xac, 0xfd, 0x8b, 0x66, 0xc0, 0x0c, 0x00, 0x01, 
+            0x00, 0x01, 0x00, 0x00, 0x00, 0x69, 0x00, 0x04, 0xac, 0xfd, 0x8b, 0x8b
+        ])
+        resp_packet = DnsPacket.generate_packet_from_bytes(packet_bytes)
+        want_str = '''Qname: google.com
+Is query: False
+Is response: True
+Transaction ID: 0x0283
+Flags: 0x8180
+Num questions: 1
+Num answer resource records: 1
+Num auth resource records: 0
+Num additional resource records: 0
+Record type: 1
+Class: 1
+Standard query: True
+Opcode: 0x0000
+Response code: 0x0000
+Recursion desired: True
+Recursion available: True
+Truncated: False'''
+        assert str(resp_packet) == want_str
+
+        dummy_answer = DnsAnswerObj(DnsRecordType.A, 0x1, 105, bytes([0xac, 0xfd, 0x8b, 0x8a]))
+        response = DnsResponse.generate_response_for_query(query_packet, DnsResponseCodes.SUCCESS, [dummy_answer], authoritative=False,
+                                                           recursion_available=True, truncated=False)
+        want_str = '''Qname: google.com
+Is query: False
+Is response: True
+Transaction ID: 0x0283
+Flags: 0x8180
+Num questions: 1
+Num answer resource records: 1
+Num auth resource records: 0
+Num additional resource records: 0
+Record type: 1
+Class: 1
+Standard query: True
+Opcode: 0x0000
+Response code: 0x0000
+Recursion desired: True
+Recursion available: True
+Truncated: False
+Answers:
+    Record type: 1
+    Dns class: 1
+    TTL: 105
+    Data: acfd8b8a
+    Data length: 4
+'''
+        assert str(response) == want_str
 
 @pytest.mark.usefixtures(
     'dns_contact_base_world'
