@@ -40,5 +40,5 @@ class TestTcpSessionHandler:
 class TestContact:
 
     def test_tcp_contact(self, event_loop):
-        tcp_c2 = Contact(services=None, log=logger)
+        tcp_c2 = Contact(services=None)
         return tcp_c2
