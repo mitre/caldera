@@ -37,8 +37,15 @@ class TestTcpSessionHandler:
         event_loop.run_until_complete(handler.refresh())
         assert len(handler.sessions) == 3
 
+
 class TestContact:
 
     def test_tcp_contact(self, event_loop):
         tcp_c2 = Contact(services=None)
+        assert tcp_c2 is not None
+        # ensure background tasks are stopped to avoid pending-task warnings
+        if hasattr(tcp_c2, "stop"):
+            event_loop.run_until_complete(tcp_c2.stop())
+        elif hasattr(tcp_c2, "shutdown"):
+            event_loop.run_until_complete(tcp_c2.shutdown())
         return tcp_c2
