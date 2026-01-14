@@ -41,6 +41,6 @@ class TestTcpSessionHandler:
 class TestContact:
 
     def test_tcp_contact(self, event_loop):
-        tcp_c2 = Contact(services=mock.Mock()))
+        tcp_c2 = Contact(services=mock.Mock())
         event_loop.run_until_complete(tcp_c2.start())
         assert tcp_c2 is not None
