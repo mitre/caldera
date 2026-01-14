@@ -16,7 +16,9 @@ class Contact(BaseWorld):
         self.description = 'Accept beacons through a raw TCP socket'
         self.log = self.create_logger('contact_tcp')
         self.contact_svc = services.get('contact_svc')
-        self.tcp_handler = TcpSessionHandler(services, self.log)
+        # Ensure services is always a mapping to avoid AttributeError when tests pass None
+        self.services = services or {}
+        self.tcp_handler = TcpSessionHandler(self.services, self.log)
 
     async def start(self):
         loop = asyncio.get_event_loop()
