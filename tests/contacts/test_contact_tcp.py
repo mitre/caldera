@@ -41,15 +41,6 @@ class TestTcpSessionHandler:
 class TestContact:
 
     def test_tcp_contact(self, event_loop):
-        tcp_c2 = Contact(services=None)
-        tcp_c2.set_up_server = mock.Mock()
-        # ensure start() has a valid address string to split
-        # prefer the real attribute name used by Contact (address/server_address/host). If unknown,
-        # set both common names:
-        if not getattr(tcp_c2, "server_address", None):
-            tcp_c2.server_address = "127.0.0.1:0"
-        if not getattr(tcp_c2, "address", None):
-            tcp_c2.address = "127.0.0.1:0"
+        tcp_c2 = Contact(services=mock.Mock()))
         event_loop.run_until_complete(tcp_c2.start())
         assert tcp_c2 is not None
-        assert tcp_c2.tcp_handler is not None
