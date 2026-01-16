@@ -28,6 +28,9 @@ beacon_profile = {'architecture': 'amd64',
                   }
 
 
+DUMMY_EXFIL_DIR = '/tmp/testexfildir'
+
+
 @pytest.fixture(scope='session')
 def base_world():
     BaseWorld.clear_config()
@@ -39,7 +42,9 @@ def base_world():
                                                 'plugins': ['sandcat', 'stockpile'],
                                                 'crypt_salt': 'BLAH',
                                                 'api_key': 'ADMIN123',
-                                                'encryption_key': 'ADMIN123'})
+                                                'encryption_key': 'ADMIN123',
+                                                'encrypt_files': False,
+                                                'exfil_dir': DUMMY_EXFIL_DIR})
     BaseWorld.apply_config(name='agents', config={'sleep_max': 5,
                                                   'sleep_min': 5,
                                                   'untrusted_timer': 90,
@@ -50,6 +55,8 @@ def base_world():
                                                   ]})
     yield BaseWorld
     BaseWorld.clear_config()
+    if os.path.exists(DUMMY_EXFIL_DIR):
+        shutil.rmtree(DUMMY_EXFIL_DIR)
 
 
 @pytest.fixture
@@ -72,6 +79,18 @@ async def ftp_c2_handler_server(ftp_c2):
 @pytest.fixture
 def ftp_dummy_agent():
     return Agent(paw=TestFtpServer.dummy_beacon_data.get('paw'), sleep_min=5, sleep_max=5, watchdog=0, executors=['sh', 'proc'])
+
+
+@pytest.fixture
+async def ftp_client(ftp_c2_handler_server, ftp_dummy_agent):
+    client = aioftp.Client()
+    await client.connect(ftp_c2_handler_server.host, port=int(ftp_c2_handler_server.port))
+    await client.login(user=ftp_c2_handler_server.login, password=ftp_c2_handler_server.pword)
+    await client.make_directory(ftp_dummy_agent.paw)
+    await client.change_directory(ftp_dummy_agent.paw)
+    yield client
+
+    client.quit()
 
 
 class TestFtpServer:
@@ -154,14 +173,13 @@ class TestFtpServer:
         resp_dict = json.loads(response)
         assert want_response_dict == resp_dict
 
-    async def test_beacon(self, ftp_c2_handler_server, ftp_dummy_agent):
+    async def test_beacon(self, ftp_c2_handler_server, ftp_dummy_agent, ftp_client):
         beacon_file_data = bytes(json.dumps(self.dummy_beacon_data).encode('ascii'))
 
         ftp_dummy_agent.pending_contact = 'newcontact'
         with mock.patch.object(ContactService, 'handle_heartbeat', return_value=(ftp_dummy_agent, [])):
-            async with aioftp.Client.context(ftp_c2_handler_server.host, port=ftp_c2_handler_server.port, user=ftp_c2_handler_server.login, password=ftp_c2_handler_server.pword, ) as client:
-                async with client.upload_stream('Alive.txt') as upload_stream:
-                    await upload_stream.write(beacon_file_data)
+            async with ftp_client.upload_stream('Alive.txt') as upload_stream:
+                await upload_stream.write(beacon_file_data)
         
         resp_path = os.path.join(ftp_c2_handler_server.ftp_server_dir, 'testpaw', 'Response.txt')
         assert os.path.exists(resp_path)  
@@ -177,17 +195,28 @@ class TestFtpServer:
         resp_dict = json.loads(response)
         assert want_response_dict == resp_dict
 
-    async def test_download_payload(self, ftp_c2_handler_server, ftp_dummy_agent):
+    async def test_download_payload(self, ftp_c2_handler_server, ftp_dummy_agent, ftp_client):
         payload_req = dict(file='testdownload', platform='linux', paw='testpaw')
         payload_req_data = bytes(json.dumps(payload_req).encode('ascii'))
         dummy_payload_data = bytes([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])
 
         with mock.patch.object(FileSvc, 'get_file', return_value=('testplugin/payloads/testdownload', dummy_payload_data, 'testdownload')) as mock_get_file:
-            async with aioftp.Client.context(ftp_c2_handler_server.host, port=ftp_c2_handler_server.port, user=ftp_c2_handler_server.login, password=ftp_c2_handler_server.pword, ) as client:
-                async with client.upload_stream('Payload.txt') as upload_stream:
-                    await upload_stream.write(payload_req_data)
+            async with ftp_client.upload_stream('Payload.txt') as upload_stream:
+                await upload_stream.write(payload_req_data)
         
         resp_path = os.path.join(ftp_c2_handler_server.ftp_server_dir, 'testpaw', 'testdownload')
         assert os.path.exists(resp_path)  
         with open(resp_path, 'rb') as resp_file:
             assert dummy_payload_data == resp_file.read()
+
+    async def test_upload_file(self, ftp_c2_handler_server, ftp_dummy_agent, ftp_client):
+        dummy_file_data = bytes([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])
+
+        async with ftp_client.upload_stream('testupload') as upload_stream:
+            await upload_stream.write(dummy_file_data)
+        
+        assert os.path.exists(DUMMY_EXFIL_DIR)
+        upload_path = os.path.join(DUMMY_EXFIL_DIR, 'testpaw', 'testupload')
+        assert os.path.exists(upload_path)  
+        with open(upload_path, 'rb') as upload_file:
+            assert dummy_file_data == upload_file.read()
