@@ -40,7 +40,7 @@ class TestTcpSessionHandler:
 
 class TestContact:
 
-    def test_tcp_contact(self, event_loop):
+    def test_tcp_contact(self, event_loop, app_svc):
         self.services = app_svc.get_services()
         tcp_c2 = Contact(services=self.services)
         event_loop.run_until_complete(tcp_c2.start())
