@@ -13,6 +13,7 @@ from app.contacts.contact_dns import Contact as DnsContact
 from app.contacts.contact_dns import DnsPacket, DnsResponse, DnsAnswerObj, DnsRecordType, DnsResponseCodes
 from app.objects.c_agent import Agent
 from app.service.contact_svc import ContactService
+from app.service.file_svc import FileSvc
 from app.utility.base_world import BaseWorld
 from app.utility.file_decryptor import read as decrypt_read, get_encryptor
 
@@ -109,6 +110,22 @@ async def get_instruction_response(random_data, get_dns_response):
 
 
 @pytest.fixture
+async def get_payload_filename(random_data, get_dns_response):
+    async def _get_payload_filename(message_id):
+        qname = '%s.pf.0.1.%s.mycaldera.caldera' % (message_id, random_data)
+        return await get_dns_response(qname, 'txt')
+    return _get_payload_filename
+
+
+@pytest.fixture
+async def get_payload_data(random_data, get_dns_response):
+    async def _get_payload_data(message_id):
+        qname = '%s.pd.0.1.%s.mycaldera.caldera' % (message_id, random_data)
+        return await get_dns_response(qname, 'txt')
+    return _get_payload_data
+
+
+@pytest.fixture
 def get_hex_chunks():
     def _get_hex_chunks(data):
         hex_str = data.hex()
@@ -134,6 +151,15 @@ def get_file_upload_data_qnames():
         return ['%s.ud.%d.%d.%s.mycaldera.caldera' % (message_id, i, num_chunks, data_hex_chunks[i])
                 for i in range(0, num_chunks)]
     return _get_file_upload_data_qnames
+
+
+@pytest.fixture
+def get_payload_request_qnames():
+    def _get_payload_request_qnames(message_id, data_hex_chunks):
+        num_chunks = len(data_hex_chunks)
+        return ['%s.pr.%d.%d.%s.mycaldera.caldera' % (message_id, i, num_chunks, data_hex_chunks[i])
+                for i in range(0, num_chunks)]
+    return _get_payload_request_qnames
 
 
 @pytest.fixture
@@ -270,7 +296,7 @@ class TestContactDns:
 
     async def test_non_c2_domain_message(self, get_dns_response):
         response_msg = await get_dns_response('notthec2domain', 'a')
-        assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
+        self._assert_nxdomain_response(response_msg)
 
     async def test_partial_beacon_message(self, get_dns_response, get_beacon_profile_qnames, message_id):
         first_qname = get_beacon_profile_qnames(message_id)[0]
@@ -312,7 +338,7 @@ class TestContactDns:
 
         # Last character should be , if returning complete instructions
         assert txt_response[-1] == ','
-        beacon_resp = json.loads(b64decode(txt_response).decode('utf-8'))
+        beacon_resp = json.loads(b64decode(txt_response[:-1]).decode('utf-8'))
         assert 'paw' in beacon_resp
         want = dict(paw='testpaw',
                     sleep=5,
@@ -320,15 +346,111 @@ class TestContactDns:
                     instructions='[]')
         assert want == beacon_resp
 
+    async def test_payload_download(self, get_dns_response, get_hex_chunks, get_payload_request_qnames, get_payload_filename, 
+                                    get_payload_data, message_id):
+        dummy_payload_data = bytes([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])
+        with mock.patch.object(FileSvc, 'get_file', return_value=('testplugin/payloads/testdownload', dummy_payload_data, 'testdownload')):
+            # Request payload
+            filename = 'testdownload'
+            req_metadata = dict(file=filename)
+            metadata_hex_chunks = get_hex_chunks(json.dumps(req_metadata).encode('utf-8'))
+            metadata_qnames = get_payload_request_qnames(message_id, metadata_hex_chunks)
+            final_index = len(metadata_qnames) - 1
+
+            for index, qname in enumerate(metadata_qnames):
+                response_msg = await get_dns_response(qname, 'a')
+                assert response_msg and response_msg.rcode() == self._RCODE_SUCCESS
+
+                # Check final octet
+                if index == final_index:
+                    self._assert_odd_ipv4(response_msg)
+                else:
+                    self._assert_even_ipv4(response_msg)
+
+        # Fetch payload name
+        response_msg = await get_payload_filename(message_id)
+        assert response_msg and response_msg.rcode() == self._RCODE_SUCCESS
+
+        # Make sure we only get 1 TXT record
+        assert len(response_msg.answer) == 1
+        assert len(response_msg.answer[0]) == 1
+        answer = response_msg.answer[0][0]
+        assert answer.rdtype == rdatatype.RdataType.TXT
+        assert len(answer.strings) == 1
+        txt_response = answer.strings[0].decode('utf-8')
+
+        # Last character should be , if returning complete instructions
+        assert txt_response[-1] == ','
+        assert filename == b64decode(txt_response[:-1]).decode('utf-8')
+
+        # Fetch payload data
+        response_msg = await get_payload_data(message_id)
+        assert response_msg and response_msg.rcode() == self._RCODE_SUCCESS
+
+        # Make sure we only get 1 TXT record
+        assert len(response_msg.answer) == 1
+        assert len(response_msg.answer[0]) == 1
+        answer = response_msg.answer[0][0]
+        assert answer.rdtype == rdatatype.RdataType.TXT
+        assert len(answer.strings) == 1
+        txt_response = answer.strings[0].decode('utf-8')
+
+        # Last character should be , if returning complete instructions
+        assert txt_response[-1] == ','
+        assert dummy_payload_data == b64decode(txt_response[:-1])
+
+    async def test_bad_payload_download(self, get_dns_response, get_hex_chunks, get_payload_request_qnames, message_id):
+        # Test file service exceptions
+        filename = 'testdownload'
+        req_metadata = dict(file=filename)
+        metadata_hex_chunks = get_hex_chunks(json.dumps(req_metadata).encode('utf-8'))
+        metadata_qnames = get_payload_request_qnames(message_id, metadata_hex_chunks)
+        final_index = len(metadata_qnames) - 1
+
+        with mock.patch.object(FileSvc, 'get_file', side_effect=FileNotFoundError('Dummy error')):
+            for index, qname in enumerate(metadata_qnames):
+                response_msg = await get_dns_response(qname, 'a')
+
+                # Check final octet
+                if index == final_index:
+                    self._assert_nxdomain_response(response_msg)
+                else:
+                    self._assert_even_ipv4(response_msg)
+
+        with mock.patch.object(FileSvc, 'get_file', side_effect=Exception('Dummy error')):
+            for index, qname in enumerate(metadata_qnames):
+                response_msg = await get_dns_response(qname, 'a')
+
+                # Check final octet
+                if index == final_index:
+                    self._assert_nxdomain_response(response_msg)
+                else:
+                    self._assert_even_ipv4(response_msg)
+
+        # Test bad requests
+        req_metadata = [dict(), dict(a='irrelevant')]
+        for metadata in req_metadata:
+            metadata_hex_chunks = get_hex_chunks(json.dumps(metadata).encode('utf-8'))
+            metadata_qnames = get_payload_request_qnames(message_id, metadata_hex_chunks)
+            final_index = len(metadata_qnames) - 1
+            for index, qname in enumerate(metadata_qnames):
+                response_msg = await get_dns_response(qname, 'a')
+
+                # Check final octet
+                if index == final_index:
+                    self._assert_nxdomain_response(response_msg)
+                else:
+                    self._assert_even_ipv4(response_msg)
+
     async def test_unsupported_client_request(self, get_dns_response, message_id, random_data):
         invalid_qname = '%s.invalid.0.1.%s.mycaldera.caldera' % (message_id, random_data)
         response_msg = await get_dns_response(invalid_qname, 'a')
-        assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
+        self._assert_nxdomain_response(response_msg)
 
     async def test_invalid_instruction_request(self, get_dns_response, message_id, random_data):
         invalid_qname = '%s.id.0.1.%s.mycaldera.caldera' % (message_id, random_data)
         response_msg = await get_dns_response(invalid_qname, 'a')  # Should be TXT request
-        assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
+        self._assert_nxdomain_response(response_msg)
 
     async def test_file_upload(self, get_dns_response, message_id, get_hex_chunks, get_file_upload_metadata_qnames,
                                get_file_upload_data_qnames, dns_c2):
