@@ -204,22 +204,6 @@ class DnsResponse(DnsPacket):
             answer_bytes += answer.get_bytes(byteorder=byteorder)
         return answer_bytes
 
-    def _generate_pointer_and_qname_bytes(self, answer_qname, byteorder='big'):
-        lowered_answer_qname = answer_qname.lower()
-        lowered_requested_qname = self.qname.lower()
-        if lowered_answer_qname == lowered_requested_qname:
-            return self.standard_pointer.to_bytes(2, byteorder=byteorder)
-        elif lowered_answer_qname.endswith(lowered_requested_qname):
-            prefix = lowered_answer_qname[:-len(lowered_requested_qname)]
-            prefix_labels = [label for label in prefix.split('.') if label]
-            return self._get_qname_bytes(prefix_labels, byteorder=byteorder) \
-                + self.standard_pointer.to_bytes(2, byteorder=byteorder)
-        elif lowered_requested_qname.endswith(lowered_answer_qname):
-            offset = len(lowered_requested_qname) - len(lowered_answer_qname)
-            return (self.standard_pointer + offset).to_bytes(2, byteorder=byteorder)
-        else:
-            return self._get_qname_bytes(answer_qname.split('.'), byteorder=byteorder)
-
     @staticmethod
     def generate_response_for_query(dns_query, r_code, answers, authoritative=True, recursion_available=False,
                                     truncated=False):
