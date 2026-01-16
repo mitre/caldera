@@ -3,25 +3,33 @@ import json
 import os
 import pytest
 import random
+import shutil
 
 from base64 import b64decode
 from dns import message, rdatatype
+from unittest import mock
 
 from app.contacts.contact_dns import Contact as DnsContact
 from app.contacts.contact_dns import DnsPacket, DnsResponse, DnsAnswerObj, DnsRecordType, DnsResponseCodes
+from app.objects.c_agent import Agent
+from app.service.contact_svc import ContactService
 from app.utility.base_world import BaseWorld
 from app.utility.file_decryptor import read as decrypt_read, get_encryptor
 
 
+DNS_EXFIL_DIR = '/tmp/testdnsexfil'
+
+
 @pytest.fixture(scope='session')
 def dns_contact_base_world():
+    BaseWorld.clear_config()
     BaseWorld.apply_config(name='main', config={'app.contact.dns.domain': 'mycaldera.caldera',
-                                                'app.contact.dns.socket': '0.0.0.0:53',
+                                                'app.contact.dns.socket': '127.0.0.1:65053',
                                                 'plugins': ['sandcat', 'stockpile'],
                                                 'crypt_salt': 'BLAH',
                                                 'api_key': 'ADMIN123',
                                                 'encryption_key': 'ADMIN123',
-                                                'exfil_dir': '/tmp'})
+                                                'exfil_dir': DNS_EXFIL_DIR})
     BaseWorld.apply_config(name='agents', config={'sleep_max': 5,
                                                   'sleep_min': 5,
                                                   'untrusted_timer': 90,
@@ -30,10 +38,14 @@ def dns_contact_base_world():
                                                   'bootstrap_abilities': [
                                                       '43b3754c-def4-4699-a673-1d85648fda6a'
                                                   ]})
+    yield BaseWorld
+    BaseWorld.clear_config()
+    if os.path.exists(DNS_EXFIL_DIR):
+        shutil.rmtree(DNS_EXFIL_DIR)
 
 
 @pytest.fixture
-async def dns_c2(app_svc, contact_svc, data_svc, file_svc, obfuscator):
+async def dns_c2(app_svc, contact_svc, data_svc, file_svc, obfuscator, dns_contact_base_world):
     services = app_svc.get_services()
     dns_c2 = DnsContact(services)
     return dns_c2
@@ -122,6 +134,11 @@ def get_file_upload_data_qnames():
         return ['%s.ud.%d.%d.%s.mycaldera.caldera' % (message_id, i, num_chunks, data_hex_chunks[i])
                 for i in range(0, num_chunks)]
     return _get_file_upload_data_qnames
+
+
+@pytest.fixture
+def dns_dummy_agent():
+    return Agent(paw='testpaw', sleep_min=5, sleep_max=5, watchdog=0, executors=['sh', 'proc'])
 
 
 class TestDnsAuxiliary:
@@ -215,9 +232,6 @@ Answers:
         assert str(response) == want_str
 
 
-@pytest.mark.usefixtures(
-    'dns_contact_base_world'
-)
 class TestContactDns:
     _RCODE_NXDOMAIN = 3
     _RCODE_SUCCESS = 0
@@ -230,6 +244,11 @@ class TestContactDns:
         assert len(response_msg.answer) == 1
         assert len(response_msg.answer[0]) == 1
         assert response_msg.answer[0][0].rdtype == rdatatype.RdataType.A
+
+    @staticmethod
+    def _assert_nxdomain_response(response_msg):
+        assert response_msg and response_msg.rcode() == TestContactDns._RCODE_NXDOMAIN
+        assert len(response_msg.answer) == 0
 
     @staticmethod
     def _assert_even_ipv4(response_msg):
@@ -273,13 +292,14 @@ class TestContactDns:
                 self._assert_even_ipv4(response_msg)
 
     async def test_instruction_download(self, get_dns_response, get_beacon_profile_qnames, message_id,
-                                        get_instruction_response):
-        # Send beacon before asking for instructions
-        for qname in get_beacon_profile_qnames(message_id):
-            await get_dns_response(qname, 'a')
+                                        get_instruction_response, dns_dummy_agent):
+        with mock.patch.object(ContactService, 'handle_heartbeat', return_value=(dns_dummy_agent, [])):
+            # Send beacon before asking for instructions
+            for qname in get_beacon_profile_qnames(message_id):
+                await get_dns_response(qname, 'a')
 
-        # Get instructions
-        response_msg = await get_instruction_response(message_id)
+            # Get instructions
+            response_msg = await get_instruction_response(message_id)
         assert response_msg and response_msg.rcode() == self._RCODE_SUCCESS
 
         # Make sure we only get 1 TXT record
@@ -294,7 +314,7 @@ class TestContactDns:
         assert txt_response[-1] == ','
         beacon_resp = json.loads(b64decode(txt_response).decode('utf-8'))
         assert 'paw' in beacon_resp
-        want = dict(paw=beacon_resp.get('paw'),
+        want = dict(paw='testpaw',
                     sleep=5,
                     watchdog=0,
                     instructions='[]')
@@ -311,13 +331,14 @@ class TestContactDns:
         assert response_msg and response_msg.rcode() == self._RCODE_NXDOMAIN
 
     async def test_file_upload(self, get_dns_response, message_id, get_hex_chunks, get_file_upload_metadata_qnames,
-                               get_file_upload_data_qnames):
+                               get_file_upload_data_qnames, dns_c2):
+        dns_c2.set_config('main', 'exfil_dir', DNS_EXFIL_DIR)
         paw = 'asdasd'
         filename = 'testupload.txt'
         hostname = 'testhost'
         directory = '%s-%s' % (hostname, paw)
         upload_metadata = dict(paw=paw, file=filename, directory=directory)
-        target_dir = '/tmp/%s' % directory
+        target_dir = f'{DNS_EXFIL_DIR}/{directory}'
         target_path = '%s/%s-%s' % (target_dir, filename, message_id)
         file_data = b'thiswilltakemultiplednsrequests' * 100
         metadata_hex_chunks = get_hex_chunks(json.dumps(upload_metadata).encode('utf-8'))
@@ -360,10 +381,33 @@ class TestContactDns:
         assert (not decrypt_error), 'Exception occurred when decrypting uploaded file: %s' % decrypt_error
         assert file_data == decrypted_upload
 
+    async def test_bad_file_upload(self, get_dns_response, message_id, get_hex_chunks, get_file_upload_metadata_qnames,
+                                   get_file_upload_data_qnames):
+        # Test missing info
+        upload_metadata = [dict(paw='test'), dict()]
+        for metadata in upload_metadata:
+            metadata_hex_chunks = get_hex_chunks(json.dumps(metadata).encode('utf-8'))
+            metadata_qnames = get_file_upload_metadata_qnames(message_id, metadata_hex_chunks)
+            final_index = len(metadata_qnames) - 1
+            for index, qname in enumerate(metadata_qnames):
+                response_msg = await get_dns_response(qname, 'a')
+
+                if index == final_index:
+                    self._assert_nxdomain_response(response_msg)
+                else:
+                    self._assert_successful_ivp4(response_msg)
+                    self._assert_even_ipv4(response_msg)
+
+    async def test_ipv6_placeholder(self, dns_c2, get_dns_response):
+        response_msg = await get_dns_response('test.mycaldera.caldera', rdatatype.RdataType.AAAA)
+        assert response_msg and response_msg.rcode() == TestContactDns._RCODE_SUCCESS
+
+        # Make sure we got back an IPv6 address
+        assert len(response_msg.answer) == 1
+        assert len(response_msg.answer[0]) == 1
+        assert response_msg.answer[0][0].rdtype == rdatatype.RdataType.AAAA
+
     @staticmethod
     def _get_decrypted_upload(filepath):
         encryptor = get_encryptor('BLAH', 'ADMIN123')
         return decrypt_read(filepath, encryptor)
-
-    def test_unexpected_file_upload(self):
-        assert True
