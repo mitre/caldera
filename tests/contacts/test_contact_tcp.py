@@ -2,6 +2,7 @@ import logging
 import socket
 from unittest import mock
 
+from app.utility.base_world import BaseWorld
 from app.contacts.contact_tcp import TcpSessionHandler
 from app.contacts.contact_tcp import Contact
 
@@ -41,6 +42,7 @@ class TestTcpSessionHandler:
 class TestContact:
 
     def test_tcp_contact(self, event_loop, app_svc):
+        BaseWorld.set_config('main', 'app.contact.tcp', '127.0.0.1:57012')
         self.services = app_svc.get_services()
         tcp_c2 = Contact(services=self.services)
         event_loop.run_until_complete(tcp_c2.start())

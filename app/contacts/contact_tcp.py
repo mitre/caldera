@@ -14,8 +14,7 @@ class Contact(BaseWorld):
     def __init__(self, services):
         self.name = 'tcp'
         self.description = 'Accept beacons through a raw TCP socket'
-        # Ensure services is always a mapping to avoid AttributeError when tests pass None
-        self.services = services or {}
+        self.services = services
         self.log = self.create_logger('contact_tcp')
         self.contact_svc = self.services.get('contact_svc')
         self.tcp_handler = TcpSessionHandler(self.services, self.log)
