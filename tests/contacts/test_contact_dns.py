@@ -346,7 +346,7 @@ class TestContactDns:
                     instructions='[]')
         assert want == beacon_resp
 
-    async def test_payload_download(self, get_dns_response, get_hex_chunks, get_payload_request_qnames, get_payload_filename, 
+    async def test_payload_download(self, get_dns_response, get_hex_chunks, get_payload_request_qnames, get_payload_filename,
                                     get_payload_data, message_id):
         dummy_payload_data = bytes([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])
         with mock.patch.object(FileSvc, 'get_file', return_value=('testplugin/payloads/testdownload', dummy_payload_data, 'testdownload')):
