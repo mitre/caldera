@@ -507,6 +507,8 @@ class Handler(asyncio.DatagramProtocol):
                     # Notify agent that payload is ready
                     self.log.debug('Stored payload %s for request ID %s' % (display_name, request_context.request_id))
                     return self._generate_server_ready_ipv4_response(request_context.dns_request)
+                else:
+                    self.log.warning('Failed to fetch file: %s' % filename)
             else:
                 self.log.warning('Client did not include filename in payload request ID %s' % request_context.request_id)
         else:
