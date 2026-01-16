@@ -2,7 +2,9 @@ import logging
 import socket
 from unittest import mock
 
+from app.utility.base_world import BaseWorld
 from app.contacts.contact_tcp import TcpSessionHandler
+from app.contacts.contact_tcp import Contact
 
 logger = logging.getLogger(__name__)
 
@@ -13,7 +15,7 @@ class TestTcpSessionHandler:
         handler = TcpSessionHandler(services=None, log=logger)
 
         session_with_socket_error = mock.Mock()
-        session_with_socket_error.writer.write.side_effect = socket.error()
+        session_with_socket_error.write_bytes.side_effect = socket.error()
 
         handler.sessions = [
             session_with_socket_error,
@@ -35,3 +37,13 @@ class TestTcpSessionHandler:
 
         event_loop.run_until_complete(handler.refresh())
         assert len(handler.sessions) == 3
+
+
+class TestContact:
+
+    def test_tcp_contact(self, event_loop, app_svc):
+        BaseWorld.set_config('main', 'app.contact.tcp', '127.0.0.1:57012')
+        self.services = app_svc.get_services()
+        tcp_c2 = Contact(services=self.services)
+        event_loop.run_until_complete(tcp_c2.start())
+        assert tcp_c2 is not None
