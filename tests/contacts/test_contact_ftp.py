@@ -142,37 +142,6 @@ class TestFtpServer:
         assert ftp_c2_handler_server.ftp_server_dir == os.path.join(os.getcwd(), 'test_dummy_ftp_dir')
         assert os.path.exists(ftp_c2_handler_server.ftp_server_dir)
 
-    async def test_beacon(self, ftp_c2_handler_server, ftp_dummy_agent):
-        beacon_file_data = bytes(json.dumps(self.dummy_beacon_data).encode('ascii'))
-
-        ftp_dummy_agent.pending_contact = 'newcontact'
-        with mock.patch.object(ContactService, 'handle_heartbeat', return_value=(ftp_dummy_agent, [])):
-            async with aioftp.Client.context(ftp_c2_handler_server.host, port=ftp_c2_handler_server.port, user=ftp_c2_handler_server.login, password=ftp_c2_handler_server.pword, ) as client:
-                async with client.upload_stream('Alive.txt') as upload_stream:
-                    await upload_stream.write(beacon_file_data)
-        
-        resp_path = os.path.join(ftp_c2_handler_server.ftp_server_dir, 'testpaw', 'Response.txt')
-        print(beacon_file_data)
-        print('looking for: ' + resp_path + ' in ' + ftp_c2_handler_server.ftp_server_dir)
-        for root, dirs, files in os.walk(ftp_c2_handler_server.ftp_server_dir):
-            print(root)
-            for file in files:
-                print(os.path.join(root, file))
-            for dir in dirs:
-                print(os.path.join(root, dir))
-        assert os.path.exists(resp_path)  
-        want_response_dict = dict(
-            paw='testpaw',
-            sleep=5,
-            watchdog=0,
-            instructions='[]',
-            new_contact='newcontact',
-        )
-        with open(resp_path, 'rb') as resp_file:
-            response = resp_file.read()
-        resp_dict = json.loads(response)
-        assert want_response_dict == resp_dict
-
     async def test_beacon(self, ftp_c2_handler_server, ftp_dummy_agent, ftp_client):
         beacon_file_data = bytes(json.dumps(self.dummy_beacon_data).encode('ascii'))
 
@@ -180,9 +149,9 @@ class TestFtpServer:
         with mock.patch.object(ContactService, 'handle_heartbeat', return_value=(ftp_dummy_agent, [])):
             async with ftp_client.upload_stream('Alive.txt') as upload_stream:
                 await upload_stream.write(beacon_file_data)
-        
+
         resp_path = os.path.join(ftp_c2_handler_server.ftp_server_dir, 'testpaw', 'Response.txt')
-        assert os.path.exists(resp_path)  
+        assert os.path.exists(resp_path)
         want_response_dict = dict(
             paw='testpaw',
             sleep=5,
@@ -200,12 +169,12 @@ class TestFtpServer:
         payload_req_data = bytes(json.dumps(payload_req).encode('ascii'))
         dummy_payload_data = bytes([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])
 
-        with mock.patch.object(FileSvc, 'get_file', return_value=('testplugin/payloads/testdownload', dummy_payload_data, 'testdownload')) as mock_get_file:
+        with mock.patch.object(FileSvc, 'get_file', return_value=('testplugin/payloads/testdownload', dummy_payload_data, 'testdownload')):
             async with ftp_client.upload_stream('Payload.txt') as upload_stream:
                 await upload_stream.write(payload_req_data)
-        
+
         resp_path = os.path.join(ftp_c2_handler_server.ftp_server_dir, 'testpaw', 'testdownload')
-        assert os.path.exists(resp_path)  
+        assert os.path.exists(resp_path)
         with open(resp_path, 'rb') as resp_file:
             assert dummy_payload_data == resp_file.read()
 
@@ -214,9 +183,9 @@ class TestFtpServer:
 
         async with ftp_client.upload_stream('testupload') as upload_stream:
             await upload_stream.write(dummy_file_data)
-        
+
         assert os.path.exists(DUMMY_EXFIL_DIR)
         upload_path = os.path.join(DUMMY_EXFIL_DIR, 'testpaw', 'testupload')
-        assert os.path.exists(upload_path)  
+        assert os.path.exists(upload_path)
         with open(upload_path, 'rb') as upload_file:
             assert dummy_file_data == upload_file.read()
