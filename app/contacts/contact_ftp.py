@@ -179,9 +179,6 @@ class FtpHandler(aioftp.Server):
             file_path, contents, display_name = await self.get_payload_file(profile)
             if file_path is not None:
                 self.write_file(profile.get('paw'), profile.get('file'), contents)
-        elif re.match(r'^Results\.txt$', split_file_path[-1]):
-            profile = json.loads(file_bytes.decode())
-            await self.contact_caldera_server(profile)
         else:
             paw = split_file_path[-2]
             filename = split_file_path[-1]
