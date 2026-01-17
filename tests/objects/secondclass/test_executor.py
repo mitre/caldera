@@ -1,6 +1,5 @@
 import pytest
 
-from app.objects.c_agent import Agent
 from app.objects.secondclass.c_executor import Executor, get_variations
 from app.objects.secondclass.c_variation import Variation
 from app.utility.base_world import BaseWorld

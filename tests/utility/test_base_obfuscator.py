@@ -1,5 +1,3 @@
-import pytest
-
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
 from app.utility.base_obfuscator import BaseObfuscator
@@ -9,7 +7,7 @@ class MockObfuscator(BaseObfuscator):
     def __init__(self, agent):
         self.supported_platforms = dict(linux=['sh'])
         super().__init__(agent)
-    
+
     def sh(self, link, arg):
         return f'obfuscated sh command {arg}'
 
