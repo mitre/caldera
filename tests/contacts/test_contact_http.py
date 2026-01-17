@@ -5,6 +5,7 @@ from http import HTTPStatus
 from unittest import mock
 
 from app.objects.c_agent import Agent
+from app.objects.secondclass.c_instruction import Instruction
 from app.contacts.contact_http import Contact as HTTPContact
 from app.service.contact_svc import ContactService
 from app.utility.base_world import BaseWorld
@@ -82,13 +83,34 @@ class TestContactHTTP:
         dummy_agent = Agent(paw=dummy_beacon_data.get('paw'), sleep_min=5, sleep_max=5, watchdog=0, executors=['sh', 'proc'])
         dummy_agent.set_pending_executor_removal('sh')
         dummy_agent.pending_contact = 'newcontact'
+        dummy_instruction = Instruction(
+            id='123',
+            sleep=5,
+            command='whoami',
+            executor='sh',
+            timeout=60,
+            payloads=[],
+            uploads=[],
+            deadman=False,
+            delete_payload=True
+        )
         mock_request = _MockRequest(encoded)
-        with mock.patch.object(ContactService, 'handle_heartbeat', return_value=(dummy_agent, [])):
+        with mock.patch.object(ContactService, 'handle_heartbeat', return_value=(dummy_agent, [dummy_instruction])):
             want_response_dict = dict(
                 paw='testpaw',
                 sleep=5,
                 watchdog=0,
-                instructions='[]',
+                instructions=[dict(
+                    id='123',
+                    sleep=5,
+                    command='whoami',
+                    executor='sh',
+                    timeout=60,
+                    payloads=[],
+                    uploads=[],
+                    deadman=False,
+                    delete_payload=True
+                )],
                 new_contact='newcontact',
                 executor_change=dict(
                     action='remove',
@@ -98,4 +120,6 @@ class TestContactHTTP:
             resp = await http_c2._beacon(mock_request)
             assert resp.status == HTTPStatus.OK
             decoded = base64.b64decode(resp.text)
-            assert json.loads(decoded) == want_response_dict
+            resp_dict = json.loads(decoded)
+            resp_dict['instructions'] = [json.loads(a) for a in json.loads(resp_dict['instructions'])]
+            assert resp_dict == want_response_dict
