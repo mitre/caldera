@@ -42,6 +42,18 @@ class TestOperationsApi:
         resp = await api_v2_client.get('/api/v2/operations/999', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
+    async def test_get_operations_summary(self, api_v2_client, api_cookies, mocker, async_return,
+                                          test_operation):
+        with mocker.patch('app.objects.c_operation.Operation.all_facts') as mock_all_facts:
+            mock_all_facts.return_value = async_return([])
+            resp = await api_v2_client.get('/api/v2/operations/summary', cookies=api_cookies)
+            summaries = await resp.json()
+            report = summaries[0]
+            assert report['name'] == test_operation['name']
+            assert report['jitter'] == test_operation['jitter']
+            assert report['planner']['name'] == test_operation['planner']['name']
+            assert report['adversary']['name'] == test_operation['adversary']['name']
+
     async def test_get_operation_report_no_payload(self, api_v2_client, api_cookies, mocker, async_return,
                                                    test_operation):
         with mocker.patch('app.objects.c_operation.Operation.all_facts') as mock_all_facts:
