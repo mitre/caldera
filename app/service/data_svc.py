@@ -86,7 +86,7 @@ class DataService(DataServiceInterface, BaseService):
         if not os.path.exists(DATA_BACKUP_DIR):
             os.mkdir(DATA_BACKUP_DIR)
 
-        timestamp = datetime.datetime.utcnow().strftime('%Y%m%d%H%M%S')
+        timestamp = datetime.datetime.now(datetime.UTC).strftime('%Y%m%d%H%M%S')
         tarball_path = os.path.join(DATA_BACKUP_DIR, f'backup-{timestamp}.tar.gz')
 
         with tarfile.open(tarball_path, 'w:gz') as tarball:
