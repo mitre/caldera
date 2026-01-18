@@ -1,7 +1,6 @@
 import pytest
 import aioftp
 import json
-import shutil
 import os
 import shutil
 

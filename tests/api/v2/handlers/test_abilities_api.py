@@ -1,6 +1,5 @@
 import os
 import pytest
-import os
 
 from http import HTTPStatus
 
