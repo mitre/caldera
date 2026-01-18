@@ -1,6 +1,7 @@
 import pytest
 
 import asyncio
+import copy
 import glob
 import json
 import os
@@ -13,9 +14,11 @@ from unittest.mock import patch, call
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
 from app.objects.c_agent import Agent
+from app.objects.c_objective import Objective
 from app.objects.c_operation import Operation
 from app.objects.c_planner import Planner
 from app.objects.c_plugin import Plugin
+from app.objects.c_source import Source
 from app.objects.secondclass.c_executor import Executor
 from app.service.data_svc import DataService
 from app.service.file_svc import FileSvc
@@ -384,3 +387,47 @@ class TestDataService:
         assert result[0] == test_abil
         result = await data_svc.search('dne', 'abilities')
         assert not result
+
+    @mock.patch.object(DataService, '_update_payload_config')
+    @mock.patch.object(DataService, 'create_or_update_everything_adversary')
+    @mock.patch.object(FileSvc, 'add_special_payload')
+    @mock.patch.object(DataService, 'load_yaml_file')
+    @mock.patch.object(DataService, 'load_ability_file')
+    async def test_reload_data(self, mock_load_abil_file, mock_load_yaml_file, mock_add_special_payload, mock_everything_adversary, mock_update_payload_config, data_svc):
+        def _mock_iglob(pathname, *, root_dir=None, dir_fd=None, recursive=False, include_hidden=False):
+            if 'payloads' in pathname:
+                return iter([])
+            elif 'abilities' in pathname:
+                return iter(['mockabilityforplugin.yml'])
+            elif 'objectives' in pathname:
+                return iter(['mockobjectiveforplugin.yml'])
+            elif 'adversaries' in pathname:
+                return iter(['mockadversaryforplugin.yml'])
+            elif 'planners' in pathname:
+                return iter(['mockplannerforplugin.yml'])
+            elif 'sources' in pathname:
+                return iter(['mocksourceforplugin.yml'])
+            elif 'packers' in pathname:
+                return iter([])
+            elif 'data_encoders' in pathname:
+                return iter([])
+            else:
+                return glob.iglob(pathname, root_dir=root_dir, dir_fd=dir_fd, recursive=recursive, include_hidden=include_hidden)
+
+        BaseWorld.apply_config(name='payloads',
+                               config=dict(extensions=dict(mockextension='mockextval')))
+
+        mock_plugin = Plugin(name='mockplugin', description='Mock plugin for unit tests', enabled=True, data_dir='mockplugin/data',
+                             access=data_svc.Access.RED)
+
+        data_svc.ram = copy.deepcopy(data_svc.schema)
+
+        with mock.patch.object(glob, 'iglob', side_effect=_mock_iglob) as mock_iglob:
+            await data_svc.reload_data([mock_plugin])
+            mock_iglob.assert_any_call('mockplugin/data/payloads/*.yml', recursive=False)
+            mock_load_abil_file.assert_any_call('mockabilityforplugin.yml', data_svc.Access.RED)
+            mock_load_yaml_file.assert_any_call(Objective, 'mockobjectiveforplugin.yml', data_svc.Access.RED)
+            mock_load_yaml_file.assert_any_call(Adversary, 'mockadversaryforplugin.yml', data_svc.Access.RED)
+            mock_load_yaml_file.assert_any_call(Planner, 'mockplannerforplugin.yml', data_svc.Access.RED)
+            mock_load_yaml_file.assert_any_call(Source, 'mocksourceforplugin.yml', data_svc.Access.RED)
+            mock_add_special_payload.assert_called_once_with('mockextension', 'mockextval')
