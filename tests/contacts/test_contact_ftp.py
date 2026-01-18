@@ -90,7 +90,7 @@ async def ftp_client(ftp_c2_handler_server, ftp_dummy_agent):
     await client.change_directory(ftp_dummy_agent.paw)
     yield client
 
-    client.quit()
+    await client.quit()
 
 
 class TestFtpServer:
