@@ -8,6 +8,7 @@ import string
 import uuid
 import yaml
 import aiohttp_apispec
+import warnings
 
 from datetime import datetime, timezone
 from base64 import b64encode
@@ -317,6 +318,11 @@ def agent_config():
 
 @pytest.fixture
 async def api_v2_client(aiohttp_client, contact_svc):
+    warnings.filterwarnings(
+        "ignore",
+        message="Multiple schemas resolved to the name"
+    )
+
     async def initialize():
         with open(Path(__file__).parents[1] / 'conf' / 'default.yml', 'r') as fle:
             BaseWorld.apply_config('main', yaml.safe_load(fle))
