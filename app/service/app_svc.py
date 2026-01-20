@@ -207,6 +207,9 @@ class AppService(AppServiceInterface, BaseService):
                 files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir+'/abilities') for fle in f if
                          time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(self.get_config('ability_refresh')))
                 for f in files:
+                    if not f.endswith(('.yml', '.yaml')):
+                        self.log.debug('[%s] Skipping non YML file %s' % (p.name, f))
+                        continue
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
                     await self.get_service('data_svc').load_ability_file(filename=f, access=p.access)
             await asyncio.sleep(int(self.get_config('ability_refresh')))

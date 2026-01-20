@@ -11,7 +11,7 @@ assignees: ''
 > Eg. I'm always frustrated when [...]
 
 
-**The ideal solution: What should the feature should do?**
+**The ideal solution: What should the feature do?**
 > a clear and concise description
 
 
@@ -33,4 +33,4 @@ assignees: ''
 **Additional context**
 Add any other context or screenshots about the feature request here.
 
-Thank you for your contribution!
+<!-- Thank you for your contribution! -->
