@@ -32,10 +32,11 @@ def new_ability_payload():
     }
 
     # Ability cleanup
-    try:
-        os.remove('data/abilities/collection/456.yml')
-    except OSError:
-        pass
+    if os.path.exists('data/abilities/collection/456.yml'):
+        try:
+            os.remove('data/abilities/collection/456.yml')
+        except OSError:
+            pass
 
 
 @pytest.fixture
@@ -67,10 +68,11 @@ def test_ability(event_loop, api_v2_client, executor):
     yield ability
 
     # cleanup
-    try:
-        os.remove('data/abilities/collection/123.yml')
-    except OSError:
-        pass
+    if os.path.exists('data/abilities/collection/123.yml'):
+        try:
+            os.remove('data/abilities/collection/123.yml')
+        except OSError:
+            pass
 
 
 class TestAbilitiesApi:
