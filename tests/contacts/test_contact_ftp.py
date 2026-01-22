@@ -3,6 +3,7 @@ import aioftp
 import json
 import shutil
 import os
+import shutil
 
 from unittest import mock
 

@@ -236,8 +236,8 @@ class TestDataService:
                 assert not executor.cleanup
 
     @mock.patch.object(BaseWorld, 'strip_yml', wraps=strip_payload_yaml)
-    @mock.patch.object(DataService, '_apply_special_payload_hooks', return_value=async_mock_return(None))
-    @mock.patch.object(DataService, '_apply_special_extension_hooks', return_value=async_mock_return(None))
+    @mock.patch.object(DataService, '_apply_special_payload_hooks', return_value=None)
+    @mock.patch.object(DataService, '_apply_special_extension_hooks', return_value=None)
     def test_load_payloads(self, mock_ext_hooks, mock_payload_hooks, mock_strip_yml, event_loop, data_svc):
         def _mock_apply_payload_config(config=None, **_):
             TestDataService.mock_payload_config = config

@@ -1,9 +1,19 @@
+import os
 import pytest
 
 from http import HTTPStatus
 
 from app.objects.c_adversary import AdversarySchema, Adversary
 from app.utility.base_service import BaseService
+
+
+def adversary_file_cleanup(adversary_id):
+    file_path = f'data/adversaries/{adversary_id}.yml'
+    if os.path.exists(file_path):
+        try:
+            os.remove(file_path)
+        except OSError:
+            pass
 
 
 @pytest.fixture
@@ -33,7 +43,7 @@ def expected_updated_adversary_dump(test_adversary, updated_adversary_payload):
 
 @pytest.fixture
 def new_adversary_payload():
-    return {
+    yield {
         'name': 'test new adversary',
         'description': 'a new adversary',
         'adversary_id': '456',
@@ -42,6 +52,8 @@ def new_adversary_payload():
         'atomic_ordering': [],
         'plugin': ''
     }
+
+    adversary_file_cleanup('456')
 
 
 @pytest.fixture
@@ -52,7 +64,7 @@ def expected_new_adversary_dump(new_adversary_payload):
 
 @pytest.fixture
 def new_adversary_duplicate_id_payload():
-    return {
+    yield {
         'name': 'test new adversary',
         'description': 'a new adversary with an invalid payload',
         'adversary_id': '456',
@@ -62,6 +74,8 @@ def new_adversary_duplicate_id_payload():
         'atomic_ordering': [],
         'plugin': ''
     }
+
+    adversary_file_cleanup('456')
 
 
 @pytest.fixture
@@ -83,7 +97,9 @@ def test_adversary(event_loop):
                           'plugin': ''}
     test_adversary = AdversarySchema().load(expected_adversary)
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_adversary))
-    return test_adversary
+    yield test_adversary
+
+    adversary_file_cleanup(test_adversary.adversary_id)
 
 
 class TestAdversariesApi:

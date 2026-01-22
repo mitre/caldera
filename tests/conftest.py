@@ -316,7 +316,7 @@ def agent_config():
 
 
 @pytest.fixture
-async def api_v2_client(event_loop, aiohttp_client, contact_svc):
+async def api_v2_client(aiohttp_client, contact_svc):
     async def initialize():
         with open(Path(__file__).parents[1] / 'conf' / 'default.yml', 'r') as fle:
             BaseWorld.apply_config('main', yaml.safe_load(fle))
