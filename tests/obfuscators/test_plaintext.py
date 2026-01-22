@@ -1,6 +1,6 @@
 import pytest
 
-from base64 import b64encode, b64decode
+from base64 import b64decode
 from app.objects.secondclass.c_link import Link
 from app.obfuscators.plain_text import Obfuscation
 
@@ -16,5 +16,3 @@ class TestPlainTextObfuscator:
         plaintext_cmd = b64decode(link.command).decode('utf-8')
         decoded = plaintext_obfuscator.run(link)
         assert decoded == plaintext_cmd
-        
-

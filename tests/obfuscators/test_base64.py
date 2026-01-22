@@ -1,11 +1,11 @@
 import pytest
 
-from base64 import b64encode, b64decode
+from base64 import b64encode
 from app.utility.base_service import BaseService
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_link import Link
-from app.objects.c_ability import Ability, AbilitySchema
-from app.objects.secondclass.c_executor import Executor, ExecutorSchema
+from app.objects.c_ability import AbilitySchema
+from app.objects.secondclass.c_executor import ExecutorSchema
 from app.obfuscators.base64_basic import Obfuscation
 
 
@@ -58,6 +58,7 @@ def finished_windows_link(test_windows_executor, test_windows_agent, test_window
         'output': 'test_dir'
     }
 
+
 class TestBase64BasicObfuscator:
     def test_b64basic_obfuscator(self, b64basic_obfuscator, test_agent, test_windows_agent, finished_link, finished_windows_link):
         # sh
@@ -73,5 +74,3 @@ class TestBase64BasicObfuscator:
         expected_encoded = 'powershell -Enc bABzAA=='
         decoded = windows_obfuscator.run(psh_link)
         assert decoded == expected_encoded
-        
-
