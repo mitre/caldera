@@ -359,7 +359,6 @@ class TestDataService:
                 mock_exception.assert_called_once_with(mock.ANY)
                 assert 'Failed to load ability file plugins/testing/data/discovery/101.yml' in mock_exception.call_args.args[0]
 
-
     def test_get_plugin_name(self, data_svc):
         assert 'test' == data_svc._get_plugin_name('plugins/test')
         assert 'test' == data_svc._get_plugin_name('plugins/test/')

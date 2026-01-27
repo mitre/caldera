@@ -5,7 +5,6 @@ import glob
 import os
 import pickle
 import tarfile
-import re
 import shutil
 import warnings
 import pathlib
@@ -512,9 +511,12 @@ class DataService(DataServiceInterface, BaseService):
             adv.verify(log=self.log, abilities=self.ram['abilities'], objectives=self.ram['objectives'])
 
     def _get_plugin_name(self, filename):
-        normalized_path = '/'.join(pathlib.PurePath(filename).parts)
-        matches = re.findall(r'.*/?plugins/([^/]+)/?.*', normalized_path)
-        return matches[0] if matches else ''
+        path_components = pathlib.PurePath(filename).parts
+        num_parts = len(path_components)
+        for i, part in enumerate(path_components):
+            if part == 'plugins' and i < num_parts - 1:
+                return path_components[i + 1]
+        return ''
 
     async def get_facts_from_source(self, fact_source_id):
         fact_sources = await self.locate('sources', match=dict(id=fact_source_id))
