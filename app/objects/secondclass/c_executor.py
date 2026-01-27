@@ -85,15 +85,13 @@ class Executor(BaseObject):
 
     def __eq__(self, other):
         """Overrides the default eq implementation"""
-        if isinstance(other, Executor):
-            return self.name == other.name and self.platform == other.platform and \
-                   self.command == other.command and self.code == other.code and \
-                   self.language == other.language and self.build_target == other.build_target and \
-                   self.payloads == other.payloads and self.uploads == other.uploads and \
-                   self.timeout == other.timeout and self.parsers == other.parsers and \
-                   self.cleanup == other.cleanup and self.variations == other.variations and \
-                   self.additional_info == other.additional_info
-        return False
+        return isinstance(other, Executor) and self.name == other.name and self.platform == other.platform and \
+            self.command == other.command and self.code == other.code and \
+            self.language == other.language and self.build_target == other.build_target and \
+            self.payloads == other.payloads and self.uploads == other.uploads and \
+            self.timeout == other.timeout and self.parsers == other.parsers and \
+            self.cleanup == other.cleanup and self.variations == other.variations and \
+            self.additional_info == other.additional_info
 
 
 def get_variations(data):
