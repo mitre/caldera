@@ -1,0 +1,57 @@
+<style>
+  [v-cloak]{display:none}
+  table{width:100%; border-collapse:collapse; margin-top:12px}
+  th,td{border-bottom:1px solid #333; padding:8px; text-align:left}
+  .muted{color:#9aa0a6; font-size:12px}
+  .pill{display:inline-block; padding:2px 8px; border:1px solid #555; border-radius:999px; margin-right:6px}
+  .btn{padding:6px 10px; border:1px solid #666; border-radius:6px; background:#111; color:#eee; cursor:pointer}
+</style>
+
+<div style="padding:16px">
+  <h2>User → Allowed Abilities</h2>
+  <p class="muted">Read‑only view resolved from roles, groups, and user overrides.</p>
+
+  {% raw %}
+  <div id="rbac-view" v-cloak>
+    <div class="muted">Loaded {{ users.length }} user(s)</div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Group</th>
+          <th>Roles</th>
+          <th>Allowed</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-for="u in users" :key="u.username">
+          <td>{{ u.username }}</td>
+          <td>{{ u.group || '—' }}</td>
+          <td>
+            <span v-for="r in (u.roles || [])" :key="r" class="pill">{{ r }}</span>
+            <span v-if="!u.roles || !u.roles.length" class="muted">none</span>
+          </td>
+          <td>{{ (u.allowed || []).length }}</td>
+          <td><button class="btn" @click="u.show=!u.show">{{ u.show?'Hide':'View' }}</button></td>
+        </tr>
+        <tr v-for="u in users" v-if="u.show" :key="u.username + '-details'">
+          <td colspan="5">
+            <div v-if="u.allowed && u.allowed.length">
+              <div v-for="id in u.allowed" :key="id">
+                <strong>{{ abilityName(id) }}</strong>
+                <span class="muted">— {{ id }}</span>
+              </div>
+            </div>
+            <div v-else class="muted">No abilities allowed.</div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  {% endraw %}
+
+  <script defer src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+  <script defer src="/plugin/testing/static/rbac-view.js"></script>
+</div>

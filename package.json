@@ -13,6 +13,7 @@
     "stylelint-config-standard": "^24.0.0"
   },
   "scripts": {
+    "build": "vite build",
     "lint-js": "eslint ./static/js/*.js ./templates/*.html",
     "lint-js-fix": "eslint ./static/js/*.js ./templates/*.html --fix",
     "lint-css": "stylelint static/css/*.css",

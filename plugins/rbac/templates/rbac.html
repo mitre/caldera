@@ -1,0 +1,777 @@
+<style>
+  /* Scoped styles for RBAC page */
+  .rbac-page { color: #e6e6e6; }
+  .rbac-grid { display: grid; grid-template-columns: 1fr 3fr; gap: 16px; align-items: start; }
+  .rbac-title { margin: 0; font-size: 28px; letter-spacing: 0.5px; }
+  .rbac-card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 6px; padding: 16px; box-shadow: 0 1px 0 rgba(0,0,0,.4); }
+  .rbac-toolbar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-top: 10px; }
+  .rbac-msg { min-height: 1.2em; color: #a0e7a0; margin-left: 6px; }
+  .rbac-input { width: 100%; padding: 10px 12px; border-radius: 6px; background: #121212; border: 1px solid #303030; color: #e6e6e6; margin: 6px 0; }
+  .rbac-input:focus { outline: none; border-color: var(--primary-color,#7e57c2); box-shadow: 0 0 0 2px rgba(126,87,194,.25); }
+  .rbac-user-row { display:flex; gap:10px; align-items:center; margin: 8px 0 12px; }
+  .rbac-user-select { height: 50px; min-width: 260px; max-width: 350px; padding: 8px 10px; border-radius: 6px; background:#121212; border:1px solid #303030; color:#e6e6e6; }
+  .rbac-select { width: 100%; height: 60vh; border-radius: 6px; background: #121212; border: 1px solid #303030; color: #e6e6e6; line-height: 1.35; font-size: 14px; padding: 8px; }
+  .rbac-select option { padding: 4px 6px; }
+  .rbac-select option[hidden] { display: none; }
+  .rbac-btn { background: linear-gradient(#2a2a2a,#222); color:#fff; border:1px solid #3a3a3a; border-radius:6px; padding:8px 12px; font-weight:600; cursor:pointer; transition: border-color .15s, transform .02s, background .15s; }
+  .rbac-btn:hover { border-color: var(--primary-color,#7e57c2); background: linear-gradient(#2f2f2f,#262626); }
+  .rbac-btn:active { transform: translateY(1px); }
+  .rbac-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .rbac-subtle { color: #bdbdbd; }
+  .rbac-selected { margin-top: 12px; }
+  .rbac-selected ul { margin: 8px 0 0 18px; }
+  .rbac-two-col { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  .rbac-card h3 { margin-top: 6px; }
+  .rbac-form { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin: 8px 0 12px; }
+  .rbac-input-small { width:auto; min-width: 180px; }
+  /* Tabs (User, Role, Team, Control) */
+  .rbac-tabs { display:flex; flex-direction:column; gap:10px; margin: 10px 0 16px; }
+  .rbac-tab-btn { width:100%; padding:12px 14px; border-radius:8px; border:1px solid #3a3a3a; background:#1f1f1f; color:#eee; font-weight:700; letter-spacing:0.4px; cursor:pointer; text-align:left; }
+  .rbac-tab-btn:hover { border-color: var(--primary-color,#7e57c2); background:#242424; }
+  .rbac-collapse { display:none; padding:8px 0 0; }
+  .rbac-collapse.open { display:block; }
+  .rbac-big-select { height: 40vh; }
+  @media (max-width: 900px) {
+    .rbac-grid { grid-template-columns: 1fr; }
+    .rbac-select { height: 50vh; }
+    .rbac-two-col { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="section-profile rbac-page">
+  <div class="rbac-grid">
+    <div class="rbac-card">
+      <h1 class="rbac-title">RBAC</h1>
+    </div>
+
+    <div>
+      <div class="rbac-card">
+        <p><strong>Total abilities:</strong> {{ ability_count }}</p>
+
+        <!-- Top-level tabs: User / Role / Team / Control -->
+        <div class="rbac-tabs">
+          <button type="button" class="rbac-tab-btn" data-target="tabUser">User</button>
+          <div id="tabUser" class="rbac-collapse">
+            <!-- Create User inside User tab -->
+            <div class="rbac-form">
+              <input id="regUser" class="rbac-input rbac-input-small" type="text" placeholder="username">
+              <input id="regPass" class="rbac-input rbac-input-small" type="password" placeholder="password">
+              <select id="regGroup" class="rbac-user-select">
+                <option value="red">red</option>
+                <option value="blue">blue</option>
+              </select>
+              <label class="rbac-subtle">Groups:</label>
+              <select id="regGroupPicker" class="rbac-user-select" style="min-width:220px">
+                <option value="" selected>— select group —</option>
+              </select>
+              <button id="btnRegAddGroup" class="rbac-btn" type="button">Add</button>
+              <div id="regGroupsChips" class="rbac-form" style="gap:6px;"></div>
+              <button id="btnReg" class="rbac-btn">Register</button>
+              <span id="regMsg" class="rbac-msg"></span>
+            </div>
+
+            <!-- List current users and assign group -->
+            <div style="margin-top:8px;">
+              <table style="width:100%; border-collapse:collapse;">
+                <thead>
+                  <tr>
+                    <th style="text-align:left; padding:6px 4px; border-bottom:1px solid #333;">User</th>
+                    <th style="text-align:left; padding:6px 4px; border-bottom:1px solid #333;">Group</th>
+                    <th style="text-align:left; padding:6px 4px; border-bottom:1px solid #333;"></th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <button type="button" class="rbac-tab-btn" data-target="tabRole">Role</button>
+          <div id="tabRole" class="rbac-collapse">
+            <!-- Create Group (Role) -->
+            <div class="rbac-form">
+              <input id="grpName" class="rbac-input rbac-input-small" type="text" placeholder="group name">
+              <select id="grpColor" class="rbac-user-select">
+                <option value="red">red</option>
+                <option value="blue">blue</option>
+              </select>
+              <button id="btnGroupCreate" class="rbac-btn">Create Group</button>
+              <span id="grpMsg" class="rbac-msg"></span>
+            </div>
+
+            <!-- Manage Group: pick, set color, manage members -->
+            <div class="rbac-form">
+              <label for="grpSelect"><strong>Group:</strong></label>
+              <select id="grpSelect" class="rbac-user-select"></select>
+              <label for="grpEditColor"><strong>Color:</strong></label>
+              <select id="grpEditColor" class="rbac-user-select">
+                <option value="red">red</option>
+                <option value="blue">blue</option>
+              </select>
+              <button id="btnGroupSave" class="rbac-btn">Save</button>
+              <button id="btnGroupDelete" class="rbac-btn">Delete</button>
+              <span id="grpEditMsg" class="rbac-msg"></span>
+            </div>
+
+            <!-- Members multi-select -->
+            <div>
+              <h4>Members</h4>
+              <select id="grpMembersSelect" class="rbac-select rbac-big-select" multiple size="14"></select>
+            </div>
+
+            <!-- Group Members Matrix -->
+            <div style="margin-top:12px;">
+              <h4>Group Members Matrix</h4>
+              <table id="grpMembersTable" style="width:100%; border-collapse:collapse; margin-top:6px;">
+                <thead id="grpMembersThead"></thead>
+                <tbody id="grpMembersTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <button type="button" class="rbac-tab-btn" data-target="tabTeam">Team</button>
+          <div id="tabTeam" class="rbac-collapse">
+            <div class="rbac-two-col">
+              <div>
+                <h3>Red</h3>
+                <table style="width:100%; border-collapse:collapse; margin-top:6px;">
+                  <thead id="teamRedThead"></thead>
+                  <tbody id="teamRedTbody"></tbody>
+                </table>
+              </div>
+              <div>
+                <h3>Blue</h3>
+                <table style="width:100%; border-collapse:collapse; margin-top:6px;">
+                  <thead id="teamBlueThead"></thead>
+                  <tbody id="teamBlueTbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <button type="button" class="rbac-tab-btn" data-target="tabControl">Control</button>
+          <div id="tabControl" class="rbac-collapse">
+            <div class="rbac-user-row">
+              <label for="userSelect"><strong>User:</strong></label>
+              <select id="userSelect" class="rbac-user-select"></select>
+              <span class="rbac-subtle" id="userHint"></span>
+            </div>
+
+            <h3>All Abilities</h3>
+            <input id="abilitySearch" class="rbac-input" type="search" placeholder="Search by name or ID...">
+            <select id="abilitySelect" class="rbac-select" multiple size="22">
+              {% for opt in ability_options %}
+                <option value="{{ opt.id }}" data-name="{{ opt.name }}" {% if opt.id in allowed_ids %}selected{% endif %}>
+                  {{ opt.name }} ({{ opt.id[:8] }})
+                </option>
+              {% endfor %}
+            </select>
+            <div class="rbac-toolbar">
+              <button id="btnSave" class="rbac-btn">Save (replace)</button>
+              <button id="btnAdd" class="rbac-btn">Add selected</button>
+              <button id="btnDel" class="rbac-btn">Delete selected</button>
+              <span id="msg" class="rbac-msg"></span>
+            </div>
+            <div class="rbac-selected">
+              <strong>Selected (<span id="selCount">0</span>):</strong>
+              <div id="selectedList" class="rbac-subtle">Nothing selected</div>
+            </div>
+          </div>
+        </div>
+        <!-- Plugin Access (blocklist) -->
+        <div>
+          <h3>Plugin Access (blocklist)</h3>
+          <select id="pluginSelect" class="rbac-select" multiple size="22"></select>
+          <div class="rbac-toolbar">
+            <button id="pbtnSave" class="rbac-btn">Save blocks</button>
+            <button id="pbtnAdd" class="rbac-btn">Block selected</button>
+            <button id="pbtnDel" class="rbac-btn">Unblock selected</button>
+            <span id="pmsg" class="rbac-msg"></span>
+          </div>
+          <div class="rbac-selected">
+            <strong>Blocked count:</strong>
+            <span id="pcount">0</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const sel  = document.getElementById('abilitySelect');
+  const userSel = document.getElementById('userSelect');
+  const userHint = document.getElementById('userHint');
+  const search = document.getElementById('abilitySearch');
+  const btnS = document.getElementById('btnSave');
+  const btnA = document.getElementById('btnAdd');
+  const btnD = document.getElementById('btnDel');
+  const msg  = document.getElementById('msg');
+  const selCount = document.getElementById('selCount');
+  const list = document.getElementById('selectedList');
+  let currentUser = '';
+  // plugin controls
+  const pSel = document.getElementById('pluginSelect');
+  const pbtnS = document.getElementById('pbtnSave');
+  const pbtnA = document.getElementById('pbtnAdd');
+  const pbtnD = document.getElementById('pbtnDel');
+  const pmsg  = document.getElementById('pmsg');
+  const pcount= document.getElementById('pcount');
+  // register controls
+  const regUser = document.getElementById('regUser');
+  const regPass = document.getElementById('regPass');
+  const regGroup= document.getElementById('regGroup');
+  const regGroupPicker = document.getElementById('regGroupPicker');
+  const btnRegAddGroup = document.getElementById('btnRegAddGroup');
+  const regGroupsChips = document.getElementById('regGroupsChips');
+  const btnReg  = document.getElementById('btnReg');
+  const regMsg  = document.getElementById('regMsg');
+  // role/group controls
+  const grpName = document.getElementById('grpName');
+  const grpColor= document.getElementById('grpColor');
+  const btnGroupCreate = document.getElementById('btnGroupCreate');
+  const grpMsg = document.getElementById('grpMsg');
+  const grpSelect = document.getElementById('grpSelect');
+  const grpEditColor = document.getElementById('grpEditColor');
+  const btnGroupSave = document.getElementById('btnGroupSave');
+  const btnGroupDelete = document.getElementById('btnGroupDelete');
+  const grpEditMsg = document.getElementById('grpEditMsg');
+  const grpMembersSelect = document.getElementById('grpMembersSelect');
+  // team tab tables (no selects)
+
+  // --- render selected list ---
+  function renderSelected() {
+    const items = Array.from(sel.selectedOptions).map(o => ({ id:o.value, name:o.dataset.name || o.textContent }));
+    selCount.textContent = items.length;
+    list.innerHTML = items.length ? '' : 'Nothing selected';
+    if (!items.length) return;
+    const ul = document.createElement('ul'); ul.style.margin='8px 0'; ul.style.paddingLeft='18px';
+    for (const it of items.slice(0, 25)) {
+      const li = document.createElement('li'); li.textContent = `${it.name} (${it.id.slice(0,8)})`; ul.appendChild(li);
+    }
+    list.appendChild(ul);
+    if (items.length > 25) { const more = document.createElement('p'); more.textContent = `…and ${items.length-25} more`; list.appendChild(more); }
+  }
+
+  // --- client-side search (filters visible options) ---
+  function filterOptions() {
+    const q = search.value.trim().toLowerCase();
+    const opts = Array.from(sel.options);
+    if (!q) { opts.forEach(o => o.hidden = false); return; }
+    for (const o of opts) {
+      const name = (o.dataset.name || o.textContent || '').toLowerCase();
+      const id   = (o.value || '').toLowerCase();
+      o.hidden = !(name.includes(q) || id.includes(q));
+    }
+  }
+  const debounce = (fn, ms=150) => { let t; return (...a)=>{ clearTimeout(t); t = setTimeout(()=>fn(...a), ms); }; };
+
+  // --- API helper ---
+  async function call(method, body) {
+    const r = await fetch('/api/rbac/allowed', {
+      method, credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},
+      body: body ? JSON.stringify(body) : null
+    });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json();
+  }
+
+  async function listUsers() {
+    const r = await fetch('/api/rbac/users', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json(); // { users: [] }
+  }
+
+  async function listUsersDetailed() {
+    const r = await fetch('/api/rbac/users/list', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json(); // { users: [{username, group}] }
+  }
+
+  async function listPlugins() {
+    const r = await fetch('/api/rbac/plugins', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json(); // { plugins: [] }
+  }
+
+  async function listGroups() {
+    const r = await fetch('/api/rbac/groups', { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    return r.json(); // { groups: { name: {members:[], color} } }
+  }
+
+  async function renderGroupsMatrix(){
+    try{
+      const data = await listGroups();
+      const groups = data.groups || {};
+      const names = Object.keys(groups).sort();
+      const thead = document.getElementById('grpMembersThead');
+      const tbody = document.getElementById('grpMembersTbody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+      if (!names.length){ return; }
+      // Header
+      const hr = document.createElement('tr');
+      for (const n of names){
+        const th = document.createElement('th');
+        th.textContent = n;
+        th.style.padding = '6px 4px';
+        th.style.borderBottom = '1px solid #333';
+        th.style.textAlign = 'left';
+        hr.appendChild(th);
+      }
+      thead.appendChild(hr);
+      // Determine max rows
+      const lists = names.map(n => (groups[n].members || []).slice().sort());
+      const maxLen = Math.max(0, ...lists.map(a => a.length));
+      for (let i=0; i<maxLen; i++){
+        const tr = document.createElement('tr');
+        for (let c=0; c<names.length; c++){
+          const td = document.createElement('td');
+          td.style.padding = '6px 4px';
+          td.style.borderBottom = '1px solid #222';
+          td.textContent = lists[c][i] || '';
+          tr.appendChild(td);
+        }
+        tbody.appendChild(tr);
+      }
+    }catch(e){ console.error(e); }
+  }
+
+  async function renderTeamLists(){
+    try{
+      const [usersDet, groupsDet] = await Promise.all([listUsersDetailed(), listGroups()]);
+      const users = Array.isArray(usersDet.users) ? usersDet.users : [];
+      const groups = groupsDet.groups || {};
+      // Build arrays
+      const redUsers = users.filter(u=>u.group==='red').map(u=>({type:'user', name:u.username}));
+      const blueUsers = users.filter(u=>u.group==='blue').map(u=>({type:'user', name:u.username}));
+      const redGroups = Object.entries(groups).filter(([n,g])=> (g.color||'red')==='red').map(([n])=>({type:'group', name:n}));
+      const blueGroups = Object.entries(groups).filter(([n,g])=> (g.color||'red')==='blue').map(([n])=>({type:'group', name:n}));
+      // Fill tables
+      const redThead = document.getElementById('teamRedThead');
+      const redTbody = document.getElementById('teamRedTbody');
+      const blueThead = document.getElementById('teamBlueThead');
+      const blueTbody = document.getElementById('teamBlueTbody');
+      redThead.innerHTML = blueThead.innerHTML = '';
+      redTbody.innerHTML = blueTbody.innerHTML = '';
+
+      function buildHeader(thead){
+        const tr = document.createElement('tr');
+        ['Users','Groups'].forEach(h=>{
+          const th = document.createElement('th');
+          th.textContent = h;
+          th.style.padding = '6px 4px';
+          th.style.borderBottom = '1px solid #333';
+          th.style.textAlign = 'left';
+          tr.appendChild(th);
+        });
+        thead.appendChild(tr);
+      }
+
+      function fillBody(tbody, usersArr, groupsArr){
+        const maxLen = Math.max(usersArr.length, groupsArr.length);
+        for (let i=0;i<maxLen;i++){
+          const tr = document.createElement('tr');
+          const tdU = document.createElement('td');
+          const tdG = document.createElement('td');
+          tdU.style.padding = tdG.style.padding = '6px 4px';
+          tdU.style.borderBottom = tdG.style.borderBottom = '1px solid #222';
+          tdU.textContent = usersArr[i] ? usersArr[i].name : '';
+          tdG.textContent = groupsArr[i] ? groupsArr[i].name : '';
+          tr.appendChild(tdU); tr.appendChild(tdG);
+          tbody.appendChild(tr);
+        }
+      }
+
+      buildHeader(redThead);
+      buildHeader(blueThead);
+      fillBody(redTbody, redUsers, redGroups);
+      fillBody(blueTbody, blueUsers, blueGroups);
+    }catch(e){ console.error(e); }
+  }
+
+  async function loadBlockedFor(user) {
+    if (!user) return;
+    const r = await fetch(`/api/rbac/blocked?username=${encodeURIComponent(user)}`, { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    const data = await r.json(); // { username, blocked: [] }
+    const blocked = new Set(data.blocked || []);
+    Array.from(pSel.options).forEach(o => { o.selected = blocked.has(o.value); });
+    pcount.textContent = blocked.size;
+  }
+
+  async function loadAllowedFor(user) {
+    if (!user) return;
+    const r = await fetch(`/api/rbac/allowed?username=${encodeURIComponent(user)}`, { credentials: 'same-origin' });
+    if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+    const data = await r.json(); // { username, allowed: [] }
+    const allowed = new Set(data.allowed || []);
+    // update selection in the big select
+    Array.from(sel.options).forEach(o => { o.selected = allowed.has(o.value); });
+    renderSelected();
+    userHint.textContent = `Assigned: ${allowed.size}`;
+  }
+
+  async function saveReplace() {
+    if (!currentUser) { msg.textContent = 'Choose a user'; return; }
+    const selected = Array.from(sel.selectedOptions).map(o => o.value);
+    btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Saving...';
+    try { await call('PUT',  { username: currentUser, ability_ids: selected }); msg.textContent = 'Saved ✓'; await loadAllowedFor(currentUser); }
+    catch(e){ console.error(e); msg.textContent = 'Save failed: ' + (e && e.message || ''); }
+    finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
+  }
+
+  async function addSelected() {
+    if (!currentUser) { msg.textContent = 'Choose a user'; return; }
+    const selected = Array.from(sel.selectedOptions).map(o => o.value);
+    if (!selected.length) return;
+    btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Adding...';
+    try { await call('POST', { username: currentUser, ability_ids: selected }); msg.textContent = 'Added ✓'; await loadAllowedFor(currentUser); }
+    catch(e){ console.error(e); msg.textContent = 'Add failed: ' + (e && e.message || ''); }
+    finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
+  }
+
+  async function deleteSelected() {
+    if (!currentUser) { msg.textContent = 'Choose a user'; return; }
+    const selected = Array.from(sel.selectedOptions).map(o => o.value);
+    if (!selected.length) return;
+    btnS.disabled = btnA.disabled = btnD.disabled = true; msg.textContent = 'Deleting...';
+    try {
+      for (const id of selected) {
+        const r = await fetch(`/api/rbac/allowed/${encodeURIComponent(id)}?username=${encodeURIComponent(currentUser)}`, { method:'DELETE', credentials:'same-origin' });
+        if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      }
+      msg.textContent = 'Deleted ✓';
+      await loadAllowedFor(currentUser);
+    } catch(e){ console.error(e); msg.textContent = 'Delete failed: ' + (e && e.message || ''); }
+    finally { btnS.disabled = btnA.disabled = btnD.disabled = false; setTimeout(()=>msg.textContent='',1200); }
+  }
+
+  // --- plugin access handlers ---
+  async function pSaveReplace() {
+    if (!currentUser) { pmsg.textContent = 'Choose a user'; return; }
+    const selected = Array.from(pSel.selectedOptions).map(o => o.value);
+    pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = true; pmsg.textContent = 'Saving...';
+    try { 
+      const r = await fetch('/api/rbac/blocked', { method:'PUT', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: currentUser, plugin_names: selected })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      pmsg.textContent = 'Saved ✓'; await loadBlockedFor(currentUser);
+    } catch(e){ console.error(e); pmsg.textContent = 'Save failed: ' + (e && e.message || ''); }
+    finally { pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = false; setTimeout(()=>pmsg.textContent='',1200); }
+  }
+
+  // --- user registration ---
+  const selectedRegGroups = new Set();
+
+  function renderRegGroupChips(){
+    regGroupsChips.innerHTML = '';
+    if (!selectedRegGroups.size){
+      const span = document.createElement('span'); span.className='rbac-subtle'; span.textContent='No groups selected';
+      regGroupsChips.appendChild(span);
+      return;
+    }
+    for (const name of Array.from(selectedRegGroups).sort()){
+      const chip = document.createElement('button');
+      chip.type='button';
+      chip.className='rbac-btn';
+      chip.textContent = name + ' ×';
+      chip.addEventListener('click', ()=>{ selectedRegGroups.delete(name); renderRegGroupChips(); });
+      regGroupsChips.appendChild(chip);
+    }
+  }
+
+  function fillRegGroupPicker(groupsMap){
+    regGroupPicker.innerHTML = '';
+    const def = document.createElement('option'); def.value=''; def.textContent='— select group —'; regGroupPicker.appendChild(def);
+    Object.keys(groupsMap||{}).sort().forEach(n=>{
+      const opt = document.createElement('option'); opt.value = opt.textContent = n; regGroupPicker.appendChild(opt);
+    });
+  }
+
+  async function registerUser(){
+    const u = (regUser.value||'').trim();
+    const p = (regPass.value||'').trim();
+    const g = (regGroup.value||'red').trim();
+    const gs = Array.from(selectedRegGroups);
+    if (!u || !p) { regMsg.textContent = 'Enter username and password'; return; }
+    btnReg.disabled = true; regMsg.textContent = 'Registering...';
+    try{
+      const r = await fetch('/api/rbac/users/register', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username:u, password:p, group:g, groups: gs })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      regMsg.textContent = 'Registered ✓';
+      // refresh user list and select the new user
+      const ures = await listUsers();
+      const users = Array.isArray(ures.users) ? ures.users : [];
+      userSel.innerHTML = '';
+      for (const name of users) { const opt=document.createElement('option'); opt.value=opt.textContent=name; userSel.appendChild(opt); }
+      currentUser = u; userSel.value = u;
+      await loadAllowedFor(currentUser);
+      await loadBlockedFor(currentUser);
+      regUser.value = regPass.value = '';
+      selectedRegGroups.clear(); renderRegGroupChips();
+      await renderUserTable();
+      await refreshGroupsUI('');
+      await renderTeamLists();
+      await renderGroupsMatrix();
+    }catch(e){ console.error(e); regMsg.textContent = 'Register failed: ' + (e && e.message || ''); }
+    finally{ btnReg.disabled = false; setTimeout(()=>regMsg.textContent='', 1500); }
+  }
+
+  async function renderUserTable(){
+    try{
+      const data = await listUsersDetailed();
+      const tbody = document.getElementById('userTableBody');
+      const users = Array.isArray(data.users) ? data.users : [];
+      tbody.innerHTML = '';
+      for (const u of users){
+        const isCore = (u.username === 'red' || u.username === 'blue');
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:6px 4px; border-bottom:1px solid #222;">${u.username}</td>
+          <td style="padding:6px 4px; border-bottom:1px solid #222;">
+            <select data-user="${u.username}" class="rbac-user-select rbac-input-small">
+              <option value="red" ${u.group==='red'?'selected':''}>red</option>
+              <option value="blue" ${u.group==='blue'?'selected':''}>blue</option>
+            </select>
+          </td>
+          <td style="padding:6px 4px; border-bottom:1px solid #222;">
+            <button class="rbac-btn" data-action="save" data-user="${u.username}" ${isCore?'disabled':''}>Save</button>
+            <button class="rbac-btn" data-action="delete" data-user="${u.username}" ${isCore?'disabled':''} style="margin-left:6px;">Delete</button>
+          </td>`;
+        tbody.appendChild(tr);
+      }
+      // attach listeners for save buttons
+      tbody.querySelectorAll('button[data-action="save"]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          if (btn.disabled) return;
+          const uname = btn.getAttribute('data-user');
+          const sel = tbody.querySelector(`select[data-user="${uname}"]`);
+          const val = sel ? sel.value : 'red';
+          btn.disabled = true; btn.textContent = 'Saving...';
+          try{
+            const r = await fetch('/api/rbac/users/group', { method:'PUT', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: uname, group: val })});
+            if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+            btn.textContent = 'Saved ✓';
+            await renderTeamLists();
+            await renderGroupsMatrix();
+          }catch(e){ console.error(e); btn.textContent = 'Failed'; }
+          finally{ setTimeout(()=>btn.textContent='Save', 1200); btn.disabled = false; }
+        });
+      });
+      // attach listeners for delete buttons
+      tbody.querySelectorAll('button[data-action="delete"]').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          if (btn.disabled) return;
+          const uname = btn.getAttribute('data-user');
+          if (!confirm(`Delete user ${uname}?`)) return;
+          btn.disabled = true; btn.textContent = 'Deleting...';
+          try{
+            const r = await fetch(`/api/rbac/users/${encodeURIComponent(uname)}`, { method:'DELETE', credentials:'same-origin' });
+            if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+            await renderUserTable();
+            const ures = await listUsers();
+            const users = Array.isArray(ures.users) ? ures.users : [];
+            userSel.innerHTML = '';
+            for (const name of users) { const opt=document.createElement('option'); opt.value=opt.textContent=name; userSel.appendChild(opt); }
+            if (users.length){ currentUser = users[0]; userSel.value = currentUser; await loadAllowedFor(currentUser); await loadBlockedFor(currentUser); }
+            await refreshGroupsUI('');
+            await renderTeamLists();
+            await renderGroupsMatrix();
+          }catch(e){ console.error(e); btn.textContent = 'Failed'; }
+          finally{ setTimeout(()=>btn.textContent='Delete', 1200); btn.disabled = false; }
+        });
+      });
+    }catch(e){ console.error(e); }
+  }
+
+  async function pAddSelected() {
+    if (!currentUser) { pmsg.textContent = 'Choose a user'; return; }
+    const selected = Array.from(pSel.selectedOptions).map(o => o.value);
+    if (!selected.length) return;
+    pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = true; pmsg.textContent = 'Blocking...';
+    try { 
+      const r = await fetch('/api/rbac/blocked', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ username: currentUser, plugin_names: selected })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      pmsg.textContent = 'Blocked ✓'; await loadBlockedFor(currentUser);
+    } catch(e){ console.error(e); pmsg.textContent = 'Block failed: ' + (e && e.message || ''); }
+    finally { pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = false; setTimeout(()=>pmsg.textContent='',1200); }
+  }
+
+  async function pDelSelected() {
+    if (!currentUser) { pmsg.textContent = 'Choose a user'; return; }
+    const selected = Array.from(pSel.selectedOptions).map(o => o.value);
+    if (!selected.length) return;
+    pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = true; pmsg.textContent = 'Unblocking...';
+    try { 
+      for (const name of selected) {
+        const r = await fetch(`/api/rbac/blocked/${encodeURIComponent(name)}?username=${encodeURIComponent(currentUser)}`, { method:'DELETE', credentials:'same-origin' });
+        if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      }
+      pmsg.textContent = 'Unblocked ✓'; await loadBlockedFor(currentUser);
+    } catch(e){ console.error(e); pmsg.textContent = 'Unblock failed: ' + (e && e.message || ''); }
+    finally { pbtnS.disabled = pbtnA.disabled = pbtnD.disabled = false; setTimeout(()=>pmsg.textContent='',1200); }
+  }
+
+  // --- role/group handlers ---
+  async function refreshGroupsUI(selectName){
+    const data = await listGroups();
+    const groups = data.groups || {};
+    grpSelect.innerHTML = '';
+    const names = Object.keys(groups).sort();
+    for (const name of names){
+      const opt = document.createElement('option');
+      opt.value = opt.textContent = name;
+      grpSelect.appendChild(opt);
+    }
+    const chosen = selectName && names.includes(selectName) ? selectName : (names[0] || '');
+    grpSelect.value = chosen;
+    // fill color + members
+    if (chosen){
+      grpEditColor.value = (groups[chosen].color || 'red');
+      // fill members list from users list
+      const ures = await listUsers();
+      const all = Array.isArray(ures.users) ? ures.users : [];
+      grpMembersSelect.innerHTML = '';
+      const membersSet = new Set(groups[chosen].members || []);
+      for (const u of all){
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = u;
+        opt.selected = membersSet.has(u);
+        grpMembersSelect.appendChild(opt);
+      }
+    } else {
+      grpEditColor.value = 'red';
+      grpMembersSelect.innerHTML = '';
+    }
+  }
+
+  async function createGroup(){
+    const name = (grpName.value||'').trim();
+    const color = (grpColor.value||'red').trim();
+    if (!name){ grpMsg.textContent = 'Enter group name'; return; }
+    btnGroupCreate.disabled = true; grpMsg.textContent = 'Saving...';
+    try{
+      const r = await fetch('/api/rbac/groups', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, color, members: [] })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      grpMsg.textContent = 'Created ✓';
+      grpName.value='';
+      await refreshGroupsUI(name);
+      const gres2 = await listGroups();
+      fillRegGroupPicker(gres2.groups||{});
+      await renderGroupsMatrix();
+      await renderTeamLists();
+    }catch(e){ console.error(e); grpMsg.textContent = 'Failed: ' + (e && e.message || ''); }
+    finally{ btnGroupCreate.disabled = false; setTimeout(()=>grpMsg.textContent='', 1200); }
+  }
+
+  async function saveGroup(){
+    const name = grpSelect.value || '';
+    if (!name) return;
+    const color = grpEditColor.value || 'red';
+    const members = Array.from(grpMembersSelect.selectedOptions).map(o=>o.value);
+    btnGroupSave.disabled = btnGroupDelete.disabled = true; grpEditMsg.textContent = 'Saving...';
+    try{
+      const r = await fetch('/api/rbac/groups', { method:'POST', credentials:'same-origin', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ name, color, members })});
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      grpEditMsg.textContent = 'Saved ✓';
+      await refreshGroupsUI(name);
+      const gres2 = await listGroups();
+      fillRegGroupPicker(gres2.groups||{});
+      await renderGroupsMatrix();
+      await renderTeamLists();
+    }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
+    finally{ btnGroupSave.disabled = btnGroupDelete.disabled = false; setTimeout(()=>grpEditMsg.textContent='', 1200); }
+  }
+
+  async function deleteGroup(){
+    const name = grpSelect.value || '';
+    if (!name) return;
+    btnGroupSave.disabled = btnGroupDelete.disabled = true; grpEditMsg.textContent = 'Deleting...';
+    try{
+      const r = await fetch(`/api/rbac/groups/${encodeURIComponent(name)}`, { method:'DELETE', credentials:'same-origin' });
+      if (!r.ok) throw new Error(`${r.status}: ${await r.text()}`);
+      grpEditMsg.textContent = 'Deleted ✓';
+      await refreshGroupsUI('');
+      const gres2 = await listGroups();
+      fillRegGroupPicker(gres2.groups||{});
+      await renderGroupsMatrix();
+      await renderTeamLists();
+    }catch(e){ console.error(e); grpEditMsg.textContent = 'Failed: ' + (e && e.message || ''); }
+    finally{ btnGroupSave.disabled = btnGroupDelete.disabled = false; setTimeout(()=>grpEditMsg.textContent='', 1200); }
+  }
+
+  // Hook up events
+  sel.addEventListener('change', renderSelected);
+  search.addEventListener('input', debounce(()=>{ filterOptions(); /* keep selection list visible */ }, 150));
+  btnS.addEventListener('click', saveReplace);
+  btnA.addEventListener('click', addSelected);
+  btnD.addEventListener('click', deleteSelected);
+  pbtnS.addEventListener('click', pSaveReplace);
+  pbtnA.addEventListener('click', pAddSelected);
+  pbtnD.addEventListener('click', pDelSelected);
+  btnReg.addEventListener('click', registerUser);
+  btnGroupCreate.addEventListener('click', createGroup);
+  btnGroupSave.addEventListener('click', saveGroup);
+  btnGroupDelete.addEventListener('click', deleteGroup);
+  btnRegAddGroup.addEventListener('click', ()=>{
+    const v = regGroupPicker.value || '';
+    if (!v) return;
+    selectedRegGroups.add(v);
+    renderRegGroupChips();
+  });
+  // Toggle panels as an accordion: open one, close others
+  const tabButtons = Array.from(document.querySelectorAll('.rbac-tab-btn'));
+  const tabPanels  = Array.from(document.querySelectorAll('.rbac-collapse'));
+  tabButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.getAttribute('data-target');
+      tabPanels.forEach(p => { if (p.id !== id) p.classList.remove('open'); });
+      const panel = document.getElementById(id);
+      if (panel) panel.classList.toggle('open');
+    });
+  });
+  userSel.addEventListener('change', async ()=>{
+    currentUser = userSel.value || '';
+    await loadAllowedFor(currentUser);
+    await loadBlockedFor(currentUser);
+  });
+
+  // Initial render: populate users then load their assignments
+  (async function init(){
+    try {
+      const [ures, pres, gres] = await Promise.all([listUsers(), listPlugins(), listGroups()]);
+      const users = Array.isArray(ures.users) ? ures.users : [];
+      userSel.innerHTML = '';
+      for (const u of users) {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = u;
+        userSel.appendChild(opt);
+      }
+      // fill plugin list
+      pSel.innerHTML = '';
+      const plugins = Array.isArray(pres.plugins) ? pres.plugins : [];
+      for (const p of plugins) {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = p;
+        pSel.appendChild(opt);
+      }
+      // fill group dropdown for registration
+      fillRegGroupPicker(gres.groups||{});
+      renderRegGroupChips();
+      // pick default: student if present else first
+      const def = users.includes('student') ? 'student' : (users[0] || '');
+      currentUser = def;
+      if (def) userSel.value = def;
+      await loadAllowedFor(currentUser);
+      await loadBlockedFor(currentUser);
+      await renderUserTable();
+      await refreshGroupsUI('');
+      await renderGroupsMatrix();
+      await renderTeamLists();
+    } catch(e){ console.error(e); }
+    renderSelected();
+  })();
+})();
+</script>

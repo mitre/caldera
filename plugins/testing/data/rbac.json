@@ -1,0 +1,95 @@
+{
+  "roles": {
+    "operator": {
+      "allowed_abilities": [
+        "a9b2...-id2",
+        "e3f1...-id1"
+      ]
+    },
+    "": {
+      "allowed_abilities": [
+        "364ea817-bbb9-4083-87dd-94b9dba45f6f"
+      ]
+    },
+    "fsfsd": {
+      "allowed_abilities": [
+        "fa6e8607-e0b1-425d-8924-9b894da5a002"
+      ]
+    },
+    "red": {
+      "allowed_abilities": [
+        "0ab383be-b819-41bf-91b9-1bd4404d83bf"
+      ]
+    },
+    "test": {
+      "allowed_abilities": [
+        "f0d77555-fa79-4884-8afd-73d39f887879"
+      ]
+    },
+    "test2": {
+      "allowed_abilities": [
+        "52177cc1-b9ab-4411-ac21-2eadc4b5d3b8"
+      ]
+    }
+  },
+  "users": {
+    "": {
+      "group": "red",
+      "roles": [],
+      "allowed_abilities": []
+    },
+    "rewrwe": {
+      "group": "red",
+      "roles": [
+        "red"
+      ],
+      "allowed_abilities": []
+    },
+    "alice": {
+      "group": "red",
+      "roles": [
+        "test2"
+      ],
+      "allowed_abilities": []
+    },
+    "swamy": {
+      "group": "red",
+      "roles": [],
+      "allowed_abilities": []
+    }
+  },
+  "groups": {
+    "": {
+      "members": [
+        ""
+      ],
+      "roles": [
+        "red"
+      ]
+    },
+    "test": {
+      "members": [
+        "alice"
+      ],
+      "roles": [
+        "test"
+      ]
+    },
+    "test2": {
+      "members": [
+        "alice"
+      ],
+      "roles": [
+        "test2"
+      ]
+    },
+    "dfasdf": {
+      "members": [
+        "swamy"
+      ],
+      "roles": [
+        "operator"
+      ]
+    }
+  }
+}
