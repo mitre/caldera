@@ -1,12 +1,15 @@
 import pytest
 import asyncio
+import logging
 import subprocess
 from datetime import datetime, timedelta, timezone
 from unittest import mock
 
 from app.objects.c_agent import Agent
 from app.service.app_svc import AppService
+from app.service.contact_svc import ContactService
 from app.service.data_svc import DataService
+from app.service.file_svc import FileSvc
 from app.utility.base_service import BaseService
 from app.utility.base_world import BaseWorld
 
@@ -163,6 +166,7 @@ class TestAppService:
         # Test failure due to obsolete version
         with mock.patch.object(subprocess, 'check_output', return_value=b'go version go1.19 linux/arm64\n'):
             assert not await app_svc.validate_requirement('go', {'command': 'go version', 'type': 'installed_program', 'version': '1.24'})
+            assert not await app_svc.validate_requirement('go', {'command': 'go version', 'type': 'installed_program', 'version': '1.24', 'optional': True})
 
         # Test failure due to unknown version
         with mock.patch.object(subprocess, 'check_output', return_value=b'go version X linux/arm64\n'):
@@ -198,3 +202,15 @@ class TestAppService:
                         mock_update_ops.assert_called_once_with(untrusted_agent)
                         assert not untrusted_agent.trusted
                         assert trusted_agent.trusted
+
+    @mock.patch.object(ContactService, 'build_filename', return_value='mock_filename')
+    @mock.patch.object(logging.Logger, 'debug')
+    @mock.patch.object(FileSvc, 'find_file_path', return_value=(None, 'mock_file'))
+    async def test_retrieve_compiled_file(self, mock_find_filepath, mock_debug, mock_build_filename, app_svc):
+        file_data = bytes([0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef])
+        m = mock.mock_open(read_data=file_data)
+        with mock.patch('builtins.open', m):
+            result = await app_svc.retrieve_compiled_file('test_file', 'windows')
+        assert result == ('test_file-windows', 'mock_filename')
+        mock_find_filepath.assert_called_once_with('test_file-windows', location='')
+        mock_debug.assert_called_once_with('test_file downloaded with hash=55c53f5d490297900cefa825d0c8e8e9532ee8a118abe7d8570762cd38be9818 and name=mock_filename')
