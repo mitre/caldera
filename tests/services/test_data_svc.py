@@ -1,5 +1,6 @@
 import glob
 import json
+import logging
 import yaml
 
 from unittest import mock
@@ -123,7 +124,7 @@ ABILITY_YAMLS = {
 - id: 101
   name: Find deletable dirs (per user)
   description: Discover all directories containing deletable files by user
-  tactic: discovery
+  tactic: purposefullywrongtactic
   technique:
     attack_id: T1082
     name: System Information Discovery
@@ -306,8 +307,9 @@ class TestDataService:
         }
         mock_apply_config2.assert_called_once_with(name='payloads', config=expected_config_part2)
 
+    @mock.patch.object(logging.Logger, 'warn')
     @mock.patch.object(BaseWorld, 'strip_yml', wraps=strip_ability_yaml)
-    async def test_load_ability_file(self, event_loop, data_svc):
+    async def test_load_ability_file(self, mock_strip_yml, mock_warn, data_svc):
         want_executors = [
             Executor(name='sh', platform='darwin', command='testcommand',
                      code=None, language=None, build_target=None,
@@ -336,15 +338,27 @@ class TestDataService:
 
         with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
             await data_svc.load_ability_file('plugins/testing/data/discovery/101.yml', BaseWorld.Access.RED)
+            mock_warn.assert_any_call('Tactic for ability=101 is not in the ability file path plugins/testing/data/discovery/101.yml.')
+            mock_warn.assert_called_with('Please check that the ability is labeled with the correct tactic and is in the correct location.')
             mock_create_ability.assert_called_once_with(ability_id='101', name='Find deletable dirs (per user)',
                                                         description='Discover all directories containing deletable files by user',
-                                                        tactic='discovery', technique_id='T1082', technique_name='System Information Discovery',
+                                                        tactic='purposefullywrongtactic', technique_id='T1082', technique_name='System Information Discovery',
                                                         executors=want_executors, requirements=[], privilege=None,
-                                                        repeatable=False, buckets=['discovery'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
+                                                        repeatable=False, buckets=['purposefullywrongtactic'], access=BaseWorld.Access.RED, singleton=False, plugin='testing')
 
         with patch.object(DataService, '_create_ability', return_value=None) as mock_create_ability:
-            await data_svc.load_ability_file('plugins/testing/data/discovery/102.yml', BaseWorld.Access.RED)
-            mock_create_ability.assert_not_called()
+            with patch.object(logging.Logger, 'error') as mock_error:
+                await data_svc.load_ability_file('plugins/testing/data/discovery/102.yml', BaseWorld.Access.RED)
+                mock_create_ability.assert_not_called()
+                assert mock_error.called
+
+        # Test exception
+        with patch.object(DataService, '_create_ability', side_effect=Exception('mockexception')):
+            with patch.object(logging.Logger, 'exception') as mock_exception:
+                await data_svc.load_ability_file('plugins/testing/data/discovery/101.yml', BaseWorld.Access.RED)
+                mock_exception.assert_called_once_with(mock.ANY)
+                assert 'Failed to load ability file plugins/testing/data/discovery/101.yml' in mock_exception.call_args.args[0]
+
 
     def test_get_plugin_name(self, data_svc):
         assert 'test' == data_svc._get_plugin_name('plugins/test')
