@@ -162,6 +162,29 @@ class TestAgentsApi:
     async def test_unauthorized_create_agent(self, api_v2_client, new_agent_payload):
         resp = await api_v2_client.post('/api/v2/agents', json=new_agent_payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED
+    
+    async def test_kill_agent(self, api_v2_client, api_cookies, test_agent, mocker, mock_time):
+        assert test_agent.watchdog == 0 and test_agent.sleep_min == 2 and test_agent.sleep_max == 8
+        assert not (test_agent._marked_for_stop or test_agent._stop_delivered)
+        with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
+            mock_datetime.return_value = mock_datetime
+            mock_datetime.now.return_value = mock_time
+            assert test_agent.status == 'alive'
+
+        resp = await api_v2_client.post('/api/v2/agents/kill/123', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        assert {'response': 'Ok'} == await resp.json()
+        assert test_agent.status == 'pending stop'
+        assert test_agent._marked_for_stop and not test_agent._stop_delivered
+        assert test_agent.watchdog == 1 and test_agent.sleep_min == 120 and test_agent.sleep_max == 120
+    
+    async def test_unauthorized_kill_agent(self, api_v2_client):
+        resp = await api_v2_client.post('/api/v2/agents/kill/123')
+        assert resp.status == HTTPStatus.UNAUTHORIZED
+    
+    async def test_nonexistent_kill_agent(self, api_v2_client, api_cookies):
+        resp = await api_v2_client.post('/api/v2/agents/kill/999', cookies=api_cookies)
+        assert resp.status == HTTPStatus.NOT_FOUND
 
     async def test_update_agent(self, api_v2_client, api_cookies, test_agent, updated_agent_fields_payload,
                                 expected_updated_agent_dump):

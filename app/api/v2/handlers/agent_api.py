@@ -19,6 +19,7 @@ class AgentApi(BaseObjectApi):
         router.add_get('/agents', self.get_agents)
         router.add_get('/agents/{paw}', self.get_agent_by_id)
         router.add_post('/agents', self.create_agent)
+        router.add_post('/agents/kill/{paw}', self.kill_agent)
         router.add_patch('/agents/{paw}', self.update_agent)
         router.add_put('/agents/{paw}', self.create_or_update_agent)
         router.add_delete('/agents/{paw}', self.delete_agent)
@@ -58,11 +59,19 @@ class AgentApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['agents'],
                           summary="Create a new agent",
                           description="Creates a new agent using the format from 'AgentSchema'.")
-    @aiohttp_apispec.request_schema(AgentSchema)
+    @aiohttp_apispec.request_schema(AgentSchema(partial=True))
     @aiohttp_apispec.response_schema(AgentSchema, description="Returns a single agent in 'AgentSchema' format")
     async def create_agent(self, request: web.Request):
         agent = await self.create_object(request)
         return web.json_response(agent.display)
+    
+    @aiohttp_apispec.docs(tags=['agents'],
+                          summary="Kills an agent",
+                          description="Marks an agent to stop after the next beacon.")
+    async def kill_agent(self, request: web.Request):
+        target_paw = request.match_info.get('paw')
+        kill_resp = await self._api_manager.kill_agent(target_paw)
+        return web.json_response(kill_resp)
 
     @aiohttp_apispec.docs(tags=['agents'],
                           summary="Update an Agent",

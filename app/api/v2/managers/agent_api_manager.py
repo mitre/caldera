@@ -1,5 +1,5 @@
 from app.api.v2.managers.base_api_manager import BaseApiManager
-
+from app.api.v2.responses import JsonHttpNotFound
 
 class AgentApiManager(BaseApiManager):
     def __init__(self, data_svc, file_svc):
@@ -25,3 +25,11 @@ class AgentApiManager(BaseApiManager):
         app_config.update({f'agents.{k}': v for k, v in self.get_config(name='agents').items()})
 
         return dict(abilities=raw_abilities, app_config=app_config)
+
+    async def kill_agent(self, target_paw: str):
+        agents = await self._data_svc.locate('agents', {'paw': target_paw})
+        if not agents:
+            raise JsonHttpNotFound(f'Agent {target_paw} not found.')
+        target = agents[0]
+        await target.kill()
+        return {'response': 'Ok'}

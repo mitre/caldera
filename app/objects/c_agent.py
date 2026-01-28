@@ -48,6 +48,8 @@ class AgentFieldsSchema(ma.Schema):
     links = ma.fields.List(ma.fields.Nested(LinkSchema), dump_only=True)
     pending_contact = ma.fields.String()
 
+    status = ma.fields.String(dump_only=True)
+
     @ma.pre_load
     def remove_nulls(self, in_data, **_):
         return {k: v for k, v in in_data.items() if v is not None}
@@ -58,6 +60,7 @@ class AgentFieldsSchema(ma.Schema):
         data.pop('created', None)
         data.pop('last_seen', None)
         data.pop('links', None)
+        data.pop('status', None)
         return data
 
 
@@ -84,6 +87,24 @@ class Agent(FirstClassObjectInterface, BaseObject):
     @property
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
+    
+    @property
+    def status(self):
+        now = datetime.now(timezone.utc)
+        if self._marked_for_stop:
+            # If agent hasn't received the stop instruction yet in a beacon response, it's still pending stop
+            if self._stop_delivered:
+                return 'dead'
+            else:
+                return 'pending stop'
+        else:
+            # If agent hasn't beaconed in since max beacon time + untrusted timer, mark as dead
+            untrusted_buffer = int(self.get_config(name='agents', prop='untrusted_timer'))
+            time_diff = (now - self.last_seen).total_seconds()
+            if time_diff > int(self.sleep_max) + untrusted_buffer:
+                return 'dead'
+            else:
+                return 'alive'
 
     @classmethod
     def is_global_variable(cls, variable):
@@ -139,6 +160,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
             self.upstream_dest = self.server
         self._executor_change_to_assign = None
         self.log = self.create_logger('agent')
+        self._marked_for_stop = False
+        self._stop_delivered = False
 
     def store(self, ram):
         existing = self.retrieve(ram['agents'], self.unique)
@@ -212,6 +235,10 @@ class Agent(FirstClassObjectInterface, BaseObject):
         if not self._executor_change_to_assign:
             # Don't update executors if we're waiting to assign an executor change to the agent.
             self.update('executors', kwargs.get('executors'))
+        
+        # Check if agent has been marked to stop
+        if self._marked_for_stop and not self._stop_delivered:
+            self._stop_delivered = True
 
     async def gui_modification(self, **kwargs):
         loaded = AgentFieldsSchema(only=('group', 'trusted', 'sleep_min', 'sleep_max', 'watchdog', 'pending_contact')).load(kwargs)
@@ -222,6 +249,9 @@ class Agent(FirstClassObjectInterface, BaseObject):
         self.update('watchdog', 1)
         self.update('sleep_min', 60 * 2)
         self.update('sleep_max', 60 * 2)
+
+        self._marked_for_stop = True
+        self._stop_delivered = False
 
     def replace(self, encoded_cmd, file_svc):
         decoded_cmd = b64decode(encoded_cmd).decode('utf-8', errors='ignore').replace('\n', '')
