@@ -262,6 +262,10 @@ class Link(BaseObject):
     async def create_relationships(self, relationships, operation):
         for relationship in relationships:
             relationship.origin = operation.id if operation else self.id
+            if not relationship.source:
+                relationship.source = Fact('', None)
+            if not relationship.target:
+                relationship.target = Fact('', None)
             await self.save_fact(operation, relationship.source, relationship.score, relationship.shorthand)
             await self.save_fact(operation, relationship.target, relationship.score, relationship.shorthand)
             if all((relationship.source.trait, relationship.edge)):
@@ -274,7 +278,7 @@ class Link(BaseObject):
         all_facts = await operation.all_facts() if operation else self.facts
         source = operation.id if operation else self.id
         rl = [relationship] if relationship else []
-        if all([fact.trait, fact.value]):
+        if fact and all([fact.trait, fact.value]):
             if operation and operation.source:
                 if any([(fact.trait, fact.value) == (x.trait, x.value) for x in
                         await knowledge_svc_handle.get_facts(criteria=dict(source=operation.source.id))]):
