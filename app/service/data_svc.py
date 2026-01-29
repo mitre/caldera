@@ -152,32 +152,41 @@ class DataService(DataServiceInterface, BaseService):
             self.log.error('[!] REMOVE: %s' % e)
 
     async def load_ability_file(self, filename, access):
-        for entries in self.strip_yml(filename):
-            for ab in entries:
-                ability_id = ab.pop('id', None)
-                name = ab.pop('name', '')
-                description = ab.pop('description', '')
-                tactic = ab.pop('tactic', None)
-                executors = await self.convert_v0_ability_executor(ab)
-                technique_id = self.convert_v0_ability_technique_id(ab)
-                technique_name = self.convert_v0_ability_technique_name(ab)
-                privilege = ab.pop('privilege', None)
-                repeatable = ab.pop('repeatable', False)
-                singleton = ab.pop('singleton', False)
-                requirements = await self.convert_v0_ability_requirements(ab.pop('requirements', []))
-                buckets = ab.pop('buckets', [tactic])
-                ab.pop('access', None)
-                plugin = self._get_plugin_name(filename)
-                ab.pop('plugin', plugin)
+        try:
+            for entries in self.strip_yml(filename):
+                for ab in entries:
+                    if type(ab) is not dict:
+                        self.log.error(f'Malformed ability file {filename}. Expected ability entry to be a dictionary, received {type(ab)} instead.')
+                        continue
+                    ability_id = ab.pop('id', None)
+                    if ability_id is not None and type(ability_id) is not str:
+                        ability_id = str(ability_id)
+                    name = ab.pop('name', '')
+                    description = ab.pop('description', '')
+                    tactic = ab.pop('tactic', None)
+                    executors = await self.convert_v0_ability_executor(ab)
+                    technique_id = self.convert_v0_ability_technique_id(ab)
+                    technique_name = self.convert_v0_ability_technique_name(ab)
+                    privilege = ab.pop('privilege', None)
+                    repeatable = ab.pop('repeatable', False)
+                    singleton = ab.pop('singleton', False)
+                    requirements = await self.convert_v0_ability_requirements(ab.pop('requirements', []))
+                    buckets = ab.pop('buckets', [tactic])
+                    ab.pop('access', None)
+                    plugin = self._get_plugin_name(filename)
+                    ab.pop('plugin', plugin)
 
-                if tactic and tactic not in filename:
-                    self.log.error('Ability=%s has wrong tactic' % ability_id)
+                    if tactic and tactic not in filename:
+                        self.log.warn(f'Tactic for ability={ability_id} is not in the ability file path {filename}.')
+                        self.log.warn('Please check that the ability is labeled with the correct tactic and is in the correct location.')
 
-                await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
-                                           technique_id=technique_id, technique_name=technique_name,
-                                           executors=executors, requirements=requirements, privilege=privilege,
-                                           repeatable=repeatable, buckets=buckets, access=access, singleton=singleton, plugin=plugin,
-                                           **ab)
+                    await self._create_ability(ability_id=ability_id, name=name, description=description, tactic=tactic,
+                                               technique_id=technique_id, technique_name=technique_name,
+                                               executors=executors, requirements=requirements, privilege=privilege,
+                                               repeatable=repeatable, buckets=buckets, access=access, singleton=singleton, plugin=plugin,
+                                               **ab)
+        except Exception as e:
+            self.log.exception(f'Failed to load ability file {filename}: {e}')
 
     async def convert_v0_ability_executor(self, ability_data: dict):
         """Checks if ability file follows v0 executor format, otherwise assumes v1 ability formatting."""
@@ -502,8 +511,12 @@ class DataService(DataServiceInterface, BaseService):
             adv.verify(log=self.log, abilities=self.ram['abilities'], objectives=self.ram['objectives'])
 
     def _get_plugin_name(self, filename):
-        plugin_path = pathlib.PurePath(filename).parts
-        return plugin_path[1] if 'plugins' in plugin_path else ''
+        path_components = pathlib.PurePath(filename).parts
+        num_parts = len(path_components)
+        for i, part in enumerate(path_components):
+            if part == 'plugins' and i < num_parts - 1:
+                return path_components[i + 1]
+        return ''
 
     async def get_facts_from_source(self, fact_source_id):
         fact_sources = await self.locate('sources', match=dict(id=fact_source_id))
