@@ -87,24 +87,20 @@ class Agent(FirstClassObjectInterface, BaseObject):
     @property
     def display_name(self):
         return '{}${}'.format(self.host, self.username)
-    
+
     @property
     def status(self):
         now = datetime.now(timezone.utc)
+        untrusted_buffer = int(self.get_config(name='agents', prop='untrusted_timer'))
+        time_diff = (now - self.last_seen).total_seconds()
+        expired = time_diff > int(self.sleep_max) + untrusted_buffer
         if self._marked_for_stop:
             # If agent hasn't received the stop instruction yet in a beacon response, it's still pending stop
-            if self._stop_delivered:
-                return 'dead'
-            else:
-                return 'pending stop'
+            # Otherwise, if agent has received the stop instruction or takes too long to beacon back, mark as dead
+            return 'dead' if self._stop_delivered or expired else 'pending stop'
         else:
             # If agent hasn't beaconed in since max beacon time + untrusted timer, mark as dead
-            untrusted_buffer = int(self.get_config(name='agents', prop='untrusted_timer'))
-            time_diff = (now - self.last_seen).total_seconds()
-            if time_diff > int(self.sleep_max) + untrusted_buffer:
-                return 'dead'
-            else:
-                return 'alive'
+            return 'dead' if expired else 'alive'
 
     @classmethod
     def is_global_variable(cls, variable):
@@ -235,7 +231,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         if not self._executor_change_to_assign:
             # Don't update executors if we're waiting to assign an executor change to the agent.
             self.update('executors', kwargs.get('executors'))
-        
+
         # Check if agent has been marked to stop
         if self._marked_for_stop and not self._stop_delivered:
             self._stop_delivered = True

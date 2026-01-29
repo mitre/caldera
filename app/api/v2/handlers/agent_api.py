@@ -64,7 +64,7 @@ class AgentApi(BaseObjectApi):
     async def create_agent(self, request: web.Request):
         agent = await self.create_object(request)
         return web.json_response(agent.display)
-    
+
     @aiohttp_apispec.docs(tags=['agents'],
                           summary="Kills an agent",
                           description="Marks an agent to stop after the next beacon.")
