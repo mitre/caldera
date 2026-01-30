@@ -206,7 +206,7 @@ def obfuscator(event_loop, data_svc):
     event_loop.run_until_complete(data_svc.store(
         Obfuscator(name='plain-text',
                    description='Does no obfuscation to any command, instead running it in plain text',
-                   module='plugins.stockpile.app.obfuscators.plain_text')
+                   module='app.obfuscators.plain_text')
         )
     )
 

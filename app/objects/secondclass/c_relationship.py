@@ -1,7 +1,7 @@
 import marshmallow as ma
 
 from app.utility.base_object import BaseObject
-from app.objects.secondclass.c_fact import FactSchema
+from app.objects.secondclass.c_fact import Fact, FactSchema
 
 
 class RelationshipSchema(ma.Schema):
@@ -68,8 +68,8 @@ class Relationship(BaseObject):
 
     def __init__(self, source, edge=None, target=None, score=1, origin=None):
         super().__init__()
-        self.source = source
+        self.source = source or Fact('', None)
         self.edge = edge
-        self.target = target
+        self.target = target or Fact('', None)
         self.score = score
         self.origin = origin
