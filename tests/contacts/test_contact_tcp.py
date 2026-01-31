@@ -1,10 +1,13 @@
 import logging
 import socket
 from unittest import mock
+import pytest
+
 
 from app.utility.base_world import BaseWorld
 from app.contacts.contact_tcp import TcpSessionHandler
 from app.contacts.contact_tcp import Contact
+from app.contacts.utility.c_tcp_session import TCPSession
 
 logger = logging.getLogger(__name__)
 
@@ -39,59 +42,24 @@ class TestTcpSessionHandler:
         assert len(handler.sessions) == 3
 
 
+@pytest.fixture
+def tcp_c2(app_svc, contact_svc, data_svc, obfuscator):
+    services = app_svc.get_services()
+    tcp_contact_svc = Contact(services=services)
+    return tcp_contact_svc
+
+class _MockReader:
+    async def read(self, n=-1):
+        return b'MockContent'
+
+class _MockWriter:
+    def write(self, data):
+        pass
+
 class TestContact:
 
-    def setUp(self):
-        self.patcher1 = mock.patch('app.contacts.contact_tcp.asyncio.start_server', autospec=True)
-        self.patcher2 = mock.patch('app.contacts.contact_tcp.asyncio.get_event_loop', autospec=True)
-        self.patcher3 = mock.patch('app.contacts.contact_tcp.BaseWorld.get_config', autospec=True)
-        self.patcher4 = mock.patch('app.contacts.contact_tcp.Contact.create_logger', autospec=True)
-        self.patcher5 = mock.patch('app.contacts.contact_tcp.Contact.operation_loop', autospec=True)
-        self.patcher6 = mock.patch('app.contacts.contact_tcp.Contact.decode_bytes', autospec=True)
-        self.patcher7 = mock.patch('app.contacts.contact_tcp.Contact.encode_string', autospec=True)
-        self.patcher8 = mock.patch('app.contacts.contact_tcp.Contact.services', autospec=True)
-        self.patcher9 = mock.patch('app.contacts.contact_tcp.Contact.contact_svc', autospec=True)
-        self.patcher10 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler.send', autospec=True)
-        self.patcher11 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler.accept', autospec=True)
-        self.patcher12 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler.refresh', autospec=True)
-        self.patcher13 = mock.patch('app.contacts.utility.c_tcp_session.TCPSession.write_bytes', autospec=True)
-        self.patcher14 = mock.patch('app.contacts.utility.c_tcp_session.TCPSession.read_bytes', autospec=True)
-        self.patcher15 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler._handshake', autospec=True)
-        self.patcher16 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler._attempt_connection', autospec=True)
-        self.patcher17 = mock.patch('app.contacts.utility.c_tcp_session.TCPSession.store', autospec=True)
-        self.patcher18 = mock.patch('app.contacts.utility.c_tcp_session.TCPSession.__init__', autospec=True)
-        self.patcher19 = mock.patch('app.contacts.contact_tcp.Contact.handle_sessions', autospec=True)
-        self.patcher20 = mock.patch('app.contacts.contact_tcp.Contact.handle_sessions.contact_svc.handle_heartbeat', autospec=True)
-        self.patcher21 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler.accept._handshake', autospec=True)
-        self.patcher22 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler.accept._handshake', autospec=True)
-        self.patcher23 = mock.patch('app.contacts.contact_tcp.TcpSessionHandler.sessions', autospec=True)
-        self.patcher1.start()
-        self.patcher2.start()
-        self.patcher3.start()
-        self.patcher4.start()
-        self.patcher5.start()
-        self.patcher6.start()
-        self.patcher7.start()
-        self.patcher8.start()
-        self.patcher9.start()
-        self.patcher10.start()
-        self.patcher11.start()
-        self.patcher12.start()
-        self.patcher13.start()
-        self.patcher14.start()
-        self.patcher15.start()
-        self.patcher16.start()
-        self.patcher17.start()
-        self.patcher18.start()
-        self.patcher19.start()
-        self.patcher20.start()
-        self.patcher21.start()
-        self.patcher22.start()
-
-    def test_tcp_contact(self, event_loop, app_svc):
+    def test_tcp_contact(self, event_loop, tcp_c2):
         BaseWorld.set_config('main', 'app.contact.tcp', '127.0.0.1:57012')
-        self.services = app_svc.get_services()
-        tcp_c2 = Contact(services=self.services)
         tcp_c2.tcp_handler.sessions = [
             mock.Mock(),
             mock.Mock(),
@@ -101,5 +69,9 @@ class TestContact:
         event_loop.run_until_complete(tcp_c2.tcp_handler.accept(None, None))
         assert tcp_c2 is not None
 
-    def tearDown(self):
-        mock.patch.stopall()
+    
+
+    async def test_attempt_connection(self, tcp_c2):
+        MockSession = TCPSession(id=123456, paw='testpaw', reader=_MockReader(), writer=_MockWriter())
+        assert "MockContent" == await tcp_c2.tcp_handler._attempt_connection(MockSession, timeout=1)
+
