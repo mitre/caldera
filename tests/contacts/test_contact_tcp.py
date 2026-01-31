@@ -69,9 +69,6 @@ class TestContact:
         event_loop.run_until_complete(tcp_c2.tcp_handler.accept(None, None))
         assert tcp_c2 is not None
 
-    
-
     async def test_attempt_connection(self, tcp_c2):
         MockSession = TCPSession(id=123456, paw='testpaw', reader=_MockReader(), writer=_MockWriter())
         assert "MockContent" == await tcp_c2.tcp_handler._attempt_connection(MockSession, timeout=1)
-
