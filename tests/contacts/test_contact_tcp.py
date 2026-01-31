@@ -48,13 +48,16 @@ def tcp_c2(app_svc, contact_svc, data_svc, obfuscator):
     tcp_contact_svc = Contact(services=services)
     return tcp_contact_svc
 
+
 class _MockReader:
     async def read(self, n=-1):
         return b'MockContent'
 
+
 class _MockWriter:
     def write(self, data):
         pass
+
 
 class TestContact:
 
