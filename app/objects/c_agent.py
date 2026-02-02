@@ -97,7 +97,7 @@ class Agent(FirstClassObjectInterface, BaseObject):
         if self._marked_for_stop:
             # If agent hasn't received the stop instruction yet in a beacon response, it's still pending stop
             # Otherwise, if agent has received the stop instruction or takes too long to beacon back, mark as dead
-            return 'dead' if self._stop_delivered or expired else 'pending stop'
+            return 'dead' if self._stop_delivered or expired else 'pending kill'
         else:
             # If agent hasn't beaconed in since max beacon time + untrusted timer, mark as dead
             return 'dead' if expired else 'alive'

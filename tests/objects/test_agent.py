@@ -133,7 +133,7 @@ class TestAgent:
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd'], platform='windows')
         assert agent.status == 'alive'
         event_loop.run_until_complete(agent.kill())
-        assert agent.status == 'pending stop'
+        assert agent.status == 'pending kill'
         assert agent.watchdog == 1 and agent.sleep_min == 120 and agent.sleep_max == 120
         event_loop.run_until_complete(agent.heartbeat_modification())
         assert agent.status == 'dead'
@@ -145,9 +145,9 @@ class TestAgent:
             event_loop.run_until_complete(second_agent.kill())
 
             mock_datetime.now.return_value = mock_time + timedelta(0, 30)
-            assert second_agent.status == 'pending stop'
+            assert second_agent.status == 'pending kill'
             mock_datetime.now.return_value = mock_time + timedelta(0, 140)
-            assert second_agent.status == 'pending stop'
+            assert second_agent.status == 'pending kill'
             mock_datetime.now.return_value = mock_time + timedelta(0, 151)
             assert second_agent.status == 'dead'
 
