@@ -64,6 +64,26 @@ class TestTcpSessionHandler:
         MockSession = TCPSession(id=123456, paw='testpaw', reader=_MockReader(), writer=_MockWriter())
         assert "MockContent" == await tcp_c2.tcp_handler._attempt_connection(MockSession, timeout=1)
 
+    async def test_accept(self, tcp_c2):
+        dummy_profile = {
+            'architecture': 'amd64',
+            'exe_name': 'splunkd',
+            'executors': 'sh',
+            'host': 'Caldera',
+            'location': './splunkd',
+            'pid': 10057,
+            'platform': 'linux',
+            'ppid': 9752,
+            'server': '0.0.0.0:7010', 'username': 'caldera'
+        }
+        with mock.patch.object(TcpSessionHandler, '_handshake', return_value=(dummy_profile)):
+            await tcp_c2.tcp_handler.accept(reader=_MockReader(), writer=_MockWriter())
+        assert len(tcp_c2.tcp_handler.sessions) is not None
+
+    async def test_accept_err(self, tcp_c2):
+        await tcp_c2.tcp_handler.accept(reader=_MockReader(), writer=_MockWriter())
+        assert len(tcp_c2.tcp_handler.sessions) is not None
+
 
 class TestContact:
 
