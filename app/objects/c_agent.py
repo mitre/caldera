@@ -243,8 +243,8 @@ class Agent(FirstClassObjectInterface, BaseObject):
 
     async def kill(self):
         self.update('watchdog', 1)
-        self.update('sleep_min', 60 * 2)
-        self.update('sleep_max', 60 * 2)
+        self.update('sleep_min', 3)
+        self.update('sleep_max', 3)
 
         self._marked_for_stop = True
         self._stop_delivered = False

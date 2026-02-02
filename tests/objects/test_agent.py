@@ -134,7 +134,7 @@ class TestAgent:
         assert agent.status == 'alive'
         event_loop.run_until_complete(agent.kill())
         assert agent.status == 'pending kill'
-        assert agent.watchdog == 1 and agent.sleep_min == 120 and agent.sleep_max == 120
+        assert agent.watchdog == 1 and agent.sleep_min == 3 and agent.sleep_max == 3
         event_loop.run_until_complete(agent.heartbeat_modification())
         assert agent.status == 'dead'
 
