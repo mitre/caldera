@@ -59,7 +59,7 @@ class AgentApi(BaseObjectApi):
     @aiohttp_apispec.docs(tags=['agents'],
                           summary="Create a new agent",
                           description="Creates a new agent using the format from 'AgentSchema'.")
-    @aiohttp_apispec.request_schema(AgentSchema(partial=True))
+    @aiohttp_apispec.request_schema(AgentSchema)
     @aiohttp_apispec.response_schema(AgentSchema, description="Returns a single agent in 'AgentSchema' format")
     async def create_agent(self, request: web.Request):
         agent = await self.create_object(request)
