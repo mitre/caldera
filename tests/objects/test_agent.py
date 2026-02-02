@@ -144,11 +144,11 @@ class TestAgent:
             second_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd'], platform='windows')
             event_loop.run_until_complete(second_agent.kill())
 
-            mock_datetime.now.return_value = mock_time + timedelta(0, 30)
+            mock_datetime.now.return_value = mock_time + timedelta(0, 10)
             assert second_agent.status == 'pending kill'
-            mock_datetime.now.return_value = mock_time + timedelta(0, 140)
+            mock_datetime.now.return_value = mock_time + timedelta(0, 32)
             assert second_agent.status == 'pending kill'
-            mock_datetime.now.return_value = mock_time + timedelta(0, 151)
+            mock_datetime.now.return_value = mock_time + timedelta(0, 34)
             assert second_agent.status == 'dead'
 
     def test_status_and_timeout(self, event_loop, mocker, mock_time):
