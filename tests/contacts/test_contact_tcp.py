@@ -89,6 +89,22 @@ class TestTcpSessionHandler:
         assert status == 1
         assert 'Could not find session' in response
 
+    async def test_send_with_session_err(self, tcp_c2):
+        mock_session = TCPSession(id=123456, paw='testpaw', reader=_MockReader(), writer=_MockWriter())
+        tcp_c2.tcp_handler.sessions.append(mock_session)
+        with mock.patch.object(TcpSessionHandler, '_attempt_connection', side_effect=Exception('Test exception')):
+            status, pwd, response, agent_time = await tcp_c2.tcp_handler.send(session_id=123456, cmd='whoami', timeout=1)
+        assert status == 1
+        assert 'Test exception' in response
+
+    async def test_send_with_session_no_response(self, tcp_c2):
+        mock_session = TCPSession(id=123456, paw='testpaw', reader=_MockReader(), writer=_MockWriter())
+        tcp_c2.tcp_handler.sessions.append(mock_session)
+        with mock.patch.object(TcpSessionHandler, '_attempt_connection', return_value=None):
+            status, pwd, response, agent_time = await tcp_c2.tcp_handler.send(session_id=123456, cmd='whoami', timeout=1)
+        assert status == 1
+        assert 'Failed to read data' in response
+
 
 class TestContact:
 
