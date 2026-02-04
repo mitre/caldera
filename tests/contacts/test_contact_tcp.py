@@ -84,6 +84,11 @@ class TestTcpSessionHandler:
         await tcp_c2.tcp_handler.accept(reader=_MockReader(), writer=_MockWriter())
         assert len(tcp_c2.tcp_handler.sessions) is not None
 
+    async def test_send_no_session(self, tcp_c2):
+        status, pwd, response, agent_time = await tcp_c2.tcp_handler.send(session_id=999999, cmd='whoami', timeout=1)
+        assert status == 1
+        assert 'Could not find session' in response
+
 
 class TestContact:
 
