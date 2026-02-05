@@ -27,7 +27,7 @@ class AdversarySchema(ma.Schema):
     tags = ma.fields.List(ma.fields.String(), allow_none=True)
     has_repeatable_abilities = ma.fields.Boolean(dump_only=True)
     plugin = ma.fields.String(load_default=None)
-    metadata = ma.fields.Dict()
+
 
     @ma.pre_load
     def fix_id(self, adversary, **_):
@@ -52,36 +52,41 @@ class AdversarySchema(ma.Schema):
         data.pop('has_repeatable_abilities', None)
         return data
 
+    # @ma.post_load
+    # def build_adversary(self, data, **kwargs):
+    #     try:
+    #         atomic_ordering = data.get('atomic_ordering', [])
+    #         metadata = {}
+
+    #         for idx, step in enumerate(atomic_ordering):
+    #             if isinstance(step, dict):
+    #                 step_metadata = {}
+
+    #                 if 'facts' in step:
+    #                     step_metadata['facts'] = step['facts']
+
+    #                 if 'metadata' in step and isinstance(step['metadata'], dict):
+    #                     executor_facts = step['metadata'].get('executor_facts')
+    #                     if executor_facts:
+    #                         step_metadata['executor_facts'] = executor_facts
+
+    #                 if step_metadata:
+    #                     metadata[str(idx)] = step_metadata
+
+    #         # Do NOT overwrite atomic_ordering here
+    #         data['metadata'] = data.get('metadata', {})
+    #         data['metadata'].update(metadata)
+
+    #         return Adversary(**data)
+    #     except Exception as e:
+    #         traceback.print_exc()
+    #         raise
+    
     @ma.post_load
     def build_adversary(self, data, **kwargs):
-        try:
-            atomic_ordering = data.get('atomic_ordering', [])
-            metadata = {}
-
-            for idx, step in enumerate(atomic_ordering):
-                if isinstance(step, dict):
-                    step_metadata = {}
-
-                    if 'facts' in step:
-                        step_metadata['facts'] = step['facts']
-
-                    if 'metadata' in step and isinstance(step['metadata'], dict):
-                        executor_facts = step['metadata'].get('executor_facts')
-                        if executor_facts:
-                            step_metadata['executor_facts'] = executor_facts
-
-                    if step_metadata:
-                        metadata[str(idx)] = step_metadata
-
-            # Do NOT overwrite atomic_ordering here
-            data['metadata'] = data.get('metadata', {})
-            data['metadata'].update(metadata)
-
-            return Adversary(**data)
-        except Exception as e:
-            traceback.print_exc()
-            raise
-
+        # Atomic ordering already contains full step metadata.
+        # Do NOT synthesize or index metadata here.
+        return Adversary(**data)
 class Adversary(FirstClassObjectInterface, BaseObject):
 
     schema = AdversarySchema()
@@ -99,34 +104,42 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         self.adversary_id = adversary_id if adversary_id else str(uuid.uuid4())
         self.name = name
         self.description = description
-        self.atomic_ordering = atomic_ordering
+        self.atomic_ordering = list(atomic_ordering or [])
+        self.tags = list(tags or [])
         self.objective = objective or DEFAULT_OBJECTIVE_ID
-        self.tags = set(tags) if tags else set()
         self.has_repeatable_abilities = False
         self.plugin = plugin
         self.metadata = metadata or {}
         self.log = logger
-        
-        
+               
     def store(self, ram):
+        self.log.debug(
+            "[store] self.atomic_ordering=%r",
+            self.atomic_ordering
+        )
         existing = self.retrieve(ram['adversaries'], self.unique)
         if not existing:
             ram['adversaries'].append(self)
             return self.retrieve(ram['adversaries'], self.unique)
         existing.update('name', self.name)
         existing.update('description', self.description)
+        self.log.debug(
+            "[store] existing.atomic_ordering BEFORE=%r",
+            getattr(existing, "atomic_ordering", None)
+        )
         existing.update('atomic_ordering', self.atomic_ordering)
+        self.log.debug(
+            "[store] existing.atomic_ordering AFTER=%r",
+            existing.atomic_ordering
+        )
         existing.update('objective', self.objective)
-        existing.update('tags', self.tags)
+        existing.update('tags', list(self.tags or []))
         existing.update('has_repeatable_abilities', self.check_repeatable_abilities(ram['abilities']))
         existing.update('plugin', self.plugin)
         
         return existing
 
     def verify(self, log, abilities, objectives):
-        if not hasattr(self, 'metadata'):
-            self.metadata = {}
-
         for step in self.atomic_ordering:
             ability_id = step if isinstance(step, str) else step.get('ability_id')
             if not any(ability.ability_id == ability_id for ability in abilities):
@@ -141,7 +154,6 @@ class Adversary(FirstClassObjectInterface, BaseObject):
             self.objective = DEFAULT_OBJECTIVE_ID
 
         self.has_repeatable_abilities = self.check_repeatable_abilities(abilities)
-
 
     def has_ability(self, ability):
         for a in self.atomic_ordering:

@@ -36,3 +36,4 @@ class Contact(BaseWorld):
             return web.Response(text=self.contact_svc.encode_string(json.dumps(response)))
         except Exception as e:
             self.log.error('Malformed beacon: %s' % e)
+            self.log.exception('Malformed beacon Exception')

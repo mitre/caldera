@@ -1,4 +1,3 @@
-import json
 from typing import Tuple, Dict, Any
 
 import aiohttp_apispec
@@ -122,19 +121,49 @@ class AdversaryApi(BaseObjectApi):
         AdversarySchema, description="The updated adversary in `AdversarySchema` format."
     )
     async def update_adversary(self, request: web.Request) -> web.Response:
-        """Update an existing adversary and re-verify."""
-        adversary = await self.update_on_disk_object(request)
-        if adversary is None:
-            self.log.debug("[update_adversary] not found id=%s", request.match_info.get("adversary_id"))
-            raise web.HTTPNotFound(reason="Adversary not found. Try creating it instead.")
+        # ✅ read raw JSON BEFORE apispec strips it
+        raw_data = await request.json()
 
+        adversary_id = request.match_info.get("adversary_id")
+        raw_data["adversary_id"] = adversary_id  
+        self.log.debug(
+            "[update_adversary FIX] using raw payload keys=%s",
+            sorted(raw_data.keys()),
+        )
         try:
-            adversary = await self._api_manager.verify_adversary(adversary)
-        except Exception as exc:
-            self.log.exception("[update_adversary] verification failed: %s", exc)
-            raise web.HTTPInternalServerError(reason="Adversary verification failed")
+            adversary = await self._api_manager.find_and_update_on_disk_object(
+                data=raw_data,
+                search={"adversary_id": adversary_id},
+                ram_key="adversaries",
+                id_property="adversary_id",
+                obj_class=Adversary,
+            )
+        except Exception:
+            self.log.exception(
+                "[update_adversary] find_and_update_on_disk_object crashed. "
+                "atomic_ordering_type=%s tags_type=%s raw_data=%r",
+                type(raw_data.get("atomic_ordering")).__name__,
+                type(raw_data.get("tags")).__name__,
+                raw_data,
+            )
+            raise
+        self.log.debug(
+            "[update_adversary] adversary.atomic_ordering (post-load)=%r",
+            getattr(adversary, "atomic_ordering", None)
+        )
+        self.log.debug(
+            "[update_adversary] adversary.metadata (post-load)=%r",
+            getattr(adversary, "metadata", None)
+        )
+        if adversary is None:
+            self.log.warning(
+                "[update_adversary] not found id=%s",
+                adversary_id
+            )
 
-        self.log.debug("[update_adversary] updated id=%s", getattr(adversary, "adversary_id", None))
+            raise web.HTTPNotFound(reason="Adversary not found")
+
+        adversary = await self._api_manager.verify_adversary(adversary)
         return web.json_response(adversary.display)
 
     @aiohttp_apispec.docs(
@@ -208,46 +237,3 @@ class AdversaryApi(BaseObjectApi):
             raise web.HTTPInternalServerError(
                 reason="Internal error during adversary create-or-update"
             )
-
-    async def _parse_common_data_from_request(
-        self, request: web.Request
-    ) -> Tuple[Dict[str, Any], Dict[str, Any], str, Dict[str, Any], Dict[str, Any]]:
-        """
-        Parse request body and common elements for ID, access, query, and search dicts.
-
-        Returns:
-            data: Parsed JSON body (with 'id' stripped and path id injected as adversary_id if present)
-            access: Access dict for the requesting user
-            obj_id: ID pulled from the path parameters
-            query: Query dict targeting the specified object
-            search: `query` + `access` merged for manager layer
-        """
-        # Prefer request.json() but keep a safe fallback for non-JSON bodies
-        data: Dict[str, Any] = {}
-        try:
-            if request.can_read_body:
-                data = await request.json()
-        except Exception:
-            raw_body = await request.read()
-            if raw_body:
-                try:
-                    data = json.loads(raw_body)
-                except Exception:
-                    data = {}
-
-        data.pop("id", None)  # ensure we don't accidentally trust body 'id'
-
-        obj_id = request.match_info.get(self.id_property, "") or ""
-        if obj_id:
-            data[self.id_property] = obj_id
-
-        access = await self.get_request_permissions(request)
-        query = {self.id_property: obj_id}
-        search = {**query, **access}
-
-        self.log.debug(
-            "[_parse_common_data_from_request] id=%s, has_body=%s",
-            obj_id,
-            bool(data),
-        )
-        return data, access, obj_id, query, search

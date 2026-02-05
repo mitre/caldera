@@ -29,6 +29,7 @@ class BaseApiManager(BaseWorld):
             if not search or obj.match(search):
                 yield obj
 
+    #do we need this functions seems useless
     def find_object(self, ram_key: str, search: dict = None):
         for obj in self.find_objects(ram_key, search):
             return obj
@@ -96,13 +97,19 @@ class BaseApiManager(BaseWorld):
         return new_obj.store(self._data_svc.ram)
 
     async def find_and_update_on_disk_object(self, data: dict, search: dict, ram_key: str, id_property: str, obj_class: type):
+        self.log.debug(
+            "[find_and_update] RAW data.atomic_ordering=%r",
+            data.get("atomic_ordering")
+        )
         for obj in self.find_objects(ram_key, search):
-            new_obj = await self.update_on_disk_object(obj, data, ram_key, id_property, obj_class)
+            new_obj = await self.update_on_disk_object(obj, data, ram_key, id_property)
             if new_obj:
                 return new_obj
         return None
 
-    async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str, obj_class: type):
+    async def update_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
+        self.log.debug("[update_on_disk_object] incoming data keys=%s", sorted(list(data.keys())))
+        self.log.debug("[update_on_disk_object] has atomic_ordering? %s", "atomic_ordering" in data)
         obj_id = getattr(obj, id_property)
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
 
@@ -112,9 +119,28 @@ class BaseApiManager(BaseWorld):
             self.log.warning(f'[update_on_disk_object] Missing file or malformed YAML for {obj_id}: {e}')
             return None  # allow the calling handler to fallback to POST
 
-        existing_obj_data.update(data)
+        # Explicitly replace atomic_ordering if provided
+        if "atomic_ordering" in data:
+            # atomic_ordering is authoritative
+            existing_obj_data["atomic_ordering"] = data["atomic_ordering"]
 
-        await self._save_and_reload_object(file_path, existing_obj_data, obj_class, obj.access)
+            # If steps carry metadata, drop legacy top-level metadata
+            if "metadata" not in data:
+                ao = data.get("atomic_ordering") or []
+                if any(isinstance(s, dict) and "metadata" in s for s in ao):
+                    existing_obj_data.pop("metadata", None)
+
+        # Shallow-merge everything else
+        for k, v in data.items():
+            if k != "atomic_ordering":
+                existing_obj_data[k] = v
+
+        await self.replace_on_disk_object(
+            obj=obj,
+            data=existing_obj_data,
+            ram_key=ram_key,
+            id_property=id_property
+        )
 
         updated_obj = next(self.find_objects(ram_key, {id_property: obj_id}), None)
         if not updated_obj:
@@ -128,14 +154,24 @@ class BaseApiManager(BaseWorld):
         # 🧠 Update in-memory object fields
         obj.update('name', data.get('name'))
         obj.update('description', data.get('description'))
-        obj.update('atomic_ordering', data.get('atomic_ordering', []))
-        obj.update('objective', data.get('objective'))
-        obj.update('tags', set(data.get('tags', [])))
-        obj.update('plugin', data.get('plugin'))
-        if 'metadata' in data and hasattr(obj, 'metadata'):
-            obj.metadata = data['metadata']
 
-        await self._save_and_reload_object(file_path, data, type(obj), obj.access)
+        # ✅ THIS is the critical fix
+        obj.atomic_ordering = data.get('atomic_ordering', [])
+        # if any(isinstance(s, dict) and "metadata" in s for s in obj.atomic_ordering):
+        #     obj.metadata = {}
+        self.log.debug(
+            "[REPLACE] Writing atomic_ordering (len=%s)",
+            len(obj.atomic_ordering)
+        )
+
+        obj.update('objective', data.get('objective'))
+        obj.update('tags', list(data.get('tags', [])))
+        obj.update('plugin', data.get('plugin'))
+
+        dumped = obj.schema.dump(obj)
+
+
+        await self._save_and_reload_object(file_path, dumped, type(obj), obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     async def remove_object_from_memory_by_id(self, identifier: str, ram_key: str, id_property: str):
@@ -167,7 +203,7 @@ class BaseApiManager(BaseWorld):
         self.log.debug('Access level: %s', access)
         self.log.debug('Writing object to file: %s', file_path)
         try:
-            yaml_data = yaml.dump(data, encoding='utf-8', sort_keys=False)
+            yaml_data = yaml.dump(data, encoding='utf-8', sort_keys=False, Dumper=yaml.SafeDumper)
             self.log.debug('YAML data prepared for write:\n%s', yaml_data.decode('utf-8'))
 
             await self._file_svc.save_file(file_path, yaml_data, '', encrypt=False)

@@ -185,7 +185,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 'metadata': metadata
             })
             unique_ids.add(ability_id)
-            self.log.debug(f' Processed step entry: {step_entries[-1]}')
 
         all_abilities = await self.get_service('data_svc').locate('abilities', match=dict(ability_id=tuple(unique_ids)))
         ability_map = {a.ability_id: a for a in all_abilities}
@@ -201,9 +200,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
                 'ability': ability,
                 'metadata': step['metadata']
             })
-            self.log.debug(f' Processed step with ability: {steps_with_abilities[-1]}')
 
-        # Optionally filter by buckets
         if buckets:
             steps_with_abilities = [
                 s for s in steps_with_abilities
@@ -387,16 +384,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
         return agent_cleanup_links
 
     async def _generate_new_links(self, operation, agent, steps_with_abilities, link_status):
-        self.log.debug('[link_gen] Using adversary metadata: %s', operation.adversary.metadata)
-        # Normalize metadata from atomic_ordering into .metadata if not already present
         step_metadata = {}
-        for idx, step in enumerate(operation.adversary.atomic_ordering):
-            if isinstance(step, dict):
-                meta = step.get('metadata')
-                if meta:
-                    step_metadata[str(idx)] = meta
-        operation.adversary.metadata = step_metadata
-        self.log.debug('[link_gen] Normalized adversary metadata: %s', operation.adversary.metadata)
+        self.log.debug('[link_gen] Step metadata normalized (%d steps)', len(operation.adversary.metadata))
         links = []
 
         for step in steps_with_abilities:
@@ -422,7 +411,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
             # --- Collect metadata facts (if any) ---
             fact_strings = []
-            fact_strings.extend(step_meta.get('facts', []))  # legacy flat format
+            # fact_strings.extend(step_meta.get('facts', []))  # legacy flat format
             executor_platform = executor.platform
             self.log.debug('Executor platform: %s', executor_platform)
             exec_facts = step_meta.get('executor_facts', {}).get(executor_platform, [])
@@ -497,9 +486,6 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             except Exception as e:
                 self.log.warning('Failed to parse fact: %s (%s)', entry, e)
 
-        self.log.debug('Fact substitutions: %s', substitutions)
-        self.log.debug('Original template: %s', template)
-
         for trait, value in substitutions.items():
             placeholder = f'#{{{trait}}}'
             if placeholder in template:
@@ -507,11 +493,8 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
             else:
                 self.log.debug('[inject_facts] Warning: placeholder %s not found in template', placeholder)
             template = template.replace(placeholder, value)
-
-        self.log.debug('Final injected template: %s', template)
         return template
 
-    
     async def _generate_cleanup_links(self, operation, agent, link_status):
         """Generate cleanup links with given status
 

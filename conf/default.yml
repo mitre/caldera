@@ -29,10 +29,10 @@ exfil_dir: /tmp/caldera
 host: 0.0.0.0
 objects.planners.default: atomic
 plugins:
-- automation
 - debrief
 - sandcat
 - stockpile
+- training
 port: 8888
 reachable_host_traits:
 - remote.host.fqdn

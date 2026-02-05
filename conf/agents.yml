@@ -6,7 +6,7 @@ deployments:
 - 1837b43e-4fff-46b2-a604-a602f7540469
 - 2f34977d-9558-4c12-abad-349716777c6b
 implant_name: splunkd
-sleep_max: 60
-sleep_min: 30
+sleep_max: 3
+sleep_min: 2
 untrusted_timer: 90
 watchdog: 0
