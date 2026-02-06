@@ -74,20 +74,24 @@ class TestTcpSessionHandler:
             'pid': 10057,
             'platform': 'linux',
             'ppid': 9752,
-            'server': '0.0.0.0:7010', 'username': 'caldera'
+            'server': '0.0.0.0:7010',
+            'username': 'caldera'
         }
         with mock.patch.object(TcpSessionHandler, '_handshake', return_value=(dummy_profile)):
             await tcp_c2.tcp_handler.accept(reader=_MockReader(), writer=_MockWriter())
-        assert len(tcp_c2.tcp_handler.sessions) is not None
+        assert len(tcp_c2.tcp_handler.sessions) == 1
 
     async def test_accept_err(self, tcp_c2):
-        await tcp_c2.tcp_handler.accept(reader=_MockReader(), writer=_MockWriter())
-        assert len(tcp_c2.tcp_handler.sessions) is not None
+        with mock.patch.object(TcpSessionHandler, '_handshake', side_effect=Exception('mock exception')):
+            await tcp_c2.tcp_handler.accept(reader=_MockReader(), writer=_MockWriter())
+            assert len(tcp_c2.tcp_handler.sessions) == 0
 
     async def test_send_no_session(self, tcp_c2):
         status, pwd, response, agent_time = await tcp_c2.tcp_handler.send(session_id=999999, cmd='whoami', timeout=1)
         assert status == 1
-        assert 'Could not find session' in response
+        assert 'Could not find session with ID 999999' == response
+        assert pwd == '~$ '
+        assert agent_time == ''
 
     async def test_send_with_session_err(self, tcp_c2):
         mock_session = TCPSession(id=123456, paw='testpaw', reader=_MockReader(), writer=_MockWriter())
@@ -95,19 +99,22 @@ class TestTcpSessionHandler:
         with mock.patch.object(TcpSessionHandler, '_attempt_connection', side_effect=Exception('Test exception')):
             status, pwd, response, agent_time = await tcp_c2.tcp_handler.send(session_id=123456, cmd='whoami', timeout=1)
         assert status == 1
-        assert 'Test exception' in response
+        assert 'Test exception' == response
+        assert pwd == '~$ '
+        assert agent_time == ''
 
     async def test_send_with_session_no_response(self, tcp_c2):
         mock_session = TCPSession(id=123456, paw='testpaw', reader=_MockReader(), writer=_MockWriter())
         tcp_c2.tcp_handler.sessions.append(mock_session)
-        with mock.patch.object(TcpSessionHandler, '_attempt_connection', return_value=None):
+        with mock.patch.object(TcpSessionHandler, '_attempt_connection', return_value=''):
             status, pwd, response, agent_time = await tcp_c2.tcp_handler.send(session_id=123456, cmd='whoami', timeout=1)
         assert status == 1
-        assert 'Failed to read data' in response
+        assert 'Failed to read data from session 123456' == response
+        assert pwd == '~$ '
+        assert agent_time == ''
 
 
 class TestContact:
-
     def test_tcp_contact(self, event_loop, tcp_c2):
         BaseWorld.set_config('main', 'app.contact.tcp', '127.0.0.1:57012')
         dummy_instruction = Instruction(
