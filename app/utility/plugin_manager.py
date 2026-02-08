@@ -14,13 +14,12 @@ class PluginManager:
     
     CORE_PLUGINS = ['stockpile', 'sandcat', 'manx', 'magma']
     
-    def __init__(self, services, plugins_dir: str = 'plugins', allow_build=False):
+    def __init__(self, services, plugins_dir: str = 'plugins'):
         self.services = services
         self.plugins_dir = Path(plugins_dir)
         self.loaded_plugins: Dict[str, object] = {}
         self.enabled_plugins: Dict[str, object] = {}
         self.available_plugins: List[str] = []
-        self.allow_build = allow_build 
 
         self._discover_plugins()
     
@@ -68,7 +67,7 @@ class PluginManager:
         await self._install_requirements_if_needed(plugin_name)
         
         restart_required = False
-        if build_gui and self.allow_build:
+        if build_gui:
             restart_required = await self._build_plugin_gui_if_needed(plugin_name)
 
         try:
