@@ -94,19 +94,19 @@ class PluginManager:
         await asyncio.to_thread(
             subprocess.run,
             ["node", "prebundle.js"],
-            cwd=f"plugins/{plugin_name}",
+            cwd=magma_path,
             check=True
         )
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "install"],
-            cwd=f"plugins/{plugin_name}",
+            cwd=magma_path,
             check=True
         )
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "run", "build"],
-            cwd=f"plugins/{plugin_name}",
+            cwd=magma_path,
             check=True
         )
         return True
