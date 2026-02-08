@@ -59,19 +59,27 @@ class PluginManager:
         module = self.load_plugin(plugin_name)
         if not module:
             return False
-        
-        await self._install_requirements_if_needed(plugin_name)
-        
-        restart_required = False
-        if build_gui:
-            restart_required = await self._build_plugin_gui_if_needed(plugin_name)
-
         try:
-            hook = importlib.import_module(f'plugins.{plugin_name}.hook')
-        except ModuleNotFoundError:
-            print(f"[PluginManager] Hook not found for {plugin_name}, skipping.")
-            return restart_required
+            # STEP 1 — install deps
+            await self._install_requirements_if_needed(plugin_name)
+            
+            # STEP 2 — build GUI
+            restart_required = False
+            if build_gui:
+                restart_required = await self._build_plugin_gui_if_needed(plugin_name)
 
+            # STEP 3 — only now commit enable state
+            try:
+                importlib.import_module(f'plugins.{plugin_name}.hook')
+            except ModuleNotFoundError as e:
+                print(f"[PluginManager] Hook not found for {plugin_name}, skipping.")
+                return restart_required
+        except Exception as e:
+            # NOTHING has been enabled yet — safe to abort
+            print(f"[PluginManager] enable failed for {plugin_name}: {e}")
+            raise
+
+        # STEP 4 — commit enable state only after successful enable
         self.enabled_plugins[plugin_name] = module
 
         return restart_required
