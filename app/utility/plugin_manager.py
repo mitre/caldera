@@ -64,6 +64,7 @@ class PluginManager:
             return None
 
     async def enable_plugin(self, plugin_name: str, build_gui=False) -> bool:
+        restart_required = False
         if plugin_name in self.enabled_plugins:
             return False
 
