@@ -73,7 +73,7 @@ async def start_server():
 
 def run_tasks(services, run_vue_server=False):
     loop = asyncio.get_event_loop()
-    plugin_manager = PluginManager(app_svc.get_services(), allow_build=args.build)
+    plugin_manager = PluginManager(app_svc.get_services())
     services['plugin_manager'] = plugin_manager   
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
