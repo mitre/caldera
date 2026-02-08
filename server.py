@@ -100,7 +100,6 @@ def run_tasks(services, run_vue_server=False):
     for p in plugins:
         if p.name in plugin_manager.enabled_plugins:
             p.enabled = True
-        print("PLUGIN:", p.name, "ACCESS:", p.access, "ENABLED:", p.enabled)
     configured_plugins = (
         BaseWorld.get_config(name='main', prop='plugins') or []
     )
