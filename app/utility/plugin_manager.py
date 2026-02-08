@@ -68,7 +68,7 @@ class PluginManager:
         await self._install_requirements_if_needed(plugin_name)
         
         restart_required = False
-        if build_gui:
+        if build_gui and self.allow_build:
             restart_required = await self._build_plugin_gui_if_needed(plugin_name)
 
         try:
@@ -95,19 +95,19 @@ class PluginManager:
         await asyncio.to_thread(
             subprocess.run,
             ["node", "prebundle.js"],
-            cwd="plugins/magma",
+            cwd=f"plugins/{plugin_name}",
             check=True
         )
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "install"],
-            cwd="plugins/magma",
+            cwd=f"plugins/{plugin_name}",
             check=True
         )
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "run", "build"],
-            cwd="plugins/magma",
+            cwd=f"plugins/{plugin_name}",
             check=True
         )
         return True
@@ -134,9 +134,8 @@ class PluginManager:
             return
 
         print(f"[plugin_manager] installing requirements for {plugin_name}")
-
-        await asyncio.to_thread(
-            subprocess.run,
+        commands = [
+            # preferred: current interpreter (venv)
             [
                 sys.executable,
                 "-m",
@@ -147,5 +146,33 @@ class PluginManager:
                 "-r",
                 str(req_file)
             ],
-            check=True
-        )
+            # fallback: system python
+            [
+                "python3",
+                "-m",
+                "pip",
+                "install",
+                "--disable-pip-version-check",
+                "--no-input",
+                "-r",
+                str(req_file)
+            ]
+        ]
+        last_error = None
+
+        for cmd in commands:
+            try:
+                await asyncio.to_thread(
+                    subprocess.run,
+                    cmd,
+                    check=True
+                )
+                print(f"[plugin_manager] requirements installed using: {cmd[0]}")
+                return
+            except Exception as e:
+                last_error = e
+                print(f"[plugin_manager] pip install failed using {cmd[0]}")
+
+        raise RuntimeError(
+            f"Failed installing requirements for {plugin_name}"
+        ) from last_error
