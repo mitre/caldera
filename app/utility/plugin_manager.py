@@ -10,17 +10,13 @@ import subprocess
 
 
 class PluginManager:
-    """Manage lazy loading of CALDERA plugins."""
-    
-    CORE_PLUGINS = ['stockpile', 'sandcat', 'manx', 'magma']
-    
+    """Manage lazy loading of CALDERA plugins."""    
     def __init__(self, services, plugins_dir: str = 'plugins'):
         self.services = services
         self.plugins_dir = Path(plugins_dir)
         self.loaded_plugins: Dict[str, object] = {}
         self.enabled_plugins: Dict[str, object] = {}
         self.available_plugins: List[str] = []
-
         self._discover_plugins()
     
     async def initialize(self):
@@ -94,28 +90,22 @@ class PluginManager:
         await asyncio.to_thread(
             subprocess.run,
             ["node", "prebundle.js"],
-            cwd=magma_path,
+            cwd="plugins/magma",
             check=True
         )
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "install"],
-            cwd=magma_path,
+            cwd="plugins/magma",
             check=True
         )
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "run", "build"],
-            cwd=magma_path,
+            cwd="plugins/magma",
             check=True
         )
         return True
-
-    def load_core_plugins(self):
-        """Load only core plugins needed for basic operation."""
-        for plugin in self.CORE_PLUGINS:
-            if plugin in self.available_plugins:
-                self.load_plugin(plugin)
     
     def unload_plugin(self, plugin_name: str):
         """Unload a plugin to free memory."""
