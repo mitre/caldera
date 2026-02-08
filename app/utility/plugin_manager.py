@@ -63,7 +63,7 @@ class PluginManager:
             print(f"Error loading plugin {plugin_name}: {e}")
             return None
 
-    async def enable_plugin(self, plugin_name: str, build_gui=False) -> bool:
+    async def enable_plugin(self, plugin_name: str, build_gui=False, install_deps=False) -> bool:
         restart_required = False
         if plugin_name in self.enabled_plugins:
             return False
@@ -77,7 +77,8 @@ class PluginManager:
                 "plugin": plugin_name
             }
             # STEP 1 — install deps
-            await self._install_requirements_if_needed(plugin_name)
+            if install_deps:
+                await self._install_requirements_if_needed(plugin_name)
             
             # STEP 2 — build GUI
             if build_gui:

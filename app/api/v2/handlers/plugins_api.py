@@ -160,7 +160,8 @@ class PluginApi(BaseObjectApi):
         try:
             await plugin_manager.enable_plugin(
                 plugin_name,
-                build_gui=build_gui
+                build_gui=build_gui,
+                install_deps=True
             )
         except Exception:
             import traceback
