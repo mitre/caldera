@@ -18,6 +18,10 @@ class PluginManager:
         self.enabled_plugins: Dict[str, object] = {}
         self.available_plugins: List[str] = []
         self._discover_plugins()
+        self.build_state = {
+            "status": "idle",   # idle | installing | building | restarting
+            "plugin": None
+        }
     
     async def initialize(self):
         """Initialize required infrastructure plugins."""
@@ -67,14 +71,24 @@ class PluginManager:
         if not module:
             return False
         try:
+            self.build_state = {
+                "status": "installing",
+                "plugin": plugin_name
+            }
             # STEP 1 — install deps
             await self._install_requirements_if_needed(plugin_name)
             
             # STEP 2 — build GUI
-            restart_required = False
             if build_gui:
+                self.build_state = {
+                    "status": "building",
+                    "plugin": plugin_name
+                }
                 restart_required = await self._build_plugin_gui_if_needed(plugin_name)
-
+            self.build_state = {
+                "status": "restarting",
+                "plugin": plugin_name
+            }
             # STEP 3 — only now commit enable state
             try:
                 importlib.import_module(f'plugins.{plugin_name}.hook')

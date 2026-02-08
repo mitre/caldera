@@ -191,3 +191,9 @@ class PluginApi(BaseObjectApi):
 
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
+    @routes.get("/api/v2/plugins/build-status")
+    async def build_status(request):
+        pm = request.app["plugin_manager"]
+
+        return web.json_response(pm.build_state)
+
