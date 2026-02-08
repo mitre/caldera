@@ -106,37 +106,52 @@ class PluginManager:
 
         return restart_required
 
-    async def _build_plugin_gui_if_needed(self, plugin_name):
-        gui_path = f"plugins/{plugin_name}/gui"
+    async def _build_plugin_gui_if_needed(self, plugins):
+        # allow string or list
+        if isinstance(plugins, str):
+            plugins = [plugins]
 
-        if not os.path.isdir(gui_path):
+        plugins_to_build = []
+
+        for plugin in plugins:
+            gui_path = f"plugins/{plugin}/gui"
+
+            if not os.path.isdir(gui_path):
+                continue
+
+            if not glob.glob(f"{gui_path}/**/*.vue", recursive=True):
+                continue
+
+            plugins_to_build.append(plugin)
+
+        if not plugins_to_build:
             return False
 
-        if not glob.glob(f"{gui_path}/**/*.vue", recursive=True):
-            return False
-
-        print(f"[plugin_manager] Building GUI for {plugin_name}")
+        print(f"[plugin_manager] Building GUI for: {', '.join(plugins_to_build)}")
 
         await asyncio.to_thread(
             subprocess.run,
-            ["node", "prebundle.js"],
+            ["node", "prebundle.js", *plugins_to_build],
             cwd="plugins/magma",
             check=True
         )
+
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "install"],
             cwd="plugins/magma",
             check=True
         )
+
         await asyncio.to_thread(
             subprocess.run,
             ["npm", "run", "build"],
             cwd="plugins/magma",
             check=True
         )
+
         return True
-    
+
     def unload_plugin(self, plugin_name: str):
         """Unload a plugin to free memory."""
         if plugin_name in self.loaded_plugins:
