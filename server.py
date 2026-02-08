@@ -35,10 +35,9 @@ from app.service.rest_svc import RestService
 from app.utility.base_object import AppConfigGlobalVariableIdentifier
 from app.utility.base_world import BaseWorld
 from app.utility.config_generator import ensure_local_config
-
+from app.utility.plugin_manager import PluginManager
 
 MAGMA_PATH = "./plugins/magma"
-
 
 def setup_logger(level=logging.DEBUG):
     format = "%(message)s"
@@ -74,16 +73,49 @@ async def start_server():
 
 def run_tasks(services, run_vue_server=False):
     loop = asyncio.get_event_loop()
+    plugin_manager = PluginManager(app_svc.get_services(), allow_build=args.build)
+    services['plugin_manager'] = plugin_manager   
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(knowledge_svc.restore_state())
     loop.run_until_complete(app_svc.register_contacts())
-    loop.run_until_complete(app_svc.load_plugins(args.plugins))
+    # loop.run_until_complete(app_svc.load_plugins(args.plugins))
+    
     loop.run_until_complete(
         data_svc.load_data(
             loop.run_until_complete(data_svc.locate("plugins", dict(enabled=True)))
         )
     )
+    loop.run_until_complete(
+        app_svc.register_discovered_plugins(
+            plugin_manager.available_plugins
+        )
+    )
+    loop.run_until_complete(
+        app_svc.setup_jinja_templates(plugin_manager.available_plugins)
+    )
+    plugins = loop.run_until_complete(
+        data_svc.locate('plugins')
+    )
+    for p in plugins:
+        if p.name in plugin_manager.enabled_plugins:
+            p.enabled = True
+        print("PLUGIN:", p.name, "ACCESS:", p.access, "ENABLED:", p.enabled)
+    configured_plugins = (
+        BaseWorld.get_config(name='main', prop='plugins') or []
+    )
+
+    restart_required = False
+    if not args.fresh:
+        for name in configured_plugins:
+            needs_restart = loop.run_until_complete(
+                plugin_manager.enable_plugin(name)
+            )
+            restart_required = restart_required or needs_restart
+
+    if restart_required:
+        logging.info("[plugin_manager] GUI rebuilt during startup")
+        
     loop.run_until_complete(
         app_svc.load_plugin_expansions(
             loop.run_until_complete(data_svc.locate("plugins", dict(enabled=True)))
@@ -91,6 +123,8 @@ def run_tasks(services, run_vue_server=False):
     )
     loop.run_until_complete(RestApi(services).enable())
     loop.run_until_complete(auth_svc.set_login_handlers(services))
+    loop.run_until_complete(plugin_manager.initialize())
+
     loop.create_task(app_svc.start_sniffer_untrusted_agents())
     loop.create_task(app_svc.resume_operations())
     loop.create_task(app_svc.run_scheduler())

@@ -45,6 +45,24 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('GET', '/file/download_exfil', self.download_exfil_file)
         self.app_svc.application.router.add_route('GET', '/{tail:(?!plugin/|api/v2/).*}', self.handle_catch)
 
+    @check_authorization
+    async def enable_plugin(self, request):
+        name = request.match_info['name']
+
+        plugin_manager = self.app_svc.get_service('plugin_manager')
+
+        await plugin_manager.enable_plugin(name)
+
+        plugin = (
+            await self.data_svc.locate('plugins', dict(name=name))
+        )[0]
+
+        plugin.enabled = True
+        await self.data_svc.store(plugin)
+
+        return web.json_response({'status': 'enabled'})
+
+
     async def validate_login(self, request):
         return await self.auth_svc.login_user(request)
 

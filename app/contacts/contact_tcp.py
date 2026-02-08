@@ -6,7 +6,10 @@ import time
 from typing import Tuple
 
 from app.utility.base_world import BaseWorld
-from plugins.manx.app.c_session import Session
+try:
+    from plugins.manx.app.c_session import Session
+except ModuleNotFoundError:
+    Session = None
 
 
 class Contact(BaseWorld):

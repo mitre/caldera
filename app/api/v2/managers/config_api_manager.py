@@ -27,7 +27,6 @@ def filter_keys(mapping, keys_to_remove):
 
     return filtered
 
-
 def filter_sensitive_props(config_map):
     """Return a copy of `config_map` with top-level sensitive keys removed."""
     return filter_keys(config_map, keys_to_remove=SENSITIVE_CONFIG_PROPS)
@@ -69,20 +68,30 @@ class ConfigApiManager(BaseApiManager):
         if is_sensitive_prop(prop):
             raise ConfigUpdateNotAllowed(prop)
 
-        if prop == 'plugin':
-            enabled_plugins = self._config_interface.get_config(
-                name='main',
-                prop='plugins'
+        # UI sends "plugin" (singular)
+        if prop in ('plugin', 'plugins'):
+            enabled_plugins = (
+                self._config_interface.get_config(
+                    name='main',
+                    prop='plugins'
+                ) or []
             )
 
             if value not in enabled_plugins:
                 enabled_plugins.append(value)
-        else:
+
             self._config_interface.set_config(
                 name='main',
-                prop=prop,
-                value=value
+                prop='plugins',
+                value=enabled_plugins
             )
+            return
+
+        self._config_interface.set_config(
+            name='main',
+            prop=prop,
+            value=value
+        )
 
     async def update_global_agent_config(self, sleep_min: int = None, sleep_max: int = None, watchdog: int = None,
                                          untrusted_timer: int = None, implant_name: str = None, bootstrap_abilities: List[str] = None, deadman_abilities=None):

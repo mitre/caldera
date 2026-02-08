@@ -6,7 +6,7 @@ from aiohttp import web
 import app
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.schemas.caldera_info_schemas import CalderaInfoSchema
-
+from app.utility.base_world import BaseWorld
 
 class HealthApi(BaseApi):
     def __init__(self, services):
@@ -22,6 +22,11 @@ class HealthApi(BaseApi):
                           description='Returns the status of Caldera and additional details including versions of system components')
     @aiohttp_apispec.response_schema(CalderaInfoSchema, 200, description='Includes all loaded plugins and system components.')
     async def get_health_info(self, request):
+        if BaseWorld.get_config(prop="restarting"):
+            return web.json_response(
+                {"status": "restarting"},
+                status=503
+            )
         loaded_plugins_sorted = sorted(self._app_svc.get_loaded_plugins(), key=operator.attrgetter('name'))
         access = await self._auth_svc.get_permissions(request)
 

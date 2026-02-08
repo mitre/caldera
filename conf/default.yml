@@ -28,11 +28,7 @@ encryption_key: ADMIN123
 exfil_dir: /tmp/caldera
 host: 0.0.0.0
 objects.planners.default: atomic
-plugins:
-- debrief
-- sandcat
-- stockpile
-- training
+plugins: []
 port: 8888
 reachable_host_traits:
 - remote.host.fqdn
@@ -48,6 +44,7 @@ requirements:
     module: sys
     type: python_module
     version: 3.9.0
+restarting: true
 users:
   blue:
     blue: admin

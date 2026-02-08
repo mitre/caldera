@@ -78,7 +78,9 @@ class Plugin(FirstClassObjectInterface, BaseObject):
 
     async def enable(self, services):
         try:
-            configured_plugins = set(BaseWorld.get_config('plugins', []))
+            configured_plugins = set(
+                BaseWorld.get_config(name='main', prop='plugins') or []
+            )
             if self.name not in configured_plugins and self.name not in self.REQUIRED_PLUGINS:
                 # logging.warning(f'Skipping plugin={self.name} because it is not enabled in config and is not required')
                 return
@@ -107,22 +109,24 @@ class Plugin(FirstClassObjectInterface, BaseObject):
         except Exception as e:
             logging.error('Error expanding plugin=%s, %s' % (self.name, e))
 
-    # def _load_module(self):
-    #     try:
-    #         return import_module('plugins.%s.hook' % self.name)
-    #     except Exception as e:
-    #         logging.error('Error importing plugin=%s, %s' % (self.name, e))
+    def _load_module(self):
+        try:
+            return import_module('plugins.%s.hook' % self.name)
+        except Exception as e:
+            logging.error('Error importing plugin=%s, %s' % (self.name, e))
   
 
-    def _load_module(self):
-        configured_plugins = set(BaseWorld.get_config('plugins', []))
-        if self.name not in configured_plugins and self.name not in self.REQUIRED_PLUGINS:
-            return None
-            # raise ImportError(f'Plugin "{self.name}" is not enabled in configuration and is not a required plugin')
+    # def _load_module(self):
+    #     configured_plugins = set(
+#     BaseWorld.get_config(name='main', prop='plugins') or []
+# )
+    #     if self.name not in configured_plugins and self.name not in self.REQUIRED_PLUGINS:
+    #         return None
+    #         # raise ImportError(f'Plugin "{self.name}" is not enabled in configuration and is not a required plugin')
 
-        try:
-            return import_module(f'plugins.{self.name}.hook')
-        except Exception as e:
-            logging.error(f'Error importing plugin={self.name}, {e}')
-            raise
+    #     try:
+    #         return import_module(f'plugins.{self.name}.hook')
+    #     except Exception as e:
+    #         logging.error(f'Error importing plugin={self.name}, {e}')
+    #         raise
 

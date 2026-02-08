@@ -9,6 +9,7 @@ import shutil
 import warnings
 import pathlib
 from importlib import import_module
+from pathlib import Path
 
 from app.objects.c_ability import Ability
 from app.objects.c_adversary import Adversary
@@ -99,22 +100,56 @@ class DataService(DataServiceInterface, BaseService):
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
     async def restore_state(self):
-        """
-        Restore the object database
+        if not os.path.exists('data/object_store'):
+            self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
+            return
 
-        :return:
-        """
-        if os.path.exists('data/object_store'):
-            _, store = await self.get_service('file_svc').read_file('object_store', 'data')
-            # Pickle is only used to load a local file that caldera creates. Pickled data is not
-            # received over the network.
+        _, store = await self.get_service('file_svc').read_file('object_store', 'data')
+
+        try:
             ram = pickle.loads(store)  # nosec
-            for key in ram.keys():
-                self.ram[key] = []
-                for c_object in ram[key]:
+        except ModuleNotFoundError as e:
+            self.log.warning(f"Stale plugin detected during restore: {e}")
+            ram = self._safe_unpickle(store)
+
+        available_plugins = {
+            p.name
+            for p in Path("plugins").iterdir()
+            if p.is_dir() and (p / "__init__.py").exists()
+        }
+
+        for key in ram.keys():
+            self.ram[key] = []
+
+            for c_object in ram[key]:
+
+                plugin = getattr(c_object, 'plugin', None)
+
+                # skip objects belonging to plugins that no longer exist
+                if plugin and plugin not in available_plugins:
+                    self.log.warning(
+                        f"Skipping object from missing plugin: {plugin}"
+                    )
+                    continue
+
+                try:
                     await self.store(c_object)
-            self.log.debug('Restored data from persistent storage')
+                except Exception as e:
+                    self.log.warning(f"Skipping stale object: {e}")
+
+
+        self.log.debug('Restored data from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
+    def _safe_unpickle(self, store):
+        """
+        Attempt partial restore when plugins are missing.
+        Drops objects that reference missing modules.
+        """
+        try:
+            self.log.warning("Falling back to empty object store")
+            return copy.deepcopy(self.schema)
+        except ModuleNotFoundError as e:
+            self.log.warning(f"Dropping object during safe unpickle: {e}")
 
     async def apply(self, collection):
         if collection not in self.ram:

@@ -36,6 +36,46 @@ class AppService(AppServiceInterface, BaseService):
         self.loop = asyncio.get_event_loop()
         self._errors = []
         self._loaded_plugins = []  # all plugins that were loaded, including disabled ones
+    async def setup_jinja_templates(self, plugin_names):
+        """
+        Configure Jinja template loader without enabling plugins.
+        This replaces the setup that used to happen inside load_plugins().
+        """
+        templates = []
+
+        for p in plugin_names:
+            tdir = f"plugins/{p.lower()}/templates"
+            if os.path.isdir(tdir):
+                templates.append(tdir)
+
+        # magma UI templates live here in Caldera v5
+        if os.path.isdir("plugins/magma/dist"):
+            templates.append("plugins/magma/dist")
+
+        aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
+        
+    async def register_discovered_plugins(self, plugin_names):
+        data_svc = self.get_service('data_svc')
+
+        existing = {
+            p.name: p for p in await data_svc.locate('plugins')
+        }
+
+        for name in plugin_names:
+            plugin = Plugin(name=name)
+            try:
+                if plugin.load_plugin():
+                    plugin.enabled = False  # default to disabled until explicitly enabled
+                    # preserve enabled state
+                    if name in existing:
+                        plugin.enabled = existing[name].enabled
+
+                    await data_svc.store(plugin)
+                    self._loaded_plugins.append(plugin)
+            except Exception as e:
+                self.log.error(f"Error loading plugin {name}: {e}", exc_info=True)
+                continue
+
 
     async def start_sniffer_untrusted_agents(self):
         next_check = self.get_config(name='agents', prop='untrusted_timer')
