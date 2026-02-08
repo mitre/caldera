@@ -28,11 +28,18 @@ class PluginManager:
         """Discover available plugins without loading them."""
         if not self.plugins_dir.exists():
             return
-        
+
         for plugin_path in self.plugins_dir.iterdir():
-            if plugin_path.is_dir() and (plugin_path / '__init__.py').exists():
-                if plugin_path.name not in self.available_plugins:
-                    self.available_plugins.append(plugin_path.name)
+            if not plugin_path.is_dir():
+                continue
+
+            if not (plugin_path / "hook.py").exists():
+                continue
+
+            name = plugin_path.name
+
+            if name not in self.available_plugins:
+                self.available_plugins.append(name)
 
     def load_plugin(self, plugin_name: str) -> Optional[object]:
         if plugin_name in self.loaded_plugins:
