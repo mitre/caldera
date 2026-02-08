@@ -22,6 +22,7 @@ class PluginApi(BaseObjectApi):
         router.add_get('/plugins/{name}', self.get_plugin_by_name)
         router.add_post('/plugins/{name}/enable', self.enable_plugin)
         router.add_post('/plugins/disable', self.disable_plugins)
+        router.add_get('/plugins/build-status', self.build_status)
 
     @aiohttp_apispec.docs(tags=['plugins'],
                           summary='Retrieve all plugins',
@@ -191,9 +192,7 @@ class PluginApi(BaseObjectApi):
 
         os.execv(sys.executable, [sys.executable] + sys.argv)
 
-    @routes.get("/api/v2/plugins/build-status")
-    async def build_status(request):
-        pm = request.app["plugin_manager"]
+    async def build_status(self, request):
+        plugin_manager = self.services.get("plugin_manager")
 
-        return web.json_response(pm.build_state)
-
+        return web.json_response(plugin_manager.build_state)
