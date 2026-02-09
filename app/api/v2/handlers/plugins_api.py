@@ -151,8 +151,6 @@ class PluginApi(BaseObjectApi):
             "restart_required": True
         })
     async def _enable_build_restart(self, plugin_manager, plugin_name, build_gui):
-
-        # CRITICAL: allow aiohttp to flush response first
         await asyncio.sleep(0.5)
 
         print("[plugin_manager] starting async enable/build")
