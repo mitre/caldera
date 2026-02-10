@@ -5,8 +5,8 @@ import pytest
 import yaml
 
 from base64 import b64encode
-from tests import AsyncMock
 from asyncio import Future
+from unittest.mock import AsyncMock
 
 from app.data_encoders.base64_basic import Base64Encoder
 from app.data_encoders.plain_text import PlainTextEncoder
