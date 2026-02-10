@@ -47,6 +47,7 @@ plugins/magma
 plugins/automation
 plugins/range
 plugins/spp
+plugins/stockpile
 mlruns/
 mlruns.db
 # coverage reports
