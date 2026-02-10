@@ -43,6 +43,7 @@ data/abilities/**/*.yml
 .tox/
 node_modules/
 plugins/mcp
+plugins/magma
 plugins/automation
 plugins/range
 plugins/spp
