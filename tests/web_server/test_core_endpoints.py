@@ -63,6 +63,8 @@ async def sample_agent(aiohttp_client):
 
 
 async def test_home(aiohttp_client):
+    if not (len(os.listdir("plugins/magma/dist/assets")) > 0):
+        pytest.xfail("Magma plugin not present, expecting failure")
     resp = await aiohttp_client.get('/')
     assert resp.status == HTTPStatus.OK
     assert resp.content_type == 'text/html'
