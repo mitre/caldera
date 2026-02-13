@@ -29,7 +29,9 @@ class RestApi(BaseWorld):
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
-        self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
+        # check if plugin path is present
+        if os.path.exists("plugins/magma/dist/assets") and (len(os.listdir("plugins/magma/dist/assets")) > 0):
+            self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
         # TODO: only serve static files in legacy plugin mode
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
