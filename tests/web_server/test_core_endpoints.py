@@ -25,6 +25,8 @@ async def aiohttp_client(aiohttp_client):
             BaseWorld.apply_config('main', yaml.safe_load(fle))
         with open(Path(__file__).parents[2] / 'conf' / 'payloads.yml', 'r') as fle:
             BaseWorld.apply_config('payloads', yaml.safe_load(fle))
+        with open(Path(__file__).parents[2] / 'conf' / 'agents.yml', 'r') as fle:
+            BaseWorld.apply_config('agents', yaml.safe_load(fle))
 
         app_svc = AppService(web.Application())
         _ = DataService()

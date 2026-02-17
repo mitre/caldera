@@ -366,6 +366,8 @@ async def api_v2_client(aiohttp_client, contact_svc):
             BaseWorld.apply_config('main', yaml.safe_load(fle))
         with open(Path(__file__).parents[1] / 'conf' / 'payloads.yml', 'r') as fle:
             BaseWorld.apply_config('payloads', yaml.safe_load(fle))
+        with open(Path(__file__).parents[1] / 'conf' / 'agents.yml', 'r') as fle:
+            BaseWorld.apply_config('agents', yaml.safe_load(fle))
 
         app_svc = AppService(web.Application(client_max_size=5120 ** 2))
         _ = DataService()
