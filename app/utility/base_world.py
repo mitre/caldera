@@ -40,7 +40,7 @@ class BaseWorld:
                 with open(overwrite_path, 'w') as cfg_file:
                     cfg_file.write(yaml.dump(config))
         BaseWorld._app_configuration[name] = config
-        
+
     @staticmethod
     def clear_config():
         BaseWorld._app_configuration = {}

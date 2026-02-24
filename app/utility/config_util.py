@@ -68,7 +68,7 @@ def make_secure_config():
 
     config['users'] = dict(red=dict(red=secrets.token_urlsafe()),
                            blue=dict(blue=secrets.token_urlsafe()))
-    
+
     # Display API keys and user credentials, then hash them
     logging.info(CONFIG_MSG_TEMPLATE.render(config_path=LOCAL_CONF_PATH, **config))
     hash_config_creds(config)

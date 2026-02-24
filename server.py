@@ -239,7 +239,7 @@ if __name__ == "__main__":
         ensure_local_config()
 
     main_config_path = "conf/%s.yml" % args.environment
-    BaseWorld.apply_config("main", BaseWorld.strip_yml(main_config_path)[0], apply_hash=True, 
+    BaseWorld.apply_config("main", BaseWorld.strip_yml(main_config_path)[0], apply_hash=True,
                            overwrite_path=main_config_path)
     logging.info("Using main config from %s" % main_config_path)
     BaseWorld.apply_config("agents", BaseWorld.strip_yml("conf/agents.yml")[0])
