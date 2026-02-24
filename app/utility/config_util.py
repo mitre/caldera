@@ -6,6 +6,7 @@ import jinja2
 import yaml
 
 from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 
 
 CONFIG_MSG_TEMPLATE = jinja2.Template("""
@@ -31,6 +32,17 @@ HASHED_OPTIONS = ('api_key_blue', 'api_key_red')
 
 def _is_hashed(val):
     return val.startswith('$argon2id$')
+
+
+def verify_hash(hash_val, target):
+    """
+    Returns True if the argon2 hash for the target matches hash_val, False otherwise.
+    """
+    ph = PasswordHasher()
+    try:
+        return ph.verify(hash_val, target)
+    except (VerifyMismatchError, VerificationError, InvalidHashError):
+        return False
 
 
 def hash_config_creds(config):

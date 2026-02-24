@@ -3,11 +3,10 @@ import ldap3
 
 from aiohttp import web
 from aiohttp_jinja2 import render_template
-from argon2 import PasswordHasher
-from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 from ldap3.core.exceptions import LDAPAttributeError, LDAPException
 
 from app.service.interfaces.i_login_handler import LoginHandlerInterface
+from app.utility.config_util import verify_hash
 
 HANDLER_NAME = 'Default Login Handler'
 
@@ -50,15 +49,10 @@ class DefaultLoginHandler(LoginHandlerInterface):
 
     @staticmethod
     async def _check_credentials(user_map, username, password):
-        ph = PasswordHasher()
         user = user_map.get(username)
         if not user:
             return False
-        try:
-            return ph.verify(user.password, password)
-        except (VerifyMismatchError, VerificationError, InvalidHashError):
-            return False
-        return False
+        return verify_hash(user.password, password)
 
     async def _ldap_login(self, username, password):
         server = ldap3.Server(self._ldap_config.get('server'))
