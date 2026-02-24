@@ -25,7 +25,6 @@ COOKIE_SESSION = 'API_SESSION'
 CONFIG_API_KEY_RED = 'api_key_red'
 CONFIG_API_KEY_BLUE = 'api_key_blue'
 CONFIG_AUTH_LOGIN_HANDLER = 'auth.login.handler.module'
-COOKIE_STORAGE_KEY_FILE = 'cookie_storage_key'
 
 
 def for_all_public_methods(decorator):
