@@ -1,6 +1,6 @@
 import base64
+import os
 from collections import namedtuple
-from hmac import compare_digest
 from importlib import import_module
 
 from aiohttp import web, web_request
@@ -11,6 +11,8 @@ from aiohttp_security import setup as setup_security
 from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
+from argon2 import PasswordHasher
+from argon2.exceptions import VerifyMismatchError, VerificationError, InvalidHashError
 from cryptography import fernet
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
@@ -24,6 +26,7 @@ COOKIE_SESSION = 'API_SESSION'
 CONFIG_API_KEY_RED = 'api_key_red'
 CONFIG_API_KEY_BLUE = 'api_key_blue'
 CONFIG_AUTH_LOGIN_HANDLER = 'auth.login.handler.module'
+COOKIE_STORAGE_KEY_FILE = 'cookie_storage_key'
 
 
 def for_all_public_methods(decorator):
@@ -139,13 +142,17 @@ class AuthService(AuthServiceInterface, BaseService):
                 raise e
 
     def request_has_valid_api_key(self, request):
+        ph = PasswordHasher()
         request_api_key = request.headers.get(HEADER_API_KEY)
         if request_api_key is None:
             return False
         for i in [CONFIG_API_KEY_RED, CONFIG_API_KEY_BLUE]:
-            api_key = self.get_config(i)
-            if api_key is not None and compare_digest(request_api_key, api_key):
-                return True
+            hashed_api_key = self.get_config(i)
+            try:
+                if hashed_api_key is not None and ph.verify(hashed_api_key, request_api_key):
+                    return True
+            except (VerifyMismatchError, VerificationError, InvalidHashError):
+                pass
         return False
 
     async def request_has_valid_user_session(self, request):
@@ -166,14 +173,22 @@ class AuthService(AuthServiceInterface, BaseService):
             return await self.login_redirect(request, use_template=False)
 
     async def get_permissions(self, request):
+        ph = PasswordHasher()
         identity_policy = request.config_dict.get('aiohttp_security_identity_policy')
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
             return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
-        elif request.headers.get(HEADER_API_KEY) == self.get_config(CONFIG_API_KEY_RED):
-            return self.Access.RED, self.Access.APP
-        elif request.headers.get(HEADER_API_KEY) == self.get_config(CONFIG_API_KEY_BLUE):
-            return self.Access.BLUE, self.Access.APP
+        else:
+            try:
+                if ph.verify(self.get_config(CONFIG_API_KEY_RED), request.headers.get(HEADER_API_KEY)):
+                    return self.Access.RED, self.Access.APP
+            except (VerifyMismatchError, VerificationError, InvalidHashError):
+                pass
+            try:
+                if ph.verify(self.get_config(CONFIG_API_KEY_BLUE), request.headers.get(HEADER_API_KEY)):
+                    return self.Access.BLUE, self.Access.APP
+            except (VerifyMismatchError, VerificationError, InvalidHashError):
+                pass
         return ()
 
     async def is_request_authenticated(self, request):

@@ -14,6 +14,8 @@ from enum import Enum
 import marshmallow as ma
 import marshmallow_enum as ma_enum
 
+from app.utility.config_util import hash_config_creds
+
 
 class BaseWorld:
     """
@@ -26,9 +28,19 @@ class BaseWorld:
     TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
     @staticmethod
-    def apply_config(name, config):
+    def apply_config(name, config, apply_hash=False, overwrite_path=''):
+        """
+        Hashes credentials and API keys if needed. Overwrites config at path with secure
+        version if any changes are made.
+        """
+        if apply_hash:
+            changes_made = hash_config_creds(config)
+            if changes_made and overwrite_path:
+                logging.debug(f'Overwriting config file {overwrite_path} with secure values')
+                with open(overwrite_path, 'w') as cfg_file:
+                    cfg_file.write(yaml.dump(config))
         BaseWorld._app_configuration[name] = config
-
+        
     @staticmethod
     def clear_config():
         BaseWorld._app_configuration = {}

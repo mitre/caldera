@@ -18,7 +18,7 @@ class StubDataService:
 @pytest.fixture
 def base_world(app_config, agent_config):
     BaseWorld.clear_config()
-    BaseWorld.apply_config('main', app_config)
+    BaseWorld.apply_config('main', app_config, apply_hash=True)
     BaseWorld.apply_config('agents', agent_config)
 
     yield BaseWorld
