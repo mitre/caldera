@@ -170,11 +170,10 @@ class AuthService(AuthServiceInterface, BaseService):
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
             return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
-        else:
-            if verify_hash(self.get_config(CONFIG_API_KEY_RED), request.headers.get(HEADER_API_KEY)):
-                return self.Access.RED, self.Access.APP
-            if verify_hash(self.get_config(CONFIG_API_KEY_BLUE), request.headers.get(HEADER_API_KEY)):
-                return self.Access.BLUE, self.Access.APP
+        elif verify_hash(self.get_config(CONFIG_API_KEY_RED), request.headers.get(HEADER_API_KEY)):
+            return self.Access.RED, self.Access.APP
+        elif verify_hash(self.get_config(CONFIG_API_KEY_BLUE), request.headers.get(HEADER_API_KEY)):
+            return self.Access.BLUE, self.Access.APP
         return ()
 
     async def is_request_authenticated(self, request):
