@@ -446,8 +446,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
         def fact_to_dict(f):
             if f:
                 return dict(trait=f.trait, value=f.value, score=f.score)
+        existing = await services.get('data_svc').locate('sources', match=dict(name=self.name))
+        source_id = existing[0].id if existing else str(uuid.uuid4())
         data = dict(
-            id=str(uuid.uuid4()),
+            id=source_id,
             name=self.name,
             facts=[fact_to_dict(f) for link in self.chain for f in link.facts],
             relationships=[dict(source=fact_to_dict(r.source), edge=r.edge,
