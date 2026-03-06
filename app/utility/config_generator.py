@@ -34,7 +34,7 @@ def make_secure_config():
     with open('conf/default.yml', 'r') as fle:
         config = yaml.safe_load(fle)
 
-    secret_options = ('api_key_blue', 'api_key_red', 'crypt_salt', 'encryption_key', 'session_cookie_key')
+    secret_options = ('api_key_blue', 'api_key_red', 'crypt_salt', 'encryption_key')
     for option in secret_options:
         config[option] = secrets.token_urlsafe()
 

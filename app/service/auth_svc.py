@@ -2,6 +2,7 @@ import base64
 from collections import namedtuple
 from hmac import compare_digest
 from importlib import import_module
+import os
 
 from aiohttp import web, web_request
 from aiohttp.web_exceptions import HTTPUnauthorized, HTTPForbidden
@@ -73,31 +74,35 @@ class AuthService(AuthServiceInterface, BaseService):
                 for username, password in user.items():
                     await self.create_user(username, password, group)
         app.user_map = self.user_map
-
-        # --- START CUSTOM SESSION PERSISTENCE LOGIC --- DBC
-        raw_session_key = self.get_config('session_cookie_key') 
+        cookie_file = 'cookie_storage'
         expiration_days = self.get_config('session_expiration_days')
+        file_svc = self.get_service('file_svc')
+        cookie_path = os.path.join('data', cookie_file)
 
         # Safely calculate max_age in seconds, allowing for fractional days
         try:
             max_age = int(float(expiration_days) * 86400) if expiration_days else None
-        except ValueError:
+        except (ValueError, TypeError):
             max_age = None
-
-        if raw_session_key:
-            # Pad or truncate the string to exactly 32 bytes for the AES cipher
-            secret_key = str(raw_session_key).encode('utf-8').ljust(32, b'\0')[:32]
-            self.log.debug('Using persistent session cookie key from config.')
-        else:
-            # Fallback to the original Caldera behavior (random key on startup)
-            fernet_key = fernet.Fernet.generate_key()
-            secret_key = base64.urlsafe_b64decode(fernet_key)
-            self.log.debug('Using random session cookie key (ephemeral sessions).')
+        try:
+            if os.path.exists(os.path.join('data', cookie_file)):
+                secret_key = file_svc._read(cookie_path)
+                self.log.debug('Loaded persistent session key from data/cookie_storage')
+            else:
+                # Generate a new random 32-byte key for AES encryption if no valid key is found in the config or data folder
+                secret_key = os.urandom(32)
+                file_svc._save(cookie_path, secret_key, encrypt=True)
+                self.log.debug('Generated and saved new persistent session key.')
+        except Exception as e:
+            # Fallback if file operations fail
+            self.log.warning('Could not manage persistent key file, falling back to ephemeral: %s', e)
+            secret_key = os.urandom(32)
+        if len(secret_key) != 32:
+            secret_key = os.urandom(32)
+            self.log.warning('Loaded session key is not 32 bytes long. Generating new key.')
 
         # Pass max_age to the storage initializer
         storage = EncryptedCookieStorage(secret_key, cookie_name=COOKIE_SESSION, max_age=max_age)
-        # --- END CUSTOM SESSION PERSISTENCE LOGIC --- DBC
-
         setup_session(app, storage)
         policy = SessionIdentityPolicy()
         setup_security(app, policy, DictionaryAuthorizationPolicy(self.user_map))
