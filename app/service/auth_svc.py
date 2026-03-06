@@ -73,9 +73,31 @@ class AuthService(AuthServiceInterface, BaseService):
                 for username, password in user.items():
                     await self.create_user(username, password, group)
         app.user_map = self.user_map
-        fernet_key = fernet.Fernet.generate_key()
-        secret_key = base64.urlsafe_b64decode(fernet_key)
-        storage = EncryptedCookieStorage(secret_key, cookie_name=COOKIE_SESSION)
+
+        # --- START CUSTOM SESSION PERSISTENCE LOGIC --- DBC
+        raw_session_key = self.get_config('session_cookie_key') 
+        expiration_days = self.get_config('session_expiration_days')
+
+        # Safely calculate max_age in seconds, allowing for fractional days
+        try:
+            max_age = int(float(expiration_days) * 86400) if expiration_days else None
+        except ValueError:
+            max_age = None
+
+        if raw_session_key:
+            # Pad or truncate the string to exactly 32 bytes for the AES cipher
+            secret_key = str(raw_session_key).encode('utf-8').ljust(32, b'\0')[:32]
+            self.log.debug('Using persistent session cookie key from config.')
+        else:
+            # Fallback to the original Caldera behavior (random key on startup)
+            fernet_key = fernet.Fernet.generate_key()
+            secret_key = base64.urlsafe_b64decode(fernet_key)
+            self.log.debug('Using random session cookie key (ephemeral sessions).')
+
+        # Pass max_age to the storage initializer
+        storage = EncryptedCookieStorage(secret_key, cookie_name=COOKIE_SESSION, max_age=max_age)
+        # --- END CUSTOM SESSION PERSISTENCE LOGIC --- DBC
+
         setup_session(app, storage)
         policy = SessionIdentityPolicy()
         setup_security(app, policy, DictionaryAuthorizationPolicy(self.user_map))
