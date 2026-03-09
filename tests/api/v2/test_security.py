@@ -67,6 +67,48 @@ def simple_webapp(event_loop, base_world):
     return app
 
 
+@pytest.fixture
+def csrf_webapp(event_loop, base_world):
+    """Like simple_webapp but with CSRF protection middleware and POST route for /private."""
+    async def index(request):
+        return web.Response(status=200, text='hello!')
+
+    @security.authentication_exempt
+    async def public(request):
+        return web.Response(status=200, text='public')
+
+    async def private(request):
+        return web.Response(status=200, text='private')
+
+    @security.authentication_exempt
+    async def login(request):
+        await auth_svc.login_user(request)  # Note: auth_svc defined in context function
+
+    app = web.Application()
+    app.router.add_get('/', index)
+    app.router.add_post('/login', login)
+    app.router.add_get('/public', public)
+    app.router.add_get('/private', private)
+    app.router.add_post('/private', private)
+
+    auth_svc = AuthService()
+
+    event_loop.run_until_complete(
+        auth_svc.apply(
+            app=app,
+            users=base_world.get_config('users')
+        )
+    )
+    event_loop.run_until_complete(auth_svc.set_login_handlers(auth_svc.get_services()))
+
+    # Ensure authentication middleware runs after session middleware
+    app.middlewares.append(security.authentication_required_middleware_factory(auth_svc))
+    # Add CSRF protection middleware after authentication
+    app.middlewares.append(security.csrf_protect_middleware_factory(auth_svc))
+
+    return app
+
+
 def test_function_is_authentication_exempt():
     def fake_handler(request):
         return None
@@ -156,3 +198,49 @@ async def test_authentication_exempt_bound_method_returns_200(base_world, aiohtt
     client = await aiohttp_client(app)
     resp = await client.get('/public')
     assert resp.status == 200
+
+
+# CSRF protection tests
+async def test_csrf_protect_rejects_missing_token_for_session_auth(csrf_webapp, aiohttp_client):
+    """A session-authenticated POST without a valid CSRF header should be rejected with 403."""
+    client = await aiohttp_client(csrf_webapp)
+
+    login_response = await client.post(
+        '/login',
+        data={'username': 'admin', 'password': 'admin'},
+        allow_redirects=False
+    )
+
+    assert login_response.status == 200
+    assert COOKIE_SESSION in login_response.cookies
+
+    post_resp = await client.post('/private')
+    assert post_resp.status == 403
+
+
+async def test_csrf_protect_accepts_valid_token_for_session_auth(csrf_webapp, aiohttp_client):
+    """A session-authenticated POST with a valid CSRF header should be allowed."""
+    client = await aiohttp_client(csrf_webapp)
+
+    login_response = await client.post(
+        '/login',
+        data={'username': 'admin', 'password': 'admin'},
+        allow_redirects=False
+    )
+
+    assert login_response.status == 200
+    # The login handler exposes the CSRF token as a readable cookie named 'XSRF-TOKEN'
+    token_cookie = login_response.cookies.get('XSRF-TOKEN')
+    assert token_cookie is not None
+    token = token_cookie.value
+
+    post_resp = await client.post('/private', headers={'X-CSRF-Token': token})
+    assert post_resp.status == 200
+
+# TODO: Change to be a valid API Key Header (vs just any API key header) - covered by API login test
+async def test_csrf_protect_skips_when_api_key_present(csrf_webapp, aiohttp_client):
+    """If an API key header is present, CSRF checks should be skipped."""
+    client = await aiohttp_client(csrf_webapp)
+
+    post_resp = await client.post('/private', headers={HEADER_API_KEY: 'abc123'})
+    assert post_resp.status == 200
