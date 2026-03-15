@@ -1,6 +1,7 @@
 import itertools
 import glob
 import re
+import time
 from base64 import b64decode
 from importlib import import_module
 
@@ -17,6 +18,8 @@ class LearningService(LearningServiceInterface, BaseService):
         self.model = set()
         self.parsers = self.add_parsers('app/learning')
         self.re_variable = re.compile(r'#{(.*?)}', flags=re.DOTALL)
+        self._model_dirty = True
+        self._model_built_at = 0.0
         self.log.debug('Loaded %d parsers' % len(self.parsers))
 
     @staticmethod
@@ -28,6 +31,10 @@ class LearningService(LearningServiceInterface, BaseService):
         return parsers
 
     async def build_model(self):
+        cache_ttl = self.get_config('model_cache_ttl_seconds') or 3600
+        if not self._model_dirty and (time.monotonic() - self._model_built_at) < cache_ttl:
+            self.log.debug('Skipping model rebuild - cache still valid (TTL=%ds)', cache_ttl)
+            return
         for ability in await self.get_service('data_svc').locate('abilities'):
             for executor in ability.executors:
                 if executor.command:
@@ -35,6 +42,12 @@ class LearningService(LearningServiceInterface, BaseService):
                     if len(variables) > 1:  # relationships require at least 2 variables
                         self.model.add(variables)
         self.model = set(self.model)
+        self._model_dirty = False
+        self._model_built_at = time.monotonic()
+
+    def invalidate_model_cache(self):
+        """Mark the model cache as dirty so it will be rebuilt on next call."""
+        self._model_dirty = True
 
     async def learn(self, facts, link, blob, operation=None):
         decoded_blob = b64decode(blob).decode('utf-8')
