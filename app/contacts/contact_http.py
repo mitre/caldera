@@ -19,7 +19,12 @@ class Contact(BaseWorld):
 
     async def _beacon(self, request):
         try:
-            profile = json.loads(self.contact_svc.decode_bytes(await request.read()))
+            max_body_size = (self.get_config('contact_http_max_body_size_kb') or 512) * 1024
+            body = await request.read()
+            if len(body) > max_body_size:
+                self.log.warning('Beacon body exceeds size limit: %d > %d bytes', len(body), max_body_size)
+                return web.Response(status=400, text='Request body too large')
+            profile = json.loads(self.contact_svc.decode_bytes(body))
             profile['paw'] = profile.get('paw')
             profile['contact'] = profile.get('contact', self.name)
             agent, instructions = await self.contact_svc.handle_heartbeat(**profile)

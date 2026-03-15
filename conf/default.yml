@@ -44,6 +44,7 @@ plugins:
 port: 8888
 reports_dir: /tmp
 auth.login.handler.module: default
+contact_http_max_body_size_kb: 512
 requirements:
   go:
     command: go version
