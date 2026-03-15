@@ -170,9 +170,12 @@ class AuthService(AuthServiceInterface, BaseService):
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
             return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
-        elif request.headers.get(HEADER_API_KEY) == self.get_config(CONFIG_API_KEY_RED):
+        request_key = str(request.headers.get(HEADER_API_KEY) or '')
+        red_key = str(self.get_config(CONFIG_API_KEY_RED) or '')
+        blue_key = str(self.get_config(CONFIG_API_KEY_BLUE) or '')
+        if red_key and compare_digest(request_key, red_key):
             return self.Access.RED, self.Access.APP
-        elif request.headers.get(HEADER_API_KEY) == self.get_config(CONFIG_API_KEY_BLUE):
+        elif blue_key and compare_digest(request_key, blue_key):
             return self.Access.BLUE, self.Access.APP
         return ()
 
