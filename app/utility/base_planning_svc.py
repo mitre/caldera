@@ -32,6 +32,8 @@ class BasePlanningService(BaseService):
     # Ex: '#{host.file.path[filters(technique=T1005,max=3)]}' => 'technique=T1005,max=3'
     re_index = re.compile(r'(?<=\[filters\().+?(?=\)\])')
 
+    MAX_LINK_TIMEOUT_DEFAULT = 600  # seconds
+
     def __init__(self, global_variable_owners=None):
         """Base class for Planning Service
 
@@ -42,6 +44,7 @@ class BasePlanningService(BaseService):
         """
         self._global_variable_owners = list(global_variable_owners or ())
         self._cached_requirement_modules = {}
+        self._max_link_timeout = self.MAX_LINK_TIMEOUT_DEFAULT
 
     def add_global_variable_owner(self, global_variable_owner):
         """Adds a global variable owner to the internal registry.
@@ -69,8 +72,17 @@ class BasePlanningService(BaseService):
         :param agent:
         :return: trimmed list of links
         """
+        self.log.debug(
+            "[GEN_TRIM PRE] links=%s",
+                [(l.ability.ability_id, l.command) for l in links]
+            )
         links[:] = await self.add_test_variants(links, agent, facts=await operation.all_facts(), rules=operation.rules, operation=operation,
                                                 trim_unset_variables=True, trim_missing_requirements=True)
+        self.log.debug(
+            "[GEN_TRIM POST] links=%s",
+            [(l.ability.ability_id, l.command) for l in links]
+        )
+
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
         links = await self.remove_completed_links(operation, agent, links)
         return links
@@ -92,7 +104,15 @@ class BasePlanningService(BaseService):
         link_variants = []
         rule_set = RuleSet(rules=rules)
 
+        max_timeout = self.get_config('max_link_timeout') if hasattr(self, 'get_config') else self._max_link_timeout
+        if not max_timeout:
+            max_timeout = self._max_link_timeout
+
         for link in links:
+            # Cap executor timeout to max allowed
+            if hasattr(link, 'executor') and hasattr(link.executor, 'timeout'):
+                if link.executor.timeout > max_timeout:
+                    link.executor.timeout = max_timeout
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))
 
@@ -132,6 +152,11 @@ class BasePlanningService(BaseService):
                     logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
 
         if trim_unset_variables:
+            self.log.debug(
+                "[UNSET DROP] ability=%s command=%s",
+                link.ability.ability_id,
+                link.command
+            )
             links = await self.remove_links_with_unset_variables(links)
 
         return links + link_variants
