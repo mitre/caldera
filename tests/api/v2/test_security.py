@@ -1,5 +1,7 @@
+import time
 import pytest
 from aiohttp import web
+from unittest.mock import patch
 
 from app.api.v2 import security
 from app.service.auth_svc import AuthService, HEADER_API_KEY, CONFIG_API_KEY_RED, COOKIE_SESSION
@@ -155,4 +157,112 @@ async def test_authentication_exempt_bound_method_returns_200(base_world, aiohtt
 
     client = await aiohttp_client(app)
     resp = await client.get('/public')
+    assert resp.status == 200
+
+
+# ---------------------------------------------------------------------------
+# Rate limiting middleware tests
+# ---------------------------------------------------------------------------
+
+@pytest.fixture
+def rate_limit_app():
+    """Small aiohttp app with a very tight rate limit (3 req / 60 s)."""
+    security._rate_limit_store.clear()
+
+    async def index(request):
+        return web.Response(status=200, text='ok')
+
+    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=3, window=60)])
+    app.router.add_get('/', index)
+    return app
+
+
+@pytest.mark.anyio
+async def test_rate_limit_requests_within_limit_are_allowed(rate_limit_app, aiohttp_client):
+    client = await aiohttp_client(rate_limit_app)
+    for _ in range(3):
+        resp = await client.get('/')
+        assert resp.status == 200
+
+
+@pytest.mark.anyio
+async def test_rate_limit_request_exceeding_limit_is_blocked(rate_limit_app, aiohttp_client):
+    client = await aiohttp_client(rate_limit_app)
+    for _ in range(3):
+        await client.get('/')
+    resp = await client.get('/')
+    assert resp.status == 429
+
+
+@pytest.mark.anyio
+async def test_rate_limit_retry_after_header_present(rate_limit_app, aiohttp_client):
+    client = await aiohttp_client(rate_limit_app)
+    for _ in range(3):
+        await client.get('/')
+    resp = await client.get('/')
+    assert resp.status == 429
+    assert 'Retry-After' in resp.headers
+    assert resp.headers['Retry-After'] == '60'
+
+
+@pytest.mark.anyio
+async def test_rate_limit_different_ips_have_independent_quotas(aiohttp_client):
+    security._rate_limit_store.clear()
+
+    async def index(request):
+        return web.Response(status=200, text='ok')
+
+    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=3, window=60)])
+    app.router.add_get('/', index)
+    client = await aiohttp_client(app)
+
+    # Exhaust quota for '1.1.1.1'
+    for _ in range(3):
+        await client.get('/', headers={'X-Forwarded-For': '1.1.1.1'})
+    blocked = await client.get('/', headers={'X-Forwarded-For': '1.1.1.1'})
+    assert blocked.status == 429
+
+    # '2.2.2.2' should still be allowed
+    allowed = await client.get('/', headers={'X-Forwarded-For': '2.2.2.2'})
+    assert allowed.status == 200
+
+
+@pytest.mark.anyio
+async def test_rate_limit_x_forwarded_for_used_for_ip(aiohttp_client):
+    security._rate_limit_store.clear()
+
+    async def index(request):
+        return web.Response(status=200, text='ok')
+
+    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=2, window=60)])
+    app.router.add_get('/', index)
+    client = await aiohttp_client(app)
+
+    await client.get('/', headers={'X-Forwarded-For': '3.3.3.3'})
+    await client.get('/', headers={'X-Forwarded-For': '3.3.3.3'})
+    resp = await client.get('/', headers={'X-Forwarded-For': '3.3.3.3'})
+    assert resp.status == 429
+
+
+@pytest.mark.anyio
+async def test_rate_limit_resets_after_window(aiohttp_client):
+    security._rate_limit_store.clear()
+
+    async def index(request):
+        return web.Response(status=200, text='ok')
+
+    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=2, window=1)])
+    app.router.add_get('/', index)
+    client = await aiohttp_client(app)
+
+    await client.get('/')
+    await client.get('/')
+    blocked = await client.get('/')
+    assert blocked.status == 429
+
+    # Advance time past the window by patching time.time
+    with patch('app.api.v2.security.time') as mock_time:
+        mock_time.time.return_value = time.time() + 2
+        security._rate_limit_store.clear()
+        resp = await client.get('/')
     assert resp.status == 200

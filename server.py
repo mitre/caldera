@@ -18,7 +18,7 @@ from app import version
 from app.ascii_banner import ASCII_BANNER, no_color, print_rich_banner
 from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
-from app.api.v2.security import pass_option_middleware
+from app.api.v2.security import pass_option_middleware, rate_limit_middleware_factory
 from app.objects.c_agent import Agent
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.secondclass.c_executor import Executor
@@ -261,9 +261,14 @@ if __name__ == "__main__":
     learning_svc = LearningService()
     event_svc = EventService()
 
+    rate_limit_requests = BaseWorld.get_config('rate_limit_requests') or 360
+    rate_limit_window = BaseWorld.get_config('rate_limit_window') or 60
     app_svc = AppService(
         application=web.Application(
-            client_max_size=5120**2, middlewares=[pass_option_middleware]
+            client_max_size=5120**2, middlewares=[
+                rate_limit_middleware_factory(requests=rate_limit_requests, window=rate_limit_window),
+                pass_option_middleware,
+            ]
         )
     )
     app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))

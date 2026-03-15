@@ -42,6 +42,8 @@ plugins:
 - stockpile
 - training
 port: 8888
+rate_limit_requests: 360
+rate_limit_window: 60
 reports_dir: /tmp
 auth.login.handler.module: default
 requirements:
