@@ -124,6 +124,9 @@ def run_tasks(services, run_vue_server=False):
         loop.run_until_complete(
             services.get("app_svc").teardown(main_config_file=args.environment)
         )
+    finally:
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
 
 
 def init_swagger_documentation(app):
@@ -314,8 +317,10 @@ if __name__ == "__main__":
             DATA_BACKUP_DIR,
         )
         loop = asyncio.new_event_loop()
-        loop.run_until_complete(data_svc.destroy())
-        loop.run_until_complete(knowledge_svc.destroy())
-        loop.close()
+        try:
+            loop.run_until_complete(data_svc.destroy())
+            loop.run_until_complete(knowledge_svc.destroy())
+        finally:
+            loop.close()
 
     run_tasks(services=app_svc.get_services(), run_vue_server=args.uiDevHost)
