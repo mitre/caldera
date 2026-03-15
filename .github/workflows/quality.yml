@@ -100,6 +100,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
           pip install --upgrade virtualenv
           pip install tox
@@ -107,6 +108,7 @@ jobs:
           npm --prefix pr/plugins/magma run build
 
       - name: Run tests (fork PR)
+        if: ${{ github.event_name == 'pull_request' }}
         run: |
           cd pr
           tox -e py313,coverage-ci
