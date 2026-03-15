@@ -13,6 +13,31 @@ from app.api.v2.schemas.payload_schemas import PayloadQuerySchema, PayloadSchema
     PayloadDeleteRequestSchema
 
 
+ALLOWED_EXTENSIONS = [
+    '.ps1', '.sh', '.py', '.exe', '.elf', '.bat', '.vbs', '.js', '.go', '.c',
+    '.zip', '.tar', '.gz', '.dll', '.bin', '.yaml', '.yml', '.txt', '.json',
+]
+
+DANGEROUS_MAGIC_BYTES = [
+    b'<?php', b'<%@', b'<%!', b'<%@ Page',
+]
+
+
+def _validate_payload_file(filename, file_content_start):
+    """Validate payload filename extension and magic bytes.
+    Returns (is_valid, error_message).
+    """
+    if '\x00' in filename:
+        return False, 'Null byte detected in filename'
+    ext = os.path.splitext(filename)[1].lower()
+    if ext and ext not in ALLOWED_EXTENSIONS:
+        return False, f'File extension not allowed: {ext}'
+    for magic in DANGEROUS_MAGIC_BYTES:
+        if file_content_start.startswith(magic):
+            return False, f'Dangerous file signature detected'
+    return True, ''
+
+
 class PayloadApi(BaseApi):
     def __init__(self, services):
         super().__init__(auth_svc=services['auth_svc'])
@@ -69,6 +94,13 @@ class PayloadApi(BaseApi):
         # As aiohttp_apispec.form_schema already calls request.multipart(),
         # accessing the file using the prefilled request["form"] dictionary.
         file_field: web.FileField = request["form"]["file"]
+
+        # Validate filename and magic bytes
+        first_bytes = file_field.file.read(16)
+        file_field.file.seek(0)
+        is_valid, error_msg = _validate_payload_file(file_field.filename, first_bytes)
+        if not is_valid:
+            raise web.HTTPBadRequest(text=error_msg)
 
         # Sanitize the file name to prevent directory traversal
         sanitized_filename = self.sanitize_filename(file_field.filename)
