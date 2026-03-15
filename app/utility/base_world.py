@@ -1,6 +1,7 @@
 import binascii
 import string
 import re
+import threading
 import yaml
 import logging
 import subprocess
@@ -21,30 +22,35 @@ class BaseWorld:
     """
 
     _app_configuration = dict()
+    _app_config_lock = threading.RLock()
 
     re_base64 = re.compile('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', flags=re.DOTALL)
     TIME_FORMAT = '%Y-%m-%dT%H:%M:%SZ'
 
     @staticmethod
     def apply_config(name, config):
-        BaseWorld._app_configuration[name] = config
+        with BaseWorld._app_config_lock:
+            BaseWorld._app_configuration[name] = config
 
     @staticmethod
     def clear_config():
-        BaseWorld._app_configuration = {}
+        with BaseWorld._app_config_lock:
+            BaseWorld._app_configuration = {}
 
     @staticmethod
     def get_config(prop=None, name=None):
-        name = name if name else 'main'
-        if prop:
-            return BaseWorld._app_configuration[name].get(prop)
-        return BaseWorld._app_configuration[name]
+        with BaseWorld._app_config_lock:
+            name = name if name else 'main'
+            if prop:
+                return BaseWorld._app_configuration[name].get(prop)
+            return BaseWorld._app_configuration[name]
 
     @staticmethod
     def set_config(name, prop, value):
-        if value is not None:
-            logging.debug('Configuration (%s) update, setting %s=%s' % (name, prop, value))
-            BaseWorld._app_configuration[name][prop] = value
+        with BaseWorld._app_config_lock:
+            if value is not None:
+                logging.debug('Configuration (%s) update, setting %s=%s' % (name, prop, value))
+                BaseWorld._app_configuration[name][prop] = value
 
     @staticmethod
     def decode_bytes(s, strip_newlines=True):
