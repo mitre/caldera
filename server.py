@@ -18,7 +18,7 @@ from app import version
 from app.ascii_banner import ASCII_BANNER, no_color, print_rich_banner
 from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
-from app.api.v2.security import pass_option_middleware
+from app.api.v2.security import pass_option_middleware, docs_guard_middleware_factory
 from app.objects.c_agent import Agent
 from app.objects.c_obfuscator import Obfuscator
 from app.objects.secondclass.c_executor import Executor
@@ -263,7 +263,11 @@ if __name__ == "__main__":
 
     app_svc = AppService(
         application=web.Application(
-            client_max_size=5120**2, middlewares=[pass_option_middleware]
+            client_max_size=5120**2,
+            middlewares=[
+                docs_guard_middleware_factory(auth_svc),
+                pass_option_middleware,
+            ]
         )
     )
     app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))
