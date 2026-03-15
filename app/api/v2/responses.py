@@ -1,4 +1,5 @@
 import json
+import logging
 
 from aiohttp import web
 from json import JSONDecodeError
@@ -63,6 +64,21 @@ async def apispec_request_validation_middleware(request, handler):
         raise JsonHttpBadRequest(
             error='Unexpected error occurred while parsing json',
             details=str(ex)
+        )
+
+
+@web.middleware
+async def internal_error_middleware(request, handler):
+    """Catch unhandled exceptions and return a generic 500 response."""
+    try:
+        return await handler(request)
+    except web.HTTPException:
+        raise  # Let aiohttp handle HTTP exceptions normally
+    except Exception:
+        logging.getLogger('caldera').exception('Unhandled exception in request handler')
+        raise web.HTTPInternalServerError(
+            content_type='application/json',
+            text='{"error": "An internal server error occurred"}'
         )
 
 
