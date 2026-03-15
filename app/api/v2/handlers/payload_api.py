@@ -11,6 +11,12 @@ from aiohttp import web
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.schemas.payload_schemas import PayloadQuerySchema, PayloadSchema, PayloadCreateRequestSchema, \
     PayloadDeleteRequestSchema
+from app.utility.base_world import BaseWorld
+
+
+class FileTooLargeError(Exception):
+    """Raised when an uploaded file exceeds the maximum allowed size."""
+    pass
 
 
 class PayloadApi(BaseApi):
@@ -76,10 +82,23 @@ class PayloadApi(BaseApi):
         # Generate the file name and path
         file_name, file_path = await self.__generate_file_name_and_path(sanitized_filename)
 
+        max_size_mb = BaseWorld.get_config('payload_max_upload_size_mb') or 100
+        max_size_bytes = int(max_size_mb) * 1024 * 1024
+
         # Save the file to a temporary location first
         temp_file_path = pathlib.Path(file_path).parent / f"temp_{file_name}"
         loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self.__save_file, str(temp_file_path), file_field.file)
+        try:
+            await loop.run_in_executor(None, self.__save_file, str(temp_file_path), file_field.file, max_size_bytes)
+        except FileTooLargeError:
+            # Clean up partial file
+            if temp_file_path.exists():
+                temp_file_path.unlink()
+            return web.HTTPRequestEntityTooLarge(
+                max_size=max_size_bytes,
+                actual_size=0,
+                text='Payload exceeds maximum upload size of %d MB' % max_size_mb
+            )
 
         # Validate the saved file to ensure it is not a symbolic link
         if temp_file_path.is_symlink():
@@ -154,13 +173,15 @@ class PayloadApi(BaseApi):
         return file_name, file_path
 
     @staticmethod
-    def __save_file(target_file_path: str, io_base_src: IOBase):
+    def __save_file(target_file_path: str, io_base_src: IOBase, max_size_bytes: int = 0):
         """
         Save an uploaded file content into a targeted file path.
         Note this method calls blocking methods and must be run into a dedicated thread.
 
         :param target_file_path: The destination path to write to.
         :param io_base_src: The stream with file content to read from.
+        :param max_size_bytes: Maximum allowed file size in bytes. 0 means no limit.
+        :raises FileTooLargeError: If file exceeds max_size_bytes.
         """
         size: int = 0
         read_chunk: bool = True
@@ -169,6 +190,10 @@ class PayloadApi(BaseApi):
                 chunk: bytes = io_base_src.read(8192)
                 if chunk:
                     size += len(chunk)
+                    if max_size_bytes and size > max_size_bytes:
+                        raise FileTooLargeError(
+                            'File size %d exceeds maximum allowed size %d bytes' % (size, max_size_bytes)
+                        )
                     buffered_io_base_dest.write(chunk)
                 else:
                     read_chunk = False
