@@ -42,7 +42,6 @@ def test_run_tasks_uses_new_event_loop():
 
 def test_run_tasks_closes_loop():
     """Verify run_tasks closes the event loop in a finally block."""
-    content = SERVER_PY.read_text()
     tree = _parse_server()
     func_node = _get_function(tree, 'run_tasks')
     assert func_node is not None, 'run_tasks not found in server.py'
