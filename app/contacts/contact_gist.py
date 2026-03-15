@@ -60,7 +60,7 @@ class Contact(BaseWorld):
         return self.token
 
     async def start(self):
-        token = self.get_config('app.contact.gist', '').strip()
+        token = (self.get_secret('app.contact.gist', env_var='CALDERA_GIST_TOKEN') or '').strip()
         if token:
             if self.valid_config(token):
                 self.token = token

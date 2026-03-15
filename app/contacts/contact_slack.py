@@ -61,9 +61,9 @@ class Contact(BaseWorld):
 
     async def start(self):
         if await self.valid_config():
-            self.key = self.get_config('app.contact.slack.api_key')
-            self.channelid = self.get_config('app.contact.slack.channel_id')
-            self.botid = self.get_config('app.contact.slack.bot_id')
+            self.key = self.get_secret('app.contact.slack.api_key', env_var='CALDERA_SLACK_API_KEY')
+            self.channelid = self.get_secret('app.contact.slack.channel_id')
+            self.botid = self.get_secret('app.contact.slack.bot_id')
             loop = asyncio.get_event_loop()
             loop.create_task(self.slack_operation_loop())
 

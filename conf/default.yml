@@ -3,9 +3,11 @@ api_key_blue: BLUEADMIN123
 api_key_red: ADMIN123
 app.contact.dns.domain: mycaldera.caldera
 app.contact.dns.socket: 0.0.0.0:8853
+# Override with env var CALDERA_GIST_TOKEN
 app.contact.gist: API_KEY
 app.contact.html: /weather
 app.contact.http: http://0.0.0.0:8888
+# Override with env var CALDERA_SLACK_API_KEY
 app.contact.slack.api_key: SLACK_TOKEN
 app.contact.slack.bot_id: SLACK_BOT_ID
 app.contact.slack.channel_id: SLACK_CHANNEL_ID

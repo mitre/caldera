@@ -1,4 +1,5 @@
 import binascii
+import os
 import string
 import re
 import yaml
@@ -45,6 +46,26 @@ class BaseWorld:
         if value is not None:
             logging.debug('Configuration (%s) update, setting %s=%s' % (name, prop, value))
             BaseWorld._app_configuration[name][prop] = value
+
+    @staticmethod
+    def get_secret(key, env_var=None):
+        """Retrieve a secret value, checking environment variables first, then config.
+
+        Args:
+            key: The config key to look up.
+            env_var: Optional environment variable name to check first.
+
+        Returns:
+            The secret value from env var or config, or None if neither found.
+        """
+        if env_var:
+            env_value = os.environ.get(env_var)
+            if env_value:
+                return env_value
+        try:
+            return BaseWorld.get_config(key)
+        except KeyError:
+            return None
 
     @staticmethod
     def decode_bytes(s, strip_newlines=True):
