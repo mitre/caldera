@@ -1,4 +1,6 @@
 import base64
+import uuid
+import time
 from collections import namedtuple
 from hmac import compare_digest
 from importlib import import_module
@@ -56,11 +58,14 @@ def check_authorization(func):
 class AuthService(AuthServiceInterface, BaseService):
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
+    SESSION_LIFETIME_HOURS = 8
+
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
         self._login_handler = None
         self._default_login_handler = None
+        self._active_sessions = {}  # {session_token: {username, created_at, expires_at}}
 
     @property
     def default_login_handler(self):
@@ -82,6 +87,38 @@ class AuthService(AuthServiceInterface, BaseService):
 
     async def create_user(self, username, password, group):
         self.user_map[username] = self.User(username, password, (group, 'app'), )
+
+    def register_session(self, username):
+        """Create a server-side session and return the token."""
+        token = str(uuid.uuid4())
+        lifetime = (self.get_config('session_lifetime_hours') or self.SESSION_LIFETIME_HOURS) * 3600
+        now = time.time()
+        self._active_sessions[token] = {
+            'username': username,
+            'created_at': now,
+            'expires_at': now + lifetime,
+        }
+        return token
+
+    def invalidate_session(self, token):
+        """Remove a session from the server-side store."""
+        self._active_sessions.pop(token, None)
+
+    def is_session_valid(self, token):
+        """Check if a session exists and is not expired."""
+        session = self._active_sessions.get(token)
+        if not session:
+            return False
+        if time.time() > session['expires_at']:
+            self._active_sessions.pop(token, None)
+            return False
+        return True
+
+    def invalidate_all_sessions_for_user(self, username):
+        """Remove all sessions for a given user."""
+        to_remove = [t for t, s in self._active_sessions.items() if s['username'] == username]
+        for token in to_remove:
+            del self._active_sessions[token]
 
     @staticmethod
     async def logout_user(request):
