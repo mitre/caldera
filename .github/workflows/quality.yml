@@ -16,7 +16,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request_target' || github.event.pull_request.head.repo.fork
+    if: github.event_name != 'pull_request_target'
     permissions:
       contents: read
       pull-requests: read
