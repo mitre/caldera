@@ -46,11 +46,14 @@ DEPRECATION_WARNING_LOAD = "Function deprecated and will be removed in a future 
 
 class DataService(DataServiceInterface, BaseService):
 
+    _DEFAULT_TTL_OPERATION_DAYS = 7
+
     def __init__(self):
         self.log = self.add_service('data_svc', self)
         self.schema = dict(agents=[], planners=[], adversaries=[], abilities=[], sources=[], operations=[],
                            schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
         self.ram = copy.deepcopy(self.schema)
+        self._ttl_config = {'operations': self._DEFAULT_TTL_OPERATION_DAYS * 86400}
 
     @staticmethod
     def _iter_data_files():
@@ -120,9 +123,31 @@ class DataService(DataServiceInterface, BaseService):
         if collection not in self.ram:
             self.ram[collection] = []
 
+    async def _evict_expired_objects(self):
+        """Background task to evict expired objects based on TTL config."""
+        while True:
+            await asyncio.sleep(3600)  # Run every hour
+            try:
+                ttl = self._ttl_config.get('operations')
+                if ttl and 'operations' in self.ram:
+                    now = datetime.datetime.utcnow()
+                    before = len(self.ram['operations'])
+                    self.ram['operations'] = [
+                        op for op in self.ram['operations']
+                        if not (getattr(op, 'finish', None) and
+                                hasattr(op, 'start') and op.start and
+                                (now - op.start).total_seconds() > ttl)
+                    ]
+                    evicted = before - len(self.ram['operations'])
+                    if evicted:
+                        self.log.info('TTL eviction: removed %d expired operations', evicted)
+            except Exception as e:
+                self.log.error('TTL eviction error: %s', e)
+
     async def load_data(self, plugins=()):
         loop = asyncio.get_event_loop()
         loop.create_task(self._load(plugins))
+        loop.create_task(self._evict_expired_objects())
 
     async def reload_data(self, plugins=()):
         await self._load(plugins)
