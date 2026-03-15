@@ -92,6 +92,21 @@ class FileSvc(FileServiceInterface, BaseService):
             os.makedirs(path)
         return path
 
+    @staticmethod
+    def _validate_filename(name):
+        """Validate that a filename contains only safe characters.
+        Returns True if valid, False otherwise.
+        """
+        if not name or len(name) > 255:
+            return False
+        if '\x00' in name:
+            return False
+        if '..' in name or '/' in name or '\\' in name:
+            return False
+        if not re.match(r'^[a-zA-Z0-9._\-]+$', name):
+            return False
+        return True
+
     async def save_multipart_file_upload(self, request, target_dir, encrypt=True):
         try:
             reader = await request.multipart()
@@ -101,6 +116,9 @@ class FileSvc(FileServiceInterface, BaseService):
                 if not field:
                     break
                 _, filename = os.path.split(field.filename)
+                if not self._validate_filename(filename):
+                    self.log.warning('Invalid filename rejected: %s', repr(filename))
+                    continue
                 await self.save_file(filename, bytes(await field.read()), target_dir,
                                      encrypt=encrypt, encoding=headers.get('x-file-encoding'))
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
