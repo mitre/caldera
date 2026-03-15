@@ -21,6 +21,7 @@ def test_valid_filenames(name):
     '<script>.js',
     '',
     'a' * 256,
+    '.',
 ])
 def test_invalid_filenames(name):
     assert not FileSvc._validate_filename(name)

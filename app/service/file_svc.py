@@ -102,7 +102,7 @@ class FileSvc(FileServiceInterface, BaseService):
             return False
         if '\x00' in name:
             return False
-        if '..' in name or '/' in name or '\\' in name:
+        if name == '.' or '..' in name or '/' in name or '\\' in name:
             return False
         if not _SAFE_FILENAME_RE.fullmatch(name):
             return False
