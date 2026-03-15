@@ -6,8 +6,6 @@ import json
 import os
 import re
 import subprocess
-
-_SAFE_FILENAME_RE = re.compile(r'^[a-zA-Z0-9._\-]+$')
 import sys
 
 from aiohttp import web
@@ -21,6 +19,7 @@ from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
+_SAFE_FILENAME_RE = re.compile(r'^[a-zA-Z0-9._\-]+$')
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 URL_SANITIZATION_REGEX = re.compile(r'^[\w\-\.:%+/]+$')
 ALLOWED_DEFAULT_LDFLAG_REGEX = re.compile(r'^[\w\-\.]+$')
