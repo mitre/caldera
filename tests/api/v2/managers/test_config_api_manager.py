@@ -170,6 +170,12 @@ async def test_update_global_agent_config_throws_validation_error_bad_architectu
         await manager.update_global_agent_config(architecture='')
 
 
+async def test_update_global_agent_config_sets_architecture(base_world, data_svc):
+    manager = ConfigApiManager(data_svc, None)
+    await manager.update_global_agent_config(architecture='arm64')
+    assert BaseWorld.get_config(prop='architecture', name='agents') == 'arm64'
+
+
 async def test_update_main_config_throws_validation_error_empty_prop(base_world, data_svc):
     manager = ConfigApiManager(data_svc, None)
 

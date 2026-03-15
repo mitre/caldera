@@ -13,6 +13,7 @@ class AgentConfigUpdateSchema(ma.Schema):
     watchdog = fields.Integer()
     untrusted_timer = fields.Integer()
     implant_name = fields.String()
+    architecture = fields.String()
     bootstrap_abilities = fields.List(fields.String)
     deadman_abilities = fields.List(fields.String)
     deployments = fields.List(fields.String, dump_only=True)
