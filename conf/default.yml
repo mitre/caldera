@@ -42,8 +42,6 @@ plugins:
 - stockpile
 - training
 port: 8888
-rate_limit_requests: 360
-rate_limit_window: 60
 reachable_host_traits:
 - remote.host.fqdn
 - remote.host.ip

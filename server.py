@@ -261,15 +261,22 @@ if __name__ == "__main__":
     learning_svc = LearningService()
     event_svc = EventService()
 
+    def _get_size_mb(config_key, default):
+        try:
+            val = int(BaseWorld.get_config(config_key))
+            return val if val > 0 else default
+        except (TypeError, ValueError):
+            return default
+
     app_svc = AppService(
         application=web.Application(
-            client_max_size=(BaseWorld.get_config('client_max_size_mb') or 1) * 1024 * 1024,
+            client_max_size=_get_size_mb('client_max_size_mb', 1) * 1024 * 1024,
             middlewares=[pass_option_middleware]
         )
     )
     app_svc.register_subapp("/api/v2", app.api.v2.make_app(
         app_svc.get_services(),
-        upload_max_size_mb=BaseWorld.get_config('api_upload_max_size_mb') or 100
+        upload_max_size_mb=_get_size_mb('api_upload_max_size_mb', 100)
     ))
     init_swagger_documentation(app_svc.application)
     if args.uiDevHost:
