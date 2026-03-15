@@ -263,7 +263,8 @@ if __name__ == "__main__":
 
     app_svc = AppService(
         application=web.Application(
-            client_max_size=5120**2, middlewares=[pass_option_middleware]
+            client_max_size=(BaseWorld.get_config('client_max_size_mb') or 1) * 1024 * 1024,
+            middlewares=[pass_option_middleware]
         )
     )
     app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))
