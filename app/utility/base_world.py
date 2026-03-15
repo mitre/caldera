@@ -1,4 +1,5 @@
 import binascii
+import shlex
 import string
 import re
 import yaml
@@ -125,7 +126,7 @@ class BaseWorld:
             return compare_versions(mod_version, version)
 
         def check_program_version(command, version, **kwargs):
-            output = subprocess.check_output(command.split(' '), stderr=subprocess.STDOUT, shell=False, timeout=10)
+            output = subprocess.check_output(shlex.split(command), stderr=subprocess.STDOUT, shell=False, timeout=10)
             return compare_versions(output.decode('utf-8'), version)
 
         def compare_versions(version_string, minimum_version):
