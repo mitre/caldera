@@ -285,7 +285,12 @@ if __name__ == "__main__":
     if args.build:
         if os.path.exists(f"{MAGMA_PATH}") and len(os.listdir(MAGMA_PATH)) > 0:
             logging.info("Building VueJS front-end.")
-            subprocess.run(["npm", "install"], cwd=MAGMA_PATH, check=True)
+            package_lock = os.path.join(MAGMA_PATH, "package-lock.json")
+            if os.path.exists(package_lock):
+                subprocess.run(["npm", "ci"], cwd=MAGMA_PATH, check=True)
+            else:
+                logging.warning("package-lock.json not found, falling back to npm install")
+                subprocess.run(["npm", "install"], cwd=MAGMA_PATH, check=True)
             subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
             logging.info("VueJS front-end build complete.")
         else:
