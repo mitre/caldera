@@ -265,10 +265,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     break
 
     async def is_closeable(self):
-        if await self.is_finished() or self.auto_close:
-            self.state = self.states['FINISHED']
-            return True
-        return False
+        return await self.is_finished() or self.auto_close
 
     async def is_finished(self):
         if self.state in [self.states['FINISHED'], self.states['OUT_OF_TIME'], self.states['CLEANUP']] \
@@ -427,7 +424,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 self.add_link(link)
                 cleanup_count += 1
         if cleanup_count:
+            self.state = self.states['CLEANUP']
+            logging.debug(f'Starting cleanup for operation {self.id}')
             await self._safely_handle_cleanup(cleanup_count)
+            logging.debug(f'Completed cleanup for operation {self.id}')
 
     async def _safely_handle_cleanup(self, cleanup_link_count):
         try:
@@ -446,8 +446,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
         def fact_to_dict(f):
             if f:
                 return dict(trait=f.trait, value=f.value, score=f.score)
+        existing = await services.get('data_svc').locate('sources', match=dict(name=self.name))
+        source_id = existing[0].id if existing else str(uuid.uuid4())
         data = dict(
-            id=str(uuid.uuid4()),
+            id=source_id,
             name=self.name,
             facts=[fact_to_dict(f) for link in self.chain for f in link.facts],
             relationships=[dict(source=fact_to_dict(r.source), edge=r.edge,

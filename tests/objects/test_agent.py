@@ -1,9 +1,11 @@
 from base64 import b64decode
+from datetime import timedelta
 
 from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_fact import Fact
+from app.utility.base_world import BaseWorld
 
 
 class TestAgent:
@@ -125,6 +127,42 @@ class TestAgent:
         agent.set_pending_executor_removal('test')
         event_loop.run_until_complete(agent.heartbeat_modification(executors=original_executors))
         assert agent.executors == ['cmd']
+
+    def test_status_and_kill(self, event_loop, mocker, mock_time):
+        BaseWorld.set_config(name='agents', prop='untrusted_timer', value=30)
+        agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd'], platform='windows')
+        assert agent.status == 'alive'
+        event_loop.run_until_complete(agent.kill())
+        assert agent.status == 'pending kill'
+        assert agent.watchdog == 1 and agent.sleep_min == 3 and agent.sleep_max == 3
+        event_loop.run_until_complete(agent.heartbeat_modification())
+        assert agent.status == 'dead'
+
+        with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
+            mock_datetime.return_value = mock_datetime
+            mock_datetime.now.return_value = mock_time
+            second_agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd'], platform='windows')
+            event_loop.run_until_complete(second_agent.kill())
+
+            mock_datetime.now.return_value = mock_time + timedelta(0, 10)
+            assert second_agent.status == 'pending kill'
+            mock_datetime.now.return_value = mock_time + timedelta(0, 32)
+            assert second_agent.status == 'pending kill'
+            mock_datetime.now.return_value = mock_time + timedelta(0, 34)
+            assert second_agent.status == 'dead'
+
+    def test_status_and_timeout(self, event_loop, mocker, mock_time):
+        BaseWorld.set_config(name='agents', prop='untrusted_timer', value=30)
+        with mocker.patch('app.objects.c_agent.datetime') as mock_datetime:
+            mock_datetime.return_value = mock_datetime
+            mock_datetime.now.return_value = mock_time
+            agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd'], platform='windows')
+            assert agent.status == 'alive'
+
+            mock_datetime.now.return_value = mock_time + timedelta(0, 30)
+            assert agent.status == 'alive'
+            mock_datetime.now.return_value = mock_time + timedelta(0, 39)
+            assert agent.status == 'dead'
 
     def test_store_new_agent(self, data_svc):
         agent = Agent(paw='123', sleep_min=2, sleep_max=8, watchdog=0, executors=['cmd', 'test'], platform='windows')

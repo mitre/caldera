@@ -3,7 +3,7 @@ name: "\U0001F680 New Feature Request"
 about: Propose a new feature
 title: ''
 labels: feature
-assignees: elegantmoose
+assignees: ''
 
 ---
 
@@ -11,7 +11,7 @@ assignees: elegantmoose
 > Eg. I'm always frustrated when [...]
 
 
-**The ideal solution: What should the feature should do?**
+**The ideal solution: What should the feature do?**
 > a clear and concise description
 
 
@@ -33,4 +33,4 @@ assignees: elegantmoose
 **Additional context**
 Add any other context or screenshots about the feature request here.
 
-Thank you for your contribution!
+<!-- Thank you for your contribution! -->

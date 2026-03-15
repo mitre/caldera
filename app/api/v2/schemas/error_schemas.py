@@ -6,9 +6,6 @@ class JsonHttpErrorSchema(schema.Schema):
     error = fields.String(required=True)
     details = fields.Dict()
 
-    class Meta:
-        ordered = True
-
     @classmethod
     def make_dict(cls, error, details=None):
         obj = {'error': error}

@@ -20,6 +20,7 @@ from app.api.rest_api import RestApi
 from app.api.v2.responses import apispec_request_validation_middleware
 from app.api.v2.security import pass_option_middleware
 from app.objects.c_agent import Agent
+from app.objects.c_obfuscator import Obfuscator
 from app.objects.secondclass.c_executor import Executor
 from app.objects.secondclass.c_link import Link
 from app.service.app_svc import AppService
@@ -98,6 +99,20 @@ def run_tasks(services, run_vue_server=False):
     loop.create_task(app_svc.watch_ability_files())
     loop.run_until_complete(start_server())
     loop.run_until_complete(event_svc.fire_event(exchange="system", queue="ready"))
+    loop.run_until_complete(
+        data_svc.store(
+            Obfuscator(name='plain-text',
+                       description='Does no obfuscation to any command, instead running it in plain text',
+                       module='app.obfuscators.plain_text')
+        )
+    )
+    loop.run_until_complete(
+        data_svc.store(
+            Obfuscator(name='base64',
+                       description='Obfuscates commands in base64',
+                       module='app.obfuscators.base64_basic')
+        )
+    )
     if run_vue_server:
         loop.run_until_complete(start_vue_dev_server())
     try:
@@ -254,14 +269,21 @@ if __name__ == "__main__":
     app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))
     init_swagger_documentation(app_svc.application)
     if args.uiDevHost:
-        if not os.path.exists(f"{MAGMA_PATH}/dist"):
+        if not os.path.exists(f"{MAGMA_PATH}/dist") and (os.path.exists(f"{MAGMA_PATH}") and len(os.listdir(MAGMA_PATH)) > 0):
             logging.info("Building VueJS front-end.")
             subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
             logging.info("VueJS front-end build complete.")
+        else:
+            logging.warning(
+                f"[bright_yellow]The `--uidev` flag was supplied, but the Caldera v5 Vue UI is not present."
+                f" The Vue UI should be located in {MAGMA_PATH}. Use `--recursive` when cloning Caldera."
+                f" Flag ignored; continuing with default server startup.[/bright_yellow]"
+            )
+            args.uiDevHost = False
         app_svc.application.on_response_prepare.append(enable_cors)
 
     if args.build:
-        if len(os.listdir(MAGMA_PATH)) > 0:
+        if os.path.exists(f"{MAGMA_PATH}") and len(os.listdir(MAGMA_PATH)) > 0:
             logging.info("Building VueJS front-end.")
             subprocess.run(["npm", "install"], cwd=MAGMA_PATH, check=True)
             subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
@@ -272,11 +294,17 @@ if __name__ == "__main__":
                 f" The Vue UI should be located in {MAGMA_PATH}. Use `--recursive` when cloning Caldera.[/bright_yellow]"
             )
     else:
-        if not os.path.exists(f"{MAGMA_PATH}/dist"):
+        if os.path.exists(f"{MAGMA_PATH}") and len(os.listdir(MAGMA_PATH)) > 0 and not os.path.exists(f"{MAGMA_PATH}/dist"):
             logging.warning(
-                "[bright_yellow]Built Caldera v5 Vue components not detected, and `--build` flag not supplied."
-                " If attempting to start Caldera v5 for the first time, the `--build` flag must be"
+                "[bright_yellow]Caldera v5 Vue UI source detected, but not built components, and `--build` flag not supplied."
+                " If attempting to start Caldera v5 with the UI for the first time, the `--build` flag must be"
                 " supplied to trigger the building of the Vue source components.[/bright_yellow]"
+            )
+        elif not os.path.exists(f"{MAGMA_PATH}/dist"):
+            logging.warning(
+                f"[bright_yellow]Built Caldera v5 Vue components not detected, and `--build` flag not supplied."
+                f" If attempting to start Caldera v5 with the UI for the first time, the `--build` flag and"
+                f" Magma plugin (located in {MAGMA_PATH}) must be supplied to trigger the building of the Vue source components.[/bright_yellow]"
             )
 
     if args.fresh:

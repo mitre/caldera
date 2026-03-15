@@ -60,7 +60,7 @@ async def setup_rest_svc_test(data_svc):
     await data_svc.store(
         Obfuscator(name='plain-text',
                    description='Does no obfuscation to any command, instead running it in plain text',
-                   module='plugins.stockpile.app.obfuscators.plain_text')
+                   module='app.obfuscators.plain_text')
     )
 
 
@@ -88,7 +88,7 @@ class TestRestSvc:
                                               'privilege': 'User', 'proxy_receivers': {}, 'proxy_chain': [],
                                               'origin_link_id': '', 'deadman_enabled': False,
                                               'available_contacts': ['unknown'], 'pending_contact': 'unknown',
-                                              'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
+                                              'host_ip_addrs': [], 'upstream_dest': '://None:None', 'status': 'alive'}],
                               'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False,
                               'obfuscator': 'plain-text', 'use_learning_parsers': False,
                               'group': '',
@@ -163,7 +163,7 @@ class TestRestSvc:
                      'display_name': 'unknown$unknown', 'group': 'red', 'location': 'unknown', 'privilege': 'User',
                      'proxy_receivers': {}, 'proxy_chain': [], 'origin_link_id': '',
                      'deadman_enabled': False, 'available_contacts': ['unknown'], 'pending_contact': 'unknown',
-                     'host_ip_addrs': [], 'upstream_dest': '://None:None'}],
+                     'host_ip_addrs': [], 'upstream_dest': '://None:None', 'status': 'alive'}],
                 'visibility': 50, 'autonomous': 1, 'chain': [], 'auto_close': False, 'objective': '',
                 'obfuscator': 'plain-text', 'use_learning_parsers': False}
         internal_rest_svc = rest_svc(event_loop)
