@@ -89,6 +89,28 @@ jobs:
           fetch-depth: 0
           submodules: recursive
 
+      - name: Setup python
+        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c
+        with:
+          python-version: '3.13'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade virtualenv
+          pip install tox
+          npm --prefix pr/plugins/magma install
+          npm --prefix pr/plugins/magma run build
+
+      - name: Run tests (fork PR)
+        run: |
+          cd pr
+          tox -e py313,coverage-ci
+
       - name: Detect Sonar base dir
         id: detect
         run: |
