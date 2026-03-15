@@ -31,11 +31,13 @@ exfil_dir: /tmp/caldera
 host: 0.0.0.0
 objects.planners.default: atomic
 plugins:
-- automation
 - access
+- atomic
+- compass
 - debrief
+- fieldmanual
 - manx
-- mcp
+- response
 - sandcat
 - stockpile
 - training
