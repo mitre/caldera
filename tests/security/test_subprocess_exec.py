@@ -16,5 +16,6 @@ def test_no_create_subprocess_shell_in_start_vue():
             break
     assert func_node is not None, "start_vue_dev_server function not found in server.py"
     func_content = ast.get_source_segment(content, func_node)
+    assert func_content is not None, "Could not extract source for start_vue_dev_server"
     assert 'create_subprocess_shell' not in func_content
     assert 'create_subprocess_exec' in func_content
