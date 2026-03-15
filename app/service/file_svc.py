@@ -6,6 +6,8 @@ import json
 import os
 import re
 import subprocess
+
+_SAFE_FILENAME_RE = re.compile(r'^[a-zA-Z0-9._\-]+$')
 import sys
 
 from aiohttp import web
@@ -103,7 +105,7 @@ class FileSvc(FileServiceInterface, BaseService):
             return False
         if '..' in name or '/' in name or '\\' in name:
             return False
-        if not re.match(r'^[a-zA-Z0-9._\-]+$', name):
+        if not _SAFE_FILENAME_RE.fullmatch(name):
             return False
         return True
 
@@ -115,10 +117,10 @@ class FileSvc(FileServiceInterface, BaseService):
                 field = await reader.next()
                 if not field:
                     break
-                _, filename = os.path.split(field.filename)
-                if not self._validate_filename(filename):
-                    self.log.warning('Invalid filename rejected: %s', repr(filename))
+                if not self._validate_filename(field.filename):
+                    self.log.warning('Invalid filename rejected: %s', repr(field.filename))
                     continue
+                _, filename = os.path.split(field.filename)
                 await self.save_file(filename, bytes(await field.read()), target_dir,
                                      encrypt=encrypt, encoding=headers.get('x-file-encoding'))
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
