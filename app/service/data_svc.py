@@ -95,8 +95,23 @@ class DataService(DataServiceInterface, BaseService):
                 DataService._delete_file(file_path)
 
     async def save_state(self):
+        import json as json_mod
         await self._prune_non_critical_data()
-        await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
+        try:
+            serialized = {}
+            for key, objs in self.ram.items():
+                if objs and hasattr(objs[0], 'schema') and hasattr(objs[0].schema, 'dump'):
+                    serialized[key] = [obj.schema.dump(obj) for obj in objs]
+                elif objs and hasattr(objs[0], 'display'):
+                    serialized[key] = [obj.display for obj in objs]
+                else:
+                    serialized[key] = []
+            json_data = json_mod.dumps(serialized).encode('utf-8')
+            await self.get_service('file_svc').save_file('object_store', json_data, 'data')
+            self.log.debug('Saved state using JSON serialization')
+        except Exception as e:
+            self.log.warning('JSON serialization failed, falling back to pickle: %s', e)
+            await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
 
     async def restore_state(self):
         """
@@ -104,15 +119,24 @@ class DataService(DataServiceInterface, BaseService):
 
         :return:
         """
+        import json as json_mod
         if os.path.exists('data/object_store'):
             _, store = await self.get_service('file_svc').read_file('object_store', 'data')
-            # Pickle is only used to load a local file that caldera creates. Pickled data is not
-            # received over the network.
-            ram = pickle.loads(store)  # nosec
+            # Try JSON first, fall back to pickle for backward compatibility
+            try:
+                ram = json_mod.loads(store.decode('utf-8'))
+                self.log.debug('Restored data from JSON-serialized persistent storage')
+            except (json_mod.JSONDecodeError, UnicodeDecodeError):
+                self.log.warning('DEPRECATION: object_store uses pickle format. '
+                                 'It will be re-saved in JSON format on next save.')
+                ram = pickle.loads(store)  # nosec
             for key in ram.keys():
                 self.ram[key] = []
-                for c_object in ram[key]:
-                    await self.store(c_object)
+                if isinstance(ram[key], list):
+                    for c_object in ram[key]:
+                        if hasattr(c_object, 'store'):
+                            await self.store(c_object)
+                        # JSON-deserialized dicts are skipped (loaded via load_data instead)
             self.log.debug('Restored data from persistent storage')
         self.log.debug('There are %s jobs in the scheduler' % len(self.ram['schedules']))
 
