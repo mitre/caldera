@@ -1,5 +1,4 @@
 import pytest
-from app.api.v2 import make_app
 
 
 def _make_app_max_size(upload_max_size_mb):
