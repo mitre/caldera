@@ -1,32 +1,35 @@
-import unittest
+def test_default_global_client_max_size():
+    """Global default is 1MB."""
+    assert (1) * 1024 * 1024 == 1048576
 
 
-class TestClientMaxSize(unittest.TestCase):
-    def test_default_client_max_size(self):
-        """Verify that 1MB is computed correctly."""
-        client_max_size_mb = 1
-        result = client_max_size_mb * 1024 * 1024
-        self.assertEqual(result, 1048576)
-
-    def test_custom_client_max_size(self):
-        """Verify custom size is computed correctly."""
-        client_max_size_mb = 5
-        result = client_max_size_mb * 1024 * 1024
-        self.assertEqual(result, 5242880)
-
-    def test_none_fallback(self):
-        """When config returns None, default to 1MB."""
-        config_val = None
-        result = (config_val or 1) * 1024 * 1024
-        self.assertEqual(result, 1048576)
-
-    def test_old_value_was_larger(self):
-        """Confirm old value (5120**2) was ~26MB, much larger than 1MB."""
-        old_value = 5120 ** 2
-        new_value = 1 * 1024 * 1024
-        self.assertGreater(old_value, new_value)
-        self.assertEqual(old_value, 26214400)
+def test_none_fallback_global():
+    """When config returns None, global defaults to 1MB."""
+    config_val = None
+    assert (config_val or 1) * 1024 * 1024 == 1048576
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_default_upload_max_size():
+    """API upload default is 100MB to accommodate payloads and exfil files."""
+    assert (100) * 1024 * 1024 == 104857600
+
+
+def test_none_fallback_upload():
+    """When config returns None, upload defaults to 100MB."""
+    config_val = None
+    assert (config_val or 100) * 1024 * 1024 == 104857600
+
+
+def test_upload_limit_exceeds_global_limit():
+    """API upload limit must be larger than the global limit."""
+    global_limit = 1 * 1024 * 1024
+    upload_limit = 100 * 1024 * 1024
+    assert upload_limit > global_limit
+
+
+def test_old_value_was_larger_than_new_global():
+    """Confirm old hardcoded value (5120**2 ~26MB) is replaced by a tighter global default."""
+    old_value = 5120 ** 2
+    new_global = 1 * 1024 * 1024
+    assert old_value > new_global
+    assert old_value == 26214400

@@ -267,7 +267,10 @@ if __name__ == "__main__":
             middlewares=[pass_option_middleware]
         )
     )
-    app_svc.register_subapp("/api/v2", app.api.v2.make_app(app_svc.get_services()))
+    app_svc.register_subapp("/api/v2", app.api.v2.make_app(
+        app_svc.get_services(),
+        upload_max_size_mb=BaseWorld.get_config('api_upload_max_size_mb') or 100
+    ))
     init_swagger_documentation(app_svc.application)
     if args.uiDevHost:
         if not os.path.exists(f"{MAGMA_PATH}/dist") and (os.path.exists(f"{MAGMA_PATH}") and len(os.listdir(MAGMA_PATH)) > 0):
