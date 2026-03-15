@@ -74,7 +74,8 @@ async def start_server():
 
 
 def run_tasks(services, run_vue_server=False):
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     loop.create_task(app_svc.validate_requirements())
     loop.run_until_complete(data_svc.restore_state())
     loop.run_until_complete(knowledge_svc.restore_state())
@@ -312,7 +313,9 @@ if __name__ == "__main__":
             "[green]Fresh startup: resetting server data. See %s directory for data backups.[/green]",
             DATA_BACKUP_DIR,
         )
-        asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
+        loop = asyncio.new_event_loop()
+        loop.run_until_complete(data_svc.destroy())
+        loop.run_until_complete(knowledge_svc.destroy())
+        loop.close()
 
     run_tasks(services=app_svc.get_services(), run_vue_server=args.uiDevHost)
