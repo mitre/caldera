@@ -1,18 +1,20 @@
-import unittest
+import ast
+from pathlib import Path
 
 
-class TestSubprocessExec(unittest.TestCase):
-    def test_no_create_subprocess_shell_in_start_vue(self):
-        """Verify create_subprocess_shell is not used in start_vue_dev_server."""
-        with open('server.py', 'r') as f:
-            content = f.read()
-        # Find the start_vue_dev_server function
-        start = content.find('async def start_vue_dev_server')
-        end = content.find('\n\n', start)
-        func_content = content[start:end]
-        self.assertNotIn('create_subprocess_shell', func_content)
-        self.assertIn('create_subprocess_exec', func_content)
+SERVER_PY = Path(__file__).resolve().parents[2] / 'server.py'
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_no_create_subprocess_shell_in_start_vue():
+    """Verify create_subprocess_shell is not used in start_vue_dev_server."""
+    content = SERVER_PY.read_text()
+    tree = ast.parse(content, filename=str(SERVER_PY))
+    func_node = None
+    for node in ast.walk(tree):
+        if isinstance(node, ast.AsyncFunctionDef) and node.name == 'start_vue_dev_server':
+            func_node = node
+            break
+    assert func_node is not None, "start_vue_dev_server function not found in server.py"
+    func_content = ast.get_source_segment(content, func_node)
+    assert 'create_subprocess_shell' not in func_content
+    assert 'create_subprocess_exec' in func_content
