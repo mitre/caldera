@@ -142,10 +142,21 @@ def init_swagger_documentation(app):
     app.middlewares.append(validation_middleware)
 
 
+def _is_valid_cors_host(host):
+    """Validate that a CORS host contains only safe characters."""
+    import re
+    return bool(re.match(r'^[a-zA-Z0-9.\-]+$', host))
+
+
 async def enable_cors(request, response):
-    response.headers["Access-Control-Allow-Origin"] = (
-        "http://" + args.uiDevHost + ":3000"
-    )
+    # Dev-only: CORS headers for VueJS dev server
+    if not _is_valid_cors_host(args.uiDevHost):
+        logging.warning('Invalid uiDevHost value: %s - CORS origin will be empty', args.uiDevHost)
+        response.headers["Access-Control-Allow-Origin"] = ""
+    else:
+        response.headers["Access-Control-Allow-Origin"] = (
+            "http://" + args.uiDevHost + ":3000"
+        )
     response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Methods"] = (
         "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
