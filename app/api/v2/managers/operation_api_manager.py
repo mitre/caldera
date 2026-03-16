@@ -2,7 +2,7 @@ import asyncio
 import uuid
 
 from marshmallow.schema import SchemaMeta
-from typing import Any, List
+from typing import Any
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpNotFound, JsonHttpForbidden, JsonHttpBadRequest

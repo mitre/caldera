@@ -3,7 +3,6 @@
 Verifies that get_hosts() and get_reachable_hosts() use parallel async queries
 via asyncio.gather() instead of sequential awaits.
 """
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
