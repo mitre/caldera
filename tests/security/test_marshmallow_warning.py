@@ -1,6 +1,4 @@
-import logging
 import unittest
-from unittest.mock import MagicMock
 import marshmallow as ma
 
 
@@ -27,5 +25,3 @@ class TestMarshmallowWarning(unittest.TestCase):
         self.assertEqual(result['name'], 'test')
 
 
-if __name__ == '__main__':
-    unittest.main()
