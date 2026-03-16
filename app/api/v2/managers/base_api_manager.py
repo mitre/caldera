@@ -134,11 +134,20 @@ class BaseApiManager(BaseWorld):
 
         Raises ValueError if the ID contains path separators, traversal sequences,
         starts with '.', or is empty.  The ID is returned unchanged when valid.
+
+        Note: embedded '..' in the middle of an ID (e.g. 'version..2') is permitted
+        because caldera IDs are used directly as filename components, and '..'' only
+        enables directory traversal when it appears as a standalone path component
+        (i.e. with an adjacent separator).  The path-separator check above ensures
+        that no separator can appear, making embedded '..' harmless.
         """
         if not obj_id:
             raise ValueError(f"Invalid id: {obj_id!r}")
-        # Reject any ID that contains a path separator or traversal component
-        if '/' in obj_id or os.sep in obj_id or '..' in obj_id:
+        # Reject any ID that contains a path separator
+        if '/' in obj_id or os.sep in obj_id:
+            raise ValueError(f"Invalid id: {obj_id!r}")
+        # Reject '..' as a standalone token (traversal sequence without separator)
+        if obj_id == '..':
             raise ValueError(f"Invalid id: {obj_id!r}")
         if obj_id.startswith('.'):
             raise ValueError(f"Invalid id: {obj_id!r}")
@@ -147,6 +156,7 @@ class BaseApiManager(BaseWorld):
     @staticmethod
     async def _get_new_object_file_path(identifier: str, ram_key: str) -> str:
         """Create file path for new object"""
+        identifier = BaseApiManager._sanitize_id(identifier)
         return os.path.join('data', ram_key, f'{identifier}.yml')
 
     async def _get_existing_object_file_path(self, identifier: str, ram_key: str) -> str:

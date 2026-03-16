@@ -69,3 +69,15 @@ class TestSanitizeId:
     def test_id_with_underscores_passes(self):
         val = 'some_object_id_42'
         assert BaseApiManager._sanitize_id(val) == val
+
+    def test_embedded_dotdot_in_id_passes(self):
+        # Embedded '..' without a path separator is not a traversal sequence and is permitted.
+        # e.g. 'version..2' is a valid slug-style ID; it cannot escape the directory
+        # because no path separator is present.
+        val = 'version..2'
+        assert BaseApiManager._sanitize_id(val) == val
+
+    def test_standalone_dotdot_raises(self):
+        # '..' alone IS a traversal token and must be rejected.
+        with pytest.raises(ValueError):
+            BaseApiManager._sanitize_id('..')
