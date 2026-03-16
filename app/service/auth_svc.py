@@ -1,5 +1,6 @@
 import base64
 from collections import namedtuple
+from datetime import datetime, timezone
 from hmac import compare_digest
 from importlib import import_module
 
@@ -165,14 +166,16 @@ class AuthService(AuthServiceInterface, BaseService):
         return request.remote or 'unknown'
 
     def _log_auth_denial(self, request, reason=''):
-        from datetime import datetime, timezone
         ip = self._get_client_ip(request)
         timestamp = datetime.now(timezone.utc).isoformat()
-        self.log.warning('AUDIT: Authorization denied [%s %s] from [%s] at [%s] %s',
-                         request.method, request.path, ip, timestamp, reason)
+        if reason:
+            self.log.warning('AUDIT: Authorization denied [%s %s] from [%s] at [%s] reason=%s',
+                             request.method, request.path, ip, timestamp, reason)
+        else:
+            self.log.warning('AUDIT: Authorization denied [%s %s] from [%s] at [%s]',
+                             request.method, request.path, ip, timestamp)
 
     def _log_invalid_api_key_attempt(self, request):
-        from datetime import datetime, timezone
         ip = self._get_client_ip(request)
         timestamp = datetime.now(timezone.utc).isoformat()
         self.log.warning('AUDIT: Invalid API key attempt [%s %s] from [%s] at [%s]',
