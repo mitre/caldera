@@ -1,7 +1,10 @@
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+from aiohttp import web
 
 import app.api.v2 as v2_module
+from app.api.v2.security import pass_option_middleware
+from app.utility.base_world import BaseWorld
 
 
 def _make_app(upload_max_size_mb):
@@ -42,7 +45,20 @@ def test_global_default_tighter_than_old_hardcoded():
     """New 1MB global default must be tighter than the old hardcoded 5120**2 (~26MB)."""
     # Verify the v2 app can be created with the old value, and 1MB is genuinely smaller
     old_hardcoded = 5120 ** 2
-    new_default_mb = 1 * 1024 * 1024
-    assert new_default_mb < old_hardcoded
+    new_default_bytes = 1 * 1024 * 1024
+    assert new_default_bytes < old_hardcoded
     # Confirm the app created with 1MB actually applies that limit
-    assert _make_app(1)._client_max_size == new_default_mb
+    assert _make_app(1)._client_max_size == new_default_bytes
+
+
+def test_root_and_subapp_limits():
+    """Root app has 1MB limit; v2 subapp has 100MB limit; subapp limit exceeds root."""
+    BaseWorld.apply_config('main', {'client_max_size_mb': 1, 'api_upload_max_size_mb': 100})
+    root_app = web.Application(
+        client_max_size=1 * 1024 * 1024,
+        middlewares=[pass_option_middleware]
+    )
+    v2_app = v2_module.make_app(MagicMock(), upload_max_size_mb=100)
+    assert root_app._client_max_size == 1 * 1024 * 1024
+    assert v2_app._client_max_size == 100 * 1024 * 1024
+    assert v2_app._client_max_size > root_app._client_max_size
