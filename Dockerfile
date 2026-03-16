@@ -1,5 +1,5 @@
 ARG PYTHON_VERSION=3.13
-ARG GO_VERSION=1.25.4
+ARG GO_VERSION=1.26.1
 ARG NODE_VERSION=23.9.0
 
 #----( Build Stage )--------------------------------
