@@ -27,7 +27,8 @@ class PayloadApi(BaseApi):
 
     @aiohttp_apispec.docs(tags=['payloads'],
                           summary='Retrieve payloads',
-                          description='Retrieves all stored payloads.')
+                          description='Retrieves all stored payloads. Supports optional filtering by name '
+                                      '(case-insensitive substring match via the `name` query parameter).')
     @aiohttp_apispec.querystring_schema(PayloadQuerySchema)
     @aiohttp_apispec.response_schema(PayloadSchema(),
                                      description='Returns a list of all payloads in PayloadSchema format.')
@@ -35,6 +36,7 @@ class PayloadApi(BaseApi):
         sort: bool = request['querystring'].get('sort')
         exclude_plugins: bool = request['querystring'].get('exclude_plugins')
         add_path: bool = request['querystring'].get('add_path')
+        name_filter: str = request['querystring'].get('name')
 
         cwd = pathlib.Path.cwd()
         payload_dirs = [cwd / 'data' / 'payloads']
@@ -52,6 +54,11 @@ class PayloadApi(BaseApi):
         }
 
         payloads = list(payloads)
+
+        if name_filter:
+            name_filter_lower = name_filter.lower()
+            payloads = [p for p in payloads if name_filter_lower in p.lower()]
+
         if sort:
             payloads.sort()
 
