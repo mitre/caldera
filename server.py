@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+import re
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.theme import Theme
@@ -39,6 +40,10 @@ from app.utility.config_generator import ensure_local_config
 
 
 MAGMA_PATH = "./plugins/magma"
+
+# Pre-compiled pattern for CORS host validation.
+# Only allows hostname characters; rejects shell metacharacters, spaces, etc.
+_CORS_HOST_RE = re.compile(r'^[a-zA-Z0-9.\-]+$')
 
 
 def setup_logger(level=logging.DEBUG):
@@ -143,16 +148,20 @@ def init_swagger_documentation(app):
 
 
 def _is_valid_cors_host(host):
-    """Validate that a CORS host contains only safe characters."""
-    import re
-    return bool(re.match(r'^[a-zA-Z0-9.\-]+$', host))
+    """Validate that a CORS host contains only safe characters.
+
+    Uses a pre-compiled regex with fullmatch so the entire string must match,
+    preventing partial-match bypasses.
+    """
+    return bool(_CORS_HOST_RE.fullmatch(host)) if host else False
 
 
 async def enable_cors(request, response):
     # Dev-only: CORS headers for VueJS dev server
     if not _is_valid_cors_host(args.uiDevHost):
-        logging.warning('Invalid uiDevHost value: %s - CORS origin will be empty', args.uiDevHost)
-        response.headers["Access-Control-Allow-Origin"] = ""
+        logging.warning('Invalid uiDevHost value: %s - omitting CORS origin header', args.uiDevHost)
+        # Do not set Access-Control-Allow-Origin at all; an empty string is
+        # not a valid CORS response and causes inconsistent browser behaviour.
     else:
         response.headers["Access-Control-Allow-Origin"] = (
             "http://" + args.uiDevHost + ":3000"
