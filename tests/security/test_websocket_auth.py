@@ -95,6 +95,14 @@ class TestIsAuthenticated:
             conn = _make_connection(blue_key)
             assert handler._is_authenticated(conn)
 
+    def test_verify_hash_exception_returns_false(self):
+        """If verify_hash raises an unexpected exception, _is_authenticated must return False."""
+        handler = self._make_handler()
+        with patch('app.contacts.contact_websocket.BaseWorld.get_config', return_value='not-a-valid-hash'), \
+             patch('app.contacts.contact_websocket.verify_hash', side_effect=Exception('bad hash format')):
+            conn = _make_connection('ANYKEY')
+            assert not handler._is_authenticated(conn)
+
 
 class TestHandleAuthentication:
     """Integration-style tests for Handler.handle() authentication gating."""

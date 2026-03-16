@@ -1,6 +1,6 @@
 import asyncio
 import websockets
-from websockets.exceptions import ConnectionClosedError
+from websockets.exceptions import ConnectionClosed
 
 from app.utility.base_world import BaseWorld
 from app.utility.config_util import verify_hash
@@ -44,8 +44,13 @@ class Handler:
         provided = connection.request.headers.get(_HEADER_API_KEY, '')
         for key_name in _CONFIG_API_KEYS:
             stored = BaseWorld.get_config(key_name)
-            if stored and verify_hash(stored, provided):
-                return True
+            if stored:
+                try:
+                    if verify_hash(stored, provided):
+                        return True
+                except Exception:
+                    self.log.warning('Hash verification failed for config key %s', key_name)
+                    return False
         return False
 
     async def handle(self, connection):
@@ -56,8 +61,11 @@ class Handler:
             path = connection.request.path
             for handle in [h for h in self.handles if path.split('/', 1)[1].startswith(h.tag)]:
                 await handle.run(connection, path, self.services)
-        except ConnectionClosedError:
+        except ConnectionClosed:
             pass
         except Exception as e:
-            self.log.warning('Unexpected error handling WebSocket connection: %s', e)
-            raise
+            self.log.exception('Unexpected error handling WebSocket connection: %s', e)
+            try:
+                await connection.close(1011, 'Internal error')
+            except Exception:
+                pass
