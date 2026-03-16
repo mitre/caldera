@@ -6,17 +6,21 @@ from aiohttp import web
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.responses import JsonHttpBadRequest, JsonHttpForbidden, JsonHttpNotFound
 
+# Named constants for pagination defaults/limits used in get_all_objects.
+DEFAULT_LIMIT = 100
+MAX_LIMIT = 1000
+
 
 class BaseObjectApi(BaseApi):
     def __init__(self, description, obj_class, schema, ram_key, id_property, auth_svc, logger=None):
         super().__init__(auth_svc=auth_svc, logger=logger)
+        # self.log is provided by BaseApi as a property backed by self._log
 
         self.description = description
         self.obj_class = obj_class
         self.schema = schema
         self.ram_key = ram_key
         self.id_property = id_property
-        # self.log = logger
         self._api_manager = None
 
     @abc.abstractmethod
@@ -30,11 +34,11 @@ class BaseObjectApi(BaseApi):
         include = request['querystring'].get('include')
         exclude = request['querystring'].get('exclude')
 
-        # Pagination support
+        # Pagination support – uses named constants DEFAULT_LIMIT / MAX_LIMIT.
         try:
-            limit = min(int(request['querystring'].get('limit', 100)), 1000)
+            limit = min(int(request['querystring'].get('limit', DEFAULT_LIMIT)), MAX_LIMIT)
         except (ValueError, TypeError):
-            limit = 100
+            limit = DEFAULT_LIMIT
         try:
             offset = max(int(request['querystring'].get('offset', 0)), 0)
         except (ValueError, TypeError):
