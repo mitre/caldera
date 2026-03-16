@@ -1,4 +1,5 @@
 import base64
+import secrets
 from collections import namedtuple
 from importlib import import_module
 
@@ -208,6 +209,21 @@ class AuthService(AuthServiceInterface, BaseService):
         else:
             self.log.debug('Using default login handler.')
             self._login_handler = self._default_login_handler
+
+    def rotate_api_key(self, group):
+        """Generate a new API key for the given group and update config.
+
+        :param group: 'red' or 'blue'
+        :returns: the new API key
+        :raises ValueError: if group is not 'red' or 'blue'
+        """
+        key_config_map = {'red': CONFIG_API_KEY_RED, 'blue': CONFIG_API_KEY_BLUE}
+        if group not in key_config_map:
+            raise ValueError(f'Invalid group: {group}. Must be "red" or "blue".')
+        new_key = secrets.token_hex(32)
+        self.set_config('main', key_config_map[group], new_key)
+        self.log.info('API key rotated for group: %s', group)
+        return new_key
 
     def _get_login_handler_from_config(self, services):
         login_handler_module_path = self.get_config(CONFIG_AUTH_LOGIN_HANDLER)
