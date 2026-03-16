@@ -13,6 +13,32 @@ from app.api.v2.schemas.payload_schemas import PayloadQuerySchema, PayloadSchema
     PayloadDeleteRequestSchema
 
 
+ALLOWED_EXTENSIONS = frozenset([
+    '.ps1', '.sh', '.py', '.exe', '.elf', '.bat', '.vbs', '.js', '.go', '.c',
+    '.zip', '.tar', '.gz', '.dll', '.bin', '.yaml', '.yml', '.txt', '.json',
+])
+
+# b'<%@ Page' is redundant because b'<%@' already matches it via startswith().
+DANGEROUS_MAGIC_BYTES = [
+    b'<?php', b'<%@', b'<%!',
+]
+
+
+def _validate_payload_file(filename, file_content_start):
+    """Validate payload filename extension and magic bytes.
+    Returns (is_valid, error_message).
+    """
+    if '\x00' in filename:
+        return False, 'Null byte detected in filename'
+    ext = os.path.splitext(filename)[1].lower()
+    if ext and ext not in ALLOWED_EXTENSIONS:
+        return False, f'File extension not allowed: {ext}'
+    for magic in DANGEROUS_MAGIC_BYTES:
+        if file_content_start.startswith(magic):
+            return False, f'Dangerous file signature detected'
+    return True, ''
+
+
 class PayloadApi(BaseApi):
     def __init__(self, services):
         super().__init__(auth_svc=services['auth_svc'])
@@ -70,8 +96,17 @@ class PayloadApi(BaseApi):
         # accessing the file using the prefilled request["form"] dictionary.
         file_field: web.FileField = request["form"]["file"]
 
-        # Sanitize the file name to prevent directory traversal
+        # Sanitize the filename first so validation uses the same name that
+        # will be used for storage, preventing discrepancies if sanitization
+        # changes the extension or structure.
         sanitized_filename = self.sanitize_filename(file_field.filename)
+
+        # Validate sanitized filename and magic bytes.
+        first_bytes = file_field.file.read(16)
+        file_field.file.seek(0)
+        is_valid, error_msg = _validate_payload_file(sanitized_filename, first_bytes)
+        if not is_valid:
+            raise web.HTTPBadRequest(text=error_msg)
 
         # Generate the file name and path
         file_name, file_path = await self.__generate_file_name_and_path(sanitized_filename)
