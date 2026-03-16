@@ -1,6 +1,6 @@
 """Unit tests for OperationApiManager._call_ability_plugin_hooks."""
 import pytest
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import MagicMock
 
 
 class TestCallAbilityPluginHooks:
