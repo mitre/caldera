@@ -294,11 +294,11 @@ class TestTryAssemble:
     def test_overlapping_fragments_do_not_falsely_complete(self):
         """Duplicate/overlapping fragments must not inflate covered count."""
         session = {
-            'fragments': {0: b'hello ', 0: b'hello '},  # same offset twice
+            'fragments': {0: b'hello '},  # only 6 unique bytes covered, not 11
             'total_length': 11,
         }
         result = BitsContact._try_assemble(session)
-        assert result is None  # only 6 unique bytes covered, not 11
+        assert result is None
 
 
 class TestParseContentRangeEdgeCases:

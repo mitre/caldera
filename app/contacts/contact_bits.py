@@ -1,4 +1,5 @@
 import os
+import tempfile
 import uuid
 
 from aiohttp import web
@@ -112,7 +113,7 @@ class Contact(BaseWorld):
 
         Raises on failure so callers can propagate a non-200 response.
         """
-        exfil_dir = self.get_config('exfil_dir') or '/tmp/caldera'
+        exfil_dir = self.get_config('exfil_dir') or os.path.join(tempfile.gettempdir(), 'caldera')
         safe_filename = ''.join(c for c in filename if c.isalnum() or c in '._- ').rstrip()
         safe_filename = os.path.basename(safe_filename)
         if not safe_filename or safe_filename in ('.', '..'):
