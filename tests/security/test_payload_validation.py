@@ -16,7 +16,7 @@ class TestPayloadValidation(unittest.TestCase):
     def test_dangerous_magic_bytes_php(self):
         ok, msg = _validate_payload_file('test.txt', b'<?php echo "hi";')
         self.assertFalse(ok)
-        self.assertIn('Dangerous', msg)
+        self.assertIn('dangerous', msg.lower())
 
     def test_dangerous_magic_bytes_jsp(self):
         ok, msg = _validate_payload_file('test.txt', b'<%@ page import')
