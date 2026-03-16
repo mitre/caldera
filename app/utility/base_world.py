@@ -43,7 +43,9 @@ class BaseWorld:
             name = name if name else 'main'
             if prop:
                 return BaseWorld._app_configuration[name].get(prop)
-            return BaseWorld._app_configuration[name]
+            # Return a shallow copy so callers cannot mutate the live config dict
+            # outside the lock, which would undermine thread safety.
+            return dict(BaseWorld._app_configuration[name])
 
     @staticmethod
     def set_config(name, prop, value):
