@@ -90,6 +90,76 @@ class AbilityApiManager(BaseApiManager):
             os.makedirs(tactic_dir)
         return os.path.join(tactic_dir, '%s.yml' % obj_id)
 
+    async def upload_ability_file(self, file_data: bytes, filename: str, access: dict):
+        """Upload a YAML ability file, validate it, save to disk, and load into memory."""
+        # Validate file extension
+        if not filename.lower().endswith(('.yml', '.yaml')):
+            raise JsonHttpBadRequest('Invalid file type. Only .yml and .yaml files are accepted.')
+
+        # Parse YAML
+        try:
+            parsed = yaml.safe_load(file_data)
+        except yaml.YAMLError as e:
+            raise JsonHttpBadRequest(f'Invalid YAML: {e}')
+
+        # Handle list-wrapped abilities (common format: list of one dict)
+        if isinstance(parsed, list):
+            if len(parsed) == 0:
+                raise JsonHttpBadRequest('YAML file contains an empty list.')
+            parsed = parsed[0]
+
+        if not isinstance(parsed, dict):
+            raise JsonHttpBadRequest('YAML file must contain a mapping/dictionary.')
+
+        # Extract required fields
+        ability_id = parsed.get('id') or parsed.get('ability_id')
+        if not ability_id:
+            raise JsonHttpBadRequest('Missing required field: "id" or "ability_id".')
+        name = parsed.get('name')
+        if not name:
+            raise JsonHttpBadRequest('Missing required field: "name".')
+        tactic = parsed.get('tactic')
+        if not tactic:
+            raise JsonHttpBadRequest('Missing required field: "tactic".')
+
+        # Validate ID and tactic format
+        validator = re.compile(r'^[a-zA-Z0-9-_]+$')
+        if not validator.match(str(ability_id)):
+            raise JsonHttpBadRequest(f'Invalid ability ID "{ability_id}". '
+                                     'IDs can only contain alphanumeric characters, hyphens, and underscores.')
+        if not validator.match(tactic):
+            raise JsonHttpBadRequest(f'Invalid tactic "{tactic}". '
+                                     'Tactics can only contain alphanumeric characters, hyphens, and underscores.')
+
+        tactic = tactic.lower()
+        parsed['tactic'] = tactic
+        parsed['id'] = ability_id
+
+        # Check for duplicates
+        existing = list(self.find_objects('abilities', dict(ability_id=str(ability_id))))
+        if existing:
+            raise JsonHttpBadRequest(f'Ability with id already exists: {ability_id}')
+
+        # Determine save path and create directory if needed
+        tactic_dir = os.path.join('data', 'abilities', tactic)
+        if not os.path.exists(tactic_dir):
+            os.makedirs(tactic_dir)
+        file_path = os.path.join(tactic_dir, f'{ability_id}.yml')
+
+        # Write the file
+        with open(file_path, 'wb') as f:
+            f.write(yaml.dump([parsed], encoding='utf-8', sort_keys=False))
+
+        # Load into memory
+        allowed = self._get_allowed_from_access(access)
+        await self._data_svc.load_ability_file(file_path, allowed)
+
+        # Return the loaded ability
+        loaded = self.find_objects('abilities', dict(ability_id=str(ability_id)))
+        if loaded:
+            return list(loaded)[0]
+        raise JsonHttpBadRequest(f'Ability was saved but could not be loaded into memory: {ability_id}')
+
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
         await self._file_svc.save_file(file_path, yaml.dump([data], encoding='utf-8', sort_keys=False),
                                        '', encrypt=False)
