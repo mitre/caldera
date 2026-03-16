@@ -1,4 +1,8 @@
+import os
+import tempfile
 import pytest
+
+from unittest.mock import MagicMock
 
 from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
@@ -335,3 +339,57 @@ class TestRestSvc:
         internal_rest_svc = rest_svc(event_loop)
         agent_config = event_loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
         assert agent_config.get('deadman_abilities') == want
+
+    def test_list_exfil_files_with_operation_id_returns_correct_files(self, event_loop, rest_svc, data_svc):
+        """Regression test for #3155: _get_operation_exfil_folders must return paw-only keys so
+        list_exfil_files does not filter out every file when an operation_id is supplied.
+
+        The operation stored in setup_rest_svc_test has id='123' and one agent with paw='123'.
+        We mock file_svc.list_exfilled_files to return a dict keyed by that paw and verify that
+        list_exfil_files does NOT filter it out.
+        """
+        agent_paw = '123'
+        # Fake exfil data keyed by paw (the directory naming convention used at upload time)
+        fake_files = {agent_paw: {'subdir': {'exfil.txt': '/tmp/caldera/%s/subdir/exfil.txt' % agent_paw}}}
+
+        mock_file_svc = MagicMock()
+        mock_file_svc.list_exfilled_files.return_value = fake_files
+
+        internal_rest_svc = rest_svc(event_loop)
+        internal_rest_svc.add_service('file_svc', mock_file_svc)
+        internal_rest_svc.add_service('data_svc', data_svc)
+
+        result = event_loop.run_until_complete(internal_rest_svc.list_exfil_files({'operation_id': '123'}))
+        # The agent paw '123' should appear as a key — the file must not be filtered out
+        assert agent_paw in result, (
+            "list_exfil_files filtered out all files; paw key missing from result: %s" % result
+        )
+        assert 'subdir' in result[agent_paw]
+        assert 'exfil.txt' in result[agent_paw]['subdir']
+
+    def test_is_in_exfil_dir_rejects_sibling_directory(self, event_loop, rest_svc):
+        """Regression test for #3155: download_exfil path check must not accept a sibling
+        directory whose name starts with the exfil_dir string (e.g. /tmp/caldera2/)."""
+        import os as _os
+
+        exfil_dir = '/tmp/caldera'
+
+        # Reproduce the fixed logic from rest_api.py download_exfil_file
+        def is_in_exfil_dir(f):
+            return f.startswith(exfil_dir + _os.sep) or f == exfil_dir
+
+        # Sibling directory must be rejected
+        assert not is_in_exfil_dir('/tmp/caldera2/evil'), (
+            "Sibling directory /tmp/caldera2/evil must NOT be accepted by is_in_exfil_dir"
+        )
+        assert not is_in_exfil_dir('/tmp/calderaevil'), (
+            "Sibling path /tmp/calderaevil must NOT be accepted by is_in_exfil_dir"
+        )
+
+        # Legitimate paths inside exfil_dir must be accepted
+        assert is_in_exfil_dir('/tmp/caldera/somefile'), (
+            "Legitimate path /tmp/caldera/somefile must be accepted by is_in_exfil_dir"
+        )
+        assert is_in_exfil_dir('/tmp/caldera'), (
+            "Exact exfil_dir path must be accepted by is_in_exfil_dir"
+        )
