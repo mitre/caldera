@@ -91,7 +91,9 @@ class AuthService(AuthServiceInterface, BaseService):
     def register_session(self, username):
         """Create a server-side session and return the token."""
         token = str(uuid.uuid4())
-        lifetime = (self.get_config('session_lifetime_hours') or self.SESSION_LIFETIME_HOURS) * 3600
+        _cfg = self.get_config('session_lifetime_hours')
+        lifetime_hours = float(_cfg) if _cfg is not None else self.SESSION_LIFETIME_HOURS
+        lifetime = lifetime_hours * 3600
         now = time.time()
         self._active_sessions[token] = {
             'username': username,
@@ -99,6 +101,18 @@ class AuthService(AuthServiceInterface, BaseService):
             'expires_at': now + lifetime,
         }
         return token
+
+    def purge_expired_sessions(self):
+        """Remove all expired sessions from the in-memory store.
+
+        This prevents _active_sessions from growing without bound when sessions
+        are never revalidated after expiry (e.g. tokens issued but never used
+        again).  Call this periodically (e.g. during server maintenance loops).
+        """
+        now = time.time()
+        expired = [t for t, s in self._active_sessions.items() if now > s['expires_at']]
+        for token in expired:
+            del self._active_sessions[token]
 
     def invalidate_session(self, token):
         """Remove a session from the server-side store."""
