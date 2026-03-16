@@ -132,8 +132,13 @@ async def test_authentication_required_middleware_authenticated_endpoint_accepts
     assert login_response.status == 302
     assert COOKIE_SESSION in login_response.cookies
 
-    # Internally the test client keeps track of the session and will forward any relavent cookies.
-    index_response = await client.get('/private')
+    # Explicitly forward the session cookie to the next request. The EncryptedCookieStorage
+    # is configured with secure=True which can prevent plain-HTTP test clients from
+    # returning the cookie automatically, so pass it explicitly in the test.
+    session_cookie = login_response.cookies[COOKIE_SESSION]
+    cookies = {COOKIE_SESSION: session_cookie.value}
+
+    index_response = await client.get('/private', cookies=cookies)
     assert index_response.status == 200
 
 
