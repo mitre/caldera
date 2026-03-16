@@ -4,6 +4,7 @@ import os
 import pathlib
 import re
 from io import IOBase
+from typing import Optional
 
 import aiohttp_apispec
 from aiohttp import web
@@ -36,7 +37,7 @@ class PayloadApi(BaseApi):
         sort: bool = request['querystring'].get('sort')
         exclude_plugins: bool = request['querystring'].get('exclude_plugins')
         add_path: bool = request['querystring'].get('add_path')
-        name_filter: str = request['querystring'].get('name')
+        name_filter: Optional[str] = request['querystring'].get('name')
 
         cwd = pathlib.Path.cwd()
         payload_dirs = [cwd / 'data' / 'payloads']
@@ -57,7 +58,7 @@ class PayloadApi(BaseApi):
 
         if name_filter:
             name_filter_lower = name_filter.lower()
-            payloads = [p for p in payloads if name_filter_lower in p.lower()]
+            payloads = [p for p in payloads if name_filter_lower in pathlib.PurePosixPath(p).name.lower()]
 
         if sort:
             payloads.sort()
