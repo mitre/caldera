@@ -7,13 +7,9 @@ handler that converts the signal into KeyboardInterrupt so the existing
 teardown path is reused.
 """
 import ast
-import inspect
 import os
 import signal
-import sys
-import types
 import unittest
-from unittest.mock import MagicMock, patch, call
 
 
 # ---------------------------------------------------------------------------
