@@ -393,7 +393,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
     async def _call_ability_plugin_hooks(self, ability, executor):
         """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
         if hasattr(executor, 'HOOKS') and executor.HOOKS:
-            for hook, fcall in executor.HOOKS.items():
+            for fcall in executor.HOOKS.values():
                 await fcall(ability, executor)
 
     @staticmethod
