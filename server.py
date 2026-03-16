@@ -205,9 +205,17 @@ async def enable_cors(request, response):
 
 async def start_vue_dev_server():
     npm = _resolve_npm()
-    proc = await asyncio.create_subprocess_exec(
-        npm, "run", "dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH
-    )
+    if sys.platform == "win32":
+        # On Windows shutil.which resolves to npm.cmd; batch files cannot
+        # be executed directly by create_subprocess_exec, so use shell.
+        cmd = subprocess.list2cmdline([npm, "run", "dev"])
+        proc = await asyncio.create_subprocess_shell(
+            cmd, stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH,
+        )
+    else:
+        proc = await asyncio.create_subprocess_exec(
+            npm, "run", "dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH,
+        )
     logging.info("VueJS development server started (PID %s).", proc.pid)
 
 
@@ -333,7 +341,8 @@ if __name__ == "__main__":
         if not os.path.exists(f"{MAGMA_PATH}/dist") and (os.path.exists(f"{MAGMA_PATH}") and len(os.listdir(MAGMA_PATH)) > 0):
             logging.info("Building VueJS front-end.")
             npm = _resolve_npm()
-            subprocess.run([npm, "run", "build"], cwd=MAGMA_PATH, check=True)
+            subprocess.run([npm, "run", "build"], cwd=MAGMA_PATH, check=True,
+                           shell=(sys.platform == "win32"))
             logging.info("VueJS front-end build complete.")
         else:
             logging.warning(
@@ -348,8 +357,10 @@ if __name__ == "__main__":
         if os.path.exists(f"{MAGMA_PATH}") and len(os.listdir(MAGMA_PATH)) > 0:
             logging.info("Building VueJS front-end.")
             npm = _resolve_npm()
-            subprocess.run([npm, "install"], cwd=MAGMA_PATH, check=True)
-            subprocess.run([npm, "run", "build"], cwd=MAGMA_PATH, check=True)
+            subprocess.run([npm, "install"], cwd=MAGMA_PATH, check=True,
+                           shell=(sys.platform == "win32"))
+            subprocess.run([npm, "run", "build"], cwd=MAGMA_PATH, check=True,
+                           shell=(sys.platform == "win32"))
             logging.info("VueJS front-end build complete.")
         else:
             logging.warning(
