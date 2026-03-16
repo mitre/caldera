@@ -75,6 +75,12 @@ async def start_server():
 
 def run_tasks(services, run_vue_server=False):
     loop = asyncio.new_event_loop()
+    # The event loop is set here, before any async work begins.  Services
+    # (AppService, DataService, etc.) are instantiated in __main__ prior to
+    # this call but they do not cache the loop at construction time — they
+    # resolve it lazily via asyncio.get_event_loop().  Setting it explicitly
+    # here ensures all subsequent loop.create_task() / loop.run_until_complete()
+    # calls operate on the same, controlled loop instance.
     asyncio.set_event_loop(loop)
     try:
         loop.create_task(app_svc.validate_requirements())
@@ -126,6 +132,13 @@ def run_tasks(services, run_vue_server=False):
                 services.get("app_svc").teardown(main_config_file=args.environment)
             )
     finally:
+        # Cancel all pending tasks before shutdown to avoid resource leaks
+        # and "Task was destroyed but it is pending!" warnings.
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
+            task.cancel()
+        if pending:
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
         loop.run_until_complete(loop.shutdown_asyncgens())
         loop.close()
         asyncio.set_event_loop(None)
