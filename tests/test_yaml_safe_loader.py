@@ -1,5 +1,3 @@
-import os
-import tempfile
 import yaml
 import pytest
 from app.utility.base_world import BaseWorld
