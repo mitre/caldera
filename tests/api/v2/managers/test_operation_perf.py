@@ -79,6 +79,22 @@ class TestGetHostsParallel:
                 assert h in result
                 assert result[h]['reachable_hosts'] == [f'{h}-peer']
 
+    async def test_get_hosts_uses_gather(self, manager):
+        """Verify asyncio.gather is used for parallel host resolution.
+
+        A sequential implementation would also produce correct results,
+        so this test explicitly asserts that asyncio.gather is invoked.
+        """
+        agent = MagicMock()
+        agent.display = {'host': 'h1', 'host_ip_addrs': [], 'platform': 'linux', 'paw': 'abc'}
+        manager.find_object = MagicMock(return_value=agent)
+
+        with patch.object(manager, 'get_reachable_hosts', new_callable=AsyncMock, return_value=[]):
+            with patch('app.api.v2.managers.operation_api_manager.asyncio.gather',
+                       wraps=__import__('asyncio').gather) as mock_gather:
+                await manager.get_hosts({'chain': [{'host': 'h1'}]})
+                mock_gather.assert_called_once()
+
 
 class TestGetReachableHostsParallel:
     """Verify get_reachable_hosts batches trait queries via asyncio.gather."""
@@ -102,3 +118,18 @@ class TestGetReachableHostsParallel:
             result = await manager.get_reachable_hosts(agent={'paw': 'abc'})
             assert set(result) == {'host-a', 'host-b'}
             assert mock_services['knowledge_svc'].get_facts.call_count == 2
+
+    async def test_get_reachable_hosts_uses_gather(self, manager, mock_services):
+        """Verify asyncio.gather is used so trait queries run concurrently.
+
+        Without this assertion a sequential refactor would silently pass
+        all other tests.
+        """
+        mock_services['knowledge_svc'].get_facts = AsyncMock(return_value=[])
+
+        with patch('app.api.v2.managers.operation_api_manager.BaseWorld') as mock_bw:
+            mock_bw.get_config.return_value = ['trait.a', 'trait.b']
+            with patch('app.api.v2.managers.operation_api_manager.asyncio.gather',
+                       wraps=__import__('asyncio').gather) as mock_gather:
+                await manager.get_reachable_hosts(agent={'paw': 'abc'})
+                mock_gather.assert_called_once()
