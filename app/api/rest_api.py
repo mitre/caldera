@@ -139,6 +139,7 @@ class RestApi(BaseWorld):
     @check_authorization
     async def download_exfil_file(self, request):
         exfil_dir = self.get_config('exfil_dir')
+
         def is_in_exfil_dir(f):
             return f.startswith(exfil_dir + os.sep) or f == exfil_dir
 
