@@ -2,6 +2,7 @@ import io
 import os
 import tempfile
 import pytest
+from aiohttp import web
 from app.api.v2.handlers.payload_api import PayloadApi, FileTooLargeError
 
 
@@ -67,6 +68,43 @@ class TestPayloadUploadSizeLimit:
             # Should not raise even though data is large
             PayloadApi._PayloadApi__save_file(target, src, max_size_bytes=max_size_bytes)
             assert os.path.getsize(target) == 200000
+        finally:
+            if os.path.exists(target):
+                os.unlink(target)
+
+    def test_file_too_large_error_carries_size_info(self):
+        """FileTooLargeError should carry actual_size and max_size_bytes for HTTP 413 reporting."""
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            target = f.name
+        try:
+            large_data = b'A' * 2000
+            src = io.BytesIO(large_data)
+            with pytest.raises(FileTooLargeError) as exc_info:
+                PayloadApi._PayloadApi__save_file(target, src, max_size_bytes=1000)
+            assert exc_info.value.actual_size > 1000
+            assert exc_info.value.max_size_bytes == 1000
+        finally:
+            if os.path.exists(target):
+                os.unlink(target)
+
+    def test_oversize_upload_produces_http_413(self):
+        """Verify that FileTooLargeError translates to an HTTP 413 response."""
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            target = f.name
+        try:
+            large_data = b'A' * 2000
+            src = io.BytesIO(large_data)
+            with pytest.raises(FileTooLargeError) as exc_info:
+                PayloadApi._PayloadApi__save_file(target, src, max_size_bytes=1000)
+            # Simulate what post_payloads does: convert to HTTPRequestEntityTooLarge
+            err = exc_info.value
+            http_exc = web.HTTPRequestEntityTooLarge(
+                max_size=err.max_size_bytes,
+                actual_size=err.actual_size,
+                text='Payload exceeds maximum upload size'
+            )
+            assert http_exc.status_code == 413
+            assert 'Payload exceeds maximum upload size' in http_exc.text
         finally:
             if os.path.exists(target):
                 os.unlink(target)

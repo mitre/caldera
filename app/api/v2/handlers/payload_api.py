@@ -16,7 +16,10 @@ from app.utility.base_world import BaseWorld
 
 class FileTooLargeError(Exception):
     """Raised when an uploaded file exceeds the maximum allowed size."""
-    pass
+    def __init__(self, message, actual_size=0, max_size_bytes=0):
+        super().__init__(message)
+        self.actual_size = actual_size
+        self.max_size_bytes = max_size_bytes
 
 
 class PayloadApi(BaseApi):
@@ -83,7 +86,10 @@ class PayloadApi(BaseApi):
         file_name, file_path = await self.__generate_file_name_and_path(sanitized_filename)
 
         _cfg_size = BaseWorld.get_config('payload_max_upload_size_mb')
-        max_size_mb = 100 if _cfg_size is None else int(_cfg_size)
+        try:
+            max_size_mb = 100 if _cfg_size is None else int(_cfg_size)
+        except (ValueError, TypeError):
+            max_size_mb = 100
         # max_size_mb == 0 means no limit; otherwise convert to bytes
         max_size_bytes = max_size_mb * 1024 * 1024 if max_size_mb else 0
 
@@ -92,14 +98,13 @@ class PayloadApi(BaseApi):
         loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
         try:
             await loop.run_in_executor(None, self.__save_file, str(temp_file_path), file_field.file, max_size_bytes)
-        except FileTooLargeError:
-            # Determine partial bytes written before cleaning up
-            actual_size = temp_file_path.stat().st_size if temp_file_path.exists() else 0
+        except FileTooLargeError as e:
+            # __save_file already cleans up the partial file; use size from exception
             if temp_file_path.exists():
                 temp_file_path.unlink()
             raise web.HTTPRequestEntityTooLarge(
                 max_size=max_size_bytes,
-                actual_size=actual_size,
+                actual_size=e.actual_size,
                 text='Payload exceeds maximum upload size of %d MB' % max_size_mb
             )
 
@@ -196,7 +201,9 @@ class PayloadApi(BaseApi):
                         size += len(chunk)
                         if max_size_bytes and size > max_size_bytes:
                             raise FileTooLargeError(
-                                'File size %d exceeds maximum allowed size %d bytes' % (size, max_size_bytes)
+                                'File size %d exceeds maximum allowed size %d bytes' % (size, max_size_bytes),
+                                actual_size=size,
+                                max_size_bytes=max_size_bytes
                             )
                         buffered_io_base_dest.write(chunk)
                     else:
