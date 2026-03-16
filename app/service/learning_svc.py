@@ -31,17 +31,25 @@ class LearningService(LearningServiceInterface, BaseService):
         return parsers
 
     async def build_model(self):
-        cache_ttl = self.get_config('model_cache_ttl_seconds') or 3600
+        # get_config() may return a string; coerce to int and clamp to >= 1 second.
+        raw_ttl = self.get_config('model_cache_ttl_seconds')
+        try:
+            cache_ttl = max(1, int(raw_ttl)) if raw_ttl is not None else 3600
+        except (ValueError, TypeError):
+            cache_ttl = 3600
         if not self._model_dirty and (time.monotonic() - self._model_built_at) < cache_ttl:
             self.log.debug('Skipping model rebuild - cache still valid (TTL=%ds)', cache_ttl)
             return
+        # Build into a fresh local set to prevent stale entries from abilities
+        # that were removed since the last build.
+        new_model = set()
         for ability in await self.get_service('data_svc').locate('abilities'):
             for executor in ability.executors:
                 if executor.command:
                     variables = frozenset(re.findall(self.re_variable, executor.test))
                     if len(variables) > 1:  # relationships require at least 2 variables
-                        self.model.add(variables)
-        self.model = set(self.model)
+                        new_model.add(variables)
+        self.model = new_model
         self._model_dirty = False
         self._model_built_at = time.monotonic()
 
