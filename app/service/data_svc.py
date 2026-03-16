@@ -54,6 +54,7 @@ class DataService(DataServiceInterface, BaseService):
                            schedules=[], plugins=[], obfuscators=[], objectives=[], data_encoders=[])
         self.ram = copy.deepcopy(self.schema)
         self._ttl_config = {'operations': self._DEFAULT_TTL_OPERATION_DAYS * 86400}
+        self._eviction_task = None  # Guard against spawning multiple eviction loops
 
     @staticmethod
     def _iter_data_files():
@@ -141,13 +142,17 @@ class DataService(DataServiceInterface, BaseService):
                     evicted = before - len(self.ram['operations'])
                     if evicted:
                         self.log.info('TTL eviction: removed %d expired operations', evicted)
-            except Exception as e:
-                self.log.error('TTL eviction error: %s', e)
+            except Exception:
+                # Log full traceback to aid production debugging; swallowing
+                # exceptions is intentional here so the background loop survives.
+                self.log.exception('TTL eviction error')
 
     async def load_data(self, plugins=()):
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         loop.create_task(self._load(plugins))
-        loop.create_task(self._evict_expired_objects())
+        # Only start one eviction loop even if load_data() is called multiple times.
+        if self._eviction_task is None or self._eviction_task.done():
+            self._eviction_task = loop.create_task(self._evict_expired_objects())
 
     async def reload_data(self, plugins=()):
         await self._load(plugins)

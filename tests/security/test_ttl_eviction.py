@@ -1,38 +1,98 @@
+"""Tests for TTL-based eviction in DataService.
+
+Rather than duplicating the production filtering predicate, these tests
+drive the actual _evict_expired_objects() coroutine so that any future
+changes to the eviction logic are automatically exercised.
+"""
+import asyncio
 import datetime
 import unittest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
+
+
+def _make_data_svc():
+    """Return a DataService instance with a minimal stub environment."""
+    from app.service.data_svc import DataService
+    svc = DataService.__new__(DataService)
+    svc.log = MagicMock()
+    svc._ttl_config = {'operations': 7 * 86400}  # 7 days
+    svc.ram = {'operations': []}
+    svc._eviction_task = None
+    return svc
+
+
+def _make_op(finish_marker, age_days):
+    """Build a mock operation object."""
+    now = datetime.datetime.utcnow()
+    op = MagicMock()
+    op.finish = finish_marker
+    op.start = now - datetime.timedelta(days=age_days)
+    return op
 
 
 class TestTTLEviction(unittest.TestCase):
-    def test_old_operations_evicted(self):
-        """Test that finished operations older than TTL are evicted."""
-        ttl = 7 * 86400  # 7 days in seconds
-        now = datetime.datetime.utcnow()
+    def _run_one_eviction_cycle(self, svc):
+        """Run one pass of the eviction coroutine by patching asyncio.sleep."""
+        async def run():
+            # Patch sleep so the infinite loop runs only once then raises to exit.
+            call_count = 0
 
-        old_op = MagicMock()
-        old_op.finish = 'some-time'
-        old_op.start = now - datetime.timedelta(days=10)
+            async def fake_sleep(_):
+                nonlocal call_count
+                call_count += 1
+                if call_count >= 1:
+                    raise asyncio.CancelledError
 
-        new_op = MagicMock()
-        new_op.finish = 'some-time'
-        new_op.start = now - datetime.timedelta(days=1)
+            with patch('asyncio.sleep', side_effect=fake_sleep):
+                try:
+                    await svc._evict_expired_objects()
+                except asyncio.CancelledError:
+                    pass
 
-        running_op = MagicMock()
-        running_op.finish = None
-        running_op.start = now - datetime.timedelta(days=30)
+        asyncio.get_event_loop().run_until_complete(run())
 
-        operations = [old_op, new_op, running_op]
-        filtered = [
-            op for op in operations
-            if not (getattr(op, 'finish', None) and
-                    hasattr(op, 'start') and op.start and
-                    (now - op.start).total_seconds() > ttl)
-        ]
-        self.assertEqual(len(filtered), 2)  # new_op and running_op
-        self.assertIn(new_op, filtered)
-        self.assertIn(running_op, filtered)
-        self.assertNotIn(old_op, filtered)
+    def test_old_finished_operations_evicted(self):
+        """Finished operations older than TTL must be removed."""
+        svc = _make_data_svc()
+        old_op = _make_op('done', age_days=10)
+        new_op = _make_op('done', age_days=1)
+        running_op = _make_op(None, age_days=30)  # no finish marker – not expired
+        svc.ram['operations'] = [old_op, new_op, running_op]
 
+        self._run_one_eviction_cycle(svc)
 
-if __name__ == '__main__':
-    unittest.main()
+        self.assertNotIn(old_op, svc.ram['operations'])
+        self.assertIn(new_op, svc.ram['operations'])
+        self.assertIn(running_op, svc.ram['operations'])
+
+    def test_running_operations_not_evicted(self):
+        """Operations without a finish marker must never be evicted regardless of age."""
+        svc = _make_data_svc()
+        running_op = _make_op(None, age_days=100)
+        svc.ram['operations'] = [running_op]
+
+        self._run_one_eviction_cycle(svc)
+
+        self.assertIn(running_op, svc.ram['operations'])
+
+    def test_no_eviction_when_ttl_not_set(self):
+        """When no TTL is configured for operations, no eviction should occur."""
+        svc = _make_data_svc()
+        svc._ttl_config = {}
+        old_op = _make_op('done', age_days=365)
+        svc.ram['operations'] = [old_op]
+
+        self._run_one_eviction_cycle(svc)
+
+        self.assertIn(old_op, svc.ram['operations'])
+
+    def test_eviction_exception_is_logged_not_propagated(self):
+        """An exception during eviction must be logged without crashing the loop."""
+        svc = _make_data_svc()
+        # Make .ram raise on access to trigger error path.
+        svc.ram = MagicMock()
+        svc.ram.__contains__ = MagicMock(side_effect=RuntimeError('boom'))
+
+        self._run_one_eviction_cycle(svc)
+
+        svc.log.exception.assert_called_once()
