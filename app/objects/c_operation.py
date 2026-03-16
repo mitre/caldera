@@ -271,7 +271,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 )
             except asyncio.TimeoutError:
                 ability_id = link.ability.ability_id if link.ability else 'unknown'
-                self.log.warning(
+                logging.getLogger('operation').warning(
                     '[OPERATION] link %s (ability %s) timed out waiting for agent %s; '
                     'marking as TIMEOUT so operation can continue.',
                     link.id, ability_id, member.paw,
