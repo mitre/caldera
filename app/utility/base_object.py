@@ -94,11 +94,11 @@ class BaseObject(BaseWorld):
             return self.encode_string(decoded_test)
 
     @classmethod
-    def load(cls, dict_obj):
+    def load(cls, dict_obj, **kwargs):
         if cls.load_schema:
-            return cls.load_schema.load(dict_obj)
+            return cls.load_schema.load(dict_obj, **kwargs)
         elif cls.schema:
-            return cls.schema.load(dict_obj)
+            return cls.schema.load(dict_obj, **kwargs)
         else:
             raise NotImplementedError
 
