@@ -626,7 +626,6 @@ class TestOperation:
         assert test_link.id in op.ignored_links
         assert len(op.ignored_links) == 1
 
-
     async def test_report_includes_steps_for_agents_not_in_host_group(
             self, operation_agent, operation_adversary, executor, ability, operation_link,
             encoded_command, parse_datestring, file_svc, data_svc, knowledge_svc, fire_event_mock):
