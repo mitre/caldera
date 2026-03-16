@@ -416,8 +416,7 @@ class Operation(FirstClassObjectInterface, BaseObject):
             for r in self.source.relationships:
                 r.origin = self.source.id
                 r.source = self._resolve_fact(r.source, self.source.facts)
-                if r.target:
-                    r.target = self._resolve_fact(r.target, self.source.facts)
+                r.target = self._resolve_fact(r.target, self.source.facts)
                 await knowledge_svc_handle.add_relationship(r)
 
     @staticmethod
