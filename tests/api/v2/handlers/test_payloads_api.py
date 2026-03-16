@@ -61,6 +61,10 @@ class TestPayloadsApi:
         }
         assert filtered_payload_file_names == expected_payload_file_names
 
+        # All returned payloads must match the filter — non-matching payloads must be excluded.
+        import pathlib as _pathlib
+        assert all('payload_' in _pathlib.PurePosixPath(p).name.lower() for p in payload_file_names)
+
     async def test_get_payloads_name_filter_no_match(self, api_v2_client, api_cookies, expected_payload_file_names):
         # Use a suffix that is extremely unlikely to appear in any real payload file name.
         resp = await api_v2_client.get('/api/v2/payloads?name=__no_match_xyzzy__', cookies=api_cookies)
@@ -80,6 +84,10 @@ class TestPayloadsApi:
             if file_name in expected_payload_file_names
         }
         assert filtered_payload_file_names == expected_payload_file_names
+
+        # All returned payloads must match the filter — non-matching payloads must be excluded.
+        import pathlib as _pathlib
+        assert all('payload_' in _pathlib.PurePosixPath(p).name.lower() for p in payload_file_names)
 
     async def test_unauthorized_get_payloads(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/payloads')
