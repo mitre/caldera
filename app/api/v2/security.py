@@ -76,6 +76,6 @@ async def pass_option_middleware(request, handler):
     This mitigates CORS issues while developing the UI without
     bypassing authentication on sensitive API endpoints.
     """
-    if request.method == 'OPTIONS' and not request.path.startswith('/api/v2/'):
+    if request.method == 'OPTIONS' and not (request.path == '/api/v2' or request.path.startswith('/api/v2/')):
         raise web.HTTPOk()
     return await handler(request)
