@@ -58,7 +58,7 @@ class PayloadApi(BaseApi):
 
         if name_filter:
             name_filter_lower = name_filter.lower()
-            payloads = [p for p in payloads if name_filter_lower in pathlib.PurePosixPath(p).name.lower()]
+            payloads = [p for p in payloads if name_filter_lower in pathlib.PurePath(p).name.lower()]
 
         if sort:
             payloads.sort()
