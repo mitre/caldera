@@ -39,7 +39,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         # authenticated file API endpoints
-        self.app_svc.application.router.add_route('*', '/file/download', self.download_file)
+        self.app_svc.application.router.add_route('GET', '/file/download', self.download_file)
         self.app_svc.application.router.add_route('POST', '/file/upload', self.upload_file)
         # authorized API endpoints
         self.app_svc.application.router.add_route('*', '/api/rest', self.rest_core)
