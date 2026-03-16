@@ -159,8 +159,7 @@ async def start_vue_dev_server():
     proc = await asyncio.create_subprocess_exec(
         "npm", "run", "dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH
     )
-    logging.info("Started VueJS development server with PID %s.", proc.pid)
-    asyncio.create_task(proc.wait())
+    logging.info("VueJS development server started (PID %s).", proc.pid)
 
 
 def _get_parser():
