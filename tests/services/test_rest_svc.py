@@ -1,5 +1,9 @@
+import base64
 import pytest
 
+from unittest.mock import AsyncMock, MagicMock
+
+from app.api.rest_api import RestApi
 from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
 from app.objects.c_adversary import Adversary
@@ -335,3 +339,102 @@ class TestRestSvc:
         internal_rest_svc = rest_svc(event_loop)
         agent_config = event_loop.run_until_complete(internal_rest_svc.update_agent_data(update_data))
         assert agent_config.get('deadman_abilities') == want
+
+    def test_list_exfil_files_with_operation_id_returns_correct_files(self, event_loop, rest_svc, data_svc):
+        """Regression test for #3155: _get_operation_exfil_folders must return paw-only keys so
+        list_exfil_files does not filter out every file when an operation_id is supplied.
+
+        The operation stored in setup_rest_svc_test has id='123' and one agent with paw='123'.
+        We mock file_svc.list_exfilled_files to return a dict keyed by that paw and verify that
+        list_exfil_files does NOT filter it out.
+        """
+        agent_paw = '123'
+        # Fake exfil data keyed by paw (the directory naming convention used at upload time)
+        fake_files = {agent_paw: {'subdir': {'exfil.txt': '/tmp/caldera/%s/subdir/exfil.txt' % agent_paw}}}
+
+        mock_file_svc = MagicMock()
+        mock_file_svc.list_exfilled_files.return_value = fake_files
+
+        internal_rest_svc = rest_svc(event_loop)
+        internal_rest_svc.add_service('file_svc', mock_file_svc)
+        internal_rest_svc.add_service('data_svc', data_svc)
+
+        result = event_loop.run_until_complete(internal_rest_svc.list_exfil_files({'operation_id': '123'}))
+        # The agent paw '123' should appear as a key — the file must not be filtered out
+        assert agent_paw in result, (
+            "list_exfil_files filtered out all files; paw key missing from result: %s" % result
+        )
+        assert 'subdir' in result[agent_paw]
+        assert 'exfil.txt' in result[agent_paw]['subdir']
+
+    def test_is_in_exfil_dir_rejects_sibling_directory(self, event_loop, rest_svc):
+        """Regression test for #3155: RestApi.download_exfil_file must return HTTPNotFound
+        for a path that starts with exfil_dir as a prefix but is actually a sibling directory
+        (e.g. /tmp/caldera2/evil when exfil_dir is /tmp/caldera).
+
+        This test exercises the production is_in_exfil_dir nested function inside
+        RestApi.download_exfil_file rather than re-implementing the logic locally, so the
+        test will fail if that production check is removed or broken.
+        """
+        BaseWorld.apply_config(name='main', config={
+            'app.contact.http': '0.0.0.0',
+            'plugins': [],
+            'crypt_salt': 'BLAH',
+            'api_key': 'ADMIN123',
+            'encryption_key': 'ADMIN123',
+            'exfil_dir': '/tmp/caldera',
+        })
+
+        # Build a minimal RestApi instance with mocked services
+        mock_auth_svc = MagicMock()
+        mock_auth_svc.check_permissions = AsyncMock(return_value=None)
+        mock_file_svc = MagicMock()
+        mock_file_svc.read_file = AsyncMock(return_value=('somefile', b'data'))
+
+        services = {
+            'data_svc': MagicMock(),
+            'app_svc': MagicMock(),
+            'auth_svc': mock_auth_svc,
+            'file_svc': mock_file_svc,
+            'rest_svc': MagicMock(),
+        }
+        rest_api = RestApi.__new__(RestApi)
+        rest_api.log = MagicMock()
+        rest_api.data_svc = services['data_svc']
+        rest_api.app_svc = services['app_svc']
+        rest_api.auth_svc = mock_auth_svc
+        rest_api.file_svc = mock_file_svc
+        rest_api.rest_svc = services['rest_svc']
+
+        def make_request(file_path):
+            """Return a mock aiohttp Request with the given file path base64-encoded."""
+            encoded = base64.b64encode(file_path.encode()).decode()
+            req = MagicMock()
+            req.query = {'file': encoded}
+            # Simulate a real aiohttp Request so check_authorization passes the type check
+            from aiohttp.web_request import Request
+            req.__class__ = Request
+            return req
+
+        # Sibling directory /tmp/caldera2/evil must be rejected (HTTPNotFound)
+        sibling_request = make_request('/tmp/caldera2/evil')
+        sibling_response = event_loop.run_until_complete(
+            rest_api.download_exfil_file(sibling_request)
+        )
+        assert sibling_response.status == 404, (
+            "Sibling directory /tmp/caldera2/evil must be rejected with 404, got %s" % sibling_response.status
+        )
+
+        # Path /tmp/calderaevil must also be rejected (starts-with prefix match must require sep)
+        prefix_request = make_request('/tmp/calderaevil')
+        prefix_response = event_loop.run_until_complete(
+            rest_api.download_exfil_file(prefix_request)
+        )
+        assert prefix_response.status == 404, (
+            "Sibling path /tmp/calderaevil must be rejected with 404, got %s" % prefix_response.status
+        )
+
+        # A legitimate path inside exfil_dir must be accepted (file_svc.read_file is called)
+        good_request = make_request('/tmp/caldera/somefile')
+        event_loop.run_until_complete(rest_api.download_exfil_file(good_request))
+        mock_file_svc.read_file.assert_called_once()
