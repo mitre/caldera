@@ -261,8 +261,10 @@ if __name__ == "__main__":
     learning_svc = LearningService()
     event_svc = EventService()
 
-    rate_limit_requests = BaseWorld.get_config('rate_limit_requests') or 360
-    rate_limit_window = BaseWorld.get_config('rate_limit_window') or 60
+    _rl_req = BaseWorld.get_config('rate_limit_requests')
+    rate_limit_requests = 360 if _rl_req is None else int(_rl_req)
+    _rl_win = BaseWorld.get_config('rate_limit_window')
+    rate_limit_window = 60 if _rl_win is None else int(_rl_win)
     app_svc = AppService(
         application=web.Application(
             client_max_size=5120**2, middlewares=[

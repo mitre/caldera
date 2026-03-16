@@ -7,11 +7,11 @@ from collections import defaultdict, deque
 from aiohttp import web
 
 
-_rate_limit_store = defaultdict(deque)
-
-
 def rate_limit_middleware_factory(requests=360, window=60):
     """Return a sliding-window rate limiting middleware.
+
+    Each call creates an independent per-IP request store so that multiple
+    middleware instances (e.g. for different apps) do not interfere.
 
     Args:
         requests: Maximum number of requests allowed per window per IP.
@@ -19,9 +19,15 @@ def rate_limit_middleware_factory(requests=360, window=60):
 
     The middleware returns HTTP 429 Too Many Requests with a Retry-After
     header when the per-IP request count reaches the configured limit.
-    Client IP is read from the X-Forwarded-For header (proxy-aware),
-    falling back to request.remote.
+
+    .. warning::
+        Client IP is read from the ``X-Forwarded-For`` header when present,
+        falling back to ``request.remote``.  ``X-Forwarded-For`` should only
+        be trusted when the server is behind a trusted reverse proxy;
+        otherwise clients can spoof their IP to bypass rate limiting.
     """
+    store = defaultdict(deque)
+
     @web.middleware
     async def rate_limit_middleware(request, handler):
         forwarded_for = request.headers.get('X-Forwarded-For')
@@ -30,14 +36,21 @@ def rate_limit_middleware_factory(requests=360, window=60):
         else:
             client_ip = request.remote
         now = time.time()
-        timestamps = _rate_limit_store[client_ip]
+        timestamps = store[client_ip]
         # Evict timestamps outside the sliding window
         while timestamps and timestamps[0] <= now - window:
             timestamps.popleft()
+        # Prune empty entries to prevent unbounded memory growth
+        if not timestamps and client_ip in store:
+            del store[client_ip]
+            timestamps = store[client_ip]
         if len(timestamps) >= requests:
             raise web.HTTPTooManyRequests(headers={'Retry-After': str(window)})
         timestamps.append(now)
         return await handler(request)
+
+    # Expose the store for testing
+    rate_limit_middleware._store = store
     return rate_limit_middleware
 
 

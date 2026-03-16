@@ -164,16 +164,21 @@ async def test_authentication_exempt_bound_method_returns_200(base_world, aiohtt
 # Rate limiting middleware tests
 # ---------------------------------------------------------------------------
 
-@pytest.fixture
-def rate_limit_app():
-    """Small aiohttp app with a very tight rate limit (3 req / 60 s)."""
-    security._rate_limit_store.clear()
-
+def _make_rate_limit_app(requests=3, window=60):
+    """Helper: build a small aiohttp app with rate limiting."""
     async def index(request):
         return web.Response(status=200, text='ok')
 
-    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=3, window=60)])
+    middleware = security.rate_limit_middleware_factory(requests=requests, window=window)
+    app = web.Application(middlewares=[middleware])
     app.router.add_get('/', index)
+    return app, middleware
+
+
+@pytest.fixture
+def rate_limit_app():
+    """Small aiohttp app with a very tight rate limit (3 req / 60 s)."""
+    app, _ = _make_rate_limit_app(requests=3, window=60)
     return app
 
 
@@ -207,13 +212,7 @@ async def test_rate_limit_retry_after_header_present(rate_limit_app, aiohttp_cli
 
 @pytest.mark.anyio
 async def test_rate_limit_different_ips_have_independent_quotas(aiohttp_client):
-    security._rate_limit_store.clear()
-
-    async def index(request):
-        return web.Response(status=200, text='ok')
-
-    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=3, window=60)])
-    app.router.add_get('/', index)
+    app, _ = _make_rate_limit_app(requests=3, window=60)
     client = await aiohttp_client(app)
 
     # Exhaust quota for '1.1.1.1'
@@ -229,13 +228,7 @@ async def test_rate_limit_different_ips_have_independent_quotas(aiohttp_client):
 
 @pytest.mark.anyio
 async def test_rate_limit_x_forwarded_for_used_for_ip(aiohttp_client):
-    security._rate_limit_store.clear()
-
-    async def index(request):
-        return web.Response(status=200, text='ok')
-
-    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=2, window=60)])
-    app.router.add_get('/', index)
+    app, _ = _make_rate_limit_app(requests=2, window=60)
     client = await aiohttp_client(app)
 
     await client.get('/', headers={'X-Forwarded-For': '3.3.3.3'})
@@ -246,13 +239,9 @@ async def test_rate_limit_x_forwarded_for_used_for_ip(aiohttp_client):
 
 @pytest.mark.anyio
 async def test_rate_limit_resets_after_window(aiohttp_client):
-    security._rate_limit_store.clear()
-
-    async def index(request):
-        return web.Response(status=200, text='ok')
-
-    app = web.Application(middlewares=[security.rate_limit_middleware_factory(requests=2, window=1)])
-    app.router.add_get('/', index)
+    """Verify the sliding-window eviction logic lets requests through once
+    the window has elapsed -- without manually clearing the store."""
+    app, _ = _make_rate_limit_app(requests=2, window=1)
     client = await aiohttp_client(app)
 
     await client.get('/')
@@ -260,9 +249,8 @@ async def test_rate_limit_resets_after_window(aiohttp_client):
     blocked = await client.get('/')
     assert blocked.status == 429
 
-    # Advance time past the window by patching time.time
+    # Advance time past the window so the eviction loop purges old entries
     with patch('app.api.v2.security.time') as mock_time:
         mock_time.time.return_value = time.time() + 2
-        security._rate_limit_store.clear()
         resp = await client.get('/')
     assert resp.status == 200
