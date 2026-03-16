@@ -504,6 +504,35 @@ class TestOperation:
         assert not op.ignored_links
         assert test_link in op.chain
 
+    def test_wait_for_links_completion_link_timeout(self, make_test_link, operation_agent, mocker, async_return):
+        """A link that never finishes and whose agent stays trusted must be marked TIMEOUT
+        after the per-link deadline (base_timeout + link_timeout) so the planner can continue
+        rather than blocking forever (regression test for issue #3254)."""
+        import asyncio as _asyncio
+        from unittest.mock import MagicMock, AsyncMock
+        from app.utility.base_service import BaseService
+
+        test_agent = operation_agent  # trusted agent
+        # Link is in EXECUTE state (-3) and has no finish set — it will never complete on its own.
+        test_link = make_test_link(1111, test_agent.paw, Link().states['EXECUTE'])
+        op = Operation(name='test', agents=[test_agent], state='running')
+        op.add_link(test_link)
+
+        # Provide a stub event service so that setting link.status doesn't raise.
+        mock_event_svc = MagicMock()
+        mock_event_svc.fire_event = AsyncMock()
+
+        loop = _asyncio.new_event_loop()
+        with mocker.patch.object(BaseService, 'get_service', return_value=mock_event_svc):
+            with mocker.patch('asyncio.sleep', return_value=async_return(None)):
+                # Force wait_for to raise TimeoutError immediately so the test is fast.
+                with mocker.patch('asyncio.wait_for', side_effect=_asyncio.TimeoutError):
+                    loop.run_until_complete(op.wait_for_links_completion([test_link.id]))
+        loop.close()
+
+        # The link must now be TIMEOUT so downstream planner steps are unblocked.
+        assert test_link.status == Link().states['TIMEOUT']
+
     def test_update_untrusted_agents_with_trusted(self, operation_agent, ability, adversary):
         operation_agent.trusted = True
         op = Operation(name='test', agents=[operation_agent], adversary=adversary)
