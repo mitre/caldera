@@ -574,5 +574,7 @@ class TestPlanningService:
         executor.HOOKS = {}
         await planning_svc._call_ability_plugin_hooks(ability, executor)  # should not raise
 
-        del executor.HOOKS
+        # Use setattr/delattr on the instance dict to safely remove instance attribute
+        # without risking a class-level HOOKS definition from interfering
+        executor.__dict__.pop('HOOKS', None)
         await planning_svc._call_ability_plugin_hooks(ability, executor)  # should not raise
