@@ -1,4 +1,6 @@
 ability_refresh: 60
+client_max_size_mb: 1
+api_upload_max_size_mb: 100
 api_key_blue: BLUEADMIN123
 api_key_red: ADMIN123
 app.contact.dns.domain: mycaldera.caldera
@@ -29,7 +31,13 @@ exfil_dir: /tmp/caldera
 host: 0.0.0.0
 objects.planners.default: atomic
 plugins:
+- access
+- atomic
+- compass
 - debrief
+- fieldmanual
+- manx
+- response
 - sandcat
 - stockpile
 - training

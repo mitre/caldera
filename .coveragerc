@@ -1,0 +1,9 @@
+[run]
+source =
+    ./app
+[report]
+exclude_lines =
+    pragma: no cover
+    raise NotImplementedError
+[html]
+directory = _htmlcov

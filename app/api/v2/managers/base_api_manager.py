@@ -29,7 +29,6 @@ class BaseApiManager(BaseWorld):
             if not search or obj.match(search):
                 yield obj
 
-    #do we need this functions seems useless
     def find_object(self, ram_key: str, search: dict = None):
         for obj in self.find_objects(ram_key, search):
             return obj
@@ -151,26 +150,16 @@ class BaseApiManager(BaseWorld):
     async def replace_on_disk_object(self, obj: Any, data: dict, ram_key: str, id_property: str):
         obj_id = getattr(obj, id_property)
         file_path = await self._get_existing_object_file_path(obj_id, ram_key)
-        # 🧠 Update in-memory object fields
         obj.update('name', data.get('name'))
         obj.update('description', data.get('description'))
 
-        # ✅ THIS is the critical fix
+        # Directly assign atomic_ordering to preserve dict-style steps with embedded metadata
         obj.atomic_ordering = data.get('atomic_ordering', [])
-        # if any(isinstance(s, dict) and "metadata" in s for s in obj.atomic_ordering):
-        #     obj.metadata = {}
-        self.log.debug(
-            "[REPLACE] Writing atomic_ordering (len=%s)",
-            len(obj.atomic_ordering)
-        )
-
         obj.update('objective', data.get('objective'))
         obj.update('tags', list(data.get('tags', [])))
         obj.update('plugin', data.get('plugin'))
 
         dumped = obj.schema.dump(obj)
-
-
         await self._save_and_reload_object(file_path, dumped, type(obj), obj.access)
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 

@@ -52,41 +52,13 @@ class AdversarySchema(ma.Schema):
         data.pop('has_repeatable_abilities', None)
         return data
 
-    # @ma.post_load
-    # def build_adversary(self, data, **kwargs):
-    #     try:
-    #         atomic_ordering = data.get('atomic_ordering', [])
-    #         metadata = {}
-
-    #         for idx, step in enumerate(atomic_ordering):
-    #             if isinstance(step, dict):
-    #                 step_metadata = {}
-
-    #                 if 'facts' in step:
-    #                     step_metadata['facts'] = step['facts']
-
-    #                 if 'metadata' in step and isinstance(step['metadata'], dict):
-    #                     executor_facts = step['metadata'].get('executor_facts')
-    #                     if executor_facts:
-    #                         step_metadata['executor_facts'] = executor_facts
-
-    #                 if step_metadata:
-    #                     metadata[str(idx)] = step_metadata
-
-    #         # Do NOT overwrite atomic_ordering here
-    #         data['metadata'] = data.get('metadata', {})
-    #         data['metadata'].update(metadata)
-
-    #         return Adversary(**data)
-    #     except Exception as e:
-    #         traceback.print_exc()
-    #         raise
-    
     @ma.post_load
     def build_adversary(self, data, **kwargs):
         # Atomic ordering already contains full step metadata.
         # Do NOT synthesize or index metadata here.
         return Adversary(**data)
+
+
 class Adversary(FirstClassObjectInterface, BaseObject):
 
     schema = AdversarySchema()
@@ -111,7 +83,7 @@ class Adversary(FirstClassObjectInterface, BaseObject):
         self.plugin = plugin
         self.metadata = metadata or {}
         self.log = logger
-               
+
     def store(self, ram):
         self.log.debug(
             "[store] self.atomic_ordering=%r",

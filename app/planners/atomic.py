@@ -23,7 +23,6 @@ class LogicalPlanner:
 
         if links_to_use:
             # Each agent will run the next available step.
-            print(f'[Atomic] Running {len(links_to_use)} links with links_to_use: {links_to_use}')
             await self.operation.wait_for_links_completion(links_to_use)
         else:
             # No more links to run.
@@ -51,4 +50,3 @@ class LogicalPlanner:
                 return abil_id_to_link[ability_id]
 
         return None
-

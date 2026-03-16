@@ -1,0 +1,51 @@
+[submodule "plugins/sandcat"]
+	path = plugins/sandcat
+	url = https://github.com/mitre/sandcat.git
+[submodule "plugins/stockpile"]
+	path = plugins/stockpile
+	url = https://github.com/mitre/stockpile.git
+[submodule "plugins/ssl"]
+	path = plugins/ssl
+	url = https://github.com/mitre/ssl.git
+[submodule "plugins/caltack"]
+	path = plugins/caltack
+	url = https://github.com/mitre/caltack.git
+[submodule "plugins/compass"]
+	path = plugins/compass
+	url = https://github.com/mitre/compass.git
+[submodule "plugins/access"]
+	path = plugins/access
+	url = https://github.com/mitre/access.git
+[submodule "plugins/atomic"]
+	path = plugins/atomic
+	url = https://github.com/mitre/atomic.git
+[submodule "plugins/response"]
+	path = plugins/response
+	url = https://github.com/mitre/response.git
+[submodule "plugins/gameboard"]
+	path = plugins/gameboard
+	url = https://github.com/mitre/gameboard.git
+[submodule "plugins/manx"]
+	path = plugins/manx
+	url = https://github.com/mitre/manx.git
+[submodule "plugins/training"]
+	path = plugins/training
+	url = https://github.com/mitre/training.git
+[submodule "plugins/builder"]
+	path = plugins/builder
+	url = https://github.com/mitre/builder.git
+[submodule "plugins/human"]
+	path = plugins/human
+	url = https://github.com/mitre/human.git
+[submodule "plugins/fieldmanual"]
+	path = plugins/fieldmanual
+	url = https://github.com/mitre/fieldmanual.git
+[submodule "plugins/debrief"]
+	path = plugins/debrief
+	url = https://github.com/mitre/debrief.git
+[submodule "plugins/emu"]
+	path = plugins/emu
+	url = https://github.com/mitre/emu.git
+[submodule "plugins/magma"]
+	path = plugins/magma
+	url = https://github.com/mitre/magma.git
