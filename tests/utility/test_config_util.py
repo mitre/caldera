@@ -1,4 +1,6 @@
+import builtins
 import copy
+import logging
 import pathlib
 import secrets
 import yaml
@@ -6,7 +8,7 @@ import yaml
 from unittest import mock
 from argon2 import PasswordHasher
 
-from app.utility.config_util import hash_config_creds, verify_hash, ensure_local_config
+from app.utility.config_util import hash_config_creds, verify_hash, ensure_local_config, make_secure_config
 
 
 NON_SENSITIVE_CONF = {
@@ -83,3 +85,27 @@ class TestConfigUtil:
                 }
                 ensure_local_config()
                 mock_safe_dump.assert_called_once_with(want_config, mock.ANY, default_flow_style=False)
+
+    @mock.patch('logging.info')
+    @mock.patch.object(yaml, 'safe_load', return_value={'app.contact.http': '0.0.0.0', 'plugins': ['sandcat']})
+    @mock.patch.object(secrets, 'token_urlsafe', return_value='plaintextsecret')
+    def test_make_secure_config_logs_plaintext_then_hashes(self, mock_token_urlsafe, mock_safe_load, mock_logging_info):
+        with mock.patch.object(builtins, 'open', mock.mock_open()):
+            config = make_secure_config()
+
+        # logging.info must have been called exactly once (to display startup credentials)
+        mock_logging_info.assert_called_once()
+        logged_message = mock_logging_info.call_args[0][0]
+
+        # The logged message must contain the plaintext secret so the admin can read their credentials
+        assert 'plaintextsecret' in logged_message, (
+            "Expected plaintext secret in logged startup message, got: %r" % logged_message
+        )
+
+        # The returned config must store argon2 hashes, not the plaintext secret
+        assert config['api_key_blue'].startswith('$argon2id$'), (
+            "api_key_blue should be an argon2 hash after make_secure_config, got: %r" % config['api_key_blue']
+        )
+        assert config['api_key_red'].startswith('$argon2id$'), (
+            "api_key_red should be an argon2 hash after make_secure_config, got: %r" % config['api_key_red']
+        )
