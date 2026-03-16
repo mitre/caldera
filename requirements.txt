@@ -3,6 +3,7 @@ aiohttp==3.13.3
 aiohttp_session==2.12.0
 aiohttp-security==0.4.0
 aiohttp-apispec==3.0.0b2
+argon2-cffi==25.1.0
 jinja2==3.1.6
 pyyaml==6.0.1
 cryptography==46.0.5
