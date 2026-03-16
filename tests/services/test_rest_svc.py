@@ -1,7 +1,9 @@
+import base64
 import pytest
 
-from unittest.mock import MagicMock
+from unittest.mock import AsyncMock, MagicMock
 
+from app.api.rest_api import RestApi
 from app.objects.c_ability import Ability
 from app.objects.c_agent import Agent
 from app.objects.c_adversary import Adversary
@@ -366,28 +368,73 @@ class TestRestSvc:
         assert 'exfil.txt' in result[agent_paw]['subdir']
 
     def test_is_in_exfil_dir_rejects_sibling_directory(self, event_loop, rest_svc):
-        """Regression test for #3155: download_exfil path check must not accept a sibling
-        directory whose name starts with the exfil_dir string (e.g. /tmp/caldera2/)."""
-        import os as _os
+        """Regression test for #3155: RestApi.download_exfil_file must return HTTPNotFound
+        for a path that starts with exfil_dir as a prefix but is actually a sibling directory
+        (e.g. /tmp/caldera2/evil when exfil_dir is /tmp/caldera).
 
-        exfil_dir = '/tmp/caldera'
+        This test exercises the production is_in_exfil_dir nested function inside
+        RestApi.download_exfil_file rather than re-implementing the logic locally, so the
+        test will fail if that production check is removed or broken.
+        """
+        BaseWorld.apply_config(name='main', config={
+            'app.contact.http': '0.0.0.0',
+            'plugins': [],
+            'crypt_salt': 'BLAH',
+            'api_key': 'ADMIN123',
+            'encryption_key': 'ADMIN123',
+            'exfil_dir': '/tmp/caldera',
+        })
 
-        # Reproduce the fixed logic from rest_api.py download_exfil_file
-        def is_in_exfil_dir(f):
-            return f.startswith(exfil_dir + _os.sep) or f == exfil_dir
+        # Build a minimal RestApi instance with mocked services
+        mock_auth_svc = MagicMock()
+        mock_auth_svc.check_permissions = AsyncMock(return_value=None)
+        mock_file_svc = MagicMock()
+        mock_file_svc.read_file = AsyncMock(return_value=('somefile', b'data'))
 
-        # Sibling directory must be rejected
-        assert not is_in_exfil_dir('/tmp/caldera2/evil'), (
-            "Sibling directory /tmp/caldera2/evil must NOT be accepted by is_in_exfil_dir"
+        services = {
+            'data_svc': MagicMock(),
+            'app_svc': MagicMock(),
+            'auth_svc': mock_auth_svc,
+            'file_svc': mock_file_svc,
+            'rest_svc': MagicMock(),
+        }
+        rest_api = RestApi.__new__(RestApi)
+        rest_api.log = MagicMock()
+        rest_api.data_svc = services['data_svc']
+        rest_api.app_svc = services['app_svc']
+        rest_api.auth_svc = mock_auth_svc
+        rest_api.file_svc = mock_file_svc
+        rest_api.rest_svc = services['rest_svc']
+
+        def make_request(file_path):
+            """Return a mock aiohttp Request with the given file path base64-encoded."""
+            encoded = base64.b64encode(file_path.encode()).decode()
+            req = MagicMock()
+            req.query = {'file': encoded}
+            # Simulate a real aiohttp Request so check_authorization passes the type check
+            from aiohttp.web_request import Request
+            req.__class__ = Request
+            return req
+
+        # Sibling directory /tmp/caldera2/evil must be rejected (HTTPNotFound)
+        sibling_request = make_request('/tmp/caldera2/evil')
+        sibling_response = event_loop.run_until_complete(
+            rest_api.download_exfil_file(sibling_request)
         )
-        assert not is_in_exfil_dir('/tmp/calderaevil'), (
-            "Sibling path /tmp/calderaevil must NOT be accepted by is_in_exfil_dir"
+        assert sibling_response.status == 404, (
+            "Sibling directory /tmp/caldera2/evil must be rejected with 404, got %s" % sibling_response.status
         )
 
-        # Legitimate paths inside exfil_dir must be accepted
-        assert is_in_exfil_dir('/tmp/caldera/somefile'), (
-            "Legitimate path /tmp/caldera/somefile must be accepted by is_in_exfil_dir"
+        # Path /tmp/calderaevil must also be rejected (starts-with prefix match must require sep)
+        prefix_request = make_request('/tmp/calderaevil')
+        prefix_response = event_loop.run_until_complete(
+            rest_api.download_exfil_file(prefix_request)
         )
-        assert is_in_exfil_dir('/tmp/caldera'), (
-            "Exact exfil_dir path must be accepted by is_in_exfil_dir"
+        assert prefix_response.status == 404, (
+            "Sibling path /tmp/calderaevil must be rejected with 404, got %s" % prefix_response.status
         )
+
+        # A legitimate path inside exfil_dir must be accepted (file_svc.read_file is called)
+        good_request = make_request('/tmp/caldera/somefile')
+        event_loop.run_until_complete(rest_api.download_exfil_file(good_request))
+        mock_file_svc.read_file.assert_called_once()
