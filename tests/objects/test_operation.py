@@ -626,6 +626,48 @@ class TestOperation:
         assert test_link.id in op.ignored_links
         assert len(op.ignored_links) == 1
 
+
+    async def test_report_includes_steps_for_agents_not_in_host_group(
+            self, operation_agent, operation_adversary, executor, ability, operation_link,
+            encoded_command, parse_datestring, file_svc, data_svc, knowledge_svc, fire_event_mock):
+        """Regression test for issue #3048: a link whose paw is absent from operation.agents
+        must not cause report() to silently return None (i.e. download as 'Null')."""
+        from app.objects.c_planner import Planner
+        from app.objects.c_objective import Objective
+
+        op = Operation(name='report-test', agents=[operation_agent], adversary=operation_adversary)
+        op.set_start_details()
+        op.planner = Planner(planner_id='testplanner', name='test_planner', module='test', params=None)
+        op.objective = Objective(id='obj1', name='test objective')
+
+        exe = executor(name='psh', platform='windows', command='whoami')
+        ab = ability(ability_id='rep123', tactic='test tactic', technique_id='T0000',
+                     technique_name='test technique', name='test ability',
+                     description='test desc', executors=[exe])
+
+        known_link = operation_link(
+            command=encoded_command('whoami'),
+            plaintext_command=encoded_command('whoami'),
+            paw=operation_agent.paw,
+            ability=ab, executor=exe, status=0, host=operation_agent.host, pid=1,
+            decide=parse_datestring(LINK1_DECIDE_TIME),
+        )
+        orphan_paw = 'orphan-paw-not-in-agents'
+        orphan_link = operation_link(
+            command=encoded_command('id'),
+            plaintext_command=encoded_command('id'),
+            paw=orphan_paw,
+            ability=ab, executor=exe, status=0, host='orphan-host', pid=2,
+            decide=parse_datestring(LINK2_DECIDE_TIME),
+        )
+        op.chain = [known_link, orphan_link]
+
+        report = await op.report(file_svc, data_svc, output=False)
+        assert report is not None, 'report() must not return None when a link paw is absent from agents'
+        assert 'steps' in report
+        assert orphan_paw in report['steps'], 'orphan paw steps must appear in report'
+        assert operation_agent.paw in report['steps'], 'known agent paw steps must appear in report'
+
     async def test_operation_cleanup_status(self, fake_planning_svc, operation_agent):
         services = {'planning_svc': fake_planning_svc}
         op = Operation(name='test with cleanup', agents=[operation_agent], state='running')

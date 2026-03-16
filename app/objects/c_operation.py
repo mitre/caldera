@@ -338,12 +338,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     step_report['output'] = json.loads(results.replace('\\r\\n', '').replace('\\n', ''))
                 if step.agent_reported_time:
                     step_report['agent_reported_time'] = step.agent_reported_time.strftime(self.TIME_FORMAT)
-                agents_steps[step.paw]['steps'].append(step_report)
+                agents_steps.setdefault(step.paw, {'steps': []})['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
             return report
         except Exception:
-            logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
+            logging.error('Error generating operation report (%s)' % self.name, exc_info=True)
+            raise
 
     async def event_logs(self, file_svc, data_svc, output=False):
         # Ignore discarded / high visibility links that did not actually run.
@@ -471,7 +472,8 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for link in self.chain:
             if link.ability.ability_id not in self.adversary.atomic_ordering:
                 matching_abilities = await data_svc.locate('abilities', match=dict(ability_id=link.ability.ability_id))
-                abilities_by_agent[link.paw]['all_abilities'].extend(matching_abilities)
+                if link.paw in abilities_by_agent:
+                    abilities_by_agent[link.paw]['all_abilities'].extend(matching_abilities)
         return abilities_by_agent
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
