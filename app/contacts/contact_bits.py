@@ -90,8 +90,12 @@ class Contact(BaseWorld):
                 # Remove the session before awaiting save to prevent interleaving
                 completed = self.sessions.pop(session_id, None)
                 if completed is not None:
-                    await self._save_upload(session_id, completed['filename'], assembled)
-                    self.log.debug('BITS upload complete for session %s', session_id)
+                    try:
+                        await self._save_upload(session_id, completed['filename'], assembled)
+                        self.log.debug('BITS upload complete for session %s', session_id)
+                    except Exception as e:
+                        self.log.error('Failed to persist BITS upload for session %s: %s', session_id, e)
+                        return web.Response(status=500, reason='Failed to save upload')
 
         return web.Response(status=200)
 
@@ -104,17 +108,17 @@ class Contact(BaseWorld):
         return web.Response(status=200)
 
     async def _save_upload(self, session_id, filename, data):
-        """Write the completed upload to the exfil directory."""
-        try:
-            exfil_dir = self.get_config('exfil_dir') or '/tmp/caldera'
-            safe_filename = ''.join(c for c in filename if c.isalnum() or c in '._- ').rstrip()
-            safe_filename = os.path.basename(safe_filename)
-            if not safe_filename or safe_filename in ('.', '..'):
-                safe_filename = session_id
-            await self.file_svc.save_file(safe_filename, data, exfil_dir, encrypt=False)
-            self.log.info('BITS upload saved: %s (%d bytes)', safe_filename, len(data))
-        except Exception as e:
-            self.log.error('Failed to save BITS upload for session %s: %s', session_id, e)
+        """Write the completed upload to the exfil directory.
+
+        Raises on failure so callers can propagate a non-200 response.
+        """
+        exfil_dir = self.get_config('exfil_dir') or '/tmp/caldera'
+        safe_filename = ''.join(c for c in filename if c.isalnum() or c in '._- ').rstrip()
+        safe_filename = os.path.basename(safe_filename)
+        if not safe_filename or safe_filename in ('.', '..'):
+            safe_filename = session_id
+        await self.file_svc.save_file(safe_filename, data, exfil_dir, encrypt=False)
+        self.log.info('BITS upload saved: %s (%d bytes)', safe_filename, len(data))
 
     @staticmethod
     def _parse_content_range(header):

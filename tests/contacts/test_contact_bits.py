@@ -290,3 +290,33 @@ class TestTryAssemble:
         }
         result = BitsContact._try_assemble(session)
         assert result is None
+
+    def test_overlapping_fragments_do_not_falsely_complete(self):
+        """Duplicate/overlapping fragments must not inflate covered count."""
+        session = {
+            'fragments': {0: b'hello ', 0: b'hello '},  # same offset twice
+            'total_length': 11,
+        }
+        result = BitsContact._try_assemble(session)
+        assert result is None  # only 6 unique bytes covered, not 11
+
+
+class TestParseContentRangeEdgeCases:
+
+    def test_negative_start_rejected(self):
+        offset, total = BitsContact._parse_content_range('bytes -1-5/10')
+        assert offset is None
+
+    def test_end_less_than_start_rejected(self):
+        offset, total = BitsContact._parse_content_range('bytes 5-3/10')
+        assert offset is None
+
+    def test_end_equals_total_rejected(self):
+        """end must be strictly less than total_length."""
+        offset, total = BitsContact._parse_content_range('bytes 0-10/10')
+        assert offset is None
+
+    def test_valid_range_accepted(self):
+        offset, total = BitsContact._parse_content_range('bytes 0-9/10')
+        assert offset == 0
+        assert total == 10
