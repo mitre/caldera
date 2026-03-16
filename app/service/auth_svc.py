@@ -9,8 +9,10 @@ from aiohttp_security import SessionIdentityPolicy, check_permission, remember, 
 from aiohttp_security import setup as setup_security
 from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
+from aiohttp_session import get_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
 from cryptography import fernet
+import secrets
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
 from app.service.interfaces.i_login_handler import LoginHandlerInterface
@@ -75,7 +77,14 @@ class AuthService(AuthServiceInterface, BaseService):
         app.user_map = self.user_map
         fernet_key = fernet.Fernet.generate_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)
-        storage = EncryptedCookieStorage(secret_key, cookie_name=COOKIE_SESSION)
+        storage = EncryptedCookieStorage(
+            secret_key,
+            cookie_name=COOKIE_SESSION,
+            secure=True,
+            httponly=True,
+            max_age=86400,
+            samesite='Strict'
+        )
         setup_session(app, storage)
         policy = SessionIdentityPolicy()
         setup_security(app, policy, DictionaryAuthorizationPolicy(self.user_map))
@@ -155,6 +164,19 @@ class AuthService(AuthServiceInterface, BaseService):
         self.log.debug('%s logging in', username)
         response = web.HTTPFound('/')
         await remember(request, response, username)
+
+        # Initialize per-session CSRF token and expose it via a readable cookie for double-submit
+        try:
+            session = await get_session(request)
+            if 'csrf_token' not in session:
+                session['csrf_token'] = secrets.token_urlsafe(32)
+            # Set a non-HttpOnly cookie so client-side JS can read the token for double-submit.
+            secure_flag = (request.scheme == 'https') if hasattr(request, 'scheme') else False
+            response.set_cookie('XSRF-TOKEN', session['csrf_token'], httponly=False, secure=secure_flag, samesite='Lax')
+        except Exception:
+            # If session management or cookie setting fails, continue without exposing token.
+            self.log.exception('Failed to set CSRF token on login')
+
         raise response
 
     async def check_permissions(self, group, request):

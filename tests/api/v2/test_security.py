@@ -1,4 +1,4 @@
-import pytest
+iimport pytest
 from aiohttp import web
 
 from app.api.v2 import security
@@ -120,6 +120,26 @@ async def test_authentication_required_middleware_authenticated_endpoint_rejects
     assert resp.status == 401
 
 
+async def test_authentication_required_middleware_authenticated_endpoint_session_unauthorized_without_cookie(simple_webapp, aiohttp_client):
+    client = await aiohttp_client(simple_webapp)
+
+    login_response = await client.post(
+        '/login',
+        data={'username': 'reduser', 'password': 'redpass'},
+        allow_redirects=False  # I just didn't like that it followed the redirect for / and wanted the test to perform it manually.
+    )
+
+    assert login_response.status == 302
+    assert COOKIE_SESSION in login_response.cookies
+
+    # The EncryptedCookieStorage
+    # is configured with secure=True which can prevent plain-HTTP test clients from
+    # returning the cookie automatically, so if not passed explicitly, this is unauthorized.
+
+    index_response = await client.get('/private')
+    assert index_response.status == 401
+
+
 async def test_authentication_required_middleware_authenticated_endpoint_accepts_session_cookie(simple_webapp, aiohttp_client):
     client = await aiohttp_client(simple_webapp)
 
@@ -132,8 +152,13 @@ async def test_authentication_required_middleware_authenticated_endpoint_accepts
     assert login_response.status == 302
     assert COOKIE_SESSION in login_response.cookies
 
-    # Internally the test client keeps track of the session and will forward any relavent cookies.
-    index_response = await client.get('/private')
+    # Explicitly forward the session cookie to the next request. The EncryptedCookieStorage
+    # is configured with secure=True which can prevent plain-HTTP test clients from
+    # returning the cookie automatically, so pass it explicitly in the test.
+    session_cookie = login_response.cookies[COOKIE_SESSION]
+    cookies = {COOKIE_SESSION: session_cookie.value}
+
+    index_response = await client.get('/private', cookies=cookies)
     assert index_response.status == 200
 
 
