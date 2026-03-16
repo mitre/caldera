@@ -58,6 +58,13 @@ class TestOperationsApi:
     async def test_get_operations_summary_links_with_no_paw_skipped(
             self, api_v2_client, api_cookies, test_operation):
         """Regression test for issue #3181: links with missing/null paw must not cause HTTP 500."""
+        # Inject a link with paw=None to exercise the guard introduced by the fix
+        data_svc = BaseService.get_service('data_svc')
+        ops = await data_svc.locate('operations', match=dict(id=test_operation['id']))
+        assert ops, 'Test operation not found in data store'
+        null_paw_link = Link(command='dGVzdA==', paw=None, id='null-paw-test-link')
+        ops[0].chain.append(null_paw_link)
+
         resp = await api_v2_client.get('/api/v2/operations/summary', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
 
