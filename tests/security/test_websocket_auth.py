@@ -4,7 +4,6 @@ Security regression tests for WebSocket contact authentication (CWE-306 fix).
 Verifies that Handler._is_authenticated() correctly validates API keys
 and that handle() rejects unauthenticated connections.
 """
-import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
@@ -12,10 +11,12 @@ from argon2 import PasswordHasher
 
 from app.contacts.contact_websocket import Handler
 
+_ph = PasswordHasher(time_cost=1, memory_cost=8, parallelism=1)
+
 
 def _make_argon2_hash(plaintext):
     """Return an Argon2id hash of plaintext, matching how Caldera stores API keys."""
-    return PasswordHasher().hash(plaintext)
+    return _ph.hash(plaintext)
 
 
 def _make_connection(key_header=''):
