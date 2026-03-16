@@ -472,8 +472,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for link in self.chain:
             if link.ability.ability_id not in self.adversary.atomic_ordering:
                 matching_abilities = await data_svc.locate('abilities', match=dict(ability_id=link.ability.ability_id))
-                if link.paw in abilities_by_agent:
-                    abilities_by_agent[link.paw]['all_abilities'].extend(matching_abilities)
+                entry = abilities_by_agent.get(link.paw)
+                if entry:
+                    entry['all_abilities'].extend(matching_abilities)
         return abilities_by_agent
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):
