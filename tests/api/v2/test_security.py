@@ -1,14 +1,9 @@
-import pytest
+iimport pytest
 from aiohttp import web
-import logging
-import time
-import statistics
 
 from app.api.v2 import security
 from app.service.auth_svc import AuthService, HEADER_API_KEY, CONFIG_API_KEY_RED, COOKIE_SESSION
 from app.utility.base_world import BaseWorld
-
-logging.basicConfig(level=logging.DEBUG)
 
 
 @pytest.fixture
@@ -24,7 +19,8 @@ def base_world():
                 'red': {'reduser': 'redpass'},
                 'blue': {'blueuser': 'bluepass'}
             }
-        }
+        },
+        apply_hash=True
     )
 
     yield BaseWorld
@@ -68,48 +64,6 @@ def simple_webapp(event_loop, base_world):
     # the auth middleware after. Not doing this will cause a 500 in regards to the
     # session middleware not being set up correctly.
     app.middlewares.append(security.authentication_required_middleware_factory(auth_svc))
-
-    return app
-
-
-@pytest.fixture
-def csrf_webapp(event_loop, base_world):
-    """Like simple_webapp but with CSRF protection middleware and POST route for /private."""
-    async def index(request):
-        return web.Response(status=200, text='hello!')
-
-    @security.authentication_exempt
-    async def public(request):
-        return web.Response(status=200, text='public')
-
-    async def private(request):
-        return web.Response(status=200, text='private')
-
-    @security.authentication_exempt
-    async def login(request):
-        await auth_svc.login_user(request)  # Note: auth_svc defined in context function
-
-    app = web.Application()
-    app.router.add_get('/', index)
-    app.router.add_post('/login', login)
-    app.router.add_get('/public', public)
-    app.router.add_get('/private', private)
-    app.router.add_post('/private', private)
-
-    auth_svc = AuthService()
-
-    event_loop.run_until_complete(
-        auth_svc.apply(
-            app=app,
-            users=base_world.get_config('users')
-        )
-    )
-    event_loop.run_until_complete(auth_svc.set_login_handlers(auth_svc.get_services()))
-
-    # Ensure authentication middleware runs after session middleware
-    app.middlewares.append(security.authentication_required_middleware_factory(auth_svc))
-    # Add CSRF protection middleware after authentication
-    app.middlewares.append(security.csrf_protect_middleware_factory(auth_svc))
 
     return app
 
