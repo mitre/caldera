@@ -8,7 +8,6 @@ from unittest import mock
 
 import aiohttp_jinja2
 import jinja2
-import pytest
 import yaml
 from aiohttp import web
 
