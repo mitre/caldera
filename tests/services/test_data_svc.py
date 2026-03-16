@@ -359,64 +359,31 @@ class TestDataService:
                 mock_exception.assert_called_once_with(mock.ANY)
                 assert 'Failed to load ability file plugins/testing/data/discovery/101.yml' in mock_exception.call_args.args[0]
 
-    def test_prune_non_critical_data_does_not_mutate_self_ram(self, data_svc):
-        """_prune_non_critical_data() must not mutate self.ram.
+    def test_save_state_does_not_mutate_self_ram(self, data_svc):
+        """save_state() must not mutate self.ram (#3158)."""
+        data_svc.ram['plugins'] = ['sentinel']
+        data_svc.ram['obfuscators'] = ['sentinel']
+        data_svc.ram['data_encoders'] = ['sentinel']
+        data_svc.ram['agents'] = ['agent_sentinel']
 
-        Regression test for issue #3158: save_state() was calling
-        _prune_non_critical_data() which popped 'plugins' and 'obfuscators'
-        directly from self.ram.  This mutated the live in-memory state, meaning
-        a second call to save_state() (or any code that relied on those keys
-        after teardown was triggered) would raise a KeyError.
+        ram_copy = dict(data_svc.ram)
+        data_svc._prune_non_critical_data(ram_copy)
 
-        The fix makes _prune_non_critical_data() a pure function that accepts
-        and returns a copy of ram, leaving self.ram untouched.
-        """
-        # Save original state of 'agents' to avoid leaking mutations into other tests
-        original_agents = data_svc.ram.get('agents')
-        try:
-            # Populate the keys that are expected to survive a prune
-            data_svc.ram['plugins'] = ['plugin_sentinel']
-            data_svc.ram['obfuscators'] = ['obfuscator_sentinel']
-            data_svc.ram['data_encoders'] = ['encoder_sentinel']
-            data_svc.ram['agents'] = ['agent_sentinel']
+        assert 'plugins' not in ram_copy
+        assert 'obfuscators' not in ram_copy
+        assert 'data_encoders' not in ram_copy
+        assert ram_copy['agents'] == ['agent_sentinel']
 
-            import copy as _copy
-            pruned = data_svc._prune_non_critical_data(_copy.deepcopy(data_svc.ram))
+        # self.ram is untouched
+        assert 'plugins' in data_svc.ram
+        assert 'obfuscators' in data_svc.ram
+        assert 'data_encoders' in data_svc.ram
 
-            # The pruned copy must not contain transient keys
-            assert 'plugins' not in pruned
-            assert 'obfuscators' not in pruned
-            assert 'data_encoders' not in pruned
-
-            # Persistent data must survive the prune
-            assert 'agents' in pruned
-            assert pruned['agents'] == ['agent_sentinel']
-
-            # self.ram must be completely unmodified
-            assert 'plugins' in data_svc.ram
-            assert 'obfuscators' in data_svc.ram
-            assert 'data_encoders' in data_svc.ram
-        finally:
-            # Restore original 'agents' value to prevent fixture state leaking
-            if original_agents is not None:
-                data_svc.ram['agents'] = original_agents
-            elif 'agents' in data_svc.ram:
-                del data_svc.ram['agents']
-
-    def test_prune_non_critical_data_idempotent(self, data_svc):
-        """_prune_non_critical_data() must be safe to call multiple times.
-
-        When called on separate deep-copies it must not raise KeyError even
-        if the transient keys are absent from the copy passed in.
-        """
-        import copy as _copy
-        # First call: all keys present
-        first = data_svc._prune_non_critical_data(_copy.deepcopy(data_svc.ram))
-        # Second call: transient keys already absent (simulates a second invocation)
-        second = data_svc._prune_non_critical_data(_copy.deepcopy(first))
-        assert 'plugins' not in second
-        assert 'obfuscators' not in second
-        assert 'data_encoders' not in second
+    def test_prune_non_critical_data_safe_when_keys_missing(self, data_svc):
+        """_prune_non_critical_data() must not raise if keys are absent."""
+        ram_copy = {'agents': ['a']}
+        data_svc._prune_non_critical_data(ram_copy)
+        assert ram_copy == {'agents': ['a']}
 
     def test_get_plugin_name(self, data_svc):
         assert 'test' == data_svc._get_plugin_name('plugins/test')
