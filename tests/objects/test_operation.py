@@ -17,6 +17,7 @@ from app.objects.c_planner import Planner
 from app.objects.c_objective import Objective
 from app.objects.secondclass.c_result import Result
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_relationship import Relationship
 from app.utility.base_object import BaseObject
 from app.utility.base_world import BaseWorld
 
@@ -633,3 +634,59 @@ class TestOperation:
         assert await op.is_closeable()
         await op._cleanup_operation(services)
         assert op.state == 'cleanup'
+
+    # -- Tests for issue #2988: fact source relationships should be resolved against source facts --
+
+    def test_resolve_fact_with_value_unchanged(self, adversary):
+        """A fact that already has a value should be returned as-is."""
+        full_fact = Fact(trait='domain.user.name', value='alice')
+        fact_list = [full_fact, Fact(trait='domain.user.name', value='bob')]
+        op = Operation(name='test', agents=[], adversary=adversary)
+        result = op._resolve_fact(full_fact, fact_list)
+        assert result is full_fact
+        assert result.value == 'alice'
+
+    def test_resolve_fact_trait_only_resolves_to_matching_fact(self, adversary):
+        """A trait-only fact (value=None) should be resolved to the first matching fact in the list."""
+        stub = Fact(trait='domain.user.name', value=None)
+        matched = Fact(trait='domain.user.name', value='alice')
+        fact_list = [matched, Fact(trait='domain.user.password', value='secret')]
+        op = Operation(name='test', agents=[], adversary=adversary)
+        result = op._resolve_fact(stub, fact_list)
+        assert result is matched
+        assert result.value == 'alice'
+
+    def test_resolve_fact_no_match_returns_original(self, adversary):
+        """If no matching trait is found, the original stub is returned unchanged."""
+        stub = Fact(trait='nonexistent.trait', value=None)
+        fact_list = [Fact(trait='domain.user.name', value='alice')]
+        op = Operation(name='test', agents=[], adversary=adversary)
+        result = op._resolve_fact(stub, fact_list)
+        assert result is stub
+
+    async def test_init_source_seeds_relationship_with_resolved_facts(self, knowledge_svc, fire_event_mock, adversary):
+        """Relationships in a fact source that use trait-only fact references should be seeded
+        with the resolved (non-null) fact values from the source's fact list. Regression test
+        for issue #2988."""
+        source_fact_name = Fact(trait='domain.user.name', value='admin')
+        source_fact_pass = Fact(trait='domain.user.password', value='s3cr3t')
+        # Relationship stubs only carry trait (value=None), as stored when created via the UI
+        rel_source_stub = Fact(trait='domain.user.name', value=None)
+        rel_target_stub = Fact(trait='domain.user.password', value=None)
+        rel = Relationship(source=rel_source_stub, edge='has_password', target=rel_target_stub)
+
+        source = Source(id='src-2988', name='test-2988',
+                        facts=[source_fact_name, source_fact_pass],
+                        relationships=[rel])
+        op = Operation(name='test-2988', agents=[], adversary=adversary, source=source)
+        await op._init_source()
+
+        seeded_rels = await knowledge_svc.get_relationships(criteria=dict(origin='src-2988'))
+        assert len(seeded_rels) == 1
+        seeded_rel = seeded_rels[0]
+        assert seeded_rel.source.value == 'admin', (
+            'Relationship source fact value should be resolved from the source fact list, not None'
+        )
+        assert seeded_rel.target.value == 's3cr3t', (
+            'Relationship target fact value should be resolved from the source fact list, not None'
+        )

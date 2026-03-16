@@ -415,7 +415,23 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 await knowledge_svc_handle.add_fact(f)
             for r in self.source.relationships:
                 r.origin = self.source.id
+                r.source = self._resolve_fact(r.source, self.source.facts)
+                r.target = self._resolve_fact(r.target, self.source.facts)
                 await knowledge_svc_handle.add_relationship(r)
+
+    @staticmethod
+    def _resolve_fact(fact, fact_list):
+        """Resolve a relationship fact stub (trait-only) against the source's full fact list.
+
+        When relationships in a fact source are defined with only a trait reference (no value),
+        the matching fact from the source's fact list is returned so the relationship carries real
+        values.  If the fact already has a value, or no match is found, the original is returned.
+        """
+        if fact.value is None:
+            for candidate in fact_list:
+                if candidate.trait == fact.trait:
+                    return candidate
+        return fact
 
     async def _cleanup_operation(self, services):
         cleanup_count = 0
