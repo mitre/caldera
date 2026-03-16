@@ -1,9 +1,7 @@
 """Tests that the DNS covert-channel contact uses a CSPRNG (secrets module)
 rather than the insecure random module for IP address generation."""
 import secrets
-import importlib
-import sys
-import types
+from unittest.mock import patch, MagicMock
 
 
 class TestDnsIpGenerationUsesCsprng:
@@ -50,39 +48,58 @@ class TestDnsIpGenerationUsesCsprng:
         results = {handler._get_random_ipv6_addr() for _ in range(10)}
         assert len(results) > 1, "IPv6 addresses should be random, not constant"
 
-    def test_contact_dns_does_not_use_random_module_for_ip(self):
-        """The random module must not be used for IP generation (secrets replaces it)."""
-        import app.contacts.contact_dns as dns_mod
-        import inspect
-        src = inspect.getsource(dns_mod.Handler._generate_random_ipv4_response)
-        assert 'random.randrange' not in src
-        assert 'random.getrandbits' not in src
-        src6 = inspect.getsource(dns_mod.Handler._get_random_ipv6_addr)
-        assert 'random.getrandbits' not in src6
+    def test_ipv4_uses_secrets_token_bytes(self):
+        """_generate_random_ipv4_response must call secrets.token_bytes,
+        not random.randrange / random.getrandbits."""
+        handler = self._get_handler_class()
+        sentinel = b'\xfe\xdc\xba\x98'
+        # Patch secrets.token_bytes; if the implementation calls it, our sentinel
+        # controls the returned bytes (last byte even for is_response=True).
+        with patch('secrets.token_bytes', return_value=sentinel) as mock_tb:
+            handler._generate_random_ipv4_response(True)
+            mock_tb.assert_called()
+
+        # Ensure random.randrange is not used (patching it to raise proves it's
+        # not on the hot path).
+        with patch('random.randrange', side_effect=AssertionError("random.randrange must not be called")):
+            with patch('random.getrandbits', side_effect=AssertionError("random.getrandbits must not be called")):
+                handler._generate_random_ipv4_response(True)
+
+    def test_ipv6_uses_secrets_token_bytes(self):
+        """_get_random_ipv6_addr must call secrets.token_bytes,
+        not random.getrandbits."""
+        handler = self._get_handler_class()
+        sentinel = b'\x00' * 16
+        with patch('secrets.token_bytes', return_value=sentinel) as mock_tb:
+            handler._get_random_ipv6_addr()
+            mock_tb.assert_called()
+
+        with patch('random.getrandbits', side_effect=AssertionError("random.getrandbits must not be called")):
+            handler._get_random_ipv6_addr()
 
 
 class TestBaseWorldGeneratorsUseCsprng:
     """generate_name, generate_number and jitter in BaseWorld must use secrets."""
 
     def test_generate_name_uses_secrets(self):
-        import inspect
         from app.utility.base_world import BaseWorld
-        src = inspect.getsource(BaseWorld.generate_name)
-        assert 'secrets' in src, "generate_name should use secrets module"
-        assert 'choice' not in src.replace('secrets.choice', ''), \
-            "generate_name should not use random.choice"
+        # Patch random.choice to raise — if generate_name uses it the test fails.
+        with patch('random.choice', side_effect=AssertionError("random.choice must not be called")):
+            name = BaseWorld.generate_name(size=8)
+        assert isinstance(name, str) and len(name) == 8
 
     def test_generate_number_uses_secrets(self):
-        import inspect
         from app.utility.base_world import BaseWorld
-        src = inspect.getsource(BaseWorld.generate_number)
-        assert 'secrets' in src, "generate_number should use secrets module"
+        # Patch random.randrange to raise — if generate_number uses it the test fails.
+        with patch('random.randrange', side_effect=AssertionError("random.randrange must not be called")):
+            n = BaseWorld.generate_number(size=4)
+        assert isinstance(n, int)
 
     def test_jitter_uses_secrets(self):
-        import inspect
         from app.utility.base_world import BaseWorld
-        src = inspect.getsource(BaseWorld.jitter)
-        assert 'secrets' in src, "jitter should use secrets module"
+        with patch('random.randint', side_effect=AssertionError("random.randint must not be called")):
+            j = BaseWorld.jitter('2/10')
+        assert isinstance(j, (int, float))
 
     def test_generate_name_returns_lowercase_string(self):
         from app.utility.base_world import BaseWorld
