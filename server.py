@@ -74,55 +74,74 @@ async def start_server():
 
 
 def run_tasks(services, run_vue_server=False):
-    loop = asyncio.get_event_loop()
-    loop.create_task(app_svc.validate_requirements())
-    loop.run_until_complete(data_svc.restore_state())
-    loop.run_until_complete(knowledge_svc.restore_state())
-    loop.run_until_complete(app_svc.register_contacts())
-    loop.run_until_complete(app_svc.load_plugins(args.plugins))
-    loop.run_until_complete(
-        data_svc.load_data(
-            loop.run_until_complete(data_svc.locate("plugins", dict(enabled=True)))
-        )
-    )
-    loop.run_until_complete(
-        app_svc.load_plugin_expansions(
-            loop.run_until_complete(data_svc.locate("plugins", dict(enabled=True)))
-        )
-    )
-    loop.run_until_complete(RestApi(services).enable())
-    loop.run_until_complete(auth_svc.set_login_handlers(services))
-    loop.create_task(app_svc.start_sniffer_untrusted_agents())
-    loop.create_task(app_svc.resume_operations())
-    loop.create_task(app_svc.run_scheduler())
-    loop.create_task(learning_svc.build_model())
-    loop.create_task(app_svc.watch_ability_files())
-    loop.run_until_complete(start_server())
-    loop.run_until_complete(event_svc.fire_event(exchange="system", queue="ready"))
-    loop.run_until_complete(
-        data_svc.store(
-            Obfuscator(name='plain-text',
-                       description='Does no obfuscation to any command, instead running it in plain text',
-                       module='app.obfuscators.plain_text')
-        )
-    )
-    loop.run_until_complete(
-        data_svc.store(
-            Obfuscator(name='base64',
-                       description='Obfuscates commands in base64',
-                       module='app.obfuscators.base64_basic')
-        )
-    )
-    if run_vue_server:
-        loop.run_until_complete(start_vue_dev_server())
+    loop = asyncio.new_event_loop()
+    # The event loop is set here, before any async work begins.  Services
+    # (AppService, DataService, etc.) are instantiated in __main__ prior to
+    # this call but they do not cache the loop at construction time — they
+    # resolve it lazily via asyncio.get_event_loop().  Setting it explicitly
+    # here ensures all subsequent loop.create_task() / loop.run_until_complete()
+    # calls operate on the same, controlled loop instance.
+    asyncio.set_event_loop(loop)
     try:
-        logging.info("All systems ready.")
-        print_rich_banner()
-        loop.run_forever()
-    except KeyboardInterrupt:
+        loop.create_task(app_svc.validate_requirements())
+        loop.run_until_complete(data_svc.restore_state())
+        loop.run_until_complete(knowledge_svc.restore_state())
+        loop.run_until_complete(app_svc.register_contacts())
+        loop.run_until_complete(app_svc.load_plugins(args.plugins))
         loop.run_until_complete(
-            services.get("app_svc").teardown(main_config_file=args.environment)
+            data_svc.load_data(
+                loop.run_until_complete(data_svc.locate("plugins", dict(enabled=True)))
+            )
         )
+        loop.run_until_complete(
+            app_svc.load_plugin_expansions(
+                loop.run_until_complete(data_svc.locate("plugins", dict(enabled=True)))
+            )
+        )
+        loop.run_until_complete(RestApi(services).enable())
+        loop.run_until_complete(auth_svc.set_login_handlers(services))
+        loop.create_task(app_svc.start_sniffer_untrusted_agents())
+        loop.create_task(app_svc.resume_operations())
+        loop.create_task(app_svc.run_scheduler())
+        loop.create_task(learning_svc.build_model())
+        loop.create_task(app_svc.watch_ability_files())
+        loop.run_until_complete(start_server())
+        loop.run_until_complete(event_svc.fire_event(exchange="system", queue="ready"))
+        loop.run_until_complete(
+            data_svc.store(
+                Obfuscator(name='plain-text',
+                           description='Does no obfuscation to any command, instead running it in plain text',
+                           module='app.obfuscators.plain_text')
+            )
+        )
+        loop.run_until_complete(
+            data_svc.store(
+                Obfuscator(name='base64',
+                           description='Obfuscates commands in base64',
+                           module='app.obfuscators.base64_basic')
+            )
+        )
+        if run_vue_server:
+            loop.run_until_complete(start_vue_dev_server())
+        try:
+            logging.info("All systems ready.")
+            print_rich_banner()
+            loop.run_forever()
+        except KeyboardInterrupt:
+            loop.run_until_complete(
+                services.get("app_svc").teardown(main_config_file=args.environment)
+            )
+    finally:
+        # Cancel all pending tasks before shutdown to avoid resource leaks
+        # and "Task was destroyed but it is pending!" warnings.
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
+            task.cancel()
+        if pending:
+            loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
+        asyncio.set_event_loop(None)
 
 
 def init_swagger_documentation(app):
@@ -313,7 +332,14 @@ if __name__ == "__main__":
             "[green]Fresh startup: resetting server data. See %s directory for data backups.[/green]",
             DATA_BACKUP_DIR,
         )
-        asyncio.get_event_loop().run_until_complete(data_svc.destroy())
-        asyncio.get_event_loop().run_until_complete(knowledge_svc.destroy())
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            loop.run_until_complete(data_svc.destroy())
+            loop.run_until_complete(knowledge_svc.destroy())
+        finally:
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
+            asyncio.set_event_loop(None)
 
     run_tasks(services=app_svc.get_services(), run_vue_server=args.uiDevHost)
