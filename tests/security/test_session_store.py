@@ -6,9 +6,10 @@ from unittest.mock import patch, MagicMock
 def _make_auth_svc():
     """Create an AuthService instance with dependencies mocked.
 
-    Uses patch.dict to scope sys.modules injection to the import call,
-    avoiding global test-process contamination.  Calls __init__ so that
-    _active_sessions and other attributes are properly initialised.
+    Uses ``patch.dict`` to scope ``sys.modules`` injection to the import
+    call, avoiding global test-process contamination.  Uses ``__new__``
+    to bypass ``__init__`` (which calls ``add_service``), then manually
+    initialises the attributes that the session methods rely on.
     """
     mock_interface_module = MagicMock()
     mock_interface_module.AuthServiceInterface = object  # plain base class
@@ -92,12 +93,24 @@ class TestSessionStore(unittest.TestCase):
 
     def test_none_config_uses_default_lifetime(self):
         """get_config=None should fall back to SESSION_LIFETIME_HOURS."""
-        from app.service.auth_svc import AuthService
         svc = _make_auth_svc()
+        # Access the class constant via type(svc) to avoid import-order issues
+        default_hours = type(svc).SESSION_LIFETIME_HOURS
         with patch.object(type(svc), 'get_config', return_value=None):
             token = svc.register_session('admin')
         session = svc._active_sessions[token]
-        expected_lifetime = AuthService.SESSION_LIFETIME_HOURS * 3600
+        expected_lifetime = default_hours * 3600
+        actual_lifetime = session['expires_at'] - session['created_at']
+        self.assertAlmostEqual(actual_lifetime, expected_lifetime, delta=5)
+
+    def test_invalid_string_config_falls_back_to_default(self):
+        """Non-numeric config string (e.g. '8h') should fall back to default."""
+        svc = _make_auth_svc()
+        default_hours = type(svc).SESSION_LIFETIME_HOURS
+        with patch.object(type(svc), 'get_config', return_value='8h'):
+            token = svc.register_session('admin')
+        session = svc._active_sessions[token]
+        expected_lifetime = default_hours * 3600
         actual_lifetime = session['expires_at'] - session['created_at']
         self.assertAlmostEqual(actual_lifetime, expected_lifetime, delta=5)
 
@@ -112,7 +125,3 @@ class TestSessionStore(unittest.TestCase):
         self.assertNotIn('expired1', svc._active_sessions)
         self.assertNotIn('expired2', svc._active_sessions)
         self.assertIn('valid1', svc._active_sessions)
-
-
-if __name__ == '__main__':
-    unittest.main()
