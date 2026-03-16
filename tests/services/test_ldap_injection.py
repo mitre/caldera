@@ -31,6 +31,10 @@ class TestLdapRdnEscape:
     def test_escapes_null_byte(self):
         result = escape_rdn_value("admin\x00")
         assert "\x00" not in result
+        # Verify the NUL was escaped to the expected representation
+        assert "\\00" in result.lower() or "\\0" in result, (
+            f"Expected escaped NUL (\\00) in {result!r}"
+        )
 
 
 class TestLdapFilterEscape:
@@ -52,6 +56,10 @@ class TestLdapFilterEscape:
     def test_escapes_null_byte(self):
         result = escape_filter_chars("admin\x00")
         assert "\x00" not in result
+        # Verify the NUL was escaped to the expected LDAP filter hex form
+        assert "\\00" in result.lower(), (
+            f"Expected escaped NUL (\\00) in {result!r}"
+        )
 
 
 class TestDefaultLoginHandlerImports:
