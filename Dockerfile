@@ -94,7 +94,7 @@ RUN set -eux; \
 # Fetch atomic data or disable it in slim
 RUN if [ "$VARIANT" = "full" ] && [ ! -d "${APP_DIR}/plugins/atomic/data/atomic-red-team" ]; then \
         git clone --depth 1 https://github.com/redcanaryco/atomic-red-team.git ${APP_DIR}/plugins/atomic/data/atomic-red-team; \
-    else \
+    elif [ "$VARIANT" != "full" ]; then \
         sed -i '/\- atomic/d' ${APP_DIR}/conf/default.yml; \
     fi
 
