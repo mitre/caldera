@@ -1,14 +1,8 @@
 import inspect
 import functools
-import time
 import types
-from collections import defaultdict, deque
 
 from aiohttp import web
-
-# Per-IP sliding window request timestamp store.
-# Keys are client IP strings; values are deques of monotonic timestamps.
-_rate_limit_store = defaultdict(deque)
 
 
 def is_handler_authentication_exempt(handler):
@@ -73,41 +67,6 @@ def authentication_required_middleware_factory(auth_svc):
             raise web.HTTPUnauthorized()
         return await handler(request)
     return authentication_required_middleware
-
-
-def rate_limit_middleware_factory(requests: int = 360, window: int = 60):
-    """Return a sliding-window rate-limit middleware.
-
-    Args:
-        requests: Maximum number of requests allowed per *window* seconds per
-                  client IP.  Defaults to 360 (6 req/s).
-        window:   Time window in seconds.  Defaults to 60.
-
-    Returns HTTP 429 with a ``Retry-After`` header when the limit is exceeded.
-    Respects ``X-Forwarded-For`` so proxy deployments work correctly.
-    """
-    @web.middleware
-    async def rate_limit_middleware(request, handler):
-        forwarded_for = request.headers.get('X-Forwarded-For')
-        client_ip = forwarded_for.split(',')[0].strip() if forwarded_for else (request.remote or 'unknown')
-
-        now = time.monotonic()
-        cutoff = now - window
-
-        timestamps = _rate_limit_store[client_ip]
-        while timestamps and timestamps[0] < cutoff:
-            timestamps.popleft()
-
-        if len(timestamps) >= requests:
-            raise web.HTTPTooManyRequests(
-                reason='Rate limit exceeded',
-                headers={'Retry-After': str(window)},
-            )
-
-        timestamps.append(now)
-        return await handler(request)
-
-    return rate_limit_middleware
 
 
 def docs_guard_middleware_factory(auth_svc):

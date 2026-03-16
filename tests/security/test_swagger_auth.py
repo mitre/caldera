@@ -66,6 +66,48 @@ class TestSwaggerDocsAuth(unittest.TestCase):
         finally:
             loop.close()
 
+    def test_docs_guard_allows_valid_user_session(self):
+        """API key invalid but valid user session should allow access to /api/docs."""
+        from app.api.v2.security import docs_guard_middleware_factory
+
+        auth_svc = MagicMock()
+        auth_svc.request_has_valid_api_key.return_value = False
+        auth_svc.request_has_valid_user_session = AsyncMock(return_value=True)
+
+        middleware = docs_guard_middleware_factory(auth_svc)
+
+        request = MagicMock()
+        request.path = '/api/docs'
+        handler = AsyncMock(return_value='ok')
+
+        loop = asyncio.new_event_loop()
+        try:
+            result = loop.run_until_complete(middleware(request, handler))
+            self.assertEqual(result, 'ok')
+        finally:
+            loop.close()
+
+    def test_docs_guard_allows_static_swagger_with_session(self):
+        """Valid user session should also permit access to /static/swagger paths."""
+        from app.api.v2.security import docs_guard_middleware_factory
+
+        auth_svc = MagicMock()
+        auth_svc.request_has_valid_api_key.return_value = False
+        auth_svc.request_has_valid_user_session = AsyncMock(return_value=True)
+
+        middleware = docs_guard_middleware_factory(auth_svc)
+
+        request = MagicMock()
+        request.path = '/static/swagger/ui.js'
+        handler = AsyncMock(return_value='script')
+
+        loop = asyncio.new_event_loop()
+        try:
+            result = loop.run_until_complete(middleware(request, handler))
+            self.assertEqual(result, 'script')
+        finally:
+            loop.close()
+
 
 if __name__ == '__main__':
     unittest.main()
