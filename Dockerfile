@@ -22,7 +22,7 @@ RUN apt-get update -qy \
  && apt-get install -y --no-install-recommends git ca-certificates curl bash xz-utils build-essential \
  && rm -rf /var/lib/apt/lists/*
 
-# Install Node
+# Install Node (with SHA256 checksum verification)
 ARG TARGETARCH
 ARG NODE_VERSION
 RUN set -eux; \
@@ -33,11 +33,13 @@ RUN set -eux; \
       *) node_arch="x64" ;; \
     esac; \
     curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" -o /tmp/node.tar.xz; \
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/SHASUMS256.txt" -o /tmp/node.SHASUMS256.txt; \
+    grep "node-v${NODE_VERSION}-linux-${node_arch}.tar.xz" /tmp/node.SHASUMS256.txt | sha256sum -c -; \
     mkdir -p /usr/local/lib/node; \
     tar -xJf /tmp/node.tar.xz -C /usr/local/lib/node --strip-components=1; \
-    rm -f /tmp/node.tar.xz
+    rm -f /tmp/node.tar.xz /tmp/node.SHASUMS256.txt
 
-# Install Go
+# Install Go (with SHA256 checksum verification)
 ARG GO_VERSION
 RUN set -eux; \
   arch="${TARGETARCH:-amd64}"; \
@@ -46,8 +48,10 @@ RUN set -eux; \
       go_arch="$arch"; \
       echo "Installing Go ${GO_VERSION} for ${go_arch}"; \
       curl -fsSL "https://go.dev/dl/go${GO_VERSION}.linux-${go_arch}.tar.gz" -o /tmp/go.tgz; \
+      curl -fsSL "https://dl.google.com/go/go${GO_VERSION}.linux-${go_arch}.tar.gz.sha256" -o /tmp/go.tgz.sha256; \
+      echo "$(cat /tmp/go.tgz.sha256)  /tmp/go.tgz" | sha256sum -c -; \
       tar -C /usr/local -xzf /tmp/go.tgz; \
-      rm -f /tmp/go.tgz ;; \
+      rm -f /tmp/go.tgz /tmp/go.tgz.sha256 ;; \
     *) \
       echo "Unsupported arch ${arch}, ignoring Go install"; \
       mkdir -p /usr/local/go/bin && touch /usr/local/go/bin/.install_failed ;; \
@@ -58,6 +62,7 @@ ENV VENV_DIR=/usr/local/venv
 RUN python3 -m venv ${VENV_DIR}
 ENV PATH="/usr/local/go/bin:${PATH}"
 ENV PATH="${VENV_DIR}/bin:$PATH"
+ENV PATH="/usr/local/lib/node/bin:${PATH}"
 
 ADD . ${APP_DIR}
 WORKDIR ${APP_DIR}
@@ -100,8 +105,14 @@ RUN if [ "$VARIANT" = "full" ] && [ ! -d "${APP_DIR}/plugins/emu/data/adversary-
     fi
 
 # Remove .git folders
-RUN (find ${APP_DIR} -type d -name ".git") | xargs rm -rf \
- && rm ${APP_DIR}/.gitmodules
+RUN find ${APP_DIR} -type d -name ".git" | xargs -r rm -rf \
+ && rm -f ${APP_DIR}/.gitmodules
+
+# Build VueJS front-end in the build stage so the production image only
+# receives the compiled dist output rather than node_modules and build tooling.
+RUN if [ -d "${APP_DIR}/plugins/magma" ] && [ -f "${APP_DIR}/plugins/magma/package-lock.json" ]; then \
+      cd ${APP_DIR}/plugins/magma && npm ci && npm run build; \
+    fi
 
 
 #----( Dev Stage )--------------------------------
@@ -182,9 +193,4 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 ENV PATH="${VENV_DIR}/bin:${PATH}"
 ENV PATH="/usr/local/lib/node/bin:${PATH}"
 
-# Build VueJS front-end
-RUN cd ${APP_DIR}/plugins/magma \
- && npm install \
- && npm run build
-
-CMD ["python3", "/usr/src/app/server.py", "--insecure"]
+CMD ["python3", "/usr/src/app/server.py"]

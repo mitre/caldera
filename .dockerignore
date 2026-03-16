@@ -5,6 +5,7 @@ docker-compose.yml
 Dockerfile
 
 # git
+**/.git
 **/.gitattributes
 **/.gitignore
 **/.github
