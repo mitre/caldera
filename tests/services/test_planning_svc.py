@@ -565,16 +565,22 @@ class TestPlanningService:
         async def hook_b(ab, ex):
             call_log.append('b')
 
-        executor.HOOKS = {'key_a': hook_a, 'key_b': hook_b}
-        await planning_svc._call_ability_plugin_hooks(ability, executor)
+        ex = executor(name='psh', platform='windows')
+        ab = ability()
+        ex.HOOKS = {'key_a': hook_a, 'key_b': hook_b}
+        await planning_svc._call_ability_plugin_hooks(ab, ex)
         assert set(call_log) == {'a', 'b'}, 'All registered hooks must be invoked'
 
     async def test_call_ability_plugin_hooks_no_hooks(self, planning_svc, ability, executor):
         """_call_ability_plugin_hooks must be a no-op when HOOKS is absent or empty."""
-        executor.HOOKS = {}
-        await planning_svc._call_ability_plugin_hooks(ability, executor)  # should not raise
+        import types
 
-        # Use setattr/delattr on the instance dict to safely remove instance attribute
-        # without risking a class-level HOOKS definition from interfering
-        executor.__dict__.pop('HOOKS', None)
-        await planning_svc._call_ability_plugin_hooks(ability, executor)  # should not raise
+        ex = executor(name='psh', platform='windows')
+        ab = ability()
+        ex.HOOKS = {}
+        await planning_svc._call_ability_plugin_hooks(ab, ex)  # should not raise
+
+        # Use SimpleNamespace to genuinely test absent HOOKS attribute;
+        # real Executor instances always have a class-level HOOKS dict.
+        executor_without_hooks = types.SimpleNamespace()
+        await planning_svc._call_ability_plugin_hooks(ab, executor_without_hooks)  # should not raise

@@ -1,4 +1,6 @@
 """Unit tests for OperationApiManager._call_ability_plugin_hooks."""
+import types
+
 import pytest
 from unittest.mock import MagicMock
 
@@ -48,7 +50,12 @@ class TestCallAbilityPluginHooks:
         await manager._call_ability_plugin_hooks(ability, executor)
 
     @pytest.mark.asyncio
-    async def test_absent_hooks_is_noop(self, manager, ability, executor):
-        """Missing HOOKS attribute must not raise."""
-        executor.__dict__.pop('HOOKS', None)
-        await manager._call_ability_plugin_hooks(ability, executor)
+    async def test_absent_hooks_is_noop(self, manager, ability):
+        """Missing HOOKS attribute must not raise.
+
+        Use SimpleNamespace instead of MagicMock because MagicMock
+        auto-creates attributes on access, so hasattr() always returns True.
+        SimpleNamespace accurately reflects attribute absence.
+        """
+        executor_without_hooks = types.SimpleNamespace()
+        await manager._call_ability_plugin_hooks(ability, executor_without_hooks)
