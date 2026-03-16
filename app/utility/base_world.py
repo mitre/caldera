@@ -72,7 +72,7 @@ class BaseWorld:
     def strip_yml(path):
         if path:
             with open(path, encoding='utf-8') as seed:
-                return list(yaml.load_all(seed, Loader=yaml.SafeLoader))
+                return list(yaml.safe_load_all(seed))
         return []
 
     @staticmethod
