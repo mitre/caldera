@@ -26,6 +26,7 @@ COOKIE_SESSION = 'API_SESSION'
 CONFIG_API_KEY_RED = 'api_key_red'
 CONFIG_API_KEY_BLUE = 'api_key_blue'
 CONFIG_AUTH_LOGIN_HANDLER = 'auth.login.handler.module'
+COOKIE_KEY_PATH = os.path.join('data', 'cookie_key')
 
 
 def for_all_public_methods(decorator):
@@ -220,7 +221,7 @@ class AuthService(AuthServiceInterface, BaseService):
         Concurrent server startups may race, but os.replace() is atomic so the
         file will always contain exactly one valid key.
         """
-        key_path = os.path.join('data', 'cookie_key')
+        key_path = COOKIE_KEY_PATH
         key_dir = os.path.dirname(key_path) or '.'
         os.makedirs(key_dir, exist_ok=True)
         if os.path.exists(key_path):

@@ -14,10 +14,14 @@ def key_path(tmp_path):
 
 @pytest.fixture(autouse=True)
 def _patch_key_path(monkeypatch, key_path):
-    """Redirect _get_or_create_cookie_key to use a temp directory."""
+    """Redirect _get_or_create_cookie_key to use a temp directory.
+
+    Patches only the COOKIE_KEY_PATH constant rather than os.path.join,
+    which would be too broad and could affect other code paths in auth_svc.
+    """
     monkeypatch.setattr(
-        'app.service.auth_svc.os.path.join',
-        lambda *_args: key_path,
+        'app.service.auth_svc.COOKIE_KEY_PATH',
+        key_path,
     )
 
 
