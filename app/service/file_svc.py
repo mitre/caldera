@@ -117,7 +117,8 @@ class FileSvc(FileServiceInterface, BaseService):
                 if not field:
                     break
                 if not self._validate_filename(field.filename):
-                    self.log.warning('Invalid filename rejected: %s', repr(field.filename))
+                    self.log.warning('Invalid filename rejected: %r', field.filename)
+                    await field.read()  # consume the part to allow reader to advance
                     continue
                 _, filename = os.path.split(field.filename)
                 await self.save_file(filename, bytes(await field.read()), target_dir,
