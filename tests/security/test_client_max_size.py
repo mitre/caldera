@@ -59,6 +59,7 @@ def test_root_and_subapp_limits():
         middlewares=[pass_option_middleware]
     )
     v2_app = v2_module.make_app(MagicMock(), upload_max_size_mb=100)
+    root_app.add_subapp('/api/v2', v2_app)
     assert root_app._client_max_size == 1 * 1024 * 1024
     assert v2_app._client_max_size == 100 * 1024 * 1024
     assert v2_app._client_max_size > root_app._client_max_size
