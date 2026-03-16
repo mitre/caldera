@@ -84,11 +84,11 @@ async def api_v2_client_with_csrf(tmp_path):
     base = Path(__file__).resolve().parents[3]
 
     with open(base / 'conf' / 'default.yml', 'r') as fle:
-        BaseWorld.apply_config('main', yaml.safe_load(fle))
+        BaseWorld.apply_config('main', yaml.safe_load(fle), apply_hash=True)
     with open(base / 'conf' / 'payloads.yml', 'r') as fle:
-        BaseWorld.apply_config('payloads', yaml.safe_load(fle))
+        BaseWorld.apply_config('payloads', yaml.safe_load(fle), apply_hash=True)
     with open(base / 'conf' / 'agents.yml', 'r') as fle:
-        BaseWorld.apply_config('agents', yaml.safe_load(fle))
+        BaseWorld.apply_config('agents', yaml.safe_load(fle), apply_hash=True)
 
     app_svc = AppService(web.Application(client_max_size=5120 ** 2))
     _ = DataService()
