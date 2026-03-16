@@ -270,12 +270,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     timeout=self.base_timeout + self.link_timeout,
                 )
             except asyncio.TimeoutError:
-                logging.warning(
+                ability_id = link.ability.ability_id if link.ability else 'unknown'
+                self.log.warning(
                     '[OPERATION] link %s (ability %s) timed out waiting for agent %s; '
                     'marking as TIMEOUT so operation can continue.',
-                    link.id, link.ability.ability_id, member.paw,
+                    link.id, ability_id, member.paw,
                 )
                 link.status = link.states['TIMEOUT']
+                link.finish = datetime.now(timezone.utc).strftime(self.TIME_FORMAT)
 
     async def _wait_for_link(self, link, member):
         """Poll until *link* finishes, can be ignored, or the agent becomes untrusted."""

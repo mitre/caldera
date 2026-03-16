@@ -523,12 +523,16 @@ class TestOperation:
         mock_event_svc.fire_event = AsyncMock()
 
         loop = _asyncio.new_event_loop()
-        with mocker.patch.object(BaseService, 'get_service', return_value=mock_event_svc):
-            with mocker.patch('asyncio.sleep', return_value=async_return(None)):
-                # Force wait_for to raise TimeoutError immediately so the test is fast.
-                with mocker.patch('asyncio.wait_for', side_effect=_asyncio.TimeoutError):
-                    loop.run_until_complete(op.wait_for_links_completion([test_link.id]))
-        loop.close()
+        _asyncio.set_event_loop(loop)
+        try:
+            with mocker.patch.object(BaseService, 'get_service', return_value=mock_event_svc):
+                with mocker.patch('asyncio.sleep', return_value=async_return(None)):
+                    # Force wait_for to raise TimeoutError immediately so the test is fast.
+                    with mocker.patch('asyncio.wait_for', side_effect=_asyncio.TimeoutError):
+                        loop.run_until_complete(op.wait_for_links_completion([test_link.id]))
+        finally:
+            _asyncio.set_event_loop(None)
+            loop.close()
 
         # The link must now be TIMEOUT so downstream planner steps are unblocked.
         assert test_link.status == Link().states['TIMEOUT']
