@@ -157,12 +157,34 @@ class AuthService(AuthServiceInterface, BaseService):
         await remember(request, response, username)
         raise response
 
+    @staticmethod
+    def _get_client_ip(request):
+        forwarded = request.headers.get('X-Forwarded-For')
+        if forwarded:
+            return forwarded.split(',')[0].strip()
+        return request.remote or 'unknown'
+
+    def _log_auth_denial(self, request, reason=''):
+        from datetime import datetime, timezone
+        ip = self._get_client_ip(request)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        self.log.warning('AUDIT: Authorization denied [%s %s] from [%s] at [%s] %s',
+                         request.method, request.path, ip, timestamp, reason)
+
+    def _log_invalid_api_key_attempt(self, request):
+        from datetime import datetime, timezone
+        ip = self._get_client_ip(request)
+        timestamp = datetime.now(timezone.utc).isoformat()
+        self.log.warning('AUDIT: Invalid API key attempt [%s %s] from [%s] at [%s]',
+                         request.method, request.path, ip, timestamp)
+
     async def check_permissions(self, group, request):
         try:
             if self.request_has_valid_api_key(request):
                 return True
             await check_permission(request, group)
         except (HTTPUnauthorized, HTTPForbidden):
+            self._log_auth_denial(request)
             return await self.login_redirect(request, use_template=False)
 
     async def get_permissions(self, request):
