@@ -1,4 +1,5 @@
 import base64
+import os
 from collections import namedtuple
 from importlib import import_module
 
@@ -73,7 +74,7 @@ class AuthService(AuthServiceInterface, BaseService):
                 for username, password in user.items():
                     await self.create_user(username, password, group)
         app.user_map = self.user_map
-        fernet_key = fernet.Fernet.generate_key()
+        fernet_key = self._get_or_create_cookie_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)
         storage = EncryptedCookieStorage(secret_key, cookie_name=COOKIE_SESSION)
         setup_session(app, storage)
@@ -208,6 +209,27 @@ class AuthService(AuthServiceInterface, BaseService):
         else:
             self.log.debug('Using default login handler.')
             self._login_handler = self._default_login_handler
+
+    @staticmethod
+    def _get_or_create_cookie_key():
+        """Load or generate the Fernet key used for cookie encryption.
+
+        Persists the key to ``data/cookie_key`` so that login sessions
+        survive server restarts.  The key file is created with 0600
+        permissions to limit access.
+        """
+        key_path = os.path.join('data', 'cookie_key')
+        if os.path.exists(key_path):
+            with open(key_path, 'rb') as f:
+                return f.read()
+        key = fernet.Fernet.generate_key()
+        os.makedirs(os.path.dirname(key_path), exist_ok=True)
+        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        try:
+            os.write(fd, key)
+        finally:
+            os.close(fd)
+        return key
 
     def _get_login_handler_from_config(self, services):
         login_handler_module_path = self.get_config(CONFIG_AUTH_LOGIN_HANDLER)
