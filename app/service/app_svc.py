@@ -137,7 +137,12 @@ class AppService(AppServiceInterface, BaseService):
             asyncio.get_event_loop().create_task(load(plug))
 
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
-        templates.append('plugins/magma/dist')
+        magma_dist = 'plugins/magma/dist'
+        if os.path.exists(magma_dist):
+            templates.append(magma_dist)
+        else:
+            self.log.warning('Magma plugin dist not found at %s — web UI will not be available. '
+                             'Run with --build or build the Magma plugin manually.', magma_dist)
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform, location=''):

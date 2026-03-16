@@ -398,7 +398,9 @@ async def api_v2_client(aiohttp_client, contact_svc):
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
         templates = ['plugins/%s/templates' % p.lower() for p in app_svc.get_config('plugins')]
-        templates.append('plugins/magma/dist')
+        magma_dist = 'plugins/magma/dist'
+        if os.path.exists(magma_dist):
+            templates.append(magma_dist)
         templates.append("templates")
         aiohttp_jinja2.setup(app_svc.application, loader=jinja2.FileSystemLoader(templates))
         return app_svc
