@@ -1,9 +1,7 @@
 """Test that aioftp meets the minimum required version (>= 0.21.0) to avoid
 the vulnerability flagged in aioftp ~= 0.20.0 by the safety DB."""
 import importlib.metadata
-import inspect
 
-import pytest
 from packaging.version import Version
 
 
@@ -36,3 +34,6 @@ def test_aioftp_server_api_intact():
 
     # worker may be a function or coroutine function rather than a class
     assert hasattr(aioftp, "worker"), "aioftp missing expected attribute: worker"
+    assert callable(aioftp.worker), (
+        f"aioftp.worker should be callable, got {type(aioftp.worker)!r}"
+    )
