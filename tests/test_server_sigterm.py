@@ -118,6 +118,35 @@ class TestSigtermHandlerStructure(unittest.TestCase):
 
         self.fail(f"Handler function '{handler_name}' not found inside run_tasks()")
 
+    def test_startup_wrapped_in_try_except(self):
+        """run_tasks() must wrap the full startup sequence (not just run_forever) in a
+        try/except KeyboardInterrupt so that SIGTERM during startup still triggers teardown."""
+        run_tasks = self._get_run_tasks_body()
+        self.assertIsNotNone(run_tasks, "run_tasks() not found in server.py")
+
+        # The try block must contain restore_state (a startup call) AND run_forever,
+        # proving the handler covers the whole startup, not just the main loop.
+        for node in ast.walk(run_tasks):
+            if not isinstance(node, ast.Try):
+                continue
+            calls_in_try = []
+            for child in ast.walk(node):
+                if isinstance(child, ast.Call) and isinstance(child.func, ast.Attribute):
+                    calls_in_try.append(child.func.attr)
+            has_startup = any(c in calls_in_try for c in ('restore_state', 'load_plugins'))
+            has_run_forever = 'run_forever' in calls_in_try
+            has_teardown = any(
+                'teardown' in ast.dump(h)
+                for h in node.handlers
+            )
+            if has_startup and has_run_forever and has_teardown:
+                return
+
+        self.fail(
+            "run_tasks() try/except must cover both startup calls and run_forever "
+            "so teardown() is called on SIGTERM at any point during startup"
+        )
+
 
 # ---------------------------------------------------------------------------
 # Behavioural check: sending SIGTERM to self raises KeyboardInterrupt

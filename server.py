@@ -136,14 +136,13 @@ def run_tasks(services, run_vue_server=False):
         )
         if run_vue_server:
             loop.run_until_complete(start_vue_dev_server())
-        try:
-            logging.info("All systems ready.")
-            print_rich_banner()
-            loop.run_forever()
-        except KeyboardInterrupt:
-            loop.run_until_complete(
-                services.get("app_svc").teardown(main_config_file=args.environment)
-            )
+        logging.info("All systems ready.")
+        print_rich_banner()
+        loop.run_forever()
+    except KeyboardInterrupt:
+        loop.run_until_complete(
+            services.get("app_svc").teardown(main_config_file=args.environment)
+        )
     finally:
         # Cancel all pending tasks before shutdown to avoid resource leaks
         # and "Task was destroyed but it is pending!" warnings.
