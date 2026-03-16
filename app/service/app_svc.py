@@ -10,8 +10,6 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timezone
 from importlib import import_module
-from pathlib import Path
-
 import aiohttp_jinja2
 import jinja2
 import yaml
@@ -251,6 +249,7 @@ class AppService(AppServiceInterface, BaseService):
         """Compute SHA-256 hash of a plugin directory and warn if it changed since last load."""
         current_hash = self._compute_dir_hash(plugin_path)
         if current_hash is None:
+            self.log.warning('Failed to compute hash for plugin %s — integrity check skipped', plugin_name)
             return
         stored_hash = self._plugin_hashes.get(plugin_name)
         if stored_hash is None:

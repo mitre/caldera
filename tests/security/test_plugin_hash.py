@@ -1,61 +1,57 @@
-import hashlib
-import os
-import tempfile
-import unittest
+"""Tests for plugin directory hash integrity checking."""
+import pytest
+from app.service.app_svc import AppService
 
 
-def _compute_dir_hash(directory):
-    """Compute a SHA-256 hash over all files in a directory."""
-    sha256 = hashlib.sha256()
-    try:
-        for root, dirs, files in os.walk(directory):
-            dirs.sort()
-            for fname in sorted(files):
-                filepath = os.path.join(root, fname)
-                try:
-                    with open(filepath, 'rb') as f:
-                        while True:
-                            chunk = f.read(8192)
-                            if not chunk:
-                                break
-                            sha256.update(chunk)
-                    sha256.update(filepath.encode('utf-8'))
-                except (OSError, IOError):
-                    continue
-    except (OSError, IOError):
-        return None
-    return sha256.hexdigest()
+def _make_tree(root, files):
+    """Helper to create a file tree from a {relative_path: content} dict."""
+    for path, content in files.items():
+        full = root / path
+        full.parent.mkdir(parents=True, exist_ok=True)
+        full.write_bytes(content if isinstance(content, bytes) else content.encode())
 
 
-class TestPluginHash(unittest.TestCase):
-    def test_hash_computation_on_temp_dir(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with open(os.path.join(tmpdir, 'test.py'), 'w') as f:
-                f.write('print("hello")')
-            h1 = _compute_dir_hash(tmpdir)
-            self.assertIsNotNone(h1)
-            self.assertEqual(len(h1), 64)
-
-    def test_hash_changes_when_file_modified(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            filepath = os.path.join(tmpdir, 'test.py')
-            with open(filepath, 'w') as f:
-                f.write('print("hello")')
-            h1 = _compute_dir_hash(tmpdir)
-
-            with open(filepath, 'w') as f:
-                f.write('print("world")')
-            h2 = _compute_dir_hash(tmpdir)
-            self.assertNotEqual(h1, h2)
-
-    def test_hash_is_deterministic(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            with open(os.path.join(tmpdir, 'test.py'), 'w') as f:
-                f.write('print("hello")')
-            h1 = _compute_dir_hash(tmpdir)
-            h2 = _compute_dir_hash(tmpdir)
-            self.assertEqual(h1, h2)
+def test_hash_is_deterministic(tmp_path):
+    """Calling _compute_dir_hash on the same directory twice returns the same hash."""
+    plugin = tmp_path / 'plugin'
+    _make_tree(plugin, {'hook.py': b'print("hello")', 'data/file.txt': b'data'})
+    h1 = AppService._compute_dir_hash(str(plugin))
+    h2 = AppService._compute_dir_hash(str(plugin))
+    assert h1 is not None
+    assert h1 == h2
 
 
-if __name__ == '__main__':
-    unittest.main()
+def test_hash_differs_on_content_change(tmp_path):
+    """Modifying a file's content produces a different hash."""
+    plugin = tmp_path / 'plugin'
+    _make_tree(plugin, {'hook.py': b'version_1'})
+    h1 = AppService._compute_dir_hash(str(plugin))
+
+    (plugin / 'hook.py').write_bytes(b'version_2')
+    h2 = AppService._compute_dir_hash(str(plugin))
+    assert h1 != h2
+
+
+def test_hash_nested_dirs_stable(tmp_path):
+    """Hash is stable across repeated calls for a nested directory structure."""
+    plugin = tmp_path / 'plugin'
+    _make_tree(plugin, {
+        'hook.py': b'root',
+        'subdir/file.py': b'nested',
+        'subdir/deep/data.txt': b'deep',
+    })
+    h1 = AppService._compute_dir_hash(str(plugin))
+    h2 = AppService._compute_dir_hash(str(plugin))
+    assert h1 is not None
+    assert h1 == h2
+
+
+def test_hash_changes_when_file_added(tmp_path):
+    """Adding a new file to the directory produces a different hash."""
+    plugin = tmp_path / 'plugin'
+    _make_tree(plugin, {'hook.py': b'content'})
+    h1 = AppService._compute_dir_hash(str(plugin))
+
+    _make_tree(plugin, {'extra.py': b'new file'})
+    h2 = AppService._compute_dir_hash(str(plugin))
+    assert h1 != h2
