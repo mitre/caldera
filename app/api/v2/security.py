@@ -70,7 +70,14 @@ def authentication_required_middleware_factory(auth_svc):
 
 
 def docs_guard_middleware_factory(auth_svc):
-    """Middleware that requires authentication for /api/docs and /static/swagger paths."""
+    """Middleware that requires authentication for /api/docs and /static/swagger paths.
+
+    Note: this middleware must be registered on the **main** application (not a
+    subapp) because ``init_swagger_documentation`` registers the ``/api/docs``
+    and ``/static/swagger`` routes on the main application via
+    ``aiohttp_apispec.setup_aiohttp_apispec``.  Middleware on the main app
+    intercepts these routes before they reach a handler.
+    """
     @web.middleware
     async def docs_guard_middleware(request, handler):
         if request.path.startswith('/api/docs') or request.path.startswith('/static/swagger'):
