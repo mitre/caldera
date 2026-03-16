@@ -124,6 +124,8 @@ class FileSvc(FileServiceInterface, BaseService):
                                      encrypt=encrypt, encoding=headers.get('x-file-encoding'))
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
+        except web.HTTPException:
+            raise
         except Exception as e:
             self.log.debug('Exception uploading file: %s' % e)
 
