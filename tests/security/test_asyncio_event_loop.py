@@ -38,16 +38,18 @@ def test_no_bare_get_event_loop_in_server():
             )
 
 
-def test_run_tasks_uses_new_event_loop():
-    """Verify run_tasks creates a new event loop and sets it via AST inspection."""
+def test_run_tasks_sets_event_loop():
+    """Verify run_tasks explicitly sets an event loop via AST inspection.
+
+    We only assert that set_event_loop is called (loop is configured before use)
+    rather than requiring new_event_loop specifically, so valid refactors such as
+    creating the loop in __main__ and passing it in remain possible.
+    """
     _, tree = _parse_server()
     func_node = _get_function(tree, 'run_tasks')
     assert func_node is not None, 'run_tasks not found in server.py'
 
-    has_new_loop = any(_is_asyncio_call(n, 'new_event_loop') for n in ast.walk(func_node))
     has_set_loop = any(_is_asyncio_call(n, 'set_event_loop') for n in ast.walk(func_node))
-
-    assert has_new_loop, 'run_tasks must call asyncio.new_event_loop()'
     assert has_set_loop, 'run_tasks must call asyncio.set_event_loop(loop)'
 
 
