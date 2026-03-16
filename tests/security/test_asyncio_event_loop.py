@@ -6,7 +6,7 @@ SERVER_PY = Path(__file__).resolve().parents[2] / 'server.py'
 
 
 def _parse_server():
-    content = SERVER_PY.read_text()
+    content = SERVER_PY.read_text(encoding='utf-8')
     return content, ast.parse(content, filename=str(SERVER_PY))
 
 
