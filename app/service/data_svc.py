@@ -454,6 +454,19 @@ class DataService(DataServiceInterface, BaseService):
 
     @staticmethod
     def _prune_non_critical_data(ram):
+        """Remove runtime-only keys from a ram snapshot before persisting.
+
+        ``plugins``, ``obfuscators``, and ``data_encoders`` are rebuilt from
+        disk/modules on every startup and must not be persisted in the
+        object_store.  Operating on a *copy* of self.ram (rather than
+        self.ram itself) ensures the live in-memory state is never mutated.
+
+        A shallow copy (e.g. ``dict(self.ram)``) is sufficient because this
+        method only removes top-level keys via ``.pop()`` and does not
+        modify nested values.
+
+        :param ram: a shallow copy of self.ram to prune
+        """
         ram.pop('plugins', None)
         ram.pop('obfuscators', None)
         ram.pop('data_encoders', None)
