@@ -31,7 +31,7 @@ HASHED_OPTIONS = ('api_key_blue', 'api_key_red')
 
 
 def _is_hashed(val):
-    return val.startswith('$argon2id$')
+    return isinstance(val, str) and val.startswith('$argon2id$')
 
 
 def verify_hash(hash_val, target):
