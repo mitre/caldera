@@ -69,16 +69,29 @@ async def apispec_request_validation_middleware(request, handler):
 
 @web.middleware
 async def internal_error_middleware(request, handler):
-    """Catch unhandled exceptions and return a generic 500 response."""
+    """Catch unhandled exceptions and return a generic 500 response.
+
+    4xx HTTPExceptions are re-raised as-is so aiohttp handles them normally.
+    5xx HTTPExceptions (e.g. HTTPInternalServerError raised by a handler with
+    internal detail) are caught and replaced with a sanitised generic response
+    to prevent leaking server-side information to clients.
+    """
     try:
         return await handler(request)
-    except web.HTTPException:
-        raise  # Let aiohttp handle HTTP exceptions normally
+    except web.HTTPException as exc:
+        if exc.status_code < 500:
+            raise  # 4xx: let aiohttp handle normally, details are safe to expose
+        # 5xx: log and replace with sanitised response to avoid leaking detail
+        logging.getLogger('caldera').exception('HTTP %d in request handler', exc.status_code)
+        raise web.HTTPInternalServerError(
+            content_type='application/json',
+            text=json.dumps({'error': 'An internal server error occurred'})
+        )
     except Exception:
         logging.getLogger('caldera').exception('Unhandled exception in request handler')
         raise web.HTTPInternalServerError(
             content_type='application/json',
-            text='{"error": "An internal server error occurred"}'
+            text=json.dumps({'error': 'An internal server error occurred'})
         )
 
 
