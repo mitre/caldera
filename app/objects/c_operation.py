@@ -446,11 +446,14 @@ class Operation(FirstClassObjectInterface, BaseObject):
         def fact_to_dict(f):
             if f:
                 return dict(trait=f.trait, value=f.value, score=f.score)
-        # Match by both name and the operation's own source id (when available) to
-        # avoid accidentally reusing a different source that happens to share the name.
-        match_criteria = dict(name=self.name)
+        # When the operation already has an associated source, match by its id
+        # (the canonical identifier) to avoid collisions with unrelated sources
+        # that happen to share the operation name.  Fall back to name-based
+        # matching only when no source has been assigned yet.
         if self.source:
-            match_criteria['id'] = self.source.id
+            match_criteria = dict(id=self.source.id)
+        else:
+            match_criteria = dict(name=self.name)
         existing = await services.get('data_svc').locate('sources', match=match_criteria)
         source_id = existing[0].id if existing else str(uuid.uuid4())
         data = dict(
