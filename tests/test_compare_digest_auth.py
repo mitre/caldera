@@ -1,4 +1,3 @@
-import asyncio
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 from app.service.auth_svc import AuthService, HEADER_API_KEY
@@ -33,32 +32,36 @@ class TestCompareDigestAuth:
         request.config_dict = {'aiohttp_security_identity_policy': identity_policy}
         return request
 
-    def test_red_key_returns_red_access(self):
+    @pytest.mark.asyncio
+    async def test_red_key_returns_red_access(self):
         svc = AuthService.__new__(AuthService)
         svc.user_map = {}
         request = self._make_request('RED_KEY_123')
-        result = asyncio.run(svc.get_permissions(request))
+        result = await svc.get_permissions(request)
         assert BaseWorld.Access.RED in result
         assert BaseWorld.Access.APP in result
 
-    def test_blue_key_returns_blue_access(self):
+    @pytest.mark.asyncio
+    async def test_blue_key_returns_blue_access(self):
         svc = AuthService.__new__(AuthService)
         svc.user_map = {}
         request = self._make_request('BLUE_KEY_456')
-        result = asyncio.run(svc.get_permissions(request))
+        result = await svc.get_permissions(request)
         assert BaseWorld.Access.BLUE in result
         assert BaseWorld.Access.APP in result
 
-    def test_wrong_key_returns_empty(self):
+    @pytest.mark.asyncio
+    async def test_wrong_key_returns_empty(self):
         svc = AuthService.__new__(AuthService)
         svc.user_map = {}
         request = self._make_request('WRONG_KEY')
-        result = asyncio.run(svc.get_permissions(request))
+        result = await svc.get_permissions(request)
         assert result == ()
 
-    def test_no_key_returns_empty(self):
+    @pytest.mark.asyncio
+    async def test_no_key_returns_empty(self):
         svc = AuthService.__new__(AuthService)
         svc.user_map = {}
         request = self._make_request(None)
-        result = asyncio.run(svc.get_permissions(request))
+        result = await svc.get_permissions(request)
         assert result == ()
