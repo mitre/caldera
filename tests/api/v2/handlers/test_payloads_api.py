@@ -73,7 +73,7 @@ class TestPayloadsApi:
         assert payload_file_names == []
 
     async def test_get_payloads_name_filter_case_insensitive(self, api_v2_client, api_cookies,
-                                                              expected_payload_file_names):
+                                                            expected_payload_file_names):
         # "PAYLOAD_" in uppercase must still match files prefixed with "payload_".
         resp = await api_v2_client.get('/api/v2/payloads?name=PAYLOAD_', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
