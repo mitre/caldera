@@ -62,6 +62,13 @@ class AuthService(AuthServiceInterface, BaseService):
         self._login_handler = None
         self._default_login_handler = None
 
+    @staticmethod
+    def _ensure_str(value) -> str:
+        """Convert a value to str safely, decoding bytes instead of using str() repr."""
+        if isinstance(value, bytes):
+            return value.decode('utf-8', errors='replace')
+        return str(value)
+
     @property
     def default_login_handler(self):
         return self._default_login_handler
@@ -170,9 +177,9 @@ class AuthService(AuthServiceInterface, BaseService):
         identity = await identity_policy.identify(request)
         if identity in self.user_map:
             return [self.Access[p.upper()] for p in self.user_map[identity].permissions]
-        request_key = str(request.headers.get(HEADER_API_KEY) or '')
-        red_key = str(self.get_config(CONFIG_API_KEY_RED) or '')
-        blue_key = str(self.get_config(CONFIG_API_KEY_BLUE) or '')
+        request_key = self._ensure_str(request.headers.get(HEADER_API_KEY) or '')
+        red_key = self._ensure_str(self.get_config(CONFIG_API_KEY_RED) or '')
+        blue_key = self._ensure_str(self.get_config(CONFIG_API_KEY_BLUE) or '')
         if red_key and compare_digest(request_key, red_key):
             return self.Access.RED, self.Access.APP
         elif blue_key and compare_digest(request_key, blue_key):

@@ -65,3 +65,21 @@ class TestCompareDigestAuth:
         request = self._make_request(None)
         result = await svc.get_permissions(request)
         assert result == ()
+
+    def test_ensure_str_decodes_bytes(self):
+        """bytes values should be decoded, not repr'd as 'b\"...\"'."""
+        assert AuthService._ensure_str(b'KEY123') == 'KEY123'
+        assert AuthService._ensure_str('KEY123') == 'KEY123'
+
+    @pytest.mark.asyncio
+    async def test_bytes_config_key_matches(self):
+        """If config returns bytes, compare_digest should still match the str header."""
+        BaseWorld.apply_config('main', {
+            'api_key_red': b'RED_KEY_123',
+            'api_key_blue': b'BLUE_KEY_456',
+        })
+        svc = AuthService.__new__(AuthService)
+        svc.user_map = {}
+        request = self._make_request('RED_KEY_123')
+        result = await svc.get_permissions(request)
+        assert BaseWorld.Access.RED in result
