@@ -91,13 +91,19 @@ def csrf_protect_middleware_factory(auth_svc):
         # If API key auth is present, skip CSRF checks
         if request.headers.get('KEY'):
             return await handler(request)
+        
+        # If the endpoint handler is explicitly decorated as authentication-exempt,
+        # allow it to proceed without CSRF validation. This covers endpoints like
+        # login which must be callable before a session and CSRF token exist.
+        if is_handler_authentication_exempt(handler):
+            return await handler(request)
 
         # For session-authenticated requests, validate token
         try:
             session = await get_session(request)
             token = session.get('csrf_token') if session is not None else None
             header = request.headers.get('X-CSRF-Token') or request.headers.get('X-XSRF-TOKEN')
-            # check if there is a token, the header is missing, and whether the token and header 
+            # check if there is a token, the header is missing, and whether the token and header
             # hash authentication works
             if not token or not header or not compare_digest(header, token):
                 raise HTTPForbidden(text='Missing or invalid CSRF token')
