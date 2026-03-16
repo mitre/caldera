@@ -220,8 +220,13 @@ class OperationApiManager(BaseApiManager):
         chain = operation.get('chain', [])
         for link in chain:
             paw = link.get('paw')
-            if paw and paw not in agents:
-                tmp_agent = self.find_object('agents', {'paw': paw}).display
+            if not paw:
+                continue
+            if paw not in agents:
+                agent_obj = self.find_object('agents', {'paw': paw})
+                if agent_obj is None:
+                    continue
+                tmp_agent = agent_obj.display
                 tmp_agent['links'] = []
                 agents[paw] = tmp_agent
             agents[paw]['links'].append(link)
@@ -235,7 +240,10 @@ class OperationApiManager(BaseApiManager):
             if not host:
                 continue
             if host not in hosts:
-                tmp_agent = self.find_object('agents', {'host': host}).display
+                agent_obj = self.find_object('agents', {'host': host})
+                if agent_obj is None:
+                    continue
+                tmp_agent = agent_obj.display
                 tmp_host = {
                     'host': tmp_agent.get('host'),
                     'host_ip_addrs': tmp_agent.get('host_ip_addrs'),
