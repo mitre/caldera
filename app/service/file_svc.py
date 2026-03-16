@@ -19,6 +19,7 @@ from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
 
+_SAFE_FILENAME_RE = re.compile(r'^[a-zA-Z0-9._\-]+$')
 FILE_ENCRYPTION_FLAG = '%encrypted%'
 URL_SANITIZATION_REGEX = re.compile(r'^[\w\-\.:%+/]+$')
 ALLOWED_DEFAULT_LDFLAG_REGEX = re.compile(r'^[\w\-\.]+$')
@@ -92,6 +93,21 @@ class FileSvc(FileServiceInterface, BaseService):
             os.makedirs(path)
         return path
 
+    @staticmethod
+    def _validate_filename(name):
+        """Validate that a filename contains only safe characters.
+        Returns True if valid, False otherwise.
+        """
+        if not name or len(name) > 255:
+            return False
+        if '\x00' in name:
+            return False
+        if name == '.' or '..' in name or '/' in name or '\\' in name:
+            return False
+        if not _SAFE_FILENAME_RE.fullmatch(name):
+            return False
+        return True
+
     async def save_multipart_file_upload(self, request, target_dir, encrypt=True):
         try:
             reader = await request.multipart()
@@ -100,11 +116,16 @@ class FileSvc(FileServiceInterface, BaseService):
                 field = await reader.next()
                 if not field:
                     break
+                if not self._validate_filename(field.filename):
+                    self.log.warning('Invalid filename rejected: %r', field.filename)
+                    raise web.HTTPBadRequest(reason='Invalid filename: disallowed characters or path traversal')
                 _, filename = os.path.split(field.filename)
                 await self.save_file(filename, bytes(await field.read()), target_dir,
                                      encrypt=encrypt, encoding=headers.get('x-file-encoding'))
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
+        except web.HTTPException:
+            raise
         except Exception as e:
             self.log.debug('Exception uploading file: %s' % e)
 
