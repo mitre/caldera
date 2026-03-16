@@ -11,6 +11,12 @@ def make_app(services, upload_max_size_mb=100):
     except (TypeError, ValueError):
         max_size = 100
 
+    try:
+        max_size = int(upload_max_size_mb)
+        max_size = max_size if max_size > 0 else 100
+    except (TypeError, ValueError):
+        max_size = 100
+
     app = web.Application(
         client_max_size=max_size * 1024 * 1024,
         middlewares=[
