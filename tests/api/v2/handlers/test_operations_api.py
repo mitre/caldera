@@ -55,8 +55,8 @@ class TestOperationsApi:
         assert 'chain' not in operation_dict
         assert 'host_group' not in operation_dict
 
-    async def test_get_operations_summary_links_with_no_paw_skipped(self, api_v2_client, api_cookies,
-                                                                     test_operation):
+    async def test_get_operations_summary_links_with_no_paw_skipped(
+            self, api_v2_client, api_cookies, test_operation):
         """Regression test for issue #3181: links with missing/null paw must not cause HTTP 500."""
         resp = await api_v2_client.get('/api/v2/operations/summary', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
