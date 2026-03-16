@@ -6,9 +6,7 @@ ability command (ability id f489321f31b6ef36304294562d3d4645).
 """
 import os
 import re
-import glob
 
-import pytest
 import yaml
 
 
@@ -18,18 +16,23 @@ ABILITY_ID_IP_NEIGHBOUR = 'f489321f31b6ef36304294562d3d4645'
 # regardless of the current working directory.
 REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 
-ATOMIC_DISCOVERY_DIR = os.path.join(
+# The YAML file lives under data/abilities/discovery/ in the main repo tree.
+DISCOVERY_DIR = os.path.join(
     REPO_ROOT,
-    'plugins', 'atomic', 'data', 'abilities', 'discovery',
+    'data', 'abilities', 'discovery',
 )
 
 
 def _load_ability_yaml(ability_id):
-    """Return the parsed YAML list for the given ability id file, or None."""
-    path = os.path.join(ATOMIC_DISCOVERY_DIR, f'{ability_id}.yml')
+    """Return a (data, path) tuple for the given ability id YAML file.
+
+    ``data`` is the parsed YAML list, or ``None`` if the file cannot be parsed
+    or does not exist.  ``path`` is always the expected filesystem path.
+    """
+    path = os.path.join(DISCOVERY_DIR, f'{ability_id}.yml')
     if not os.path.isfile(path):
         return None, path
-    with open(path, 'r') as fh:
+    with open(path, 'r', encoding='utf-8') as fh:
         return yaml.safe_load(fh), path
 
 
@@ -41,7 +44,7 @@ class TestIpNeighbourAbility:
         _, path = _load_ability_yaml(ABILITY_ID_IP_NEIGHBOUR)
         assert os.path.isfile(path), (
             f"Ability YAML not found at {path}. "
-            "Ensure the atomic plugin submodule is initialised."
+            "Ensure the file exists under data/abilities/discovery/."
         )
 
     def test_no_extra_semicolon_in_command(self):
