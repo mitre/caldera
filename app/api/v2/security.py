@@ -91,7 +91,7 @@ def csrf_protect_middleware_factory(auth_svc):
         # If API key auth is present, skip CSRF checks
         if request.headers.get('KEY'):
             return await handler(request)
-        
+
         # If the endpoint handler is explicitly decorated as authentication-exempt,
         # allow it to proceed without CSRF validation. This covers endpoints like
         # login which must be callable before a session and CSRF token exist.
