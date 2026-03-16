@@ -1,7 +1,6 @@
 """Tests that the DNS covert-channel contact uses a CSPRNG (secrets module)
 rather than the insecure random module for IP address generation."""
-import secrets
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 
 class TestDnsIpGenerationUsesCsprng:
