@@ -1,7 +1,12 @@
 import asyncio
 import websockets
+from websockets.exceptions import ConnectionClosedError
 
 from app.utility.base_world import BaseWorld
+from app.utility.config_util import verify_hash
+
+_HEADER_API_KEY = 'KEY'
+_CONFIG_API_KEYS = ('api_key_red', 'api_key_blue')
 
 
 class Contact(BaseWorld):
@@ -34,10 +39,22 @@ class Handler:
         self.handles = []
         self.log = BaseWorld.create_logger('websocket_handler')
 
+    def _is_authenticated(self, connection):
+        """Return True if the WebSocket upgrade request carries a valid API key."""
+        provided = connection.request.headers.get(_HEADER_API_KEY, '')
+        for key_name in _CONFIG_API_KEYS:
+            stored = BaseWorld.get_config(key_name)
+            if stored and verify_hash(stored, provided):
+                return True
+        return False
+
     async def handle(self, connection):
         try:
+            if not self._is_authenticated(connection):
+                await connection.close(1008, 'Unauthorized')
+                return
             path = connection.request.path
             for handle in [h for h in self.handles if path.split('/', 1)[1].startswith(h.tag)]:
                 await handle.run(connection, path, self.services)
-        except Exception as e:
+        except (ConnectionClosedError, Exception) as e:
             self.log.debug(e)
