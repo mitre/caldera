@@ -22,13 +22,6 @@ def _make_link(link_id, file_encoding=None, command='ls', paw='abc123'):
     return link
 
 
-def _make_request(headers: dict):
-    """Return a lightweight mock that mimics an aiohttp Request's headers."""
-    req = MagicMock()
-    req.headers = headers
-    return req
-
-
 def _make_data_svc(operations):
     """Return an async mock DataService that returns *operations* from locate()."""
     data_svc = MagicMock()
@@ -108,10 +101,9 @@ class TestGetFileEncoding:
     async def test_returns_link_encoding_when_x_link_id_matches(self, file_svc):
         link = _make_link('link-abc', file_encoding='plain-text')
         op = _make_operation([link])
-        data_svc = _make_data_svc([op])
+        file_svc.data_svc = _make_data_svc([op])
 
-        request = _make_request({'x-link-id': 'link-abc'})
-        result = await file_svc.get_file_encoding(request, data_svc=data_svc)
+        result = await file_svc.get_file_encoding({'x-link-id': 'link-abc'})
 
         assert result == 'plain-text'
 
@@ -120,10 +112,9 @@ class TestGetFileEncoding:
         """When the matched link has no file_encoding, fall through to header."""
         link = _make_link('link-noenc', file_encoding=None)
         op = _make_operation([link])
-        data_svc = _make_data_svc([op])
+        file_svc.data_svc = _make_data_svc([op])
 
-        request = _make_request({'x-link-id': 'link-noenc', 'x-file-encoding': 'base64'})
-        result = await file_svc.get_file_encoding(request, data_svc=data_svc)
+        result = await file_svc.get_file_encoding({'x-link-id': 'link-noenc', 'x-file-encoding': 'base64'})
 
         assert result == 'base64'
 
@@ -131,10 +122,9 @@ class TestGetFileEncoding:
     async def test_skips_unmatched_links(self, file_svc):
         link = _make_link('link-other', file_encoding='plain-text')
         op = _make_operation([link])
-        data_svc = _make_data_svc([op])
+        file_svc.data_svc = _make_data_svc([op])
 
-        request = _make_request({'x-link-id': 'link-unknown', 'x-file-encoding': 'base64'})
-        result = await file_svc.get_file_encoding(request, data_svc=data_svc)
+        result = await file_svc.get_file_encoding({'x-link-id': 'link-unknown', 'x-file-encoding': 'base64'})
 
         assert result == 'base64'
 
@@ -144,10 +134,9 @@ class TestGetFileEncoding:
         link_b = _make_link('link-B', file_encoding='plain-text')
         op1 = _make_operation([link_a])
         op2 = _make_operation([link_b])
-        data_svc = _make_data_svc([op1, op2])
+        file_svc.data_svc = _make_data_svc([op1, op2])
 
-        request = _make_request({'x-link-id': 'link-B'})
-        result = await file_svc.get_file_encoding(request, data_svc=data_svc)
+        result = await file_svc.get_file_encoding({'x-link-id': 'link-B'})
 
         assert result == 'plain-text'
 
@@ -155,27 +144,26 @@ class TestGetFileEncoding:
 
     @pytest.mark.asyncio
     async def test_falls_back_to_x_file_encoding_when_no_x_link_id(self, file_svc):
-        data_svc = _make_data_svc([])
-        request = _make_request({'x-file-encoding': 'base64'})
-        result = await file_svc.get_file_encoding(request, data_svc=data_svc)
+        file_svc.data_svc = _make_data_svc([])
+        result = await file_svc.get_file_encoding({'x-file-encoding': 'base64'})
         assert result == 'base64'
 
     @pytest.mark.asyncio
     async def test_falls_back_to_x_file_encoding_without_data_svc(self, file_svc):
-        request = _make_request({'x-file-encoding': 'plain-text'})
-        result = await file_svc.get_file_encoding(request, data_svc=None)
+        file_svc.data_svc = None
+        result = await file_svc.get_file_encoding({'x-file-encoding': 'plain-text'})
         assert result == 'plain-text'
 
     # -- no-header fallback --------------------------------------------------
 
     @pytest.mark.asyncio
     async def test_returns_none_when_no_headers(self, file_svc):
-        request = _make_request({})
-        result = await file_svc.get_file_encoding(request, data_svc=None)
+        file_svc.data_svc = None
+        result = await file_svc.get_file_encoding({})
         assert result is None
 
     @pytest.mark.asyncio
     async def test_returns_none_when_only_x_link_id_but_no_data_svc(self, file_svc):
-        request = _make_request({'x-link-id': 'link-xyz'})
-        result = await file_svc.get_file_encoding(request, data_svc=None)
+        file_svc.data_svc = None
+        result = await file_svc.get_file_encoding({'x-link-id': 'link-xyz'})
         assert result is None

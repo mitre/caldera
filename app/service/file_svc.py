@@ -308,7 +308,7 @@ class FileSvc(FileServiceInterface, BaseService):
         except Exception as e:
             self.log.error('Error loading extension handler=%s, %s' % (payload, e))
 
-    async def get_file_encoding(self, request, data_svc=None):
+    async def get_file_encoding(self, headers):
         """Resolve the file encoding for a request.
 
         Resolution order:
@@ -317,20 +317,19 @@ class FileSvc(FileServiceInterface, BaseService):
         2. x-file-encoding header — honour the per-request encoding value.
         3. Fall back to ``None`` (no encoding applied).
 
-        :param request: The aiohttp Request (or any object with a ``headers`` mapping).
-        :param data_svc: Optional DataService instance; required for link look-up.
+        :param headers: A headers mapping (e.g. CIMultiDict or plain dict).
         :return: Encoding name string, or ``None``.
         """
-        link_id = request.headers.get('x-link-id')
-        if link_id and data_svc:
-            for op in await data_svc.locate('operations'):
+        link_id = headers.get('x-link-id')
+        if link_id and self.data_svc:
+            for op in await self.data_svc.locate('operations'):
                 for link in op.chain:
-                    if link.id == link_id and link.file_encoding:
+                    if link.id == link_id and link.file_encoding is not None:
                         return link.file_encoding
-        return request.headers.get('x-file-encoding')
+        return headers.get('x-file-encoding')
 
     async def _perform_data_encoding(self, headers, contents):
-        requested_encoding = headers.get('x-file-encoding')
+        requested_encoding = await self.get_file_encoding(headers)
         if requested_encoding:
             return await self._encode_contents(contents, requested_encoding)
         return contents
