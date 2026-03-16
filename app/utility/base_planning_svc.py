@@ -73,14 +73,16 @@ class BasePlanningService(BaseService):
         :return: trimmed list of links
         """
         self.log.debug(
-            "[GEN_TRIM PRE] links=%s",
-                [(l.ability.ability_id, l.command) for l in links]
-            )
+            "[GEN_TRIM PRE] link_count=%d ability_ids=%s",
+            len(links),
+            [l.ability.ability_id for l in links]
+        )
         links[:] = await self.add_test_variants(links, agent, facts=await operation.all_facts(), rules=operation.rules, operation=operation,
                                                 trim_unset_variables=True, trim_missing_requirements=True)
         self.log.debug(
-            "[GEN_TRIM POST] links=%s",
-            [(l.ability.ability_id, l.command) for l in links]
+            "[GEN_TRIM POST] link_count=%d ability_ids=%s",
+            len(links),
+            [l.ability.ability_id for l in links]
         )
 
         links = await self.obfuscate_commands(agent, operation.obfuscator, links)
@@ -104,15 +106,20 @@ class BasePlanningService(BaseService):
         link_variants = []
         rule_set = RuleSet(rules=rules)
 
-        max_timeout = self.get_config('max_link_timeout') if hasattr(self, 'get_config') else self._max_link_timeout
-        if not max_timeout:
+        configured = self.get_config('max_link_timeout')
+        try:
+            max_timeout = int(configured) if configured is not None else self._max_link_timeout
+        except (TypeError, ValueError):
             max_timeout = self._max_link_timeout
 
         for link in links:
             # Cap executor timeout to max allowed
             if hasattr(link, 'executor') and hasattr(link.executor, 'timeout'):
-                if link.executor.timeout > max_timeout:
-                    link.executor.timeout = max_timeout
+                try:
+                    if int(link.executor.timeout) > max_timeout:
+                        link.executor.timeout = max_timeout
+                except (TypeError, ValueError):
+                    pass
             decoded_test = agent.replace(link.command, file_svc=self.get_service('file_svc'))
             variables = set(x for x in re.findall(self.re_variable, decoded_test) if not self.is_global_variable(x))
 
@@ -152,12 +159,13 @@ class BasePlanningService(BaseService):
                     logging.error('Could not create test variant: %s.\nLink=%s' % (ex, link.__dict__))
 
         if trim_unset_variables:
-            self.log.debug(
-                "[UNSET DROP] ability=%s command=%s",
-                link.ability.ability_id,
-                link.command
-            )
+            links_before = len(links)
             links = await self.remove_links_with_unset_variables(links)
+            self.log.debug(
+                "[UNSET DROP] dropped=%d remaining=%d",
+                links_before - len(links),
+                len(links)
+            )
 
         return links + link_variants
 
