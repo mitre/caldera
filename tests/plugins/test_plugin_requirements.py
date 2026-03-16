@@ -2,16 +2,20 @@
 import os
 import pytest
 
-PLUGINS_DIR = os.path.join('plugins')
-
-EXPECTED_PLUGINS = [
-    'access', 'atomic', 'compass', 'debrief', 'emu', 'fieldmanual',
-    'gameboard', 'human', 'magma', 'manx', 'response', 'sandcat',
-    'ssl', 'stockpile', 'training', 'turla',
-]
+PLUGINS_DIR = 'plugins'
 
 
-@pytest.mark.parametrize('plugin', EXPECTED_PLUGINS)
+def _discover_plugins():
+    """Return list of plugin names that have a hook.py (i.e., are real caldera plugins)."""
+    if not os.path.isdir(PLUGINS_DIR):
+        return []
+    return [
+        p for p in os.listdir(PLUGINS_DIR)
+        if os.path.isfile(os.path.join(PLUGINS_DIR, p, 'hook.py'))
+    ]
+
+
+@pytest.mark.parametrize('plugin', _discover_plugins())
 def test_plugin_has_requirements_txt(plugin):
     req_path = os.path.join(PLUGINS_DIR, plugin, 'requirements.txt')
     assert os.path.isfile(req_path), (
