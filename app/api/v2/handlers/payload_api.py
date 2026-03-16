@@ -14,7 +14,7 @@ from app.api.v2.schemas.payload_schemas import PayloadQuerySchema, PayloadSchema
 
 # Extensions that could be executed server-side and must never be accepted as
 # uploaded payloads (CWE-94 / Remote Code Execution mitigation).
-_BLOCKED_EXTENSIONS = {'.py', '.pyc', '.pyo', '.so', '.dll'}
+_BLOCKED_EXTENSIONS = frozenset({'.py', '.pyc', '.pyo', '.so', '.dll'})
 
 
 def _validate_payload_extension(filename: str) -> None:

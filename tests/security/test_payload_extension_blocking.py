@@ -59,8 +59,10 @@ class TestPayloadExtensionBlocking:
             _validate_payload_extension('legit.txt.py')
 
     def test_blocked_extensions_set(self):
-        """Verify the constant contains exactly the expected types."""
-        assert '.py' in _BLOCKED_EXTENSIONS
-        assert '.pyc' in _BLOCKED_EXTENSIONS
-        assert '.so' in _BLOCKED_EXTENSIONS
-        assert '.dll' in _BLOCKED_EXTENSIONS
+        """Verify the constant is a frozenset and contains exactly the expected types."""
+        from app.api.v2.handlers.payload_api import _BLOCKED_EXTENSIONS as _BLK
+        assert isinstance(_BLK, frozenset), "_BLOCKED_EXTENSIONS must be a frozenset"
+        expected = frozenset({'.py', '.pyc', '.pyo', '.so', '.dll'})
+        assert _BLK == expected, (
+            f"_BLOCKED_EXTENSIONS mismatch: got {_BLK}, expected {expected}"
+        )
