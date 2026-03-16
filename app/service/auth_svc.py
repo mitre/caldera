@@ -1,4 +1,6 @@
 import base64
+import uuid
+import time
 from collections import namedtuple
 from importlib import import_module
 
@@ -56,11 +58,19 @@ def check_authorization(func):
 class AuthService(AuthServiceInterface, BaseService):
     User = namedtuple('User', ['username', 'password', 'permissions'])
 
+    SESSION_LIFETIME_HOURS = 8
+
     def __init__(self):
         self.user_map = dict()
         self.log = self.add_service('auth_svc', self)
         self._login_handler = None
         self._default_login_handler = None
+        # In-memory session store.  This only tracks sessions within a single
+        # process; in multi-worker or multi-process deployments sessions will
+        # not be shared across workers and forced logout will not propagate.
+        # For production multi-worker setups a shared backing store (e.g.
+        # Redis) behind this same API would be needed.
+        self._active_sessions = {}  # {session_token: {username, created_at, expires_at}}
 
     @property
     def default_login_handler(self):
@@ -82,6 +92,61 @@ class AuthService(AuthServiceInterface, BaseService):
 
     async def create_user(self, username, password, group):
         self.user_map[username] = self.User(username, password, (group, 'app'), )
+
+    def register_session(self, username):
+        """Create a server-side session and return the token.
+
+        Calls :meth:`purge_expired_sessions` on each registration to keep the
+        in-memory store bounded.
+        """
+        self.purge_expired_sessions()
+        token = str(uuid.uuid4())
+        _cfg = self.get_config('session_lifetime_hours')
+        try:
+            lifetime_hours = float(_cfg) if _cfg is not None else self.SESSION_LIFETIME_HOURS
+        except (ValueError, TypeError):
+            self.log.warning('Invalid session_lifetime_hours config value %r; using default', _cfg)
+            lifetime_hours = self.SESSION_LIFETIME_HOURS
+        lifetime = lifetime_hours * 3600
+        now = time.time()
+        self._active_sessions[token] = {
+            'username': username,
+            'created_at': now,
+            'expires_at': now + lifetime,
+        }
+        return token
+
+    def purge_expired_sessions(self):
+        """Remove all expired sessions from the in-memory store.
+
+        This prevents _active_sessions from growing without bound when sessions
+        are never revalidated after expiry (e.g. tokens issued but never used
+        again).  Call this periodically (e.g. during server maintenance loops).
+        """
+        now = time.time()
+        expired = [t for t, s in self._active_sessions.items() if now > s['expires_at']]
+        for token in expired:
+            del self._active_sessions[token]
+
+    def invalidate_session(self, token):
+        """Remove a session from the server-side store."""
+        self._active_sessions.pop(token, None)
+
+    def is_session_valid(self, token):
+        """Check if a session exists and is not expired."""
+        session = self._active_sessions.get(token)
+        if not session:
+            return False
+        if time.time() > session['expires_at']:
+            self._active_sessions.pop(token, None)
+            return False
+        return True
+
+    def invalidate_all_sessions_for_user(self, username):
+        """Remove all sessions for a given user."""
+        to_remove = [t for t, s in self._active_sessions.items() if s['username'] == username]
+        for token in to_remove:
+            del self._active_sessions[token]
 
     @staticmethod
     async def logout_user(request):
