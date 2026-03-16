@@ -11,7 +11,7 @@ def test_no_create_subprocess_shell_in_start_vue():
     tree = ast.parse(content, filename=str(SERVER_PY))
     func_node = None
     for node in ast.walk(tree):
-        if isinstance(node, ast.AsyncFunctionDef) and node.name == 'start_vue_dev_server':
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == 'start_vue_dev_server':
             func_node = node
             break
     assert func_node is not None, "start_vue_dev_server function not found in server.py"
