@@ -43,7 +43,8 @@ MAGMA_PATH = "./plugins/magma"
 
 # Pre-compiled pattern for CORS host validation.
 # Only allows hostname characters; rejects shell metacharacters, spaces, etc.
-_CORS_HOST_RE = re.compile(r'^[a-zA-Z0-9.\-]+$')
+_CORS_HOST_RE = re.compile(r'[a-zA-Z0-9.\-]+')
+_cors_host_warned = False
 
 
 def setup_logger(level=logging.DEBUG):
@@ -157,16 +158,20 @@ def _is_valid_cors_host(host):
 
 
 async def enable_cors(request, response):
+    global _cors_host_warned
     # Dev-only: CORS headers for VueJS dev server
     if not _is_valid_cors_host(args.uiDevHost):
-        logging.warning('Invalid uiDevHost value: %s - omitting CORS origin header', args.uiDevHost)
-        # Do not set Access-Control-Allow-Origin at all; an empty string is
-        # not a valid CORS response and causes inconsistent browser behaviour.
+        if not _cors_host_warned:
+            logging.warning('Invalid uiDevHost value: %s - omitting CORS headers', args.uiDevHost)
+            _cors_host_warned = True
+        # Do not set Access-Control-Allow-Origin or Allow-Credentials at all;
+        # an empty/missing origin with credentials is not a valid CORS response
+        # and causes inconsistent browser behaviour.
     else:
         response.headers["Access-Control-Allow-Origin"] = (
             "http://" + args.uiDevHost + ":3000"
         )
-    response.headers["Access-Control-Allow-Credentials"] = "true"
+        response.headers["Access-Control-Allow-Credentials"] = "true"
     response.headers["Access-Control-Allow-Methods"] = (
         "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD"
     )

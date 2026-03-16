@@ -28,7 +28,3 @@ class TestCorsValidation(unittest.TestCase):
         """Ensure partial matches are rejected (e.g. valid prefix + injection suffix)."""
         self.assertFalse(_is_valid_cors_host('localhost;evil'))
         self.assertFalse(_is_valid_cors_host('localhost evil'))
-
-
-if __name__ == '__main__':
-    unittest.main()
