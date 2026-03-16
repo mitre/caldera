@@ -1,0 +1,15 @@
+- description: "Use the ip neighbour command to display the known link layer (ARP\
+    \ table) addresses for hosts sharing the same network segment. \n"
+  id: f489321f31b6ef36304294562d3d4645
+  name: Remote System Discovery - ip neighbour
+  platforms:
+    linux:
+      sh:
+        cleanup: ''
+        command: 'if [ -x "$(command -v ip)" ]; then : ; else apt-get install iproute2
+          -y; fi; ip neighbour show'
+        payloads: []
+  tactic: discovery
+  technique:
+    attack_id: T1018
+    name: Remote System Discovery
