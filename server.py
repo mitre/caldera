@@ -288,14 +288,15 @@ if __name__ == "__main__":
             package_lock = os.path.join(MAGMA_PATH, "package-lock.json")
             if os.path.isfile(package_lock):
                 subprocess.run(["npm", "ci"], cwd=MAGMA_PATH, check=True)
+                subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
+                logging.info("VueJS front-end build complete.")
             else:
-                raise FileNotFoundError(
-                    f"package-lock.json not found at {package_lock}. "
+                logging.warning(
+                    f"[bright_yellow]package-lock.json not found at {package_lock}. "
                     "A lockfile is required for reproducible builds. "
-                    "Commit package-lock.json or run 'npm install' locally to generate it."
+                    "Skipping frontend build. Commit package-lock.json or run "
+                    "'npm install' locally to generate it.[/bright_yellow]"
                 )
-            subprocess.run(["npm", "run", "build"], cwd=MAGMA_PATH, check=True)
-            logging.info("VueJS front-end build complete.")
         else:
             logging.warning(
                 f"[bright_yellow]The `--build` flag was supplied, but the Caldera v5 Vue UI is not present."
