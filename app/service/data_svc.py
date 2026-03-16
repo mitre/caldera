@@ -2,6 +2,7 @@ import asyncio
 import copy
 import datetime
 import glob
+import json as json_mod
 import os
 import pickle
 import tarfile
@@ -95,23 +96,18 @@ class DataService(DataServiceInterface, BaseService):
                 DataService._delete_file(file_path)
 
     async def save_state(self):
-        import json as json_mod
         await self._prune_non_critical_data()
-        try:
-            serialized = {}
-            for key, objs in self.ram.items():
-                if objs and hasattr(objs[0], 'schema') and hasattr(objs[0].schema, 'dump'):
-                    serialized[key] = [obj.schema.dump(obj) for obj in objs]
-                elif objs and hasattr(objs[0], 'display'):
-                    serialized[key] = [obj.display for obj in objs]
-                else:
-                    serialized[key] = []
-            json_data = json_mod.dumps(serialized).encode('utf-8')
-            await self.get_service('file_svc').save_file('object_store', json_data, 'data')
-            self.log.debug('Saved state using JSON serialization')
-        except Exception as e:
-            self.log.warning('JSON serialization failed, falling back to pickle: %s', e)
-            await self.get_service('file_svc').save_file('object_store', pickle.dumps(self.ram), 'data')
+        serialized = {}
+        for key, objs in self.ram.items():
+            if objs and hasattr(objs[0], 'schema') and hasattr(objs[0].schema, 'dump'):
+                serialized[key] = [obj.schema.dump(obj) for obj in objs]
+            elif objs and hasattr(objs[0], 'display'):
+                serialized[key] = [obj.display for obj in objs]
+            else:
+                serialized[key] = []
+        json_data = json_mod.dumps(serialized).encode('utf-8')
+        await self.get_service('file_svc').save_file('object_store', json_data, 'data')
+        self.log.debug('Saved state using JSON serialization')
 
     async def restore_state(self):
         """
@@ -119,7 +115,6 @@ class DataService(DataServiceInterface, BaseService):
 
         :return:
         """
-        import json as json_mod
         if os.path.exists('data/object_store'):
             _, store = await self.get_service('file_svc').read_file('object_store', 'data')
             # Try JSON first, fall back to pickle for backward compatibility
@@ -130,6 +125,9 @@ class DataService(DataServiceInterface, BaseService):
                 self.log.warning('DEPRECATION: object_store uses pickle format. '
                                  'It will be re-saved in JSON format on next save.')
                 ram = pickle.loads(store)  # nosec
+            if not isinstance(ram, dict):
+                self.log.warning('object_store contains unexpected type %s; ignoring', type(ram).__name__)
+                ram = {}
             for key in ram.keys():
                 self.ram[key] = []
                 if isinstance(ram[key], list):
