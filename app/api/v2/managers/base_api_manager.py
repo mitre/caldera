@@ -130,15 +130,19 @@ class BaseApiManager(BaseWorld):
 
     @staticmethod
     def _sanitize_id(obj_id: str) -> str:
-        """Strip any path traversal sequences from an object ID used as a filename.
+        """Validate an object ID used as a filename, rejecting any path traversal sequences.
 
-        Raises ValueError if the resulting name is empty or starts with '.',
-        which would indicate a hidden file or a remaining traversal component.
+        Raises ValueError if the ID contains path separators, traversal sequences,
+        starts with '.', or is empty.  The ID is returned unchanged when valid.
         """
-        safe = os.path.basename(obj_id)
-        if not safe or safe.startswith('.'):
+        if not obj_id:
             raise ValueError(f"Invalid id: {obj_id!r}")
-        return safe
+        # Reject any ID that contains a path separator or traversal component
+        if '/' in obj_id or os.sep in obj_id or '..' in obj_id:
+            raise ValueError(f"Invalid id: {obj_id!r}")
+        if obj_id.startswith('.'):
+            raise ValueError(f"Invalid id: {obj_id!r}")
+        return obj_id
 
     @staticmethod
     async def _get_new_object_file_path(identifier: str, ram_key: str) -> str:
