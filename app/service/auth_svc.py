@@ -216,7 +216,9 @@ class AuthService(AuthServiceInterface, BaseService):
         """Load or generate the Fernet key for cookie encryption.
 
         Uses a temp-file + os.replace() for atomic write to prevent partial writes.
-        Falls back to reading existing key if a race causes FileExistsError.
+        If the file already exists on entry it is read and returned unchanged.
+        Concurrent server startups may race, but os.replace() is atomic so the
+        file will always contain exactly one valid key.
         """
         key_path = os.path.join('data', 'cookie_key')
         key_dir = os.path.dirname(key_path) or '.'
@@ -227,13 +229,16 @@ class AuthService(AuthServiceInterface, BaseService):
         key = fernet.Fernet.generate_key()
         # Write atomically: temp file then rename so partial writes are impossible
         fd, tmp_path = tempfile.mkstemp(dir=key_dir)
+        fd_closed = False
         try:
             os.write(fd, key)
             os.close(fd)
+            fd_closed = True
             os.chmod(tmp_path, 0o600)
             os.replace(tmp_path, key_path)
         except Exception:
-            os.close(fd)
+            if not fd_closed:
+                os.close(fd)
             try:
                 os.unlink(tmp_path)
             except OSError:
