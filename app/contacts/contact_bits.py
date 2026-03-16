@@ -1,3 +1,4 @@
+import os
 import uuid
 
 from aiohttp import web
@@ -86,9 +87,11 @@ class Contact(BaseWorld):
         if session['total_length'] is not None:
             assembled = self._try_assemble(session)
             if assembled is not None:
-                await self._save_upload(session_id, session['filename'], assembled)
-                del self.sessions[session_id]
-                self.log.debug('BITS upload complete for session %s', session_id)
+                # Remove the session before awaiting save to prevent interleaving
+                completed = self.sessions.pop(session_id, None)
+                if completed is not None:
+                    await self._save_upload(session_id, completed['filename'], assembled)
+                    self.log.debug('BITS upload complete for session %s', session_id)
 
         return web.Response(status=200)
 
@@ -105,7 +108,8 @@ class Contact(BaseWorld):
         try:
             exfil_dir = self.get_config('exfil_dir') or '/tmp/caldera'
             safe_filename = ''.join(c for c in filename if c.isalnum() or c in '._- ').rstrip()
-            if not safe_filename:
+            safe_filename = os.path.basename(safe_filename)
+            if not safe_filename or safe_filename in ('.', '..'):
                 safe_filename = session_id
             await self.file_svc.save_file(safe_filename, data, exfil_dir, encrypt=False)
             self.log.info('BITS upload saved: %s (%d bytes)', safe_filename, len(data))
@@ -124,9 +128,15 @@ class Contact(BaseWorld):
                 return None, None
             range_part = header[len('bytes '):]
             range_section, total_part = range_part.split('/')
-            start_str, _ = range_section.split('-')
+            start_str, end_str = range_section.split('-')
             offset = int(start_str)
+            end = int(end_str)
             total_length = None if total_part == '*' else int(total_part)
+            # Validate parsed values
+            if offset < 0 or end < offset:
+                return None, None
+            if total_length is not None and (total_length <= 0 or end >= total_length):
+                return None, None
             return offset, total_length
         except (ValueError, AttributeError):
             return None, None
@@ -140,16 +150,18 @@ class Contact(BaseWorld):
         total_length = session['total_length']
         fragments = session['fragments']
         assembled = bytearray(total_length)
-        covered = 0
+        # Check for contiguous coverage from byte 0 to handle overlaps correctly.
+        # Walk fragments in offset order and track the high-water mark of covered bytes.
+        high_water = 0
         for offset in sorted(fragments.keys()):
             chunk = fragments[offset]
             end = offset + len(chunk)
             if end > total_length:
-                # Truncate to expected total
                 chunk = chunk[:total_length - offset]
                 end = total_length
             assembled[offset:end] = chunk
-            covered += len(chunk)
-        if covered >= total_length:
+            if offset <= high_water:
+                high_water = max(high_water, end)
+        if high_water >= total_length:
             return bytes(assembled)
         return None

@@ -1,6 +1,5 @@
 import pytest
-from unittest import mock
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock
 
 from app.contacts.contact_bits import Contact as BitsContact, BITS_PROTOCOL_GUID, MAX_FRAGMENT_SIZE
 from app.utility.base_world import BaseWorld
