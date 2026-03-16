@@ -7,6 +7,7 @@ from marshmallow.schema import SchemaMeta
 from typing import Any, List
 from base64 import b64encode, b64decode
 
+from app.api.v2.errors import DataValidationError
 from app.utility.base_world import BaseWorld
 
 
@@ -64,6 +65,7 @@ class BaseApiManager(BaseWorld):
 
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         obj_id = data.get(id_property) or str(uuid.uuid4())
+        obj_id = self._sanitize_id(obj_id)
         data[id_property] = obj_id
 
         file_path = await self._get_new_object_file_path(data[id_property], ram_key)
@@ -121,18 +123,48 @@ class BaseApiManager(BaseWorld):
         await self._data_svc.remove(ram_key, {id_property: identifier})
 
     async def remove_object_from_disk_by_id(self, identifier: str, ram_key: str):
+        identifier = self._sanitize_id(identifier)
         file_path = await self._get_existing_object_file_path(identifier, ram_key)
 
         if os.path.exists(file_path):
             os.remove(file_path)
 
     @staticmethod
+    def _sanitize_id(obj_id) -> str:
+        """Validate an object ID used as a filename, rejecting any path traversal sequences.
+
+        Raises DataValidationError if the ID contains path separators, traversal sequences,
+        starts with '.', or is empty.  The ID is returned unchanged when valid.
+
+        Note: embedded '..' in the middle of an ID (e.g. 'version..2') is permitted
+        because caldera IDs are used directly as filename components, and '..' only
+        enables directory traversal when it appears as a standalone path component
+        (i.e. with an adjacent separator).  The path-separator check above ensures
+        that no separator can appear, making embedded '..' harmless.
+        """
+        if not isinstance(obj_id, str):
+            raise DataValidationError(message=f"Invalid id type: expected str, got {type(obj_id).__name__}", name='id', value=obj_id)
+        if not obj_id:
+            raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
+        # Reject any ID that contains a path separator
+        if '/' in obj_id or os.sep in obj_id:
+            raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
+        # Reject '..' as a standalone token (traversal sequence without separator)
+        if obj_id == '..':
+            raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
+        if obj_id.startswith('.'):
+            raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
+        return obj_id
+
+    @staticmethod
     async def _get_new_object_file_path(identifier: str, ram_key: str) -> str:
         """Create file path for new object"""
+        identifier = BaseApiManager._sanitize_id(identifier)
         return os.path.join('data', ram_key, f'{identifier}.yml')
 
     async def _get_existing_object_file_path(self, identifier: str, ram_key: str) -> str:
         """Find file path for existing object (by id)"""
+        identifier = self._sanitize_id(identifier)
         _, file_path = await self._file_svc.find_file_path(f'{identifier}.yml', location=ram_key)
         if not file_path:
             file_path = await self._get_new_object_file_path(identifier, ram_key)
