@@ -120,8 +120,9 @@ class FileSvc(FileServiceInterface, BaseService):
                     self.log.warning('Invalid filename rejected: %r', field.filename)
                     raise web.HTTPBadRequest(reason='Invalid filename: disallowed characters or path traversal')
                 _, filename = os.path.split(field.filename)
+                encoding = await self.get_file_encoding(headers)
                 await self.save_file(filename, bytes(await field.read()), target_dir,
-                                     encrypt=encrypt, encoding=headers.get('x-file-encoding'))
+                                     encrypt=encrypt, encoding=encoding)
                 self.log.debug('Uploaded file %s/%s' % (target_dir, filename))
             return web.Response()
         except web.HTTPException:
