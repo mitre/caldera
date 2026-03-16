@@ -7,7 +7,7 @@ SERVER_PY = Path(__file__).resolve().parents[2] / 'server.py'
 
 def test_no_create_subprocess_shell_in_start_vue():
     """Verify create_subprocess_shell is not used in start_vue_dev_server."""
-    content = SERVER_PY.read_text()
+    content = SERVER_PY.read_text(encoding='utf-8')
     tree = ast.parse(content, filename=str(SERVER_PY))
     func_node = None
     for node in ast.walk(tree):
