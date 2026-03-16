@@ -2,6 +2,7 @@ import argparse
 import asyncio
 import logging
 import os
+import signal
 from rich.console import Console
 from rich.logging import RichHandler
 from rich.theme import Theme
@@ -74,6 +75,18 @@ async def start_server():
 
 
 def run_tasks(services, run_vue_server=False):
+    def _handle_sigterm(*args):
+        """Convert SIGTERM into KeyboardInterrupt to reuse the existing teardown path.
+
+        When Caldera runs as a systemd service (or with ``& disown`` / ``nohup``),
+        the process receives SIGTERM on shutdown rather than SIGINT/KeyboardInterrupt.
+        Without this handler the teardown/save logic is never called, so operations
+        and other in-memory state are lost (issue #3018).
+        """
+        raise KeyboardInterrupt
+
+    signal.signal(signal.SIGTERM, _handle_sigterm)
+
     loop = asyncio.new_event_loop()
     # The event loop is set here, before any async work begins.  Services
     # (AppService, DataService, etc.) are instantiated in __main__ prior to
@@ -123,14 +136,13 @@ def run_tasks(services, run_vue_server=False):
         )
         if run_vue_server:
             loop.run_until_complete(start_vue_dev_server())
-        try:
-            logging.info("All systems ready.")
-            print_rich_banner()
-            loop.run_forever()
-        except KeyboardInterrupt:
-            loop.run_until_complete(
-                services.get("app_svc").teardown(main_config_file=args.environment)
-            )
+        logging.info("All systems ready.")
+        print_rich_banner()
+        loop.run_forever()
+    except KeyboardInterrupt:
+        loop.run_until_complete(
+            services.get("app_svc").teardown(main_config_file=args.environment)
+        )
     finally:
         # Cancel all pending tasks before shutdown to avoid resource leaks
         # and "Task was destroyed but it is pending!" warnings.
