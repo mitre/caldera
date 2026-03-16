@@ -1,5 +1,6 @@
 import base64
 import os
+import tempfile
 from collections import namedtuple
 from importlib import import_module
 
@@ -212,23 +213,32 @@ class AuthService(AuthServiceInterface, BaseService):
 
     @staticmethod
     def _get_or_create_cookie_key():
-        """Load or generate the Fernet key used for cookie encryption.
+        """Load or generate the Fernet key for cookie encryption.
 
-        Persists the key to ``data/cookie_key`` so that login sessions
-        survive server restarts.  The key file is created with 0600
-        permissions to limit access.
+        Uses a temp-file + os.replace() for atomic write to prevent partial writes.
+        Falls back to reading existing key if a race causes FileExistsError.
         """
         key_path = os.path.join('data', 'cookie_key')
+        key_dir = os.path.dirname(key_path) or '.'
+        os.makedirs(key_dir, exist_ok=True)
         if os.path.exists(key_path):
             with open(key_path, 'rb') as f:
                 return f.read()
         key = fernet.Fernet.generate_key()
-        os.makedirs(os.path.dirname(key_path), exist_ok=True)
-        fd = os.open(key_path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        # Write atomically: temp file then rename so partial writes are impossible
+        fd, tmp_path = tempfile.mkstemp(dir=key_dir)
         try:
             os.write(fd, key)
-        finally:
             os.close(fd)
+            os.chmod(tmp_path, 0o600)
+            os.replace(tmp_path, key_path)
+        except Exception:
+            os.close(fd)
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
         return key
 
     def _get_login_handler_from_config(self, services):
