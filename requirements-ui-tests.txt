@@ -1,0 +1,12 @@
+# Requirements for Playwright E2E UI tests
+# Install with: pip install -r requirements-ui-tests.txt
+# Then:         playwright install chromium
+#
+# nodeenv is used by the tox `ui` environment to install Node.js inside the
+# Python virtualenv so `npm run build` can compile the Magma frontend before
+# tests run.
+
+playwright>=1.44.0
+pytest-playwright>=0.5.0
+requests>=2.31.0
+nodeenv>=1.8.0
