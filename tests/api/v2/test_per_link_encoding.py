@@ -88,12 +88,14 @@ class TestLinkFileEncodingField:
 # FileSvc.get_file_encoding() tests
 # ---------------------------------------------------------------------------
 
-@pytest.mark.usefixtures('init_base_world')
 class TestGetFileEncoding:
 
     @pytest.fixture
     def file_svc(self):
-        return FileSvc()
+        """Create a minimal FileSvc without full __init__ (avoids config dependency)."""
+        svc = object.__new__(FileSvc)
+        svc.data_svc = None
+        return svc
 
     # -- x-link-id resolution -----------------------------------------------
 
