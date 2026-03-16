@@ -110,15 +110,17 @@ class TestMagmaGracefulDegradation:
                 loader=jinja2.FileSystemLoader([str(CALDERA_ROOT / 'templates')]),
             )
 
-            rest_api = RestApi(app_svc.get_services())
-
-            # Collect route names before and after enable(); assert no /assets route added
+            # Create and set the event loop before constructing RestApi so that
+            # asyncio.get_event_loop() inside RestApi.__init__ succeeds on Python 3.11+.
             import asyncio
             loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
             try:
+                rest_api = RestApi(app_svc.get_services())
                 loop.run_until_complete(rest_api.enable())
             finally:
                 loop.close()
+                asyncio.set_event_loop(None)
 
             route_prefixes = [str(r) for r in app_svc.application.router.resources()]
             assert not any('/assets' in r for r in route_prefixes), (
