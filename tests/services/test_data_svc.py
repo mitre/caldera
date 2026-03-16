@@ -371,28 +371,37 @@ class TestDataService:
         The fix makes _prune_non_critical_data() a pure function that accepts
         and returns a copy of ram, leaving self.ram untouched.
         """
-        # Populate the keys that are expected to survive a prune
-        data_svc.ram['plugins'] = ['plugin_sentinel']
-        data_svc.ram['obfuscators'] = ['obfuscator_sentinel']
-        data_svc.ram['data_encoders'] = ['encoder_sentinel']
-        data_svc.ram['agents'] = ['agent_sentinel']
+        # Save original state of 'agents' to avoid leaking mutations into other tests
+        original_agents = data_svc.ram.get('agents')
+        try:
+            # Populate the keys that are expected to survive a prune
+            data_svc.ram['plugins'] = ['plugin_sentinel']
+            data_svc.ram['obfuscators'] = ['obfuscator_sentinel']
+            data_svc.ram['data_encoders'] = ['encoder_sentinel']
+            data_svc.ram['agents'] = ['agent_sentinel']
 
-        import copy as _copy
-        pruned = data_svc._prune_non_critical_data(_copy.deepcopy(data_svc.ram))
+            import copy as _copy
+            pruned = data_svc._prune_non_critical_data(_copy.deepcopy(data_svc.ram))
 
-        # The pruned copy must not contain transient keys
-        assert 'plugins' not in pruned
-        assert 'obfuscators' not in pruned
-        assert 'data_encoders' not in pruned
+            # The pruned copy must not contain transient keys
+            assert 'plugins' not in pruned
+            assert 'obfuscators' not in pruned
+            assert 'data_encoders' not in pruned
 
-        # Persistent data must survive the prune
-        assert 'agents' in pruned
-        assert pruned['agents'] == ['agent_sentinel']
+            # Persistent data must survive the prune
+            assert 'agents' in pruned
+            assert pruned['agents'] == ['agent_sentinel']
 
-        # self.ram must be completely unmodified
-        assert 'plugins' in data_svc.ram
-        assert 'obfuscators' in data_svc.ram
-        assert 'data_encoders' in data_svc.ram
+            # self.ram must be completely unmodified
+            assert 'plugins' in data_svc.ram
+            assert 'obfuscators' in data_svc.ram
+            assert 'data_encoders' in data_svc.ram
+        finally:
+            # Restore original 'agents' value to prevent fixture state leaking
+            if original_agents is not None:
+                data_svc.ram['agents'] = original_agents
+            elif 'agents' in data_svc.ram:
+                del data_svc.ram['agents']
 
     def test_prune_non_critical_data_idempotent(self, data_svc):
         """_prune_non_critical_data() must be safe to call multiple times.

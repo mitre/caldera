@@ -95,7 +95,7 @@ class DataService(DataServiceInterface, BaseService):
                 DataService._delete_file(file_path)
 
     async def save_state(self):
-        ram_to_save = self._prune_non_critical_data(copy.deepcopy(self.ram))
+        ram_to_save = self._prune_non_critical_data(dict(self.ram))
         await self.get_service('file_svc').save_file('object_store', pickle.dumps(ram_to_save), 'data')
 
     async def restore_state(self):
