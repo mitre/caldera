@@ -7,7 +7,11 @@ from aiohttp import web
 from app.utility.base_world import BaseWorld
 
 BITS_PROTOCOL_GUID = '{7df0354d-249b-430f-820d-3d2a9bef4931}'
-MAX_FRAGMENT_SIZE = 100 * 1024 * 1024  # 100 MB
+# Fragment size limit.  Note: aiohttp enforces client_max_size (default 1 MB)
+# at the transport layer, so fragments larger than client_max_size will be
+# rejected before reaching the handler.  Adjust the server's client_max_size
+# (or mount on a sub-app with a higher limit) if larger fragments are needed.
+MAX_FRAGMENT_SIZE = 1 * 1024 * 1024  # 1 MB — aligned with aiohttp default client_max_size
 
 
 class Contact(BaseWorld):
@@ -55,7 +59,14 @@ class Contact(BaseWorld):
             )
 
         content_range = request.headers.get('Content-Range', '')
-        content_length = int(request.headers.get('Content-Length', 0))
+        try:
+            content_length = int(request.headers.get('Content-Length', 0))
+        except (ValueError, TypeError):
+            return web.Response(
+                status=400,
+                headers={'BITS-Error-Code': '0x80200004'},
+                reason='Invalid Content-Length'
+            )
 
         if content_length > MAX_FRAGMENT_SIZE:
             self.log.warning('BITS fragment too large: %d bytes (session %s)', content_length, session_id)
