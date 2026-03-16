@@ -55,3 +55,16 @@ def test_hash_changes_when_file_added(tmp_path):
     _make_tree(plugin, {'extra.py': b'new file'})
     h2 = AppService._compute_dir_hash(str(plugin))
     assert h1 != h2
+
+
+def test_hash_consistent_across_different_absolute_paths(tmp_path):
+    """Same file tree at different absolute paths must produce the same hash."""
+    files = {'hook.py': b'print("hello")', 'data/file.txt': b'data'}
+    dir_a = tmp_path / 'location_a' / 'plugin'
+    dir_b = tmp_path / 'location_b' / 'plugin'
+    _make_tree(dir_a, files)
+    _make_tree(dir_b, files)
+    h_a = AppService._compute_dir_hash(str(dir_a))
+    h_b = AppService._compute_dir_hash(str(dir_b))
+    assert h_a is not None
+    assert h_a == h_b

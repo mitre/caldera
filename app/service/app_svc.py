@@ -269,6 +269,7 @@ class AppService(AppServiceInterface, BaseService):
                 dirs.sort()
                 for fname in sorted(files):
                     filepath = os.path.join(root, fname)
+                    relpath = os.path.relpath(filepath, directory).replace(os.sep, '/')
                     try:
                         with open(filepath, 'rb') as f:
                             while True:
@@ -276,7 +277,7 @@ class AppService(AppServiceInterface, BaseService):
                                 if not chunk:
                                     break
                                 sha256.update(chunk)
-                        sha256.update(filepath.encode('utf-8'))
+                        sha256.update(relpath.encode('utf-8'))
                     except (OSError, IOError):
                         continue
         except (OSError, IOError):
