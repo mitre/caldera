@@ -97,6 +97,8 @@ def csrf_protect_middleware_factory(auth_svc):
             session = await get_session(request)
             token = session.get('csrf_token') if session is not None else None
             header = request.headers.get('X-CSRF-Token') or request.headers.get('X-XSRF-TOKEN')
+            # check if there is a token, the header is missing, and whether the token and header 
+            # hash authentication works
             if not token or not header or not compare_digest(header, token):
                 raise HTTPForbidden(text='Missing or invalid CSRF token')
         except HTTPForbidden:

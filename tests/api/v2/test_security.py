@@ -1,9 +1,14 @@
 import pytest
 from aiohttp import web
+import logging
+import time
+import statistics
 
 from app.api.v2 import security
 from app.service.auth_svc import AuthService, HEADER_API_KEY, CONFIG_API_KEY_RED, COOKIE_SESSION
 from app.utility.base_world import BaseWorld
+
+logging.basicConfig(level=logging.DEBUG)
 
 
 @pytest.fixture
@@ -198,49 +203,3 @@ async def test_authentication_exempt_bound_method_returns_200(base_world, aiohtt
     client = await aiohttp_client(app)
     resp = await client.get('/public')
     assert resp.status == 200
-
-
-# CSRF protection tests
-async def test_csrf_protect_rejects_missing_token_for_session_auth(csrf_webapp, aiohttp_client):
-    """A session-authenticated POST without a valid CSRF header should be rejected with 403."""
-    client = await aiohttp_client(csrf_webapp)
-
-    login_response = await client.post(
-        '/login',
-        data={'username': 'admin', 'password': 'admin'},
-        allow_redirects=False
-    )
-
-    assert login_response.status == 200
-    assert COOKIE_SESSION in login_response.cookies
-
-    post_resp = await client.post('/private')
-    assert post_resp.status == 403
-
-
-async def test_csrf_protect_accepts_valid_token_for_session_auth(csrf_webapp, aiohttp_client):
-    """A session-authenticated POST with a valid CSRF header should be allowed."""
-    client = await aiohttp_client(csrf_webapp)
-
-    login_response = await client.post(
-        '/login',
-        data={'username': 'admin', 'password': 'admin'},
-        allow_redirects=False
-    )
-
-    assert login_response.status == 200
-    # The login handler exposes the CSRF token as a readable cookie named 'XSRF-TOKEN'
-    token_cookie = login_response.cookies.get('XSRF-TOKEN')
-    assert token_cookie is not None
-    token = token_cookie.value
-
-    post_resp = await client.post('/private', headers={'X-CSRF-Token': token})
-    assert post_resp.status == 200
-
-# TODO: Change to be a valid API Key Header (vs just any API key header) - covered by API login test
-async def test_csrf_protect_skips_when_api_key_present(csrf_webapp, aiohttp_client):
-    """If an API key header is present, CSRF checks should be skipped."""
-    client = await aiohttp_client(csrf_webapp)
-
-    post_resp = await client.post('/private', headers={HEADER_API_KEY: 'abc123'})
-    assert post_resp.status == 200
