@@ -118,8 +118,7 @@ class FileSvc(FileServiceInterface, BaseService):
                     break
                 if not self._validate_filename(field.filename):
                     self.log.warning('Invalid filename rejected: %r', field.filename)
-                    await field.read()  # consume the part to allow reader to advance
-                    continue
+                    raise web.HTTPBadRequest(reason='Invalid filename: disallowed characters or path traversal')
                 _, filename = os.path.split(field.filename)
                 await self.save_file(filename, bytes(await field.read()), target_dir,
                                      encrypt=encrypt, encoding=headers.get('x-file-encoding'))
