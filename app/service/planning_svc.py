@@ -130,6 +130,7 @@ class PlanningService(PlanningServiceInterface, BasePlanningService):
 
         while planner.next_bucket is not None and not (planner.stopping_condition_met and planner.stopping_conditions) \
                 and not await planner.operation.is_finished():
+            await planner.operation.refresh_agents(self.get_service('data_svc'))
             if publish_transitions:
                 await _publish_bucket_transition(planner.next_bucket)
             await getattr(planner, planner.next_bucket)()

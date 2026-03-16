@@ -134,6 +134,7 @@ class OperationApiManager(BaseApiManager):
         except IndexError:
             raise JsonHttpNotFound(f'Operation not found: {operation_id}')
         if operation.match(access):
+            await operation.refresh_agents(self._data_svc)
             return operation
         raise JsonHttpForbidden(f'Cannot view operation due to insufficient permissions: {operation_id}')
 
