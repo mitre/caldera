@@ -82,21 +82,24 @@ class PayloadApi(BaseApi):
         # Generate the file name and path
         file_name, file_path = await self.__generate_file_name_and_path(sanitized_filename)
 
-        max_size_mb = BaseWorld.get_config('payload_max_upload_size_mb') or 100
-        max_size_bytes = int(max_size_mb) * 1024 * 1024
+        _cfg_size = BaseWorld.get_config('payload_max_upload_size_mb')
+        max_size_mb = 100 if _cfg_size is None else int(_cfg_size)
+        # max_size_mb == 0 means no limit; otherwise convert to bytes
+        max_size_bytes = max_size_mb * 1024 * 1024 if max_size_mb else 0
 
         # Save the file to a temporary location first
         temp_file_path = pathlib.Path(file_path).parent / f"temp_{file_name}"
-        loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+        loop: asyncio.AbstractEventLoop = asyncio.get_running_loop()
         try:
             await loop.run_in_executor(None, self.__save_file, str(temp_file_path), file_field.file, max_size_bytes)
         except FileTooLargeError:
-            # Clean up partial file
+            # Determine partial bytes written before cleaning up
+            actual_size = temp_file_path.stat().st_size if temp_file_path.exists() else 0
             if temp_file_path.exists():
                 temp_file_path.unlink()
-            return web.HTTPRequestEntityTooLarge(
+            raise web.HTTPRequestEntityTooLarge(
                 max_size=max_size_bytes,
-                actual_size=0,
+                actual_size=actual_size,
                 text='Payload exceeds maximum upload size of %d MB' % max_size_mb
             )
 
@@ -185,18 +188,27 @@ class PayloadApi(BaseApi):
         """
         size: int = 0
         read_chunk: bool = True
-        with open(target_file_path, 'wb') as buffered_io_base_dest:
-            while read_chunk:
-                chunk: bytes = io_base_src.read(8192)
-                if chunk:
-                    size += len(chunk)
-                    if max_size_bytes and size > max_size_bytes:
-                        raise FileTooLargeError(
-                            'File size %d exceeds maximum allowed size %d bytes' % (size, max_size_bytes)
-                        )
-                    buffered_io_base_dest.write(chunk)
-                else:
-                    read_chunk = False
+        try:
+            with open(target_file_path, 'wb') as buffered_io_base_dest:
+                while read_chunk:
+                    chunk: bytes = io_base_src.read(8192)
+                    if chunk:
+                        size += len(chunk)
+                        if max_size_bytes and size > max_size_bytes:
+                            raise FileTooLargeError(
+                                'File size %d exceeds maximum allowed size %d bytes' % (size, max_size_bytes)
+                            )
+                        buffered_io_base_dest.write(chunk)
+                    else:
+                        read_chunk = False
+        except FileTooLargeError:
+            # Remove the partial file so callers don't need to clean up
+            import os as _os
+            try:
+                _os.unlink(target_file_path)
+            except OSError:
+                pass
+            raise
 
     @staticmethod
     def validate_and_canonicalize_path(input_path: str, base_directory: str = "data/payloads/") -> str:
