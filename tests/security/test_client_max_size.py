@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 from aiohttp import web
 
 import app.api.v2 as v2_module
