@@ -2,6 +2,10 @@ import json
 import logging
 
 from aiohttp import web
+
+_log = logging.getLogger('caldera')
+
+_GENERIC_ERROR_BODY = json.dumps({'error': 'An internal server error occurred'})
 from json import JSONDecodeError
 
 from aiohttp.web_exceptions import HTTPUnprocessableEntity
@@ -69,29 +73,32 @@ async def apispec_request_validation_middleware(request, handler):
 
 @web.middleware
 async def internal_error_middleware(request, handler):
-    """Catch unhandled exceptions and return a generic 500 response.
+    """Catch unhandled exceptions and return a sanitised error response.
 
     4xx HTTPExceptions are re-raised as-is so aiohttp handles them normally.
-    5xx HTTPExceptions (e.g. HTTPInternalServerError raised by a handler with
-    internal detail) are caught and replaced with a sanitised generic response
-    to prevent leaking server-side information to clients.
+    5xx HTTPExceptions are sanitised (body replaced with a generic message)
+    while **preserving the original status code and any important headers**
+    (e.g. ``Retry-After`` on a 503).  Unhandled non-HTTP exceptions become 500s.
     """
     try:
         return await handler(request)
     except web.HTTPException as exc:
         if exc.status_code < 500:
             raise  # 4xx: let aiohttp handle normally, details are safe to expose
-        # 5xx: log and replace with sanitised response to avoid leaking detail
-        logging.getLogger('caldera').exception('HTTP %d in request handler', exc.status_code)
-        raise web.HTTPInternalServerError(
+        # 5xx: log and replace body but keep the original status code
+        _log.exception('HTTP %d in request handler', exc.status_code)
+        return web.Response(
+            status=exc.status_code,
             content_type='application/json',
-            text=json.dumps({'error': 'An internal server error occurred'})
+            text=_GENERIC_ERROR_BODY,
+            headers=exc.headers,
         )
     except Exception:
-        logging.getLogger('caldera').exception('Unhandled exception in request handler')
-        raise web.HTTPInternalServerError(
+        _log.exception('Unhandled exception in request handler')
+        return web.Response(
+            status=500,
             content_type='application/json',
-            text=json.dumps({'error': 'An internal server error occurred'})
+            text=_GENERIC_ERROR_BODY,
         )
 
 
