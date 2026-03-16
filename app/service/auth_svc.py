@@ -1,4 +1,6 @@
 import base64
+import os
+import tempfile
 from collections import namedtuple
 from importlib import import_module
 
@@ -24,6 +26,7 @@ COOKIE_SESSION = 'API_SESSION'
 CONFIG_API_KEY_RED = 'api_key_red'
 CONFIG_API_KEY_BLUE = 'api_key_blue'
 CONFIG_AUTH_LOGIN_HANDLER = 'auth.login.handler.module'
+COOKIE_KEY_PATH = os.path.join('data', 'cookie_key')
 
 
 def for_all_public_methods(decorator):
@@ -73,7 +76,7 @@ class AuthService(AuthServiceInterface, BaseService):
                 for username, password in user.items():
                     await self.create_user(username, password, group)
         app.user_map = self.user_map
-        fernet_key = fernet.Fernet.generate_key()
+        fernet_key = self._get_or_create_cookie_key()
         secret_key = base64.urlsafe_b64decode(fernet_key)
         storage = EncryptedCookieStorage(secret_key, cookie_name=COOKIE_SESSION)
         setup_session(app, storage)
@@ -208,6 +211,41 @@ class AuthService(AuthServiceInterface, BaseService):
         else:
             self.log.debug('Using default login handler.')
             self._login_handler = self._default_login_handler
+
+    @staticmethod
+    def _get_or_create_cookie_key():
+        """Load or generate the Fernet key for cookie encryption.
+
+        Uses a temp-file + os.replace() for atomic write to prevent partial writes.
+        If the file already exists on entry it is read and returned unchanged.
+        Concurrent server startups may race, but os.replace() is atomic so the
+        file will always contain exactly one valid key.
+        """
+        key_path = COOKIE_KEY_PATH
+        key_dir = os.path.dirname(key_path) or '.'
+        os.makedirs(key_dir, exist_ok=True)
+        if os.path.exists(key_path):
+            with open(key_path, 'rb') as f:
+                return f.read()
+        key = fernet.Fernet.generate_key()
+        # Write atomically: temp file then rename so partial writes are impossible
+        fd, tmp_path = tempfile.mkstemp(dir=key_dir)
+        fd_closed = False
+        try:
+            os.write(fd, key)
+            os.close(fd)
+            fd_closed = True
+            os.chmod(tmp_path, 0o600)
+            os.replace(tmp_path, key_path)
+        except Exception:
+            if not fd_closed:
+                os.close(fd)
+            try:
+                os.unlink(tmp_path)
+            except OSError:
+                pass
+            raise
+        return key
 
     def _get_login_handler_from_config(self, services):
         login_handler_module_path = self.get_config(CONFIG_AUTH_LOGIN_HANDLER)
