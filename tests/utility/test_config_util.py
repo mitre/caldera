@@ -33,15 +33,17 @@ SENSITIVE_CONF = {
 class TestConfigUtil:
 
     def test_verify_hash(self):
-        hash = '$argon2id$v=19$m=65536,t=3,p=4$87lgOXDGx/9JUHuCsxlaZw$bcJp3dQcqMiYdZOCm8LLJ8ncaEwjoS1xVcPHUGs/ajU'
+        hash_val = '$argon2id$v=19$m=65536,t=3,p=4$87lgOXDGx/9JUHuCsxlaZw$bcJp3dQcqMiYdZOCm8LLJ8ncaEwjoS1xVcPHUGs/ajU'
         plaintext = 'testpassword'
-        assert verify_hash(hash, plaintext)
-        assert not verify_hash(hash, 'testpassword2')
+        assert verify_hash(hash_val, plaintext)
+        assert not verify_hash(hash_val, 'testpassword2')
         assert not verify_hash('$argon2id$v=19$m=65536,t=3,p=4$K/WRrQC6CaEkiDF+KhKfMQ$y4dB2W/sqiCcyJX3SYPYhHenEmLv4xDuKV38Ca9FrGc', plaintext)
         assert not verify_hash('notahash', plaintext)
         assert not verify_hash('$argon2id$v=19$m=65536,t=2,p=4$87lgOXDGx/9JUHuCsxlaZw$bcJp3dQcqMiYdZOCm8LLJ8ncaEwjoS1xVcPHUGs/ajU', plaintext)
         assert not verify_hash('$argon2$v=19$m=65536,t=3,p=4$87lgOXDGx/9JUHuCsxlaZw$bcJp3dQcqMiYdZOCm8LLJ8ncaEwjoS1xVcPHUGs/ajU', plaintext)
         assert not verify_hash('$argon2idasdkl$v=19$m=65536,t=2,p=4$87lgOXDGx/laksdj$bcJp3dQcqMiYdZOCm8LLJ8ncaEwjoS1xVcPHUGs/ajU', plaintext)
+        assert not verify_hash(None, plaintext)
+        assert not verify_hash(hash_val, None)
 
     def test_hash_config_creds(self):
         config = copy.deepcopy(NON_SENSITIVE_CONF)
@@ -57,7 +59,7 @@ class TestConfigUtil:
         assert verify_hash(config['users']['group2']['user2'], 'testpassword2')
 
     @mock.patch.object(PasswordHasher, 'hash', return_value='mockhash')
-    @mock.patch.object(yaml, 'safe_load', return_value=SENSITIVE_CONF)
+    @mock.patch.object(yaml, 'safe_load', side_effect=lambda *a, **kw: copy.deepcopy(SENSITIVE_CONF))
     @mock.patch.object(yaml, 'safe_dump')
     @mock.patch.object(secrets, 'token_urlsafe', return_value='mocksecret')
     def test_ensure_local_config(self, mock_token_urlsafe, mock_safe_dump, mock_safe_load, mock_hashs):

@@ -37,7 +37,10 @@ def _is_hashed(val):
 def verify_hash(hash_val, target):
     """
     Returns True if the argon2 hash for the target matches hash_val, False otherwise.
+    Returns False for None or non-string inputs.
     """
+    if not isinstance(hash_val, str) or not isinstance(target, str):
+        return False
     ph = PasswordHasher()
     try:
         return ph.verify(hash_val, target)

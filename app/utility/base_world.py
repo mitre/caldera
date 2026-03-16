@@ -38,7 +38,7 @@ class BaseWorld:
             if changes_made and overwrite_path:
                 logging.debug(f'Overwriting config file {overwrite_path} with secure values')
                 with open(overwrite_path, 'w') as cfg_file:
-                    cfg_file.write(yaml.dump(config))
+                    yaml.safe_dump(config, cfg_file, default_flow_style=False)
         BaseWorld._app_configuration[name] = config
 
     @staticmethod
