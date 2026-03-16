@@ -156,10 +156,10 @@ async def enable_cors(request, response):
 
 
 async def start_vue_dev_server():
-    await asyncio.create_subprocess_shell(
-        "npm run dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH
+    proc = await asyncio.create_subprocess_exec(
+        "npm", "run", "dev", stdout=sys.stdout, stderr=sys.stderr, cwd=MAGMA_PATH
     )
-    logging.info("VueJS development server is live.")
+    logging.info("VueJS development server started (PID %s).", proc.pid)
 
 
 def _get_parser():
