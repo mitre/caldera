@@ -1,4 +1,3 @@
-import base64
 from collections import namedtuple
 from importlib import import_module
 import os
@@ -11,7 +10,6 @@ from aiohttp_security import setup as setup_security
 from aiohttp_security.abc import AbstractAuthorizationPolicy
 from aiohttp_session import setup as setup_session
 from aiohttp_session.cookie_storage import EncryptedCookieStorage
-from cryptography import fernet
 
 from app.service.interfaces.i_auth_svc import AuthServiceInterface
 from app.service.interfaces.i_login_handler import LoginHandlerInterface
