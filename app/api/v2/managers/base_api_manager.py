@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import uuid
 import yaml
 
@@ -131,28 +132,11 @@ class BaseApiManager(BaseWorld):
 
     @staticmethod
     def _sanitize_id(obj_id) -> str:
-        """Validate an object ID used as a filename, rejecting any path traversal sequences.
-
-        Raises DataValidationError if the ID contains path separators, traversal sequences,
-        starts with '.', or is empty.  The ID is returned unchanged when valid.
-
-        Note: embedded '..' in the middle of an ID (e.g. 'version..2') is permitted
-        because caldera IDs are used directly as filename components, and '..' only
-        enables directory traversal when it appears as a standalone path component
-        (i.e. with an adjacent separator).  The path-separator check above ensures
-        that no separator can appear, making embedded '..' harmless.
-        """
+        '''Removes any non-alphanumeric characters and non-hyphen/underscore.'''
         if not isinstance(obj_id, str):
-            raise DataValidationError(message=f"Invalid id type: expected str, got {type(obj_id).__name__}", name='id', value=obj_id)
+            raise DataValidationError(message=f'Invalid id type: expected str, got {type(obj_id).__name__}', name='id', value=obj_id)
+        obj_id = re.sub(r'[^a-zA-Z0-9_-]', '', obj_id)
         if not obj_id:
-            raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
-        # Reject any ID that contains a path separator
-        if '/' in obj_id or os.sep in obj_id:
-            raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
-        # Reject '..' as a standalone token (traversal sequence without separator)
-        if obj_id == '..':
-            raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
-        if obj_id.startswith('.'):
             raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
         return obj_id
 
