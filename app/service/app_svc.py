@@ -137,7 +137,12 @@ class AppService(AppServiceInterface, BaseService):
             asyncio.get_event_loop().create_task(load(plug))
 
         templates = ['plugins/%s/templates' % p.lower() for p in self.get_config('plugins')]
-        templates.append('plugins/magma/dist')
+        magma_dist = 'plugins/magma/dist'
+        if os.path.exists(magma_dist):
+            templates.append(magma_dist)
+        else:
+            self.log.warning('Magma plugin dist not found at %s — web UI will not be available. '
+                             'Run with --build or build the Magma plugin manually.', magma_dist)
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform, location=''):
@@ -207,6 +212,9 @@ class AppService(AppServiceInterface, BaseService):
                 files = (os.path.join(rt, fle) for rt, _, f in os.walk(p.data_dir+'/abilities') for fle in f if
                          time.time() - os.stat(os.path.join(rt, fle)).st_mtime < int(self.get_config('ability_refresh')))
                 for f in files:
+                    if not f.endswith(('.yml', '.yaml')):
+                        self.log.debug('[%s] Skipping non YML file %s' % (p.name, f))
+                        continue
                     self.log.debug('[%s] Reloading %s' % (p.name, f))
                     await self.get_service('data_svc').load_ability_file(filename=f, access=p.access)
             await asyncio.sleep(int(self.get_config('ability_refresh')))

@@ -34,7 +34,8 @@ def base_world():
 
             'crypt_salt': 'thisisdefinitelynotkosher',  # Salt for file service instantiation
             'encryption_key': 'andneitheristhis',  # fake encryption key for file service instantiation
-        }
+        },
+        apply_hash=True
     )
 
     yield BaseWorld
@@ -42,7 +43,7 @@ def base_world():
 
 
 @pytest.fixture
-async def knowledge_webapp(event_loop, base_world, data_svc):
+async def knowledge_webapp(base_world, data_svc):
     app_svc = AppService(web.Application())
     app_svc.add_service('auth_svc', AuthService())
     app_svc.add_service('knowledge_svc', KnowledgeService())

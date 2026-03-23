@@ -10,12 +10,14 @@ import pytest
 from app.objects.c_operation import Operation
 from app.objects.secondclass.c_link import Link
 from app.service.interfaces.i_event_svc import EventServiceInterface
+from app.service.interfaces.i_planning_svc import PlanningServiceInterface
 from app.utility.base_service import BaseService
 from app.objects.c_source import Source
 from app.objects.c_planner import Planner
 from app.objects.c_objective import Objective
 from app.objects.secondclass.c_result import Result
 from app.objects.secondclass.c_fact import Fact
+from app.objects.secondclass.c_relationship import Relationship
 from app.utility.base_object import BaseObject
 from app.utility.base_world import BaseWorld
 
@@ -140,15 +142,42 @@ def fake_event_svc(event_loop):
 
 
 @pytest.fixture
+def fake_planning_svc(event_loop, make_test_link, test_agent):
+    class FakePlanningService(BaseService, PlanningServiceInterface):
+        def __init__(self):
+            self.fired = {}
+
+        async def get_cleanup_links(self, operation, agent):
+            cleanup_link = make_test_link(135, link_paw=test_agent.paw, link_cleanup=1, link_status=0)
+            return [cleanup_link]
+
+        def get_links(self, operation, buckets, agent, trim):
+            pass
+
+        def generate_and_trim_links(self, agent, operation, abilities, trim):
+            pass
+
+        def sort_links(self, links):
+            pass
+
+    service = FakePlanningService()
+    service.add_service('planning_svc', service)
+
+    yield service
+
+    BaseService.remove_service('planning_svc')
+
+
+@pytest.fixture
 def test_ability(ability, executor):
     return ability(ability_id='123', executors=[executor(name='psh', platform='windows')])
 
 
 @pytest.fixture
 def make_test_link(test_ability):
-    def _make_link(link_id, link_paw='123456', link_status=-3):
+    def _make_link(link_id, link_paw='123456', link_status=-3, link_cleanup=0):
         return Link(command='', paw=link_paw, ability=test_ability, id=link_id, executor=next(test_ability.executors),
-                    status=link_status)
+                    status=link_status, cleanup=link_cleanup)
     return _make_link
 
 
@@ -597,3 +626,108 @@ class TestOperation:
         assert op.ignored_links
         assert test_link.id in op.ignored_links
         assert len(op.ignored_links) == 1
+
+    async def test_report_includes_steps_for_agents_not_in_host_group(
+            self, operation_agent, operation_adversary, executor, ability, operation_link,
+            encoded_command, parse_datestring, file_svc, data_svc, knowledge_svc, fire_event_mock):
+        """Regression test for issue #3048: a link whose paw is absent from operation.agents
+        must not cause report() to silently return None (i.e. download as 'Null')."""
+        from app.objects.c_planner import Planner
+        from app.objects.c_objective import Objective
+
+        op = Operation(name='report-test', agents=[operation_agent], adversary=operation_adversary)
+        op.set_start_details()
+        op.planner = Planner(planner_id='testplanner', name='test_planner', module='test', params=None)
+        op.objective = Objective(id='obj1', name='test objective')
+
+        exe = executor(name='psh', platform='windows', command='whoami')
+        ab = ability(ability_id='rep123', tactic='test tactic', technique_id='T0000',
+                     technique_name='test technique', name='test ability',
+                     description='test desc', executors=[exe])
+
+        known_link = operation_link(
+            command=encoded_command('whoami'),
+            plaintext_command=encoded_command('whoami'),
+            paw=operation_agent.paw,
+            ability=ab, executor=exe, status=0, host=operation_agent.host, pid=1,
+            decide=parse_datestring(LINK1_DECIDE_TIME),
+        )
+        orphan_paw = 'orphan-paw-not-in-agents'
+        orphan_link = operation_link(
+            command=encoded_command('id'),
+            plaintext_command=encoded_command('id'),
+            paw=orphan_paw,
+            ability=ab, executor=exe, status=0, host='orphan-host', pid=2,
+            decide=parse_datestring(LINK2_DECIDE_TIME),
+        )
+        op.chain = [known_link, orphan_link]
+
+        report = await op.report(file_svc, data_svc, output=False)
+        assert report is not None, 'report() must not return None when a link paw is absent from agents'
+        assert 'steps' in report
+        assert orphan_paw in report['steps'], 'orphan paw steps must appear in report'
+        assert operation_agent.paw in report['steps'], 'known agent paw steps must appear in report'
+
+    async def test_operation_cleanup_status(self, fake_planning_svc, operation_agent):
+        services = {'planning_svc': fake_planning_svc}
+        op = Operation(name='test with cleanup', agents=[operation_agent], state='running')
+        assert op.state == 'running'
+        assert await op.is_closeable()
+        await op._cleanup_operation(services)
+        assert op.state == 'cleanup'
+
+    # -- Tests for issue #2988: fact source relationships should be resolved against source facts --
+
+    def test_resolve_fact_with_value_unchanged(self, adversary):
+        """A fact that already has a value should be returned as-is."""
+        full_fact = Fact(trait='domain.user.name', value='alice')
+        fact_list = [full_fact, Fact(trait='domain.user.name', value='bob')]
+        op = Operation(name='test', agents=[], adversary=adversary)
+        result = op._resolve_fact(full_fact, fact_list)
+        assert result is full_fact
+        assert result.value == 'alice'
+
+    def test_resolve_fact_trait_only_resolves_to_matching_fact(self, adversary):
+        """A trait-only fact (value=None) should be resolved to the first matching fact in the list."""
+        stub = Fact(trait='domain.user.name', value=None)
+        matched = Fact(trait='domain.user.name', value='alice')
+        fact_list = [matched, Fact(trait='domain.user.password', value='secret')]
+        op = Operation(name='test', agents=[], adversary=adversary)
+        result = op._resolve_fact(stub, fact_list)
+        assert result is matched
+        assert result.value == 'alice'
+
+    def test_resolve_fact_no_match_returns_original(self, adversary):
+        """If no matching trait is found, the original stub is returned unchanged."""
+        stub = Fact(trait='nonexistent.trait', value=None)
+        fact_list = [Fact(trait='domain.user.name', value='alice')]
+        op = Operation(name='test', agents=[], adversary=adversary)
+        result = op._resolve_fact(stub, fact_list)
+        assert result is stub
+
+    async def test_init_source_seeds_relationship_with_resolved_facts(self, knowledge_svc, fire_event_mock, adversary):
+        """Relationships in a fact source that use trait-only fact references should be seeded
+        with the resolved (non-null) fact values from the source's fact list. Regression test
+        for issue #2988."""
+        source_fact_name = Fact(trait='domain.user.name', value='admin')
+        source_fact_pass = Fact(trait='domain.user.password', value='s3cr3t')
+        # Relationship stubs only carry trait (value=None), as stored when created via the UI
+        rel_source_stub = Fact(trait='domain.user.name', value=None)
+        rel_target_stub = Fact(trait='domain.user.password', value=None)
+        rel = Relationship(source=rel_source_stub, edge='has_password', target=rel_target_stub)
+
+        source = Source(id='src-2988', name='test-2988',
+                        facts=[source_fact_name, source_fact_pass],
+                        relationships=[rel])
+        op = Operation(name='test-2988', agents=[], adversary=adversary, source=source)
+        await op._init_source()
+
+        seeded_rels = await knowledge_svc.get_relationships(criteria=dict(origin='src-2988'))
+        assert len(seeded_rels) == 1
+        seeded_rel = seeded_rels[0]
+        assert seeded_rel.source.value == 'admin', (
+            'Relationship source fact value should be resolved from the source fact list, not None'
+        )
+        assert seeded_rel.target.value == 's3cr3t', (
+            'Relationship target fact value should be resolved from the source fact list, not None'
+        )

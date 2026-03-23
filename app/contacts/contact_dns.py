@@ -82,8 +82,9 @@ class DnsPacket:
     def __str__(self):
         return '\n'.join([
             'Qname: %s' % self.qname,
+            'Is query: %s' % self.is_query(),
             'Is response: %s' % self.is_response(),
-            'Transaction ID: 0x%02x' % self.transaction_id,
+            'Transaction ID: 0x%04x' % self.transaction_id,
             'Flags: 0x%04x' % self.flags,
             'Num questions: %d' % self.num_questions,
             'Num answer resource records: %d' % self.num_answer_rrs,
@@ -92,8 +93,8 @@ class DnsPacket:
             'Record type: %d' % self.record_type.value,
             'Class: %d' % self.dns_class,
             'Standard query: %s' % self.has_standard_query(),
-            'Opcode: 0x%03x' % self.get_opcode(),
-            'Response code: 0x%02x' % self.get_response_code(),
+            'Opcode: 0x%04x' % self.get_opcode(),
+            'Response code: 0x%04x' % self.get_response_code(),
             'Recursion desired: %s' % self.recursion_desired(),
             'Recursion available: %s' % self.recursion_available(),
             'Truncated: %s' % self.truncated(),
@@ -191,9 +192,10 @@ class DnsResponse(DnsPacket):
             + self._get_answer_bytes(byteorder=byteorder)
 
     def __str__(self):
-        output = [super().__str__(), 'Answers: ']
+        output = [super().__str__(), 'Answers:']
         for answer in self.answers:
-            output.append(str(answer))
+            answer_str_tabbed = '\n    '.join(str(answer).split('\n'))
+            output.append('    ' + answer_str_tabbed + '\n')
         return '\n'.join(output)
 
     def _get_answer_bytes(self, byteorder='big'):
@@ -201,22 +203,6 @@ class DnsResponse(DnsPacket):
         for answer in self.answers:
             answer_bytes += answer.get_bytes(byteorder=byteorder)
         return answer_bytes
-
-    def _generate_pointer_and_qname_bytes(self, answer_qname, byteorder='big'):
-        lowered_answer_qname = answer_qname.lower()
-        lowered_requested_qname = self.qname.lower()
-        if lowered_answer_qname == lowered_requested_qname:
-            return self.standard_pointer.to_bytes(2, byteorder=byteorder)
-        elif lowered_answer_qname.endswith(lowered_requested_qname):
-            prefix = lowered_answer_qname[:-len(lowered_requested_qname)]
-            prefix_labels = [label for label in prefix.split('.') if label]
-            return self._get_qname_bytes(prefix_labels, byteorder=byteorder) \
-                + self.standard_pointer.to_bytes(2, byteorder=byteorder)
-        elif lowered_requested_qname.endswith(lowered_answer_qname):
-            offset = len(lowered_requested_qname) - len(lowered_answer_qname)
-            return (self.standard_pointer + offset).to_bytes(2, byteorder=byteorder)
-        else:
-            return self._get_qname_bytes(answer_qname.split('.'), byteorder=byteorder)
 
     @staticmethod
     def generate_response_for_query(dns_query, r_code, answers, authoritative=True, recursion_available=False,
@@ -521,6 +507,8 @@ class Handler(asyncio.DatagramProtocol):
                     # Notify agent that payload is ready
                     self.log.debug('Stored payload %s for request ID %s' % (display_name, request_context.request_id))
                     return self._generate_server_ready_ipv4_response(request_context.dns_request)
+                else:
+                    self.log.warning('Failed to fetch file: %s' % filename)
             else:
                 self.log.warning('Client did not include filename in payload request ID %s' % request_context.request_id)
         else:

@@ -1,7 +1,7 @@
 import pytest
 import asyncio
 import base64
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, AsyncMock
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -11,7 +11,6 @@ from app.objects.secondclass.c_link import Link
 from app.objects.secondclass.c_fact import Fact
 from app.objects.secondclass.c_requirement import Requirement
 from app.utility.base_world import BaseWorld
-from tests import AsyncMock
 
 
 stop_bucket_exhaustion_params = [
@@ -92,7 +91,7 @@ async def setup_planning_test(executor, ability, agent, operation, data_svc, eve
     await data_svc.store(
         Obfuscator(name='plain-text',
                    description='Does no obfuscation to any command, instead running it in plain text',
-                   module='plugins.stockpile.app.obfuscators.plain_text')
+                   module='app.obfuscators.plain_text')
     )
 
     yield tability, tagent, toperation, cability

@@ -18,7 +18,7 @@ class StubDataService:
 @pytest.fixture
 def base_world(app_config, agent_config):
     BaseWorld.clear_config()
-    BaseWorld.apply_config('main', app_config)
+    BaseWorld.apply_config('main', app_config, apply_hash=True)
     BaseWorld.apply_config('agents', agent_config)
 
     yield BaseWorld
@@ -161,6 +161,19 @@ async def test_update_global_agent_config_throws_validation_error_bad_implant_na
 
     with pytest.raises(errors.DataValidationError):
         await manager.update_global_agent_config(implant_name='')
+
+
+async def test_update_global_agent_config_throws_validation_error_bad_architecture(base_world, data_svc):
+    manager = ConfigApiManager(data_svc, None)
+
+    with pytest.raises(errors.DataValidationError):
+        await manager.update_global_agent_config(architecture='')
+
+
+async def test_update_global_agent_config_sets_architecture(base_world, data_svc):
+    manager = ConfigApiManager(data_svc, None)
+    await manager.update_global_agent_config(architecture='arm64')
+    assert BaseWorld.get_config(prop='architecture', name='agents') == 'arm64'
 
 
 async def test_update_main_config_throws_validation_error_empty_prop(base_world, data_svc):

@@ -19,7 +19,8 @@ def base_world():
                 'red': {'reduser': 'redpass'},
                 'blue': {'blueuser': 'bluepass'}
             }
-        }
+        },
+        apply_hash=True
     )
 
     yield BaseWorld

@@ -1,3 +1,4 @@
+import os
 import pytest
 
 from http import HTTPStatus
@@ -11,23 +12,31 @@ from app.utility.base_service import BaseService
 @pytest.fixture
 def new_ability_payload():
     test_executor_linux = Executor(name='sh', platform='linux', command='whoami')
-    return {'name': 'new test ability',
-            'ability_id': '456',
-            'tactic': 'collection',
-            'technique_name': 'collection',
-            'technique_id': '1',
-            'executors': [ExecutorSchema().dump(test_executor_linux)],
-            'access': {},
-            'additional_info': {},
-            'buckets': ['collection'],
-            'description': '',
-            'privilege': '',
-            'repeatable': False,
-            'requirements': [],
-            'singleton': False,
-            'plugin': '',
-            'delete_payload': True,
-            }
+    yield {
+        'name': 'new test ability',
+        'ability_id': '456',
+        'tactic': 'collection',
+        'technique_name': 'collection',
+        'technique_id': '1',
+        'executors': [ExecutorSchema().dump(test_executor_linux)],
+        'access': {},
+        'additional_info': {},
+        'buckets': ['collection'],
+        'description': '',
+        'privilege': '',
+        'repeatable': False,
+        'requirements': [],
+        'singleton': False,
+        'plugin': '',
+        'delete_payload': True,
+    }
+
+    # Ability cleanup
+    if os.path.exists('data/abilities/collection/456.yml'):
+        try:
+            os.remove('data/abilities/collection/456.yml')
+        except OSError:
+            pass
 
 
 @pytest.fixture
@@ -56,7 +65,14 @@ def test_ability(event_loop, api_v2_client, executor):
                       technique_name='collection', technique_id='1', description='', privilege='', tactic='discovery',
                       plugin='testplugin')
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(ability))
-    return ability
+    yield ability
+
+    # cleanup
+    if os.path.exists('data/abilities/collection/123.yml'):
+        try:
+            os.remove('data/abilities/collection/123.yml')
+        except OSError:
+            pass
 
 
 class TestAbilitiesApi:

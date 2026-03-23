@@ -1,5 +1,6 @@
 import pytest
 import os
+import shutil
 
 from app.contacts import contact_ftp
 from app.utility.base_world import BaseWorld
@@ -26,7 +27,7 @@ def base_world():
     BaseWorld.apply_config(name='main', config={'app.contact.ftp.host': '0.0.0.0',
                                                 'app.contact.ftp.port': '2222',
                                                 'app.contact.ftp.pword': 'caldera',
-                                                'app.contact.ftp.server.dir': 'ftp_dir',
+                                                'app.contact.ftp.server.dir': 'ftp_dir_testing',
                                                 'app.contact.ftp.user': 'caldera_user',
                                                 'plugins': ['sandcat', 'stockpile'],
                                                 'crypt_salt': 'BLAH',
@@ -64,7 +65,7 @@ class TestFtpServer:
         assert ftp_c2.description == 'Accept agent beacons through ftp'
         assert ftp_c2.host == '0.0.0.0'
         assert ftp_c2.port == '2222'
-        assert ftp_c2.directory == 'ftp_dir'
+        assert ftp_c2.directory == 'ftp_dir_testing'
         assert ftp_c2.user == 'caldera_user'
         assert ftp_c2.pword == 'caldera'
         assert ftp_c2.server is None
@@ -80,6 +81,6 @@ class TestFtpServer:
         assert ftp_c2_my_server.port == '2222'
         assert ftp_c2_my_server.login == 'caldera_user'
         assert ftp_c2_my_server.pword == 'caldera'
-        assert ftp_c2_my_server.ftp_server_dir == os.path.join(os.getcwd(), 'ftp_dir')
+        assert ftp_c2_my_server.ftp_server_dir == os.path.join(os.getcwd(), 'ftp_dir_testing')
         assert os.path.exists(ftp_c2_my_server.ftp_server_dir)
-        os.rmdir(ftp_c2_my_server.ftp_server_dir)
+        shutil.rmtree(ftp_c2_my_server.ftp_server_dir)

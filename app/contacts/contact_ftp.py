@@ -3,7 +3,6 @@ import os
 import re
 import asyncio
 import aioftp
-import sys
 
 from app.utility.base_world import BaseWorld
 
@@ -39,18 +38,14 @@ class Contact(BaseWorld):
         self.user = self.get_config('app.contact.ftp.user')
         self.pword = self.get_config('app.contact.ftp.pword')
         self.server = None
-        self.task = None
 
     async def start(self):
         self.set_up_server()
-        if sys.version_info >= (3, 7):
-            self.task = asyncio.create_task(self.ftp_server_python_new())
-        else:
-            self.task = asyncio.create_task(self.ftp_server_python_old())
-        await self.task
+        await self.ftp_server()
 
     async def stop(self):
-        self.task.cancel()
+        if self.server:
+            await self.server.close()
 
     def set_up_server(self):
         user = self.setup_ftp_users()
@@ -89,11 +84,8 @@ class Contact(BaseWorld):
             ),
         )
 
-    async def ftp_server_python_old(self):
+    async def ftp_server(self):
         await self.server.start(host=self.host, port=self.port)
-
-    async def ftp_server_python_new(self):
-        await self.server.run(host=self.host, port=self.port)
 
     def check_config(self):
         if not self.get_config(FTP_HOST_PROPERTY):

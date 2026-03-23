@@ -3,9 +3,15 @@ name: "\U0001F41E  Bug report"
 about: Create a report to help us improve
 title: ''
 labels: bug
-assignees: elegantmoose
+assignees: ''
 
 ---
+
+<!--
+Is this a UI bug? Please report it here: https://github.com/mitre/magma/issues/new/choose
+
+Is this an issue with documentation? Please report it here: https://github.com/mitre/fieldmanual/issues/new/choose 
+-->
 
 **Describe the bug**
 A clear and concise description of what the bug is.

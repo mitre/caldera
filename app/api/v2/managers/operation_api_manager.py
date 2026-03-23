@@ -102,6 +102,7 @@ class OperationApiManager(BaseApiManager):
                                               file_svc=self.services['file_svc']))
         executor = self.build_executor(data=data.pop('executor', {}), agent=agent)
         ability = self.build_ability(data=data.pop('ability', {}), executor=executor)
+        await self._call_ability_plugin_hooks(ability, executor)
         link = Link.load(dict(command=encoded_command, plaintext_command=encoded_command, paw=agent.paw, ability=ability, executor=executor,
                               status=operation.link_status(), score=data.get('score', 0), jitter=data.get('jitter', 0),
                               cleanup=data.get('cleanup', 0), pin=data.get('pin', 0),
@@ -171,6 +172,13 @@ class OperationApiManager(BaseApiManager):
             source = (await self.services['data_svc'].locate('sources', match=dict(name='basic')))
         return SourceSchema().dump(source[0])
 
+    async def _call_ability_plugin_hooks(self, ability, executor):
+        """Calls any plugin hooks (at runtime) that exist for the ability and executor."""
+        if (hasattr(executor, 'HOOKS') and executor.HOOKS and
+                hasattr(executor, 'language') and executor.language and
+                executor.language in executor.HOOKS):
+            await executor.HOOKS[executor.language](ability, executor)
+
     async def validate_operation_state(self, data: dict, existing: Operation = None):
         if not existing:
             if data.get('state') in Operation.get_finished_states():
@@ -212,8 +220,13 @@ class OperationApiManager(BaseApiManager):
         chain = operation.get('chain', [])
         for link in chain:
             paw = link.get('paw')
-            if paw and paw not in agents:
-                tmp_agent = self.find_object('agents', {'paw': paw}).display
+            if not paw:
+                continue
+            if paw not in agents:
+                agent_obj = self.find_object('agents', {'paw': paw})
+                if agent_obj is None:
+                    continue
+                tmp_agent = agent_obj.display
                 tmp_agent['links'] = []
                 agents[paw] = tmp_agent
             agents[paw]['links'].append(link)
@@ -227,7 +240,10 @@ class OperationApiManager(BaseApiManager):
             if not host:
                 continue
             if host not in hosts:
-                tmp_agent = self.find_object('agents', {'host': host}).display
+                agent_obj = self.find_object('agents', {'host': host})
+                if agent_obj is None:
+                    continue
+                tmp_agent = agent_obj.display
                 tmp_host = {
                     'host': tmp_agent.get('host'),
                     'host_ip_addrs': tmp_agent.get('host_ip_addrs'),
