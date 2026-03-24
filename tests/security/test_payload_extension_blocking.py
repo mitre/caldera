@@ -7,7 +7,7 @@ executable file types (.py, .pyc, .pyo, .so, .dll).
 import pytest
 from aiohttp import web
 
-from app.api.v2.handlers.payload_api import _validate_payload_extension, _BLOCKED_EXTENSIONS
+from app.api.v2.handlers.payload_api import _validate_payload_extension
 
 
 class TestPayloadExtensionBlocking:
