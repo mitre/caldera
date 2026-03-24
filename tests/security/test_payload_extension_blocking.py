@@ -12,33 +12,23 @@ from app.api.v2.handlers.payload_api import _validate_payload_extension
 
 class TestPayloadExtensionBlocking:
 
-    def test_py_file_rejected(self):
+    @pytest.mark.parametrize(
+        "filename",
+        [
+            "malicious.py",
+            "malicious.pyc",
+            "malicious.pyo",
+            "exploit.so",
+            "evil.dll",
+            "malicious.PY",
+            "malicious.Py",
+            # Files with a safe-looking extension followed by a blocked one
+            "legit.txt.py",
+        ],
+    )
+    def test_blocked_filenames_rejected(self, filename):
         with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('malicious.py')
-
-    def test_pyc_file_rejected(self):
-        with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('malicious.pyc')
-
-    def test_pyo_file_rejected(self):
-        with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('malicious.pyo')
-
-    def test_so_file_rejected(self):
-        with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('exploit.so')
-
-    def test_dll_file_rejected(self):
-        with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('evil.dll')
-
-    def test_uppercase_extension_rejected(self):
-        with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('malicious.PY')
-
-    def test_mixed_case_extension_rejected(self):
-        with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('malicious.Py')
+            _validate_payload_extension(filename)
 
     def test_exe_allowed(self):
         """Agent binaries (.exe) must still be uploadable."""
@@ -52,11 +42,6 @@ class TestPayloadExtensionBlocking:
 
     def test_go_allowed(self):
         _validate_payload_extension('manx.go')
-
-    def test_double_extension_py_blocked(self):
-        """Files like 'legit.txt.py' must still be rejected."""
-        with pytest.raises(web.HTTPBadRequest):
-            _validate_payload_extension('legit.txt.py')
 
     def test_blocked_extensions_set(self):
         """Verify the constant is a frozenset and contains at least the known dangerous types."""
