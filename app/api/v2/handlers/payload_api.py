@@ -19,7 +19,10 @@ _BLOCKED_EXTENSIONS = frozenset({'.py', '.pyc', '.pyo', '.so', '.dll'})
 
 def _validate_payload_extension(filename: str) -> None:
     """Raise HTTPBadRequest if the file extension is on the server-side executable blocklist."""
-    ext = os.path.splitext(filename)[1].lower()
+    # Normalize the filename so the extension check reflects how it will be stored
+    # on filesystems like Windows that ignore trailing dots and spaces.
+    normalized = filename.rstrip(". ")
+    ext = os.path.splitext(normalized)[1].lower()
     if ext in _BLOCKED_EXTENSIONS:
         raise web.HTTPBadRequest(reason=f"File type {ext!r} is not allowed as a payload")
 
