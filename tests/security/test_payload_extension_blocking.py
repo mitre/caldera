@@ -1,5 +1,5 @@
 """
-Security regression tests for payload upload extension blocking (CWE-94 fix).
+Security regression tests for payload upload extension blocking (CWE-94 fix). 
 
 Verifies that _validate_payload_extension() correctly rejects server-side
 executable file types (.py, .pyc, .pyo, .so, .dll).
