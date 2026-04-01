@@ -1,4 +1,5 @@
 import pytest
+import os
 from aiohttp import web
 
 from app.api.v2 import security
@@ -8,13 +9,17 @@ from app.utility.base_world import BaseWorld
 
 @pytest.fixture
 def base_world():
+    cookie_path = os.path.join('data', 'cookie_storage')
     BaseWorld.clear_config()
+    if os.path.exists(cookie_path):
+        os.remove(cookie_path)
 
     BaseWorld.apply_config(
         name='main',
         config={
             CONFIG_API_KEY_RED: 'abc123',
-
+            'crypt_salt': 'REPLACE_WITH_RANDOM_VALUE',
+            'encryption_key': 'ADMIN123',
             'users': {
                 'red': {'reduser': 'redpass'},
                 'blue': {'blueuser': 'bluepass'}
@@ -25,6 +30,8 @@ def base_world():
 
     yield BaseWorld
     BaseWorld.clear_config()
+    if os.path.exists(cookie_path):
+        os.remove(cookie_path)
 
 
 @pytest.fixture
