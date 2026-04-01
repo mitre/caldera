@@ -28,7 +28,7 @@ def test_aioftp_server_api_intact():
     for name, expected_type in expected_classes.items():
         obj = getattr(aioftp, name, None)
         assert obj is not None, f"aioftp missing expected attribute: {name}"
-        assert isinstance(obj, type), (
+        assert isinstance(obj, expected_type), (
             f"aioftp.{name} should be a class, got {type(obj)!r}"
         )
 
