@@ -50,43 +50,34 @@ class TestPayloadsApi:
 
         assert filtered_payload_file_names == expected_payload_file_names
 
-    async def test_get_payloads_name_filter_matches(self, api_v2_client, api_cookies, expected_payload_file_names):
-        # All test payloads are created with a "payload_" prefix, so filtering by "payload_" must return all of them.
-        resp = await api_v2_client.get('/api/v2/payloads?name=payload_', cookies=api_cookies)
+    @pytest.mark.parametrize('query_name', ['payload_', 'PAYLOAD_'])
+    async def test_get_payloads_name_filter(self, api_v2_client, api_cookies, expected_payload_file_names, query_name):
+        resp = await api_v2_client.get(f'/api/v2/payloads?name={query_name}', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
         payload_file_names = await resp.json()
 
-        filtered_payload_file_names = {
-            file_name for file_name in payload_file_names
-            if file_name in expected_payload_file_names
-        }
-        assert filtered_payload_file_names == expected_payload_file_names
-
-        # All returned payloads must match the filter — non-matching payloads must be excluded.
+        # All expected payloads should be present
+        assert expected_payload_file_names <= set(payload_file_names)
+        # Every returned payload must match the filter (no false positives)
         assert all('payload_' in pathlib.PurePath(p).name.lower() for p in payload_file_names)
 
-    async def test_get_payloads_name_filter_no_match(self, api_v2_client, api_cookies, expected_payload_file_names):
-        # Use a suffix that is extremely unlikely to appear in any real payload file name.
+    async def test_get_payloads_name_filter_no_match(self, api_v2_client, api_cookies):
         resp = await api_v2_client.get('/api/v2/payloads?name=__no_match_xyzzy__', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
-        payload_file_names = await resp.json()
-        assert payload_file_names == []
+        assert await resp.json() == []
 
-    async def test_get_payloads_name_filter_case_insensitive(self, api_v2_client, api_cookies,
-                                                            expected_payload_file_names):
-        # "PAYLOAD_" in uppercase must still match files prefixed with "payload_".
-        resp = await api_v2_client.get('/api/v2/payloads?name=PAYLOAD_', cookies=api_cookies)
+    async def test_get_payloads_name_filter_with_sort_and_add_path(self, api_v2_client, api_cookies,
+                                                                    expected_payload_file_names):
+        resp = await api_v2_client.get('/api/v2/payloads?name=payload_&sort=true&add_path=true', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
-        payload_file_names = await resp.json()
+        payload_paths = await resp.json()
 
-        filtered_payload_file_names = {
-            file_name for file_name in payload_file_names
-            if file_name in expected_payload_file_names
-        }
-        assert filtered_payload_file_names == expected_payload_file_names
-
-        # All returned payloads must match the filter — non-matching payloads must be excluded.
-        assert all('payload_' in pathlib.PurePath(p).name.lower() for p in payload_file_names)
+        # Results should be sorted
+        assert payload_paths == sorted(payload_paths)
+        # Every returned path's filename must match the filter
+        assert all('payload_' in pathlib.PurePath(p).name.lower() for p in payload_paths)
+        # Results should contain paths (not bare filenames)
+        assert all(os.sep in p or '/' in p for p in payload_paths)
 
     async def test_unauthorized_get_payloads(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/payloads')
