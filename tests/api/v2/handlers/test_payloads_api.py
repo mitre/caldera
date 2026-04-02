@@ -66,8 +66,8 @@ class TestPayloadsApi:
         assert resp.status == HTTPStatus.OK
         assert await resp.json() == []
 
-    async def test_get_payloads_name_filter_with_sort_and_add_path(self, api_v2_client, api_cookies,
-                                                                    expected_payload_file_names):
+    async def test_get_payloads_name_filter_with_sort_and_add_path(
+            self, api_v2_client, api_cookies, expected_payload_file_names):
         resp = await api_v2_client.get('/api/v2/payloads?name=payload_&sort=true&add_path=true', cookies=api_cookies)
         assert resp.status == HTTPStatus.OK
         payload_paths = await resp.json()
