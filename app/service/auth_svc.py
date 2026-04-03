@@ -87,7 +87,8 @@ class AuthService(AuthServiceInterface, BaseService):
                 try:
                     secret_key = file_svc._read(cookie_path)
                     self.log.debug('Loaded persistent session key from data/cookie_storage')
-                except (SystemExit, Exception):
+                except SystemExit:
+                    # file_svc._read() calls sys.exit(1) on InvalidToken (encryption key mismatch).
                     self.log.warning('Failed to decrypt cookie_storage (encryption key mismatch). '
                                      'Regenerating session key — existing sessions will be invalidated.')
                     os.remove(cookie_path)

@@ -1,7 +1,7 @@
 """Tests proving that --fresh cleanup and auth_svc recovery work correctly.
 
 These tests verify:
-1. data/cookie_storage and data/fact_store are cleaned by --fresh (via DATA_FILE_GLOBS)
+1. data/cookie_storage is cleaned by --fresh (via DATA_FILE_GLOBS)
 2. auth_svc recovers gracefully when cookie_storage was encrypted with a different key
 """
 import os
@@ -23,10 +23,6 @@ class TestDataFileGlobs:
     def test_cookie_storage_in_data_file_globs(self):
         assert any('cookie_storage' in pattern for pattern in DATA_FILE_GLOBS), \
             'data/cookie_storage must be in DATA_FILE_GLOBS so --fresh cleans it up'
-
-    def test_fact_store_in_data_file_globs(self):
-        assert any('fact_store' in pattern for pattern in DATA_FILE_GLOBS), \
-            'data/fact_store must be in DATA_FILE_GLOBS so --fresh cleans it up'
 
     def test_object_store_in_data_file_globs(self):
         assert any('object_store' in pattern for pattern in DATA_FILE_GLOBS), \

@@ -35,7 +35,6 @@ DATA_FILE_GLOBS = (
     'data/results/*',
     'data/sources/*',
     'data/object_store',
-    'data/fact_store',
     'data/cookie_storage',
 )
 
