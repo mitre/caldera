@@ -143,7 +143,6 @@ class AppService(AppServiceInterface, BaseService):
         else:
             self.log.warning('Magma plugin dist not found at %s — web UI will not be available. '
                              'Run with --build or build the Magma plugin manually.', magma_dist)
-        templates.append('templates')
         aiohttp_jinja2.setup(self.application, loader=jinja2.FileSystemLoader(templates))
 
     async def retrieve_compiled_file(self, name, platform, location=''):
