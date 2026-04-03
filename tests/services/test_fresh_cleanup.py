@@ -9,13 +9,10 @@ import os
 import pytest
 
 from aiohttp import web
-from app.service.auth_svc import AuthService, CONFIG_API_KEY_RED, COOKIE_SESSION
+from app.service.auth_svc import AuthService, CONFIG_API_KEY_RED
 from app.service.data_svc import DATA_FILE_GLOBS
 from app.service.file_svc import FileSvc
 from app.utility.base_world import BaseWorld
-
-pytestmark = pytest.mark.asyncio
-
 
 class TestDataFileGlobs:
     """Verify that critical encrypted files are included in the --fresh cleanup list."""
@@ -40,6 +37,7 @@ class TestAuthSvcCookieRecovery:
         yield
         if os.path.exists(self.cookie_path):
             os.remove(self.cookie_path)
+        BaseWorld.clear_config()
 
     def _apply_config(self, encryption_key):
         BaseWorld.clear_config()
@@ -59,6 +57,7 @@ class TestAuthSvcCookieRecovery:
         # Ensure file_svc is registered so auth_svc can use it
         FileSvc()
 
+    @pytest.mark.asyncio
     async def test_stale_cookie_does_not_crash_server(self):
         """Prove that a cookie_storage encrypted with key A doesn't crash when loaded with key B."""
         # Step 1: Create cookie_storage with encryption key A
