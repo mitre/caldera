@@ -14,6 +14,7 @@ from app.service.data_svc import DATA_FILE_GLOBS
 from app.service.file_svc import FileSvc
 from app.utility.base_world import BaseWorld
 
+
 class TestDataFileGlobs:
     """Verify that critical encrypted files are included in the --fresh cleanup list."""
 
