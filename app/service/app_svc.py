@@ -10,7 +10,6 @@ import uuid
 from collections import namedtuple
 from datetime import datetime, timezone
 from importlib import import_module
-
 import aiohttp_jinja2
 import jinja2
 import yaml
@@ -36,6 +35,7 @@ class AppService(AppServiceInterface, BaseService):
         self.loop = asyncio.get_event_loop()
         self._errors = []
         self._loaded_plugins = []  # all plugins that were loaded, including disabled ones
+        self._plugin_hashes = {}  # stores SHA-256 hashes of plugin directories
 
     async def start_sniffer_untrusted_agents(self):
         next_check = self.get_config(name='agents', prop='untrusted_timer')
@@ -122,6 +122,8 @@ class AppService(AppServiceInterface, BaseService):
 
         async def load(p):
             plugin = Plugin(name=p)
+            plugin_path = 'plugins/%s' % p
+            self._verify_plugin_hash(plugin_path, p)
             if plugin.load_plugin():
                 await self.get_service('data_svc').store(plugin)
                 self._loaded_plugins.append(plugin)
@@ -247,6 +249,45 @@ class AppService(AppServiceInterface, BaseService):
             report = json.dumps(await op.report(self.get_service('file_svc'), self.get_service('data_svc')))
             if report:
                 await file_svc.save_file('operation_%s' % op.id, report.encode(), r_dir)
+
+    def _verify_plugin_hash(self, plugin_path, plugin_name):
+        """Compute SHA-256 hash of a plugin directory and warn if it changed since last load."""
+        current_hash = self._compute_dir_hash(plugin_path)
+        if current_hash is None:
+            self.log.warning('Failed to compute hash for plugin %s — integrity check skipped', plugin_name)
+            return
+        stored_hash = self._plugin_hashes.get(plugin_name)
+        if stored_hash is None:
+            self._plugin_hashes[plugin_name] = current_hash
+            self.log.debug('Recorded plugin hash for %s: %s', plugin_name, current_hash[:16])
+        elif stored_hash != current_hash:
+            self.log.warning('Plugin %s hash changed! Previous: %s, Current: %s',
+                             plugin_name, stored_hash[:16], current_hash[:16])
+            self._plugin_hashes[plugin_name] = current_hash
+
+    @staticmethod
+    def _compute_dir_hash(directory):
+        """Compute a SHA-256 hash over all files in a directory."""
+        sha256 = hashlib.sha256()
+        try:
+            for root, dirs, files in os.walk(directory):
+                dirs.sort()
+                for fname in sorted(files):
+                    filepath = os.path.join(root, fname)
+                    relpath = os.path.relpath(filepath, directory).replace(os.sep, '/')
+                    try:
+                        with open(filepath, 'rb') as f:
+                            while True:
+                                chunk = f.read(8192)
+                                if not chunk:
+                                    break
+                                sha256.update(chunk)
+                        sha256.update(relpath.encode('utf-8'))
+                    except (OSError, IOError):
+                        continue
+        except (OSError, IOError):
+            return None
+        return sha256.hexdigest()
 
     @staticmethod
     def _check_links_for_match(unique, links):
