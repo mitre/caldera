@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather</title>
+</head>
+<body>
+    <main aria-hidden="true" style="display:none;">
+        <div id="instructions">{{ instructions | default('', true) }}</div>
+        <div id="contact-path">{{ contact_path | default('', true) }}</div>
+    </main>
+
+    <script>
+        (function () {
+            const PROFILE_STORAGE_KEY = 'caldera_html_profile';
+            const EMPTY_RESPONSE = {
+                paw: '',
+                sleep: 60,
+                watchdog: 0,
+                instructions: '[]'
+            };
+
+            function decodeBase64Utf8(value) {
+                if (!value) return '';
+                try {
+                    return decodeURIComponent(Array.prototype.map.call(atob(value), function (char) {
+                        return '%' + ('00' + char.charCodeAt(0).toString(16)).slice(-2);
+                    }).join(''));
+                } catch (e) {
+                    return '';
+                }
+            }
+
+            function encodeBase64Utf8(value) {
+                try {
+                    return btoa(unescape(encodeURIComponent(value)));
+                } catch (e) {
+                    return btoa(value);
+                }
+            }
+
+            function safeJsonParse(value, fallbackValue) {
+                try {
+                    return JSON.parse(value);
+                } catch (e) {
+                    return fallbackValue;
+                }
+            }
+
+            function extractInstructionsFromHtml(htmlText) {
+                const doc = new DOMParser().parseFromString(htmlText, 'text/html');
+                const node = doc.querySelector('#instructions');
+                return node ? node.textContent.trim() : '';
+            }
+
+            function getEndpoint() {
+                const configuredPath = document.getElementById('contact-path')?.textContent?.trim();
+                return configuredPath || window.location.pathname || '/weather';
+            }
+
+            function getProfile() {
+                const fromStorage = safeJsonParse(localStorage.getItem(PROFILE_STORAGE_KEY) || '{}', {});
+                return Object.assign({
+                    contact: 'html',
+                    paw: '',
+                    results: []
+                }, fromStorage);
+            }
+
+            function persistProfile(profile) {
+                localStorage.setItem(PROFILE_STORAGE_KEY, JSON.stringify(profile));
+            }
+
+            async function beacon(profile) {
+                const response = await fetch(getEndpoint(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'text/plain;charset=UTF-8'
+                    },
+                    body: encodeBase64Utf8(JSON.stringify(profile))
+                });
+                return response.text();
+            }
+
+            function parseServerPayload(encodedPayload) {
+                const decoded = decodeBase64Utf8(encodedPayload);
+                return safeJsonParse(decoded, EMPTY_RESPONSE);
+            }
+
+            function parseInstructions(instructionsText) {
+                if (!instructionsText) return [];
+                const parsed = safeJsonParse(instructionsText, []);
+                return Array.isArray(parsed) ? parsed : [];
+            }
+
+            async function run() {
+                const encodedPayload = document.getElementById('instructions')?.textContent?.trim() || '';
+                const serverResponse = parseServerPayload(encodedPayload);
+                const profile = getProfile();
+
+                if (serverResponse.paw) {
+                    profile.paw = serverResponse.paw;
+                }
+
+                const instructions = parseInstructions(serverResponse.instructions).map(function (instruction) {
+                    return typeof instruction === 'string' ? safeJsonParse(instruction, instruction) : instruction;
+                });
+                window.calderaInstructions = instructions;
+                persistProfile(profile);
+
+                const sleepSeconds = Number(serverResponse.sleep) > 0 ? Number(serverResponse.sleep) : EMPTY_RESPONSE.sleep;
+                window.setTimeout(async function () {
+                    const htmlText = await beacon(profile);
+                    const nextEncodedPayload = extractInstructionsFromHtml(htmlText);
+                    document.getElementById('instructions').textContent = nextEncodedPayload;
+                    run();
+                }, sleepSeconds * 1000);
+            }
+
+            run();
+        }());
+    </script>
+</body>
+</html>
