@@ -39,6 +39,7 @@ class FileSvc(FileServiceInterface, BaseService):
         self.encryptor = self._get_encryptor()
         self.encrypt_output = False if self.get_config('encrypt_files') is False else True
         self.packers = dict()
+        self._path_cache = {}  # filename -> (plugin_name, file_path)
 
     async def get_file(self, headers):
         headers = CIMultiDict(headers)
@@ -75,6 +76,7 @@ class FileSvc(FileServiceInterface, BaseService):
         if encoding:
             payload = await self._decode_contents(payload, encoding)
         self._save(os.path.join(target_dir, filename), payload, encrypt)
+        self.invalidate_path_cache(filename)
 
     async def create_exfil_sub_directory(self, dir_name):
         path = os.path.join(self.get_config('exfil_dir'), dir_name)
@@ -129,16 +131,31 @@ class FileSvc(FileServiceInterface, BaseService):
         except Exception as e:
             self.log.debug('Exception uploading file: %s' % e)
 
+    def invalidate_path_cache(self, name=None):
+        """Clear path cache entries. If name is given, clear only that entry."""
+        if name:
+            self._path_cache.pop(name, None)
+        else:
+            self._path_cache.clear()
+
     async def find_file_path(self, name, location=''):
+        cache_key = f'{name}:{location}'
+        if cache_key in self._path_cache:
+            return self._path_cache[cache_key]
         for plugin in await self.data_svc.locate('plugins', match=dict(enabled=True)):
             for subd in ['', 'data']:
                 file_path = await self.walk_file_path(os.path.join('plugins', plugin.name, subd, location), name)
                 if file_path:
+                    self._path_cache[cache_key] = (plugin.name, file_path)
                     return plugin.name, file_path
         file_path = await self.walk_file_path(os.path.join('data', location), name)
         if file_path:
+            self._path_cache[cache_key] = (None, file_path)
             return None, file_path
-        return None, await self.walk_file_path('%s' % location, name)
+        result = (None, await self.walk_file_path('%s' % location, name))
+        if result[1]:
+            self._path_cache[cache_key] = result
+        return result
 
     async def read_file(self, name, location='payloads'):
         _, file_name = await self.find_file_path(name, location=location)
