@@ -36,6 +36,7 @@ class RestApi(BaseWorld):
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('GET', '/', self.landing)
+        self.app_svc.application.router.add_route('GET', '/pricing', self.pricing)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         # unauthorized API endpoints
@@ -55,6 +56,9 @@ class RestApi(BaseWorld):
 
     async def landing(self, request):
         return render_template("index.html", request, {})
+
+    async def pricing(self, request):
+        return render_template("pricing.html", request, {})
 
     async def handle_catch(self, request):
         return render_template("index.html", request, {})

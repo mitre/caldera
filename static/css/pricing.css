@@ -1,0 +1,251 @@
+/* R2Purple Pricing Page Styles */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0f;
+    color: #ffffff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+}
+
+/* Navigation */
+.pricing-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 40px;
+    border-bottom: 1px solid #1a1a2e;
+}
+
+.nav-logo-img {
+    height: 40px;
+}
+
+.nav-links {
+    display: flex;
+    gap: 32px;
+}
+
+.nav-links a {
+    color: #8a8a9a;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+    color: #00e5ff;
+}
+
+/* Hero */
+.pricing-hero {
+    text-align: center;
+    padding: 60px 20px 40px;
+}
+
+.pricing-hero h1 {
+    font-size: 42px;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #ffffff;
+}
+
+.pricing-hero .subtitle {
+    font-size: 18px;
+    color: #8a8a9a;
+}
+
+/* Pricing Cards Container */
+.pricing-container {
+    display: flex;
+    justify-content: center;
+    gap: 24px;
+    padding: 20px 40px 60px;
+    max-width: 1200px;
+    margin: 0 auto;
+    flex-wrap: wrap;
+}
+
+/* Pricing Card */
+.pricing-card {
+    background: #0d0d1a;
+    border: 1px solid #1a1a2e;
+    border-radius: 12px;
+    padding: 40px 32px;
+    width: 340px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.pricing-card:hover {
+    transform: translateY(-4px);
+    border-color: #2a2a3e;
+}
+
+.pricing-card.featured {
+    border-color: #00e5ff;
+    box-shadow: 0 0 30px rgba(0, 229, 255, 0.1);
+}
+
+.pricing-card.featured:hover {
+    border-color: #00e5ff;
+    box-shadow: 0 0 40px rgba(0, 229, 255, 0.15);
+}
+
+/* Recommended Badge */
+.recommended-badge {
+    position: absolute;
+    top: -14px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #00e5ff;
+    color: #0a0a0f;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
+    padding: 6px 20px;
+    border-radius: 20px;
+}
+
+/* Card Header */
+.card-header {
+    margin-bottom: 32px;
+}
+
+.tier-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    color: #8a8a9a;
+    text-transform: uppercase;
+}
+
+.tier-name {
+    font-size: 28px;
+    font-weight: 700;
+    margin: 8px 0 16px;
+    color: #ffffff;
+}
+
+.price .amount {
+    font-size: 44px;
+    font-weight: 700;
+    color: #ffffff;
+}
+
+.price .period {
+    display: block;
+    font-size: 14px;
+    color: #6a6a7a;
+    margin-top: 4px;
+}
+
+/* Features List */
+.features {
+    list-style: none;
+    flex: 1;
+    margin-bottom: 32px;
+}
+
+.features li {
+    padding: 8px 0;
+    font-size: 15px;
+    color: #c0c0d0;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.features li i {
+    color: #00e5ff;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+/* CTA Buttons */
+.cta-button {
+    display: block;
+    text-align: center;
+    padding: 14px 24px;
+    border-radius: 8px;
+    font-size: 15px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.cta-outline {
+    color: #ffffff;
+    border: 1px solid #2a2a3e;
+    background: transparent;
+}
+
+.cta-outline:hover {
+    border-color: #00e5ff;
+    color: #00e5ff;
+}
+
+.cta-filled {
+    background: #00e5ff;
+    color: #0a0a0f;
+    border: 1px solid #00e5ff;
+}
+
+.cta-filled:hover {
+    background: #00c8e0;
+    border-color: #00c8e0;
+}
+
+/* Footer */
+.pricing-footer {
+    text-align: center;
+    padding: 40px 20px;
+    border-top: 1px solid #1a1a2e;
+    color: #6a6a7a;
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 1080px) {
+    .pricing-container {
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .pricing-card {
+        width: 100%;
+        max-width: 400px;
+    }
+}
+
+@media (max-width: 600px) {
+    .pricing-hero h1 {
+        font-size: 28px;
+    }
+
+    .pricing-nav {
+        padding: 16px 20px;
+    }
+
+    .pricing-container {
+        padding: 20px;
+    }
+
+    .pricing-card {
+        padding: 32px 24px;
+    }
+
+    .price .amount {
+        font-size: 36px;
+    }
+}

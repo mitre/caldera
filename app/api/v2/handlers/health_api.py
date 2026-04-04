@@ -18,15 +18,15 @@ class HealthApi(BaseApi):
         router.add_get('/health', self.get_health_info)
 
     @aiohttp_apispec.docs(tags=['health'],
-                          summary='Health endpoints returns the status of Caldera',
-                          description='Returns the status of Caldera and additional details including versions of system components')
+                          summary='Health endpoints returns the status of R2Purple',
+                          description='Returns the status of R2Purple and additional details including versions of system components')
     @aiohttp_apispec.response_schema(CalderaInfoSchema, 200, description='Includes all loaded plugins and system components.')
     async def get_health_info(self, request):
         loaded_plugins_sorted = sorted(self._app_svc.get_loaded_plugins(), key=operator.attrgetter('name'))
         access = await self._auth_svc.get_permissions(request)
 
         mapping = {
-            'application': 'Caldera',
+            'application': 'R2Purple',
             'version': app.get_version(),
             'access': access[0].name,
             'plugins': loaded_plugins_sorted
