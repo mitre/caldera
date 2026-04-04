@@ -2,6 +2,7 @@ import asyncio
 import json
 import os
 import random
+import secrets
 import uuid
 
 from base64 import b64encode
@@ -640,11 +641,11 @@ class Handler(asyncio.DatagramProtocol):
     def _generate_random_ipv4_response(last_octet_even):
         """Generate random IPv4 address as an A record response.
         If last_octet_even is true, make sure the last octet is even. Otherwise, make sure it is odd."""
-        random_ip_int = random.randrange(1, 0xffffffff)
+        random_ip_int = secrets.randbelow(0xffffffff - 1) + 1
         if (random_ip_int % 2 == 0 and not last_octet_even) or (random_ip_int % 2 == 1 and last_octet_even):
             random_ip_int += 1
         return random_ip_int.to_bytes(4, byteorder='big')
 
     @staticmethod
     def _get_random_ipv6_addr():
-        return random.getrandbits(128).to_bytes(16, byteorder='big')
+        return secrets.token_bytes(16)
