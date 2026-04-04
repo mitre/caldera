@@ -1,5 +1,6 @@
 import asyncio
 import json
+import logging
 import os
 import random
 import uuid
@@ -306,6 +307,8 @@ class Handler(asyncio.DatagramProtocol):
             self.directory = directory
             self.filename = filename
 
+    MAX_TXT_CONTENT_SIZE = 65536  # 64KB max for TXT record content
+
     def __init__(self, domain, services, name):
         super().__init__()
         self.services = services
@@ -586,10 +589,34 @@ class Handler(asyncio.DatagramProtocol):
         response_data = self._generate_random_ipv4_response(False)
         return self._generate_ipv4_response(dns_request_packet, response_data, DnsResponse.default_ttl)
 
+    @staticmethod
+    def sanitize_txt_content(data):
+        """Sanitize DNS TXT record content before processing.
+
+        Strips null bytes, enforces max size limit, and validates content.
+        Returns sanitized bytes or None if content is suspicious.
+        """
+        if not data:
+            return data
+        # Strip null bytes
+        sanitized = data.replace(b'\x00', b'')
+        # Limit to max size
+        if len(sanitized) > Handler.MAX_TXT_CONTENT_SIZE:
+            logging.getLogger('contact_dns_handler').warning(
+                'DNS TXT content exceeds max size (%d > %d bytes), truncating',
+                len(sanitized), Handler.MAX_TXT_CONTENT_SIZE
+            )
+            sanitized = sanitized[:Handler.MAX_TXT_CONTENT_SIZE]
+        return sanitized
+
     def _unpack_json(self, data):
         json_contents = None
         try:
-            json_contents = json.loads(data.decode('utf-8'))
+            sanitized = self.sanitize_txt_content(data)
+            if sanitized is None:
+                self.log.warning('Suspicious DNS TXT content rejected')
+                return None
+            json_contents = json.loads(sanitized.decode('utf-8'))
         except Exception as e:
             self.log.error('Error decoding contents into json: %s' % e)
         return json_contents
