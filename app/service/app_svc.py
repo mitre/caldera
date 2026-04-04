@@ -127,8 +127,11 @@ class AppService(AppServiceInterface, BaseService):
                 self._loaded_plugins.append(plugin)
 
             if plugin.name in self.get_config('plugins') or plugin.name == 'magma':
-                await plugin.enable(self.get_services())
-                self.log.info('Enabled plugin: %s' % plugin.name)
+                try:
+                    await plugin.enable(self.get_services())
+                    self.log.info('Enabled plugin: %s' % plugin.name)
+                except Exception:
+                    self.log.error('Failed to enable plugin: %s' % plugin.name, exc_info=True)
 
         for plug in filter(trim, plugins):
             if not os.path.isdir('plugins/%s' % plug) or not os.path.isfile('plugins/%s/hook.py' % plug):
