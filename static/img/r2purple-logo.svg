@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 80" width="300" height="80">
+  <defs>
+    <linearGradient id="purpleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#7B2FBE;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#00E5FF;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <!-- Shield icon -->
+  <path d="M30 12 L50 4 L70 12 L70 38 C70 54 50 68 50 68 C50 68 30 54 30 38 Z" fill="none" stroke="url(#purpleGrad)" stroke-width="3"/>
+  <path d="M44 28 L50 22 L56 28 L50 48 Z" fill="url(#purpleGrad)" opacity="0.8"/>
+  <circle cx="50" cy="22" r="4" fill="url(#purpleGrad)"/>
+  <!-- Text -->
+  <text x="82" y="35" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="700" fill="#FFFFFF">R2</text>
+  <text x="122" y="35" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="700" fill="url(#purpleGrad)">Purple</text>
+  <text x="82" y="55" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="12" font-weight="400" fill="#8a8a9a" letter-spacing="3">SECURITY VALIDATION</text>
+</svg>

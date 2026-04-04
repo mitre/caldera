@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Request a Demo | R2Purple</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="shortcut icon" type="image/png" href="/gui/img/favicon.png"/>
+    <link rel="stylesheet" href="/gui/css/lib/custom-bulma.css">
+    <link href="/gui/css/lib/fa-all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/gui/css/demo.css">
+</head>
+<body>
+    <nav class="demo-nav">
+        <div class="nav-inner">
+            <a href="/" class="nav-brand">
+                <img src="/gui/img/r2purple-logo.svg" alt="R2Purple" class="nav-logo-img">
+            </a>
+            <div class="nav-links">
+                <a href="/">Home</a>
+                <a href="/pricing">Pricing</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="demo-container">
+        <div class="demo-info">
+            <h1>See R2Purple<br><span class="gradient-text">In Action</span></h1>
+            <p class="demo-description">
+                Get a personalized walkthrough of the R2Purple platform tailored to your security environment and goals.
+            </p>
+            <div class="demo-benefits">
+                <div class="benefit">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Live adversary emulation demo</span>
+                </div>
+                <div class="benefit">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Custom threat profile for your industry</span>
+                </div>
+                <div class="benefit">
+                    <i class="fas fa-check-circle"></i>
+                    <span>ROI analysis and deployment planning</span>
+                </div>
+                <div class="benefit">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Integration review with your existing stack</span>
+                </div>
+                <div class="benefit">
+                    <i class="fas fa-check-circle"></i>
+                    <span>No commitment required</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="demo-form-wrapper">
+            <form id="demo-form" class="demo-form" method="POST" action="/api/demo-request">
+                <h2>Request Your Demo</h2>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="firstName">First Name *</label>
+                        <input type="text" id="firstName" name="first_name" required placeholder="John">
+                    </div>
+                    <div class="form-group">
+                        <label for="lastName">Last Name *</label>
+                        <input type="text" id="lastName" name="last_name" required placeholder="Doe">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="email">Work Email *</label>
+                    <input type="email" id="email" name="email" required placeholder="john@company.com">
+                </div>
+                <div class="form-group">
+                    <label for="company">Company *</label>
+                    <input type="text" id="company" name="company" required placeholder="Acme Corp">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="title">Job Title</label>
+                        <input type="text" id="title" name="job_title" placeholder="CISO, SOC Manager, etc.">
+                    </div>
+                    <div class="form-group">
+                        <label for="size">Company Size</label>
+                        <select id="size" name="company_size">
+                            <option value="">Select...</option>
+                            <option value="1-50">1-50 employees</option>
+                            <option value="51-200">51-200 employees</option>
+                            <option value="201-1000">201-1,000 employees</option>
+                            <option value="1001-5000">1,001-5,000 employees</option>
+                            <option value="5001+">5,001+ employees</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="interest">What are you most interested in?</label>
+                    <select id="interest" name="interest">
+                        <option value="">Select...</option>
+                        <option value="adversary-emulation">Adversary Emulation</option>
+                        <option value="continuous-validation">Continuous Security Validation</option>
+                        <option value="compliance">Compliance & Reporting</option>
+                        <option value="purple-team">Purple Team Operations</option>
+                        <option value="siem-validation">SIEM/EDR Validation</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="message">Anything else we should know?</label>
+                    <textarea id="message" name="message" rows="3" placeholder="Tell us about your current security testing workflow..."></textarea>
+                </div>
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span class="btn-text">Request Demo</span>
+                    <span class="btn-loading" style="display:none"><i class="fas fa-spinner fa-spin"></i> Sending...</span>
+                </button>
+                <p class="form-disclaimer">By submitting this form, you agree to be contacted about R2Purple products and services.</p>
+            </form>
+
+            <div id="success-message" class="success-message" style="display:none">
+                <div class="success-icon"><i class="fas fa-check-circle"></i></div>
+                <h2>Thank You!</h2>
+                <p>Your demo request has been received. Our team will reach out within 1 business day to schedule your personalized demo.</p>
+                <a href="/" class="btn btn-outline">Back to Home</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('demo-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var btn = document.getElementById('submitBtn');
+            btn.querySelector('.btn-text').style.display = 'none';
+            btn.querySelector('.btn-loading').style.display = 'inline';
+            btn.disabled = true;
+
+            var formData = new FormData(this);
+            var data = {};
+            formData.forEach(function(value, key) { data[key] = value; });
+
+            fetch('/api/demo-request', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            }).then(function() {
+                document.getElementById('demo-form').style.display = 'none';
+                document.getElementById('success-message').style.display = 'block';
+            }).catch(function() {
+                // Fallback: show success anyway (mailto fallback)
+                window.location.href = 'mailto:info@r2purple.com?subject=Demo Request - ' +
+                    encodeURIComponent(data.company || '') +
+                    '&body=' + encodeURIComponent(
+                        'Name: ' + (data.first_name || '') + ' ' + (data.last_name || '') +
+                        '\nEmail: ' + (data.email || '') +
+                        '\nCompany: ' + (data.company || '') +
+                        '\nTitle: ' + (data.job_title || '') +
+                        '\nInterest: ' + (data.interest || '') +
+                        '\nMessage: ' + (data.message || '')
+                    );
+            });
+        });
+
+        // # sourceURL=demo.js
+    </script>
+</body>
+</html>

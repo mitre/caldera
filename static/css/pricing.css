@@ -206,6 +206,146 @@ body {
     border-color: #00c8e0;
 }
 
+/* Comparison Table */
+.comparison-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 80px 40px 40px;
+}
+
+.comparison-title {
+    text-align: center;
+    font-size: 32px;
+    font-weight: 700;
+    margin-bottom: 40px;
+}
+
+.table-wrapper {
+    overflow-x: auto;
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+}
+
+.comparison-table th,
+.comparison-table td {
+    padding: 14px 20px;
+    text-align: center;
+    border-bottom: 1px solid #1a1a2e;
+}
+
+.comparison-table th {
+    font-size: 15px;
+    font-weight: 600;
+    color: #ffffff;
+    padding: 16px 20px;
+    background: #0d0d1a;
+    position: sticky;
+    top: 0;
+}
+
+.comparison-table .feature-col {
+    text-align: left;
+    min-width: 240px;
+}
+
+.comparison-table td:first-child {
+    text-align: left;
+    color: #c0c0d0;
+}
+
+.comparison-table .highlight-col {
+    background: rgba(0, 229, 255, 0.04);
+}
+
+.comparison-table th.highlight-col {
+    color: #00e5ff;
+}
+
+.comparison-table .section-row td {
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #8a8a9a;
+    background: #0a0a12;
+    padding: 12px 20px;
+    border-bottom: 1px solid #1a1a2e;
+}
+
+.c-yes {
+    color: #00e5ff;
+}
+
+.c-no {
+    color: #3a3a4a;
+}
+
+/* FAQ Section */
+.faq-section {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 60px 40px;
+}
+
+.faq-title {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 40px;
+}
+
+.faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.faq-item {
+    background: #0d0d1a;
+    border: 1px solid #1a1a2e;
+    border-radius: 10px;
+    padding: 24px;
+}
+
+.faq-item h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #ffffff;
+}
+
+.faq-item p {
+    font-size: 14px;
+    color: #8a8a9a;
+    line-height: 1.6;
+}
+
+/* Pricing CTA */
+.pricing-cta {
+    text-align: center;
+    padding: 60px 40px;
+}
+
+.pricing-cta h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.pricing-cta p {
+    font-size: 16px;
+    color: #8a8a9a;
+    margin-bottom: 28px;
+}
+
+.pricing-cta .cta-button {
+    display: inline-block;
+}
+
 /* Footer */
 .pricing-footer {
     text-align: center;
@@ -247,5 +387,16 @@ body {
 
     .price .amount {
         font-size: 36px;
+    }
+
+    .faq-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .comparison-section,
+    .faq-section,
+    .pricing-cta {
+        padding-left: 20px;
+        padding-right: 20px;
     }
 }

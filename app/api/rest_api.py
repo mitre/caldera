@@ -37,6 +37,9 @@ class RestApi(BaseWorld):
         # unauthorized GUI endpoints
         self.app_svc.application.router.add_route('GET', '/', self.landing)
         self.app_svc.application.router.add_route('GET', '/pricing', self.pricing)
+        self.app_svc.application.router.add_route('GET', '/login', self.login_page)
+        self.app_svc.application.router.add_route('GET', '/demo', self.demo)
+        self.app_svc.application.router.add_route('POST', '/api/demo-request', self.demo_request)
         self.app_svc.application.router.add_route('POST', '/enter', self.validate_login)
         self.app_svc.application.router.add_route('POST', '/logout', self.logout)
         # unauthorized API endpoints
@@ -55,10 +58,27 @@ class RestApi(BaseWorld):
         await self.auth_svc.logout_user(request)
 
     async def landing(self, request):
-        return render_template("index.html", request, {})
+        return render_template("landing.html", request, {})
+
+    async def login_page(self, request):
+        return render_template("login.html", request, {})
 
     async def pricing(self, request):
         return render_template("pricing.html", request, {})
+
+    async def demo(self, request):
+        return render_template("demo.html", request, {})
+
+    async def demo_request(self, request):
+        try:
+            data = await request.json()
+            self.log.info('Demo request received: %s (%s) at %s',
+                          data.get('first_name', ''), data.get('last_name', ''),
+                          data.get('email', ''), data.get('company', ''))
+            return web.json_response({'status': 'success', 'message': 'Demo request received'})
+        except Exception as e:
+            self.log.error('Demo request error: %s', repr(e))
+            return web.json_response({'status': 'error', 'message': str(e)}, status=400)
 
     async def handle_catch(self, request):
         return render_template("index.html", request, {})
