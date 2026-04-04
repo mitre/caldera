@@ -4,6 +4,7 @@ import logging
 import os
 import uuid
 import base64
+from datetime import datetime
 
 import marshmallow as ma
 from aiohttp import web
@@ -72,9 +73,29 @@ class RestApi(BaseWorld):
     async def demo_request(self, request):
         try:
             data = await request.json()
-            self.log.info('Demo request received: %s (%s) at %s',
-                          data.get('first_name', ''), data.get('last_name', ''),
-                          data.get('email', ''), data.get('company', ''))
+            allowed_fields = {'first_name', 'last_name', 'email', 'company',
+                              'job_title', 'company_size', 'interest', 'message'}
+            lead = {k: str(v)[:500] for k, v in data.items() if k in allowed_fields}
+            lead['submitted_at'] = datetime.utcnow().isoformat()
+            lead['source_ip'] = request.remote
+
+            leads_file = os.path.join('data', 'demo_requests.json')
+            os.makedirs('data', exist_ok=True)
+
+            leads = []
+            if os.path.exists(leads_file):
+                with open(leads_file, 'r') as f:
+                    try:
+                        leads = json.load(f)
+                    except json.JSONDecodeError:
+                        leads = []
+            leads.append(lead)
+            with open(leads_file, 'w') as f:
+                json.dump(leads, f, indent=2)
+
+            self.log.info('Demo request received: %s %s <%s> at %s',
+                          lead.get('first_name', ''), lead.get('last_name', ''),
+                          lead.get('email', ''), lead.get('company', ''))
             return web.json_response({'status': 'success', 'message': 'Demo request received'})
         except Exception as e:
             self.log.error('Demo request error: %s', repr(e))
