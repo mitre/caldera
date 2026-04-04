@@ -13,6 +13,20 @@ from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.schemas.payload_schemas import PayloadQuerySchema, PayloadSchema, PayloadCreateRequestSchema, \
     PayloadDeleteRequestSchema
 
+# Extensions that could be executed server-side and must never be accepted as
+# uploaded payloads (CWE-94 / Remote Code Execution mitigation).
+_BLOCKED_EXTENSIONS = frozenset({'.py', '.pyc', '.pyo', '.so', '.dll'})
+
+
+def _validate_payload_extension(filename: str) -> None:
+    """Raise HTTPBadRequest if the file extension is on the server-side executable blocklist."""
+    # Normalize the filename so the extension check reflects how it will be stored
+    # on filesystems like Windows that ignore trailing dots and spaces.
+    normalized = filename.rstrip(". ")
+    ext = os.path.splitext(normalized)[1].lower()
+    if ext in _BLOCKED_EXTENSIONS:
+        raise web.HTTPBadRequest(reason=f"File type {ext!r} is not allowed as a payload")
+
 
 class PayloadApi(BaseApi):
     def __init__(self, services):
@@ -80,6 +94,9 @@ class PayloadApi(BaseApi):
 
         # Sanitize the file name to prevent directory traversal
         sanitized_filename = self.sanitize_filename(file_field.filename)
+
+        # Block server-side executable file types (CWE-94 RCE mitigation)
+        _validate_payload_extension(sanitized_filename)
 
         # Generate the file name and path
         file_name, file_path = await self.__generate_file_name_and_path(sanitized_filename)
