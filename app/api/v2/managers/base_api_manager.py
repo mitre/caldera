@@ -135,9 +135,12 @@ class BaseApiManager(BaseWorld):
         '''Removes any non-alphanumeric characters and non-hyphen/underscore.'''
         if not isinstance(obj_id, str):
             raise DataValidationError(message=f'Invalid id type: expected str, got {type(obj_id).__name__}', name='id', value=obj_id)
+        original_id = obj_id
         obj_id = re.sub(r'[^a-zA-Z0-9_-]', '', obj_id)
         if not obj_id:
             raise DataValidationError(message=f"Invalid id: {obj_id!r}", name='id', value=obj_id)
+        if original_id != obj_id:
+            logging.getLogger(DEFAULT_LOGGER_NAME).warning(f"Sanitized ID: {obj_id}")
         return obj_id
 
     @staticmethod

@@ -262,3 +262,15 @@ def test_sanitize_id():
         BaseApiManager._sanitize_id('../../.')
     with pytest.raises(DataValidationError):
         BaseApiManager._sanitize_id('')
+    # Non-string IDs should raise a DataValidationError
+    with pytest.raises(DataValidationError):
+        BaseApiManager._sanitize_id(12345)
+
+def test_sanitize_id_logs_warning_when_changed(caplog):
+    # Capture warnings when an ID is mutated by sanitization
+    caplog.set_level('WARNING')
+    original = 'abc/def?ghi'
+    sanitized = BaseApiManager._sanitize_id(original)
+    assert sanitized == 'abcdefghi'
+    # Ensure a warning was emitted that includes the sanitized ID
+    assert any('Sanitized ID' in rec.getMessage() and sanitized in rec.getMessage() for rec in caplog.records)
