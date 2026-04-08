@@ -266,6 +266,7 @@ def test_sanitize_id():
     with pytest.raises(DataValidationError):
         BaseApiManager._sanitize_id(12345)
 
+
 def test_sanitize_id_logs_warning_when_changed(caplog):
     # Capture warnings when an ID is mutated by sanitization
     caplog.set_level('WARNING')
