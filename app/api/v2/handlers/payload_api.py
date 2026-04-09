@@ -1,9 +1,11 @@
 import asyncio
 import itertools
+import logging
 import os
 import pathlib
 import re
 from io import IOBase
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from typing import Optional
 
 import aiohttp_apispec
@@ -12,6 +14,9 @@ from aiohttp import web
 from app.api.v2.handlers.base_api import BaseApi
 from app.api.v2.schemas.payload_schemas import PayloadQuerySchema, PayloadSchema, PayloadCreateRequestSchema, \
     PayloadDeleteRequestSchema
+
+USER_PAYLOAD_ENCRYPTION_FLAG = bytes('%userencryptedpayload%', encoding='utf-8')
+PAYLOAD_API_LOGGER_NAME = 'payload_api_handler'
 
 
 class PayloadApi(BaseApi):
@@ -87,7 +92,7 @@ class PayloadApi(BaseApi):
         # Save the file to a temporary location first
         temp_file_path = pathlib.Path(file_path).parent / f"temp_{file_name}"
         loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, self.__save_file, str(temp_file_path), file_field.file)
+        await loop.run_in_executor(None, self._save_file, str(temp_file_path), file_field.file)
 
         # Validate the saved file to ensure it is not a symbolic link
         if temp_file_path.is_symlink():
@@ -114,14 +119,14 @@ class PayloadApi(BaseApi):
 
         # Filename Input Validation
         if not file_name:
-            return web.HTTPBadRequest(reason="File name is required.")
+            raise web.HTTPBadRequest(reason="File name is required.")
 
         # Sanitize the filename
         sanitized_filename = self.sanitize_filename(file_name)
 
         # Additional safety checks
         if not sanitized_filename or sanitized_filename in ['.', '..']:
-            return web.HTTPBadRequest(reason="Invalid file name.")
+            raise web.HTTPBadRequest(reason="Invalid file name.")
 
         try:
             safe_path = self.validate_and_canonicalize_path(sanitized_filename)
@@ -129,14 +134,13 @@ class PayloadApi(BaseApi):
             if safe_path_obj.is_symlink():
                 raise ValueError(f"Invalid path: {sanitized_filename} is a symbolic link.")
             os.remove(safe_path_obj)
-            response = web.HTTPNoContent()
         except ValueError as e:
-            response = web.HTTPNotFound(reason=str(e))
+            raise web.HTTPNotFound(reason=str(e))
         except FileNotFoundError:
-            response = web.HTTPNotFound()
+            raise web.HTTPNotFound()
         except PermissionError:
-            response = web.HTTPForbidden(reason="Permission denied.")
-        return response
+            raise web.HTTPForbidden(reason="Permission denied.")
+        raise web.HTTPNoContent()
 
     @classmethod
     async def __generate_file_name_and_path(cls, sanitized_filename: str) -> [str, str]:
@@ -162,9 +166,15 @@ class PayloadApi(BaseApi):
         return file_name, file_path
 
     @staticmethod
-    def __save_file(target_file_path: str, io_base_src: IOBase):
+    def _save_file(target_file_path: str, io_base_src: IOBase):
         """
         Save an uploaded file content into a targeted file path.
+        To prevent unintended server-side execution of payloads, user-provided
+        payloads will be encrypted using a randomly generated key and IV.
+
+        The on-disk file format is as follows:
+        USER_PAYLOAD_ENCRYPTION_FLAG + key + IV + ciphertext
+
         Note this method calls blocking methods and must be run into a dedicated thread.
 
         :param target_file_path: The destination path to write to.
@@ -172,14 +182,28 @@ class PayloadApi(BaseApi):
         """
         size: int = 0
         read_chunk: bool = True
+        key = os.urandom(32)
+        iv = os.urandom(16)
+        cipher = Cipher(algorithms.AES(key), modes.CTR(iv))
+        encryptor = cipher.encryptor()
+
         with open(target_file_path, 'wb') as buffered_io_base_dest:
+            # Write flag, key, and IV prior to ciphertext.
+            buffered_io_base_dest.write(USER_PAYLOAD_ENCRYPTION_FLAG + key + iv)
+
+            # Encrypt each chunk prior to appending it to the file
+            # We use CTR mode to take advantage of the stream cipher.
             while read_chunk:
                 chunk: bytes = io_base_src.read(8192)
                 if chunk:
                     size += len(chunk)
-                    buffered_io_base_dest.write(chunk)
+                    buffered_io_base_dest.write(encryptor.update(chunk))
                 else:
                     read_chunk = False
+            buffered_io_base_dest.write(encryptor.finalize())
+        logging.getLogger(PAYLOAD_API_LOGGER_NAME).debug(
+            f'Encrypted {size} bytes of user payload and wrote to disk at {target_file_path}'
+        )
 
     @staticmethod
     def validate_and_canonicalize_path(input_path: str, base_directory: str = "data/payloads/") -> str:
