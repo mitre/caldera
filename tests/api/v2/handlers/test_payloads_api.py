@@ -120,7 +120,7 @@ class TestPayloadsApi:
 
     def test_save_file(self):
         original_data = os.urandom(24*1024)
-        with tempfile.NamedTemporaryFile(delete_on_close=False) as fp:
+        with tempfile.NamedTemporaryFile() as fp:
             PayloadApi._save_file(fp.name, io.BytesIO(original_data))
             decrypted = BaseService.get_service('file_svc')._read(fp.name)
             assert decrypted == original_data
