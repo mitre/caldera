@@ -14,11 +14,11 @@ class TestDataFileGlobs:
     """Verify that critical encrypted files are in the --fresh cleanup list."""
 
     def test_cookie_storage_in_data_file_globs(self):
-        assert any('cookie_storage' in p for p in DATA_FILE_GLOBS), \
+        assert any('data/cookie_storage' == p for p in DATA_FILE_GLOBS), \
             'data/cookie_storage must be in DATA_FILE_GLOBS so --fresh cleans it up'
 
     def test_object_store_in_data_file_globs(self):
-        assert any('object_store' in p for p in DATA_FILE_GLOBS), \
+        assert any('data/object_store' == p for p in DATA_FILE_GLOBS), \
             'data/object_store must be in DATA_FILE_GLOBS'
 
 
