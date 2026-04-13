@@ -6,10 +6,11 @@ import json
 import os
 import re
 import subprocess
+import sys
 
 from aiohttp import web
 from multidict import CIMultiDict
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
@@ -281,15 +282,15 @@ class FileSvc(FileServiceInterface, BaseService):
         if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
             try:
                 buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
-            except Exception as e:
-                self.log.error('Failed to decrypt saved Caldera state. This may be due to an incorrect encryption key.\n'
+            except InvalidToken:
+                self.log.error('Failed to decrypt saved Caldera state due to incorrect encryption key.\n'
                                ' - If attempting to restore secure backup, verify that conf/local.yml exists with '
                                'correct encryption_key value, and that the server is being run without --insecure.\n'
                                ' - If attempting to restore insecure backup, verify that conf/default.yml exists '
                                'with correct encryption_key value, and that the server is being run with --insecure.\n'
                                ' - If correct encryption_key value cannot be recovered, rerun the server with --fresh '
                                'to disregard stored server state.')
-                raise e
+                sys.exit(1)
         return buf
 
     def _get_encryptor(self):
