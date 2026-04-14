@@ -84,16 +84,8 @@ class AuthService(AuthServiceInterface, BaseService):
             max_age = None
         try:
             if os.path.exists(cookie_path):
-                try:
-                    secret_key = file_svc._read(cookie_path)
-                    self.log.debug('Loaded persistent session key from data/cookie_storage')
-                except SystemExit:
-                    # file_svc._read() calls sys.exit(1) on InvalidToken (encryption key mismatch).
-                    self.log.warning('Failed to decrypt cookie_storage (encryption key mismatch). '
-                                     'Regenerating session key — existing sessions will be invalidated.')
-                    os.remove(cookie_path)
-                    secret_key = os.urandom(32)
-                    file_svc._save(cookie_path, secret_key, encrypt=True)
+                secret_key = file_svc._read(cookie_path)
+                self.log.debug('Loaded persistent session key from data/cookie_storage')
             else:
                 secret_key = os.urandom(32)
                 file_svc._save(cookie_path, secret_key, encrypt=True)
