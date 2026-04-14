@@ -87,10 +87,12 @@ class AuthService(AuthServiceInterface, BaseService):
                 secret_key = file_svc._read(cookie_path)
                 self.log.debug('Loaded persistent session key from data/cookie_storage')
             else:
+                # Generate a new random 32-byte key for AES encryption if no valid key is found in the config or data folder
                 secret_key = os.urandom(32)
                 file_svc._save(cookie_path, secret_key, encrypt=True)
                 self.log.debug('Generated and saved new persistent session key.')
         except Exception as e:
+            # Fallback if file operations fail
             self.log.warning('Could not manage persistent key file, falling back to ephemeral: %s', e)
             secret_key = os.urandom(32)
         if len(secret_key) != 32:
