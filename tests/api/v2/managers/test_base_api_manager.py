@@ -1,5 +1,7 @@
+import pytest
 import marshmallow as ma
 
+from app.api.v2.errors import DataValidationError
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
@@ -248,3 +250,28 @@ def test_replace_object(agent):
 
     assert len(stub_data_svc.ram['tests']) == 1
     assert not stub_data_svc.ram['tests'][0].value
+
+
+def test_sanitize_id():
+    valid = '766be199-7316-4b26-b3db-e272aaf7e0d4'
+    assert valid == BaseApiManager._sanitize_id(valid)
+    assert valid.upper() == BaseApiManager._sanitize_id(valid.upper())
+    assert valid == BaseApiManager._sanitize_id('../.././&%$!"#766be19:9-73[16-]4b}26-b{3d!b-e272..\\//aaf/*7e0d4')
+    assert 'testid123TEST' == BaseApiManager._sanitize_id('testid123TEST')
+    with pytest.raises(DataValidationError):
+        BaseApiManager._sanitize_id('../../.')
+    with pytest.raises(DataValidationError):
+        BaseApiManager._sanitize_id('')
+    # Non-string IDs should raise a DataValidationError
+    with pytest.raises(DataValidationError):
+        BaseApiManager._sanitize_id(12345)
+
+
+def test_sanitize_id_logs_warning_when_changed(caplog):
+    # Capture warnings when an ID is mutated by sanitization
+    caplog.set_level('WARNING')
+    original = 'abc/def?ghi'
+    sanitized = BaseApiManager._sanitize_id(original)
+    assert sanitized == 'abcdefghi'
+    # Ensure a warning was emitted that includes the sanitized ID
+    assert any('Sanitized ID' in rec.getMessage() and sanitized in rec.getMessage() for rec in caplog.records)

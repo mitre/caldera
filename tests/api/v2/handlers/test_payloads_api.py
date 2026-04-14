@@ -1,4 +1,5 @@
 import os
+import pathlib
 import tempfile
 from http import HTTPStatus
 
@@ -48,6 +49,35 @@ class TestPayloadsApi:
         }
 
         assert filtered_payload_file_names == expected_payload_file_names
+
+    @pytest.mark.parametrize('query_name', ['payload_', 'PAYLOAD_'])
+    async def test_get_payloads_name_filter(self, api_v2_client, api_cookies, expected_payload_file_names, query_name):
+        resp = await api_v2_client.get(f'/api/v2/payloads?name={query_name}', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        payload_file_names = await resp.json()
+
+        # All expected payloads should be present
+        assert expected_payload_file_names <= set(payload_file_names)
+        # Every returned payload must match the filter (no false positives)
+        assert all('payload_' in pathlib.PurePath(p).name.lower() for p in payload_file_names)
+
+    async def test_get_payloads_name_filter_no_match(self, api_v2_client, api_cookies):
+        resp = await api_v2_client.get('/api/v2/payloads?name=__no_match_xyzzy__', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        assert await resp.json() == []
+
+    async def test_get_payloads_name_filter_with_sort_and_add_path(
+            self, api_v2_client, api_cookies, expected_payload_file_names):
+        resp = await api_v2_client.get('/api/v2/payloads?name=payload_&sort=true&add_path=true', cookies=api_cookies)
+        assert resp.status == HTTPStatus.OK
+        payload_paths = await resp.json()
+
+        # Results should be sorted
+        assert payload_paths == sorted(payload_paths)
+        # Every returned path's filename must match the filter
+        assert all('payload_' in pathlib.PurePath(p).name.lower() for p in payload_paths)
+        # Results should contain paths (not bare filenames)
+        assert all(os.sep in p or '/' in p for p in payload_paths)
 
     async def test_unauthorized_get_payloads(self, api_v2_client):
         resp = await api_v2_client.get('/api/v2/payloads')

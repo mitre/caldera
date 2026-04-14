@@ -5,6 +5,7 @@ class PayloadQuerySchema(schema.Schema):
     sort = fields.Boolean(required=False, load_default=False)
     exclude_plugins = fields.Boolean(required=False, load_default=False)
     add_path = fields.Boolean(required=False, load_default=False)
+    name = fields.String(required=False, load_default=None, allow_none=True)
 
 
 class PayloadSchema(schema.Schema):
