@@ -475,6 +475,22 @@ class Operation(FirstClassObjectInterface, BaseObject):
         )
         await services.get('rest_svc').persist_source(dict(access=[self.access]), data)
 
+    async def refresh_agents(self, data_svc):
+        """Refresh the operation's agent list from data_svc to pick up newly connected agents.
+
+        Queries data_svc for agents matching the operation's group (or all agents if no group
+        is set) and appends any that are not already in the operation's agent list. Existing
+        agents are never removed or duplicated.
+        """
+        if self.group:
+            agents = await data_svc.locate('agents', match=dict(group=self.group))
+        else:
+            agents = await data_svc.locate('agents')
+        existing_paws = {a.paw for a in self.agents}
+        for agent in agents:
+            if agent.paw not in existing_paws:
+                self.agents.append(agent)
+
     async def update_operation_agents(self, services):
         self.agents = await services.get('rest_svc').construct_agents_for_group(self.group)
 

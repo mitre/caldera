@@ -731,3 +731,59 @@ class TestOperation:
         assert seeded_rel.target.value == 's3cr3t', (
             'Relationship target fact value should be resolved from the source fact list, not None'
         )
+
+    # -- Tests for refresh_agents: pick up newly connected agents --
+
+    def test_refresh_agents_picks_up_new_agent(self, event_loop, agent, adversary):
+        """refresh_agents should add agents from data_svc that are not already in the operation."""
+        existing_agent = agent(sleep_min=30, sleep_max=60, watchdog=0, platform='windows',
+                               host='HOST1', username='user1', group='red', paw='paw1',
+                               executors=['psh'])
+        new_agent = agent(sleep_min=30, sleep_max=60, watchdog=0, platform='linux',
+                          host='HOST2', username='user2', group='red', paw='paw2',
+                          executors=['sh'])
+        op = Operation(name='test-refresh', agents=[existing_agent], adversary=adversary, group='red')
+
+        class FakeDataSvc:
+            async def locate(self, key, match=None):
+                if key == 'agents' and match and match.get('group') == 'red':
+                    return [existing_agent, new_agent]
+                return []
+
+        event_loop.run_until_complete(op.refresh_agents(FakeDataSvc()))
+        paws = [a.paw for a in op.agents]
+        assert 'paw1' in paws
+        assert 'paw2' in paws
+        assert len(op.agents) == 2
+
+    def test_refresh_agents_no_duplicates(self, event_loop, agent, adversary):
+        """refresh_agents should not duplicate agents that are already in the operation."""
+        existing_agent = agent(sleep_min=30, sleep_max=60, watchdog=0, platform='windows',
+                               host='HOST1', username='user1', group='red', paw='paw1',
+                               executors=['psh'])
+        op = Operation(name='test-no-dup', agents=[existing_agent], adversary=adversary, group='red')
+
+        class FakeDataSvc:
+            async def locate(self, key, match=None):
+                return [existing_agent]
+
+        event_loop.run_until_complete(op.refresh_agents(FakeDataSvc()))
+        assert len(op.agents) == 1
+        assert op.agents[0].paw == 'paw1'
+
+    def test_refresh_agents_no_group_returns_all(self, event_loop, agent, adversary):
+        """When operation has no group, refresh_agents should query all agents."""
+        agent1 = agent(sleep_min=30, sleep_max=60, watchdog=0, platform='windows',
+                       host='HOST1', username='user1', group='blue', paw='paw1',
+                       executors=['psh'])
+        op = Operation(name='test-no-group', agents=[], adversary=adversary, group=None)
+
+        class FakeDataSvc:
+            async def locate(self, key, match=None):
+                if key == 'agents' and match is None:
+                    return [agent1]
+                return []
+
+        event_loop.run_until_complete(op.refresh_agents(FakeDataSvc()))
+        assert len(op.agents) == 1
+        assert op.agents[0].paw == 'paw1'
