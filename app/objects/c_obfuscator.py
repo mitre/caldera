@@ -5,6 +5,7 @@ import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 
 
 class ObfuscatorSchema(ma.Schema):
@@ -28,6 +29,7 @@ class Obfuscator(FirstClassObjectInterface, BaseObject):
 
     def __init__(self, name, description, module):
         super().__init__()
+        BaseWorld.verify_module(module, 'obfuscators')
         self.name = name
         self.description = description
         self.module = module

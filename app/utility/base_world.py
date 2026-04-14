@@ -1,4 +1,5 @@
 import binascii
+import os
 import string
 import re
 import yaml
@@ -163,6 +164,35 @@ class BaseWorld:
         except Exception as e:
             logging.getLogger('check_requirement').error(repr(e))
             return False
+
+    @staticmethod
+    def verify_module(module, module_type, additional_paths=[]):
+        '''Checks that the specified module matches the expected module path
+        given its type and that the corresponding Python file exists.
+        Raises a ModuleNotFoundError if the requested module does not meet the
+        required conditions.'''
+
+        module_path = module.replace('.', '/') + '.py'
+        module_filename = os.path.basename(module_path)
+        allowed_paths = [os.path.join('app/', module_type, module_filename)]
+        if os.path.isdir('plugins'):
+            for plugin_dir in os.listdir('plugins'):
+                if os.path.isdir(os.path.join('plugins', plugin_dir)):
+                    allowed_paths.append(
+                        os.path.join('plugins', plugin_dir, 'app', module_type, module_filename)
+                    )
+        if additional_paths:
+            allowed_paths += [os.path.join(p, module_filename) for p in additional_paths]
+        if module_path not in allowed_paths:
+            raise ModuleNotFoundError(
+                f'Module {module} does not align with allowed paths for this module type. Allowed paths for this module: {str(allowed_paths)}',
+                name=module
+            )
+        if not os.path.isfile(module_path):
+            raise ModuleNotFoundError(
+                f'Module {module} with path {module_path} was not found on disk.',
+                name=module
+            )
 
     class Access(Enum):
         APP = 0

@@ -2,6 +2,7 @@ import marshmallow as ma
 
 from app.objects.secondclass.c_parserconfig import ParserConfig, ParserConfigSchema
 from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 
 
 class ParserSchema(ma.Schema):
@@ -31,5 +32,6 @@ class Parser(BaseObject):
 
     def __init__(self, module, parserconfigs):
         super().__init__()
+        BaseWorld.verify_module(module, 'parsers', ['app/learning'])
         self.module = module
         self.parserconfigs = parserconfigs

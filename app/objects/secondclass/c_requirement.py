@@ -1,6 +1,7 @@
 import marshmallow as ma
 
 from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 
 
 class RequirementSchema(ma.Schema):
@@ -23,5 +24,6 @@ class Requirement(BaseObject):
 
     def __init__(self, module, relationship_match):
         super().__init__()
+        BaseWorld.verify_module(module, 'requirements')
         self.module = module
         self.relationship_match = relationship_match

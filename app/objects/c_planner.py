@@ -4,6 +4,7 @@ import marshmallow as ma
 
 from app.objects.interfaces.i_object import FirstClassObjectInterface
 from app.utility.base_object import BaseObject
+from app.utility.base_world import BaseWorld
 from app.objects.secondclass.c_fact import Fact, FactSchema
 
 
@@ -43,6 +44,7 @@ class Planner(FirstClassObjectInterface, BaseObject):
         super().__init__()
         self.name = name
         self.planner_id = planner_id if planner_id else str(uuid.uuid4())
+        BaseWorld.verify_module(module, 'planners')
         self.module = module
         self.params = params if params else {}
         self.description = description

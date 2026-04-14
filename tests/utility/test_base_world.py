@@ -1,7 +1,9 @@
 import pytest
+import os
 import yaml
 
 from datetime import datetime, timezone
+from unittest import mock
 from app.utility.base_world import BaseWorld
 
 
@@ -91,3 +93,45 @@ class TestBaseWorld:
     def test_is_base64(self):
         b64str = 'aGVsbG8gd29ybGQgZnJvbSB1bml0IHRlc3QgbGFuZAo='
         assert BaseWorld.is_base64(b64str)
+
+    @mock.patch.object(os, 'listdir', return_value=['stockpile', 'testplugin', 'dummy'])
+    @mock.patch.object(os.path, 'isdir', return_value=True)
+    def test_verify_module(self, mock_isdir, mock_listdir):
+        def _mock_isfile(path):
+            return path in [
+                'plugins/stockpile/app/requirements/test_req.py',
+                'plugins/testplugin/app/obfuscators/test_obf.py',
+                'app/planners/test_planner.py',
+                'app/parsers/test_parser.py',
+                'app/learning/learning_parser.py',
+            ]
+
+        with mock.patch.object(os.path, 'isfile', side_effect=_mock_isfile):
+            BaseWorld.verify_module('plugins.stockpile.app.requirements.test_req', 'requirements')
+            BaseWorld.verify_module('plugins.testplugin.app.obfuscators.test_obf', 'obfuscators')
+            BaseWorld.verify_module('app.planners.test_planner', 'planners')
+            BaseWorld.verify_module('app.parsers.test_parser', 'parsers')
+            BaseWorld.verify_module('app.learning.learning_parser', 'parsers', ['app/learning'])
+
+            allowed_paths_str = str([
+                'app/parsers/myparser.py',
+                'plugins/stockpile/parsers/myparser.py',
+                'plugins/testplugin/parsers/myparser.py',
+                'plugins/dummy/parsers/myparser.py'
+            ])
+            expected_err = f'Module data.payloads.myparser does not align with allowed paths for this module type. Allowed paths for this module: {allowed_paths_str}'
+            with pytest.raises(ModuleNotFoundError, match=expected_err):
+                BaseWorld.verify_module('data.payloads.myparser', 'parsers')
+            allowed_paths_str = str([
+                'otherdir/myparser.py',
+                'app/parsers/myparser.py',
+                'plugins/stockpile/parsers/myparser.py',
+                'plugins/testplugin/parsers/myparser.py',
+                'plugins/dummy/parsers/myparser.py'
+            ])
+            expected_err = f'Module plugins.dne.myparser does not align with allowed paths for this module type. Allowed paths for this module: {allowed_paths_str}'
+            with pytest.raises(ModuleNotFoundError, match=expected_err):
+                BaseWorld.verify_module('data.payloads.myparser', 'parsers', ['otherdir'])
+            expected_err = 'Module plugins.stockpile.app.obfuscators.dne with path plugins/stockpile/app/obfuscators/dne was not found on disk.'
+            with pytest.raises(ModuleNotFoundError, match=expected_err):
+                BaseWorld.verify_module('plugins.stockpile.app.obfuscators.dne', 'obfuscators', ['otherdir'])
