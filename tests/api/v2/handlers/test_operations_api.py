@@ -1,5 +1,5 @@
 import json
-
+import os
 import pytest
 
 from http import HTTPStatus
@@ -166,10 +166,11 @@ class TestOperationsApi:
         resp = await api_v2_client.post('/api/v2/operations/999/event-logs', cookies=api_cookies)
         assert resp.status == HTTPStatus.NOT_FOUND
 
-    async def test_create_operation(self, api_v2_client, api_cookies):
-        payload = dict(name='post_test', planner={'id': '123'},
+    async def test_create_operation(self, api_v2_client, api_cookies, mocker):
+        payload = dict(name='post_test', planner={'id': '123', 'module': 'app.planners.atomic'},
                        adversary={'adversary_id': '123', 'name': 'ad-hoc'}, source={'id': '123'})
-        resp = await api_v2_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
+        with mocker.patch.object(os.path, 'isfile', return_value=True):
+            resp = await api_v2_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.OK
         op_exists = await BaseService.get_service('data_svc').locate('operations', {'name': 'post_test'})
         assert op_exists

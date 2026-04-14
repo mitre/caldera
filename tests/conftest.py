@@ -590,7 +590,8 @@ def setup_finished_operation(event_loop, finished_operation_payload):
 @pytest.fixture
 def setup_operations_api_test(event_loop, api_v2_client, test_operation, test_agent, test_ability,
                               active_link, finished_link, expected_link_output):
-    test_operation = OperationSchema().load(test_operation)
+    with mock.patch.object(os.path, 'isfile', return_value=True):
+        test_operation = OperationSchema().load(test_operation)
     test_operation.agents.append(test_agent)
     test_operation.set_start_details()
     test_link = Link.load(active_link)
