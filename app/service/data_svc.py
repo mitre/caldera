@@ -35,6 +35,7 @@ DATA_FILE_GLOBS = (
     'data/results/*',
     'data/sources/*',
     'data/object_store',
+    'data/cookie_storage',
 )
 
 PAYLOADS_CONFIG_STANDARD_KEY = 'standard_payloads'
