@@ -637,7 +637,7 @@ class TestOperation:
 
         op = Operation(name='report-test', agents=[operation_agent], adversary=operation_adversary)
         op.set_start_details()
-        op.planner = Planner(planner_id='testplanner', name='test_planner', module='test', params=None)
+        op.planner = Planner(planner_id='testplanner', name='test_planner', module='atomic', params=None)
         op.objective = Objective(id='obj1', name='test objective')
 
         exe = executor(name='psh', platform='windows', command='whoami')

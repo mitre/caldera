@@ -1,7 +1,8 @@
 import pytest
 import asyncio
 import base64
-from unittest.mock import MagicMock, AsyncMock
+import os
+from unittest.mock import MagicMock, AsyncMock, patch
 
 from app.objects.c_adversary import Adversary
 from app.objects.c_obfuscator import Obfuscator
@@ -351,7 +352,8 @@ class TestPlanningService:
         operation.all_facts = AsyncMock(return_value=facts)
         operation.planner = MagicMock()
         planning_svc.load_module = AsyncMock(return_value=RequirementFake())
-        link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
+        with patch.object(os.path, 'isfile', return_value=True):
+            link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
 
         trimmed_links = await planning_svc.trim_links(operation, [link], agent)
 

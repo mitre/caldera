@@ -1,5 +1,5 @@
 import asyncio
-import os.path
+import os
 
 import jinja2
 import pytest
@@ -457,13 +457,14 @@ def test_adversary(event_loop):
 def test_planner(event_loop):
     expected_planner = {'name': 'test planner',
                         'description': 'test planner',
-                        'module': 'test',
+                        'module': 'app.planners.test',
                         'stopping_conditions': [],
                         'params': {},
                         'allow_repeatable_abilities': False,
                         'ignore_enforcement_modules': [],
                         'id': '123'}
-    test_planner = PlannerSchema().load(expected_planner)
+    with mock.patch.object(os.path, 'isfile', return_value=True):
+        test_planner = PlannerSchema().load(expected_planner)
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(test_planner))
     return test_planner
 

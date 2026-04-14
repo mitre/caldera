@@ -169,8 +169,8 @@ class TestDataService:
             json.dumps(x.display)
 
     def test_no_duplicate_planner(self, event_loop, data_svc):
-        event_loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='some.path.here', params=None, description='description')))
-        event_loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='some.path.here', params=None, description='description')))
+        event_loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='atomic', params=None, description='description')))
+        event_loop.run_until_complete(data_svc.store(Planner(name='test', planner_id='some_id', module='atomic', params=None, description='description')))
         planners = event_loop.run_until_complete(data_svc.locate('planners'))
 
         assert len(planners) == 1
