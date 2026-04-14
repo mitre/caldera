@@ -83,7 +83,7 @@ class AuthService(AuthServiceInterface, BaseService):
         except (ValueError, TypeError):
             max_age = None
         try:
-            if os.path.exists(os.path.join('data', cookie_file)):
+            if os.path.exists(cookie_path):
                 secret_key = file_svc._read(cookie_path)
                 self.log.debug('Loaded persistent session key from data/cookie_storage')
             else:
