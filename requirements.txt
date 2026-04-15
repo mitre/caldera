@@ -6,7 +6,7 @@ aiohttp-apispec==3.0.0b2
 argon2-cffi==25.1.0
 jinja2==3.1.6
 pyyaml==6.0.1
-cryptography==46.0.5
+cryptography==46.0.7
 websockets==15.0
 Sphinx==7.1.2
 sphinx_rtd_theme==1.3.0
@@ -15,7 +15,7 @@ marshmallow==3.26.2
 dirhash==0.2.1
 marshmallow-enum==1.5.1
 ldap3==2.9.1
-pyasn1~=0.5.1
+pyasn1==0.6.3
 reportlab==4.0.4  # debrief
 rich==13.7.0
 lxml==6.0.2  # debrief
