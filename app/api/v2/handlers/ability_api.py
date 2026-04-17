@@ -16,6 +16,7 @@ class AbilityApi(BaseObjectApi):
     def add_routes(self, app: web.Application):
         router = app.router
         router.add_get('/abilities', self.get_abilities)
+        router.add_post('/abilities/upload', self.upload_ability)
         router.add_get('/abilities/{ability_id}', self.get_ability_by_id)
         router.add_post('/abilities', self.create_ability)
         router.add_put('/abilities/{ability_id}', self.create_or_update_ability)
@@ -110,3 +111,21 @@ class AbilityApi(BaseObjectApi):
     async def delete_ability(self, request: web.Request):
         await self.delete_on_disk_object(request)
         return web.HTTPNoContent()
+
+    @aiohttp_apispec.docs(tags=['abilities'],
+                          summary='Upload a YAML ability file.',
+                          description='Uploads a YAML ability file, validates its contents, '
+                                      'saves it to disk under data/abilities/{tactic}/, '
+                                      'and loads it into memory.')
+    @aiohttp_apispec.response_schema(AbilitySchema,
+                                     description='JSON dictionary representation of the uploaded Ability.')
+    async def upload_ability(self, request: web.Request):
+        reader = await request.multipart()
+        file_field = await reader.next()
+        if not file_field or file_field.name != 'file':
+            raise web.HTTPBadRequest(reason='Missing "file" field in multipart form data.')
+        filename = file_field.filename or ''
+        file_data = await file_field.read()
+        access = await self.get_request_permissions(request)
+        ability = await self._api_manager.upload_ability_file(file_data, filename, access)
+        return web.json_response(ability.display)
