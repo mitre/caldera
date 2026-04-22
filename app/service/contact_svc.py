@@ -113,11 +113,9 @@ class ContactService(ContactServiceInterface, BaseService):
 
     async def _save(self, result):
         try:
-            loop = asyncio.get_event_loop()
             link = await self.get_service('app_svc').find_link(result.id)
             if link:
                 link.pid = int(result.pid)
-                link.finish = self.get_service('data_svc').get_current_timestamp()
                 link.status = int(result.status)
                 if result.agent_reported_time:
                     link.agent_reported_time = self.get_timestamp_from_string(result.agent_reported_time)
@@ -133,16 +131,16 @@ class ContactService(ContactServiceInterface, BaseService):
                     operation = await self.get_service('app_svc').find_op_with_link(result.id)
                     if not operation and not link.executor.parsers:
                         agent = await self.get_service('data_svc').locate('agents', dict(paw=link.paw))
-                        loop.create_task(self.get_service('learning_svc').learn(await agent[0].all_facts(), link,
-                                                                                result.output))
+                        await self.get_service('learning_svc').learn(await agent[0].all_facts(), link, result.output)
                     elif not operation:
-                        loop.create_task(link.parse(None, result.output))
+                        await link.parse(None, result.output)
                     elif link.executor.parsers:
-                        loop.create_task(link.parse(operation, result.output))
+                        await link.parse(operation, result.output)
                     elif operation.use_learning_parsers:
                         all_facts = await operation.all_facts()
-                        loop.create_task(self.get_service('learning_svc').learn(all_facts, link, result.output,
-                                                                                operation))
+                        await self.get_service('learning_svc').learn(all_facts, link, result.output, operation)
+                # Only mark the link finished once any parser/learning side effects are visible to the operation.
+                link.finish = self.get_service('data_svc').get_current_timestamp()
             else:
                 command_results = json.dumps(dict(
                     stdout=self.decode_bytes(result.output, strip_newlines=False),

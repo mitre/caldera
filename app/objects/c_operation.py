@@ -179,7 +179,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         self.chain.append(link)
 
     def has_link(self, link_id):
-        return any(lnk.id == link_id for lnk in self.potential_links + self.chain)
+        link_identifier = str(link_id)
+        return any(lnk.id == link_identifier or lnk.unique == link_identifier
+                   for lnk in self.potential_links + self.chain)
 
     def update_untrusted_agents(self, agent):
         if not agent.trusted and agent in self.agents:
