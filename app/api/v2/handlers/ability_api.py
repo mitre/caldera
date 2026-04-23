@@ -1,5 +1,6 @@
 import aiohttp_apispec
 from aiohttp import web
+import json
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.ability_api_manager import AbilityApiManager
@@ -123,7 +124,8 @@ class AbilityApi(BaseObjectApi):
         reader = await request.multipart()
         file_field = await reader.next()
         if not file_field or file_field.name != 'file':
-            raise web.HTTPBadRequest(reason='Missing "file" field in multipart form data.')
+            error_body = json.dumps({'error': 'Missing "file" field in multipart form data.'})
+            raise web.HTTPBadRequest(text=error_body, content_type='application/json')
         filename = file_field.filename or ''
         file_data = await file_field.read()
         access = await self.get_request_permissions(request)
