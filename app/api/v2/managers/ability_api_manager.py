@@ -7,7 +7,7 @@ from typing import Any
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpBadRequest
-from app.objects.c_ability import AbilitySchema
+from app.objects.c_ability import AbilitySchema, Ability
 from app.utility.base_world import BaseWorld
 
 
@@ -51,8 +51,11 @@ class AbilityApiManager(BaseApiManager):
         return next(self.find_objects(ram_key, {id_property: obj_id}))
 
     def _validate_ability_data(self, create: bool, data: dict):
-        # Correct ability_id key for ability file saving.
-        data['id'] = data.pop('ability_id', '')
+        # Normalize ability ID: prefer explicit 'ability_id' if provided, otherwise preserve any existing 'id'.
+        if 'ability_id' in data:
+            data['id'] = data.pop('ability_id')
+        else:
+            data['id'] = data.get('id', '')
 
         # If a new ability is being created, ensure required fields present.
         if create:
@@ -99,7 +102,6 @@ class AbilityApiManager(BaseApiManager):
         # Parse YAML
         try:
             # Ensure we pass a text string to yaml.safe_load. PyYAML accepts strings or file-like objects.
-            # The test fixtures pass bytes; decode bytes/bytearray to str before parsing.
             if isinstance(file_data, (bytes, bytearray)):
                 try:
                     file_text = file_data.decode('utf-8')
@@ -121,57 +123,9 @@ class AbilityApiManager(BaseApiManager):
         if not isinstance(parsed, dict):
             raise JsonHttpBadRequest('YAML file must contain a mapping/dictionary.')
 
-        # Extract required fields
-        ability_id = parsed.get('id') or parsed.get('ability_id')
-        if not ability_id:
-            raise JsonHttpBadRequest('Missing required field: "id" or "ability_id".')
-        name = parsed.get('name')
-        if not name:
-            raise JsonHttpBadRequest('Missing required field: "name".')
-        tactic = parsed.get('tactic')
-        if not tactic:
-            raise JsonHttpBadRequest('Missing required field: "tactic".')
-
-        # Validate ID and tactic format
-        validator = re.compile(r'^[a-zA-Z0-9-_]+$')
-        if not validator.match(str(ability_id)):
-            raise JsonHttpBadRequest(f'Invalid ability ID "{ability_id}". '
-                                     'IDs can only contain alphanumeric characters, hyphens, and underscores.')
-        if not validator.match(tactic):
-            raise JsonHttpBadRequest(f'Invalid tactic "{tactic}". '
-                                     'Tactics can only contain alphanumeric characters, hyphens, and underscores.')
-
-        tactic = tactic.lower()
-        parsed['tactic'] = tactic
-        parsed['id'] = ability_id
-        # Normalize keys so downstream loaders don't receive duplicate ability_id
-        parsed.pop('ability_id', None)
-
-        # Check for duplicates
-        existing = list(self.find_objects('abilities', dict(ability_id=str(ability_id))))
-        if existing:
-            raise JsonHttpBadRequest(f'Ability with id already exists: {ability_id}')
-
-        # Determine save path and create directory if needed
-        tactic_dir = os.path.join('data', 'abilities', tactic)
-        if not os.path.exists(tactic_dir):
-            os.makedirs(tactic_dir)
-        file_path = os.path.join(tactic_dir, f'{ability_id}.yml')
-
-        # Write the file
-        with open(file_path, 'wb') as f:
-            # Dump as bytes using explicit encoding
-            f.write(yaml.dump([parsed], encoding='utf-8', sort_keys=False))
-
-        # Load into memory
-        allowed = self._get_allowed_from_access(access)
-        await self._data_svc.load_ability_file(file_path, allowed)
-
-        # Return the loaded ability
-        loaded = self.find_objects('abilities', dict(ability_id=str(ability_id)))
-        if loaded:
-            return list(loaded)[0]
-        raise JsonHttpBadRequest(f'Ability was saved but could not be loaded into memory: {ability_id}')
+        # write the file and return the created ability object
+        return await self.create_on_disk_object(data=parsed, access=access,
+                                                ram_key='abilities', id_property='ability_id', obj_class=Ability)
 
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
         await self._file_svc.save_file(file_path, yaml.dump([data], encoding='utf-8', sort_keys=False),
