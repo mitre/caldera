@@ -118,13 +118,14 @@ class AbilityApi(BaseObjectApi):
                           description='Uploads a YAML ability file, validates its contents, '
                                       'saves it to disk under data/abilities/{tactic}/, '
                                       'and loads it into memory.')
+    # add request_schema here
     @aiohttp_apispec.response_schema(AbilitySchema,
                                      description='JSON dictionary representation of the uploaded Ability.')
     async def upload_ability(self, request: web.Request):
         reader = await request.multipart()
         file_field = await reader.next()
         if not file_field or file_field.name != 'file':
-            error_body = json.dumps({'error': 'Missing "file" field in multipart form data.'})
+            error_body = json.dumps({'error': 'Missing "file" field as first in multipart form data.'})
             raise web.HTTPBadRequest(text=error_body, content_type='application/json')
         filename = file_field.filename or ''
         file_data = await file_field.read()

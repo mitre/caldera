@@ -98,7 +98,17 @@ class AbilityApiManager(BaseApiManager):
 
         # Parse YAML
         try:
-            parsed = yaml.safe_load(file_data)
+            # Ensure we pass a text string to yaml.safe_load. PyYAML accepts strings or file-like objects.
+            # The test fixtures pass bytes; decode bytes/bytearray to str before parsing.
+            if isinstance(file_data, (bytes, bytearray)):
+                try:
+                    file_text = file_data.decode('utf-8')
+                except UnicodeDecodeError:
+                    # Fallback to latin-1 to preserve byte values if utf-8 fails
+                    file_text = file_data.decode('latin-1')
+            else:
+                file_text = file_data
+            parsed = yaml.safe_load(file_text)
         except yaml.YAMLError as e:
             raise JsonHttpBadRequest(f'Invalid YAML: {e}')
 
@@ -134,6 +144,8 @@ class AbilityApiManager(BaseApiManager):
         tactic = tactic.lower()
         parsed['tactic'] = tactic
         parsed['id'] = ability_id
+        # Normalize keys so downstream loaders don't receive duplicate ability_id
+        parsed.pop('ability_id', None)
 
         # Check for duplicates
         existing = list(self.find_objects('abilities', dict(ability_id=str(ability_id))))
@@ -148,6 +160,7 @@ class AbilityApiManager(BaseApiManager):
 
         # Write the file
         with open(file_path, 'wb') as f:
+            # Dump as bytes using explicit encoding
             f.write(yaml.dump([parsed], encoding='utf-8', sort_keys=False))
 
         # Load into memory
