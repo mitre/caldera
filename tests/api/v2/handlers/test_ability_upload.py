@@ -79,6 +79,21 @@ class TestAbilityUploadApi:
         assert result['tactic'] == 'discovery'
         assert os.path.exists('data/abilities/discovery/upload-test-001.yml')
 
+    async def test_upload_valid_yaml_ability_id(self, api_v2_client, api_cookies, valid_ability_yaml_with_ability_id_key):
+        form = FormData()
+        form.add_field('file', valid_ability_yaml_with_ability_id_key,
+                       filename='upload-test-001.yml',
+                       content_type='application/x-yaml')
+        resp = await api_v2_client.post('/api/v2/abilities/upload',
+                                        cookies=api_cookies,
+                                        data=form)
+        assert resp.status == HTTPStatus.OK
+        result = await resp.json()
+        assert result['ability_id'] == 'upload-test-002'
+        assert result['name'] == 'Uploaded Test Ability 2'
+        assert result['tactic'] == 'collection'
+        assert os.path.exists('data/abilities/collection/upload-test-002.yml')
+
     async def test_upload_invalid_file_type(self, api_v2_client, api_cookies):
         form = FormData()
         form.add_field('file', b'not yaml content',
