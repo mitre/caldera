@@ -269,16 +269,6 @@ class RestService(RestServiceInterface, BaseService):
             return await self.get_service('data_svc').locate('agents', match=dict(group=group))
         return await self.get_service('data_svc').locate('agents')
 
-    async def update_config(self, data):
-        if data.get('prop') == 'plugin':
-            enabled_plugins = self.get_config('plugins')
-            new_plugin = data.get('value')
-            if new_plugin not in enabled_plugins:
-                enabled_plugins.append(new_plugin)
-        elif data.get('prop') != 'requirements':  # Prevent users from editing requirements via API.
-            self.set_config('main', data.get('prop'), data.get('value'))
-        return self.get_config()
-
     async def update_operation(self, op_id, state=None, autonomous=None, obfuscator=None):
         async def validate(op):
             try:
