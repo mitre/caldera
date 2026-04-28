@@ -89,7 +89,6 @@ class RestApi(BaseWorld):
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
                     result=lambda d: self.rest_svc.display_result(d),
                     contact=lambda d: self.rest_svc.download_contact_report(d),
-                    configuration=lambda d: self.rest_svc.update_config(d),
                     link=lambda d: self.rest_svc.get_potential_links(**d),
                     operation=lambda d: self.rest_svc.update_operation(**d),
                     task=lambda d: self.rest_svc.task_agent_with_ability(**d),
@@ -103,8 +102,14 @@ class RestApi(BaseWorld):
             return web.json_response(await options[request.method][index](data))
         except ma.ValidationError as e:
             raise web.HTTPBadRequest(content_type='application/json', text=json.dumps(e.messages))
+        except TypeError as e:
+            self.log.error(repr(e), exc_info=True)
+            error_msg = dict(error='400: Bad Request')
+            raise web.HTTPBadRequest(text=json.dumps(error_msg), content_type='application/json')
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
+            error_msg = dict(error='500: Internal Server Error')
+            raise web.HTTPInternalServerError(text=json.dumps(error_msg), content_type='application/json')
 
     @check_authorization
     async def rest_core_info(self, request):

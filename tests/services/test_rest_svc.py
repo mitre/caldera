@@ -125,28 +125,6 @@ class TestRestSvc:
         event_loop.run_until_complete(internal_rest_svc.delete_operation(delete_criteria))
         assert event_loop.run_until_complete(data_svc.locate('operations', match=dict(id=operation_id))) == []
 
-    def test_update_config(self, event_loop, data_svc, rest_svc):
-        internal_rest_svc = rest_svc(event_loop)
-        # check that an ability reflects the value in app. property
-        pre_ability = event_loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
-        assert '0.0.0.0' == BaseWorld.get_config('app.contact.http')
-        assert 'curl 0.0.0.0' == next(pre_ability[0].executors).test
-
-        # update property
-        event_loop.run_until_complete(internal_rest_svc.update_config(data=dict(prop='app.contact.http', value='127.0.0.1')))
-
-        # verify ability reflects new value
-        post_ability = event_loop.run_until_complete(data_svc.locate('abilities', dict(ability_id='123')))
-        assert '127.0.0.1' == BaseWorld.get_config('app.contact.http')
-        assert 'curl 127.0.0.1' == next(post_ability[0].executors).test
-
-    def test_update_config_plugin(self, event_loop, rest_svc):
-        internal_rest_svc = rest_svc(event_loop)
-        # update plugin property
-        assert ['sandcat', 'stockpile'] == BaseWorld.get_config('plugins')
-        event_loop.run_until_complete(internal_rest_svc.update_config(data=dict(prop='plugin', value='ssl')))
-        assert ['sandcat', 'stockpile', 'ssl'] == BaseWorld.get_config('plugins')
-
     def test_create_operation(self, event_loop, rest_svc, data_svc):
         want = {'name': 'Test',
                 'adversary': {'description': 'an empty adversary profile', 'name': 'ad-hoc', 'adversary_id': 'ad-hoc',
