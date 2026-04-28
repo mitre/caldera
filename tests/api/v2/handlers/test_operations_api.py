@@ -182,14 +182,14 @@ class TestOperationsApi:
         assert op_data['source']['id'] == payload['source']['id']
 
     async def test_duplicate_create_operation(self, api_v2_client, api_cookies, test_operation):
-        payload = dict(name='post_test', id=test_operation['id'], planner={'id': '123'},
+        payload = dict(name='post_test', id=test_operation['id'], planner={'id': '123', 'module': 'app.planners.atomic'},
                        adversary={'adversary_id': '123'}, source={'id': '123'})
         resp = await api_v2_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
     async def test_create_operation_existing_relationships(self, api_v2_client, api_cookies,
                                                            test_source_existing_relationships):
-        payload = dict(name='op_existing_relationships', id='456', planner={'id': '123'},
+        payload = dict(name='op_existing_relationships', id='456', planner={'id': '123', 'module': 'app.planners.atomic'},
                        adversary={'adversary_id': '123'},
                        source=SourceSchema().dump(test_source_existing_relationships))
         resp = await api_v2_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
@@ -202,13 +202,13 @@ class TestOperationsApi:
         assert len(op_data['source']['relationships']) == len(payload['source']['relationships'])
 
     async def test_create_finished_operation(self, api_v2_client, api_cookies, test_operation):
-        payload = dict(name='post_test', id='111', planner={'id': '123'},
+        payload = dict(name='post_test', id='111', planner={'id': '123', 'module': 'app.planners.atomic'},
                        adversary={'adversary_id': '123'}, source={'id': '123'}, state='finished')
         resp = await api_v2_client.post('/api/v2/operations', cookies=api_cookies, json=payload)
         assert resp.status == HTTPStatus.BAD_REQUEST
 
     async def test_unauthorized_create_operation(self, api_v2_client):
-        payload = dict(name='post_test', planner={'id': '123'},
+        payload = dict(name='post_test', planner={'id': '123', 'module': 'app.planners.atomic'},
                        adversary={'adversary_id': '123'}, source={'id': '123'})
         resp = await api_v2_client.post('/api/v2/operations', json=payload)
         assert resp.status == HTTPStatus.UNAUTHORIZED

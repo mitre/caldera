@@ -457,7 +457,7 @@ def test_adversary(event_loop):
 def test_planner(event_loop):
     expected_planner = {'name': 'test planner',
                         'description': 'test planner',
-                        'module': 'app.planners.test',
+                        'module': 'app.planners.atomic',
                         'stopping_conditions': [],
                         'params': {},
                         'allow_repeatable_abilities': False,
