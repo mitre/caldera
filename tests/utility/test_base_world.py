@@ -1,5 +1,6 @@
 import pytest
 import os
+import re
 import yaml
 
 from datetime import datetime, timezone
@@ -115,23 +116,23 @@ class TestBaseWorld:
 
             allowed_paths_str = str([
                 'app/parsers/myparser.py',
-                'plugins/stockpile/parsers/myparser.py',
-                'plugins/testplugin/parsers/myparser.py',
-                'plugins/dummy/parsers/myparser.py'
+                'plugins/stockpile/app/parsers/myparser.py',
+                'plugins/testplugin/app/parsers/myparser.py',
+                'plugins/dummy/app/parsers/myparser.py'
             ])
             expected_err = f'Module data.payloads.myparser does not align with allowed paths for this module type. Allowed paths for this module: {allowed_paths_str}'
-            with pytest.raises(ModuleNotFoundError, match=expected_err):
+            with pytest.raises(ModuleNotFoundError, match=re.escape(expected_err)):
                 BaseWorld.verify_module('data.payloads.myparser', 'parsers')
             allowed_paths_str = str([
-                'otherdir/myparser.py',
                 'app/parsers/myparser.py',
-                'plugins/stockpile/parsers/myparser.py',
-                'plugins/testplugin/parsers/myparser.py',
-                'plugins/dummy/parsers/myparser.py'
+                'plugins/stockpile/app/parsers/myparser.py',
+                'plugins/testplugin/app/parsers/myparser.py',
+                'plugins/dummy/app/parsers/myparser.py',
+                'otherdir/myparser.py'
             ])
             expected_err = f'Module plugins.dne.myparser does not align with allowed paths for this module type. Allowed paths for this module: {allowed_paths_str}'
-            with pytest.raises(ModuleNotFoundError, match=expected_err):
-                BaseWorld.verify_module('data.payloads.myparser', 'parsers', ['otherdir'])
-            expected_err = 'Module plugins.stockpile.app.obfuscators.dne with path plugins/stockpile/app/obfuscators/dne was not found on disk.'
-            with pytest.raises(ModuleNotFoundError, match=expected_err):
+            with pytest.raises(ModuleNotFoundError, match=re.escape(expected_err)):
+                BaseWorld.verify_module('plugins.dne.myparser', 'parsers', ['otherdir'])
+            expected_err = 'Module plugins.stockpile.app.obfuscators.dne with path plugins/stockpile/app/obfuscators/dne.py was not found on disk.'
+            with pytest.raises(ModuleNotFoundError, match=re.escape(expected_err)):
                 BaseWorld.verify_module('plugins.stockpile.app.obfuscators.dne', 'obfuscators', ['otherdir'])

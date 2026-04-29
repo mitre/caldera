@@ -353,7 +353,7 @@ class TestPlanningService:
         operation.planner = MagicMock()
         planning_svc.load_module = AsyncMock(return_value=RequirementFake())
         with patch.object(os.path, 'isfile', return_value=True):
-            link.ability.requirements = [Requirement('fake_requirement', [{'fake': 'relationship'}])]
+            link.ability.requirements = [Requirement('app.requirements.fake_requirement', [{'fake': 'relationship'}])]
 
         trimmed_links = await planning_svc.trim_links(operation, [link], agent)
 

@@ -24,7 +24,7 @@ def test_planner(event_loop, api_v2_client):
 @pytest.fixture
 def test_planner_2(event_loop, api_v2_client):
     planner = Planner(name="atomic", planner_id="456", description="an alphabetically superior test planner (fake)",
-                      plugin="planner")
+                      plugin="planner", module='app.planners.atomic')
     event_loop.run_until_complete(BaseService.get_service('data_svc').store(planner))
     return planner
 

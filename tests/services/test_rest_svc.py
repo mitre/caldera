@@ -51,7 +51,7 @@ async def setup_rest_svc_test(data_svc):
     )
 
     await data_svc.store(
-        Planner(planner_id='123', name='test', module='test', params=dict())
+        Planner(planner_id='123', name='test', module='app.planners.atomic', params=dict())
     )
 
     source = Source(id='123', name='test', facts=[], adjustments=[])
@@ -80,7 +80,7 @@ class TestRestSvc:
                                             'adversary_id': 'ad-hoc', 'atomic_ordering': [],
                                             'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc',
                                             'tags': [], 'has_repeatable_abilities': False, 'plugin': None}, 'state': 'finished',
-                              'planner': {'name': 'test', 'description': None, 'module': 'test',
+                              'planner': {'name': 'test', 'description': None, 'module': 'app.planners.atomic',
                                           'stopping_conditions': [], 'params': {}, 'allow_repeatable_abilities': False,
                                           'ignore_enforcement_modules': [], 'id': '123', 'plugin': ''}, 'jitter': '2/8',
                               'host_group': [{'trusted': True, 'architecture': 'unknown', 'watchdog': 0,
@@ -131,7 +131,7 @@ class TestRestSvc:
                               'atomic_ordering': [], 'objective': '495a9828-cab1-44dd-a0ca-66e58177d8cc', 'tags': [],
                               'has_repeatable_abilities': False, 'plugin': None},
                 'state': 'finished',
-                'planner': {'name': 'test', 'description': None, 'module': 'test', 'stopping_conditions': [],
+                'planner': {'name': 'test', 'description': None, 'module': 'app.planners.atomic', 'stopping_conditions': [],
                             'params': {},
                             'ignore_enforcement_modules': [], 'id': '123', 'allow_repeatable_abilities': False, 'plugin': ''},
                 'jitter': '2/8',

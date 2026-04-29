@@ -225,7 +225,7 @@ def op_with_learning_and_seeded(ability, adversary, operation_agent, parse_dates
     op.start = parse_datestring(OP_START_TIME)
     op.adversary = op.adversary()
     op.planner = Planner(planner_id='12345', name='test_planner',
-                                                  module='not.an.actual.planner', params=None)
+                         module='app.planners.atomic', params=None)
     op.objective = Objective(id='6428', name='not_an_objective')
     t_operation_agent = operation_agent
     t_operation_agent.paw = '123456'
