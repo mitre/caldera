@@ -1,12 +1,10 @@
 import aiohttp_apispec
 from aiohttp import web
-import json
 
 from app.api.v2.handlers.base_object_api import BaseObjectApi
 from app.api.v2.managers.ability_api_manager import AbilityApiManager
 from app.api.v2.schemas.base_schemas import BaseGetAllQuerySchema, BaseGetOneQuerySchema
 from app.objects.c_ability import Ability, AbilitySchema
-from app.api.v2.schemas.ability_schemas import AbilityUploadRequestSchema
 
 
 class AbilityApi(BaseObjectApi):
@@ -18,7 +16,6 @@ class AbilityApi(BaseObjectApi):
     def add_routes(self, app: web.Application):
         router = app.router
         router.add_get('/abilities', self.get_abilities)
-        router.add_post('/abilities/upload', self.upload_ability)
         router.add_get('/abilities/{ability_id}', self.get_ability_by_id)
         router.add_post('/abilities', self.create_ability)
         router.add_put('/abilities/{ability_id}', self.create_or_update_ability)
@@ -113,25 +110,3 @@ class AbilityApi(BaseObjectApi):
     async def delete_ability(self, request: web.Request):
         await self.delete_on_disk_object(request)
         return web.HTTPNoContent()
-
-    @aiohttp_apispec.docs(tags=['abilities'],
-                          summary='Upload a YAML ability file.',
-                          description='Uploads a YAML ability file, validates its contents, '
-                                      'saves it to disk under data/abilities/{tactic}/, '
-                                      'and loads it into memory.')
-    @aiohttp_apispec.form_schema(AbilityUploadRequestSchema)
-    @aiohttp_apispec.response_schema(AbilitySchema,
-                                     description='JSON dictionary representation of the uploaded Ability.')
-    async def upload_ability(self, request: web.Request):
-        # aiohttp_apispec.form_schema() already parses multipart data and populates request["form"].
-        # Use the pre-parsed form to avoid re-reading the request body which causes multipart boundary errors.
-        file_field: web.FileField = request.get("form", {}).get("file")
-        if not file_field:
-            return json.dumps({'error': 'Missing "file" field in multipart form data.'})
-        filename = file_field.filename or ''
-        # file_field.file is a synchronous file-like object; read it in a thread to avoid blocking the event loop.
-        loop = __import__('asyncio').get_event_loop()
-        file_data = await loop.run_in_executor(None, file_field.file.read)
-        access = await self.get_request_permissions(request)
-        ability = await self._api_manager.upload_ability_file(file_data, filename, access)
-        return web.json_response(ability.display)

@@ -34,16 +34,66 @@ class AbilitySchema(ma.Schema):
     delete_payload = ma.fields.Bool(load_default=None)
 
     @ma.pre_load
-    def fix_id(self, data, **_):
+    def normalize_ability_file_fields(self, data, **_):
+        if not isinstance(data, dict):
+            return data
         if 'id' in data:
             data['ability_id'] = data.pop('id')
+        if isinstance(data.get('technique'), dict):
+            technique = data.pop('technique')
+            data.setdefault('technique_id', technique.get('attack_id'))
+            data.setdefault('technique_name', technique.get('name'))
+        if 'platforms' in data and 'executors' not in data:
+            data['executors'] = self._platforms_to_executor_list(data.pop('platforms'))
+        if self._has_legacy_requirements(data.get('requirements')):
+            data['requirements'] = self._legacy_requirements_to_list(data['requirements'])
         return data
 
     @ma.post_load
     def build_ability(self, data, **kwargs):
-        if 'technique' in data:
-            data['technique_name'] = data.pop('technique')
         return None if kwargs.get('partial') is True else Ability(**data)
+
+    @staticmethod
+    def _platforms_to_executor_list(platforms):
+        executors = []
+        if not isinstance(platforms, dict):
+            return executors
+        for platform_names, platform_executors in platforms.items():
+            if not isinstance(platform_executors, dict):
+                continue
+            for executor_names, executor_data in platform_executors.items():
+                executor = dict(executor_data or {})
+                if isinstance(executor.get('cleanup'), str):
+                    executor['cleanup'] = [executor['cleanup']]
+                if isinstance(executor.get('parsers'), dict):
+                    executor['parsers'] = [
+                        dict(module=module, parserconfigs=parserconfigs)
+                        for module, parserconfigs in executor['parsers'].items()
+                    ]
+                for platform_name in str(platform_names).split(','):
+                    for executor_name in str(executor_names).split(','):
+                        parsed_executor = dict(executor)
+                        parsed_executor['platform'] = platform_name.strip()
+                        parsed_executor['name'] = executor_name.strip()
+                        executors.append(parsed_executor)
+        return executors
+
+    @staticmethod
+    def _has_legacy_requirements(requirements):
+        return (
+            isinstance(requirements, list)
+            and requirements
+            and isinstance(requirements[0], dict)
+            and 'relationship_match' not in requirements[0]
+        )
+
+    @staticmethod
+    def _legacy_requirements_to_list(requirements):
+        converted = []
+        for requirement in requirements:
+            for module, relationship_match in requirement.items():
+                converted.append(dict(module=module, relationship_match=relationship_match))
+        return converted
 
 
 class Ability(FirstClassObjectInterface, BaseObject):

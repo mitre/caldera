@@ -7,7 +7,7 @@ from typing import Any
 
 from app.api.v2.managers.base_api_manager import BaseApiManager
 from app.api.v2.responses import JsonHttpBadRequest
-from app.objects.c_ability import AbilitySchema, Ability
+from app.objects.c_ability import AbilitySchema
 from app.utility.base_world import BaseWorld
 
 
@@ -17,7 +17,9 @@ class AbilityApiManager(BaseApiManager):
 
     async def create_on_disk_object(self, data: dict, access: dict, ram_key: str, id_property: str, obj_class: type):
         self._validate_ability_data(create=True, data=data)
-        obj_id = data.get('id')
+        obj_id = data['id']
+        if self.find_object(ram_key, {id_property: obj_id}):
+            raise JsonHttpBadRequest(f'Ability with given id already exists: {obj_id}')
         file_path = self._create_ability_filepath(data.get('tactic'), obj_id)
         allowed = self._get_allowed_from_access(access)
         await self._save_and_reload_object(file_path, data, obj_class, allowed)
@@ -56,6 +58,8 @@ class AbilityApiManager(BaseApiManager):
             data['id'] = data.pop('ability_id')
         else:
             data['id'] = data.get('id', '')
+        if data['id'] is not None:
+            data['id'] = str(data['id'])
 
         # If a new ability is being created, ensure required fields present.
         if create:
@@ -64,9 +68,9 @@ class AbilityApiManager(BaseApiManager):
                 data['id'] = str(uuid.uuid4())
             if not data.get('name'):
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing name')
-            if 'tactic' not in data:
+            if not data.get('tactic'):
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing tactic')
-            if not data.get('executors'):
+            if not (data.get('executors') or data.get('platforms')):
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]}: at least one executor required')
         # Validate ID, used for file creation
         validator = re.compile(r'^[a-zA-Z0-9-_]+$')
@@ -81,7 +85,7 @@ class AbilityApiManager(BaseApiManager):
                                          'alphanumeric characters, hyphens, and underscores.')
             data['tactic'] = data['tactic'].lower()
 
-        if 'executors' in data and not data.get('executors'):
+        if 'executors' in data and not data.get('executors') and 'platforms' not in data:
             raise JsonHttpBadRequest(f'Cannot create ability {data["id"]}: at least one executor required')
 
         if 'name' in data and not data.get('name'):
@@ -92,40 +96,6 @@ class AbilityApiManager(BaseApiManager):
         if not os.path.exists(tactic_dir):
             os.makedirs(tactic_dir)
         return os.path.join(tactic_dir, '%s.yml' % obj_id)
-
-    async def upload_ability_file(self, file_data: bytes, filename: str, access: dict):
-        """Upload a YAML ability file, validate it, save to disk, and load into memory."""
-        # Validate file extension
-        if not filename.lower().endswith(('.yml', '.yaml')):
-            raise JsonHttpBadRequest('Invalid file type. Only .yml and .yaml files are accepted.')
-
-        # Parse YAML
-        try:
-            # Ensure we pass a text string to yaml.safe_load. PyYAML accepts strings or file-like objects.
-            if isinstance(file_data, (bytes, bytearray)):
-                try:
-                    file_text = file_data.decode('utf-8')
-                except UnicodeDecodeError:
-                    # Fallback to latin-1 to preserve byte values if utf-8 fails
-                    file_text = file_data.decode('latin-1')
-            else:
-                file_text = file_data
-            parsed = yaml.safe_load(file_text)
-        except yaml.YAMLError as e:
-            raise JsonHttpBadRequest(f'Invalid YAML: {e}')
-
-        # Handle list-wrapped abilities (common format: list of one dict)
-        if isinstance(parsed, list):
-            if len(parsed) == 0:
-                raise JsonHttpBadRequest('YAML file contains an empty list.')
-            parsed = parsed[0]
-
-        if not isinstance(parsed, dict):
-            raise JsonHttpBadRequest('YAML file must contain a mapping/dictionary.')
-
-        # write the file and return the created ability object
-        return await self.create_on_disk_object(data=parsed, access=access,
-                                                ram_key='abilities', id_property='ability_id', obj_class=Ability)
 
     async def _save_and_reload_object(self, file_path: str, data: dict, obj_type: type, access: BaseWorld.Access):
         await self._file_svc.save_file(file_path, yaml.dump([data], encoding='utf-8', sort_keys=False),
