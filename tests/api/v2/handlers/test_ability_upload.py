@@ -15,7 +15,7 @@ def ability_file_cleanup(tactic, ability_id):
             pass
 
 
-def basic_ability(identifier_key, identifier, name, description, tactic):
+def basic_platform_ability(identifier_key, identifier, name, description, tactic):
     return {
         identifier_key: identifier,
         'name': name,
@@ -56,7 +56,7 @@ def basic_ability(identifier_key, identifier, name, description, tactic):
 
 @pytest.fixture
 def valid_ability_payload():
-    yield basic_ability(
+    yield basic_platform_ability(
         'id',
         'upload-test-001',
         'Uploaded Test Ability',
@@ -69,7 +69,7 @@ def valid_ability_payload():
 
 @pytest.fixture
 def valid_ability_payload_with_ability_id():
-    yield basic_ability(
+    yield basic_platform_ability(
         'ability_id',
         'upload-test-002',
         'Uploaded Test Ability 2',
@@ -80,9 +80,69 @@ def valid_ability_payload_with_ability_id():
     ability_file_cleanup('collection', 'upload-test-002')
 
 
+@pytest.fixture
+def new_executors_ability_payload():
+    ability_id = 'upload-test-new-executors'
+    tactic = 'discovery'
+    ability_file_cleanup(tactic, ability_id)
+    yield {
+        'id': ability_id,
+        'repeatable': False,
+        'name': 'New executors ability',
+        'additional_info': {
+            'cleanup': ''
+        },
+        'technique_name': 'File and Directory Discovery',
+        'executors': [
+            {
+                'name': 'sh',
+                'additional_info': {},
+                'variations': [],
+                'platform': 'linux',
+                'command': 'ls',
+                'code': None,
+                'language': None,
+                'payloads': [],
+                'timeout': 60,
+                'parsers': [],
+                'cleanup': [],
+                'uploads': [],
+                'build_target': None
+            },
+            {
+                'name': 'psh',
+                'additional_info': {},
+                'variations': [],
+                'platform': 'windows',
+                'command': 'dir',
+                'code': None,
+                'language': None,
+                'payloads': [],
+                'timeout': 60,
+                'parsers': [],
+                'cleanup': [],
+                'uploads': [],
+                'build_target': None
+            }
+        ],
+        'buckets': [],
+        'technique_id': 'T1083',
+        'delete_payload': True,
+        'tactic': tactic,
+        'description': 'Simple new-style ability payload.',
+        'singleton': False,
+        'plugin': '',
+        'requirements': [],
+        'privilege': '',
+        'access': {}
+    }
+    ability_file_cleanup(tactic, ability_id)
+
+
 class TestAbilityUploadApi:
 
-    async def test_create_ability_from_yaml_style_payload(self, api_v2_client, api_cookies, valid_ability_payload):
+    async def test_create_ability_from_old_platforms_yaml_style_payload(self, api_v2_client, api_cookies,
+                                                                        valid_ability_payload):
         resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=valid_ability_payload)
 
         assert resp.status == HTTPStatus.OK
@@ -92,12 +152,20 @@ class TestAbilityUploadApi:
         assert result['tactic'] == 'discovery'
         assert result['technique_id'] == 'T1083'
         assert result['technique_name'] == 'File and Directory Discovery'
-        assert {executor['platform'] for executor in result['executors']} == {'darwin', 'linux', 'windows'}
+        assert [
+            (executor['platform'], executor['name'], executor['command'])
+            for executor in result['executors']
+        ] == [
+            ('darwin', 'sh', 'ls #{host.system.path}'),
+            ('linux', 'sh', 'ls #{host.system.path}'),
+            ('windows', 'psh', 'dir #{host.system.path}')
+        ]
         assert os.path.exists('data/abilities/discovery/upload-test-001.yml')
 
         ability = (await BaseService.get_service('data_svc').locate(
             'abilities', {'ability_id': 'upload-test-001'}
         ))[0]
+        assert ability.display == result
         assert ability.requirements[0].module == 'plugins.stockpile.app.requirements.paw_provenance'
 
     async def test_create_ability_from_yaml_style_payload_with_ability_id(
@@ -112,6 +180,26 @@ class TestAbilityUploadApi:
         assert result['name'] == 'Uploaded Test Ability 2'
         assert result['tactic'] == 'collection'
         assert os.path.exists('data/abilities/collection/upload-test-002.yml')
+
+    async def test_create_ability_from_new_executors_yaml_style(self, api_v2_client, api_cookies,
+                                                                new_executors_ability_payload):
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies,
+                                        json=new_executors_ability_payload)
+
+        assert resp.status == HTTPStatus.OK
+        ability_data = await resp.json()
+        assert ability_data['ability_id'] == new_executors_ability_payload['id']
+        assert ability_data['technique_id'] == new_executors_ability_payload['technique_id']
+        assert ability_data['technique_name'] == new_executors_ability_payload['technique_name']
+        assert [
+            (executor['platform'], executor['name'], executor['command'])
+            for executor in ability_data['executors']
+        ] == [('linux', 'sh', 'ls'), ('windows', 'psh', 'dir')]
+
+        stored_ability = (await BaseService.get_service('data_svc').locate(
+            'abilities', {'ability_id': new_executors_ability_payload['id']}
+        ))[0]
+        assert stored_ability.display == ability_data
 
     async def test_create_ability_from_yaml_style_payload_missing_required_fields(self, api_v2_client, api_cookies):
         resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies,

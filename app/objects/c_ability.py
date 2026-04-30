@@ -35,6 +35,9 @@ class AbilitySchema(ma.Schema):
 
     @ma.pre_load
     def normalize_ability_file_fields(self, data, **_):
+        """
+        Ensures that ability file fields are formatted correctly for processing
+        """
         if not isinstance(data, dict):
             return data
         if 'id' in data:
@@ -55,27 +58,34 @@ class AbilitySchema(ma.Schema):
 
     @staticmethod
     def _platforms_to_executor_list(platforms):
+        """
+        Translates legacy platform-structured YAML into caldera executor format
+        """
         executors = []
         if not isinstance(platforms, dict):
+            # there are no executors listed, return empty list
             return executors
         for platform_names, platform_executors in platforms.items():
             if not isinstance(platform_executors, dict):
+                # there is just one executor for this platform
                 continue
+            platform_list = [name.strip() for name in str(platform_names).split(',')]
             for executor_names, executor_data in platform_executors.items():
-                executor = dict(executor_data or {})
+                executor = dict(executor_data)  # make a dict of the data and fix up below
                 if isinstance(executor.get('cleanup'), str):
+                    # cleanup actions should be in a list
                     executor['cleanup'] = [executor['cleanup']]
                 if isinstance(executor.get('parsers'), dict):
                     executor['parsers'] = [
-                        dict(module=module, parserconfigs=parserconfigs)
+                        {'module': module, 'parserconfigs': parserconfigs}
                         for module, parserconfigs in executor['parsers'].items()
                     ]
-                for platform_name in str(platform_names).split(','):
-                    for executor_name in str(executor_names).split(','):
-                        parsed_executor = dict(executor)
-                        parsed_executor['platform'] = platform_name.strip()
-                        parsed_executor['name'] = executor_name.strip()
-                        executors.append(parsed_executor)
+                executor_list = [name.strip() for name in str(executor_names.split(','))]
+                executors.extend(
+                    {**executor, 'platform': platform_name, 'name': executor_name}
+                    for platform_name in platform_list
+                    for executor_name in executor_list
+                )
         return executors
 
     @staticmethod
