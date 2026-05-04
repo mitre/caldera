@@ -24,6 +24,7 @@ class Requirement(BaseObject):
 
     def __init__(self, module, relationship_match):
         super().__init__()
-        BaseWorld.verify_module(module, 'requirements')
+        if module:
+            BaseWorld.verify_module(module, 'requirements')
         self.module = module
         self.relationship_match = relationship_match

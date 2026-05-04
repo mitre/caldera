@@ -32,6 +32,7 @@ class Parser(BaseObject):
 
     def __init__(self, module, parserconfigs):
         super().__init__()
-        BaseWorld.verify_module(module, 'parsers', ['app/learning'])
+        if module:
+            BaseWorld.verify_module(module, 'parsers', ['app/learning'])
         self.module = module
         self.parserconfigs = parserconfigs

@@ -44,7 +44,8 @@ class Planner(FirstClassObjectInterface, BaseObject):
         super().__init__()
         self.name = name
         self.planner_id = planner_id if planner_id else str(uuid.uuid4())
-        BaseWorld.verify_module(module, 'planners')
+        if module:
+            BaseWorld.verify_module(module, 'planners')
         self.module = module
         self.params = params if params else {}
         self.description = description
