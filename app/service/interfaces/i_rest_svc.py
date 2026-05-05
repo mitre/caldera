@@ -108,9 +108,5 @@ class RestServiceInterface(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def update_config(self, data):
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def update_operation(self, op_id, state, autonomous):
         raise NotImplementedError
