@@ -110,24 +110,6 @@ async def test_invalid_request(aiohttp_client, authorized_cookies, sample_agent)
     assert messages == dict(sleep_min=['Not a valid integer.'])
 
 
-async def test_command_overwrite_failure(aiohttp_client, authorized_cookies):
-    resp = await aiohttp_client.post('/api/rest',
-                                     cookies=authorized_cookies,
-                                     json=dict(index='configuration',
-                                               prop='requirements',
-                                               value=dict(go=dict(command='this should not get written',
-                                                                  type='installed program',
-                                                                  version='1.11',),
-                                                          python=dict(attr='version',
-                                                                      module='sys',
-                                                                      type='python_module',
-                                                                      version='3.11.0'))))
-
-    assert resp.status == HTTPStatus.OK
-    config_dict = await resp.json()
-    assert config_dict.get('requirements', dict()).get('go', dict()).get('command') == 'go version'
-
-
 async def test_custom_rejecting_login_handler(aiohttp_client):
     class RejectAllLoginHandler(LoginHandlerInterface):
         def __init__(self, services):

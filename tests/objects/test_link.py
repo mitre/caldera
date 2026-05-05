@@ -41,10 +41,12 @@ class TestLink:
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact = Fact(trait='remote.host.fqdn', value='dc')
-        test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
+        # sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"
+        test_link = Link(command='c2MuZXhlIFxcZGMgY3JlYXRlIHNhbmRzdmMgYmlucGF0aD0gInM0bmRjNHQuZXhlIC1vcmlnaW5MaW5rSUQgMTExMTExIg==',
                          paw='123456', ability=test_ability, id=111111, executor=test_executor)
         test_link.used = [fact]
-        test_link2 = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 222222"',
+        # sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 222222"
+        test_link2 = Link(command='c2MuZXhlIFxcZGMgY3JlYXRlIHNhbmRzdmMgYmlucGF0aD0gInM0bmRjNHQuZXhlIC1vcmlnaW5MaW5rSUQgMjIyMjIyIg==',
                           paw='123456', ability=test_ability, id=222222, executor=test_executor)
         test_link2.used = [fact]
         assert test_link == test_link2
@@ -54,9 +56,11 @@ class TestLink:
         test_ability = ability(ability_id='123', executors=[test_executor])
         fact_a = Fact(trait='host.user.name', value='a')
         fact_b = Fact(trait='host.user.name', value='b')
-        test_link_a = Link(command='net user a', paw='123456', ability=test_ability, id=111111, executor=test_executor)
+        # net user a
+        test_link_a = Link(command='bmV0IHVzZXIgYQ==', paw='123456', ability=test_ability, id=111111, executor=test_executor)
         test_link_a.used = [fact_a]
-        test_link_b = Link(command='net user b', paw='123456', ability=test_ability, id=222222, executor=test_executor)
+        # net user b
+        test_link_b = Link(command='bmV0IHVzZXIgYg==', paw='123456', ability=test_ability, id=222222, executor=test_executor)
         test_link_b.used = [fact_b]
         assert test_link_a != test_link_b
 
@@ -64,21 +68,24 @@ class TestLink:
     def test_no_status_change_event_on_instantiation(self, mock_emit_status_change_method, ability, executor):
         executor = executor('psh', 'windows')
         ability = ability(executor=executor)
-        Link(command='net user a', paw='123456', ability=ability, executor=executor)
+        # net user a
+        Link(command='bmV0IHVzZXIgYQ==', paw='123456', ability=ability, executor=executor)
         mock_emit_status_change_method.assert_not_called()
 
     @mock.patch.object(Link, '_emit_status_change_event')
     def test_status_change_event_fired_on_status_change(self, mock_emit_status_change_method, ability, executor):
         executor = executor('psh', 'windows')
         ability = ability(executor=executor)
-        link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
+        # net user a
+        link = Link(command='bmV0IHVzZXIgYQ==', paw='123456', ability=ability, executor=executor, status=-3)
         link.status = -5
         mock_emit_status_change_method.assert_called_with(from_status=-3, to_status=-5)
 
     def test_emit_status_change_event(self, event_loop, fake_event_svc, ability, executor):
         executor = executor('psh', 'windows')
         ability = ability(executor=executor)
-        link = Link(command='net user a', paw='123456', ability=ability, executor=executor, status=-3)
+        # net user a
+        link = Link(command='bmV0IHVzZXIgYQ==', paw='123456', ability=ability, executor=executor, status=-3)
         fake_event_svc.reset()
 
         event_loop.run_until_complete(
@@ -99,7 +106,8 @@ class TestLink:
     def test_link_agent_reported_time_not_present_when_none_roundtrip(self, ability, executor):
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123')
-        test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
+        # sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"
+        test_link = Link(command='c2MuZXhlIFxcZGMgY3JlYXRlIHNhbmRzdmMgYmlucGF0aD0gInM0bmRjNHQuZXhlIC1vcmlnaW5MaW5rSUQgMTExMTExIg==',
                          paw='123456', ability=test_ability, executor=test_executor, id=111111)
         serialized_link = test_link.display
         loaded_link = Link.load(serialized_link)
@@ -111,7 +119,8 @@ class TestLink:
         agent_reported_time = '2021-02-23T11:50:16Z'
         test_executor = executor(name='psh', platform='windows')
         test_ability = ability(ability_id='123')
-        test_link = Link(command='sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"',
+        # sc.exe \\dc create sandsvc binpath= "s4ndc4t.exe -originLinkID 111111"
+        test_link = Link(command='c2MuZXhlIFxcZGMgY3JlYXRlIHNhbmRzdmMgYmlucGF0aD0gInM0bmRjNHQuZXhlIC1vcmlnaW5MaW5rSUQgMTExMTExIg==',
                          paw='123456', ability=test_ability, executor=test_executor, id=111111,
                          agent_reported_time=BaseService.get_timestamp_from_string(agent_reported_time))
         serialized_link = test_link.display
@@ -126,7 +135,8 @@ class TestLink:
         fact = Fact(trait='remote.host.fqdn', value='dc')
         fact2 = Fact(trait='domain.user.name', value='Bob')
         relationship = Relationship(source=fact, edge='has_admin', target=fact2)
-        test_link = Link(command='echo "this was a triumph"',
+        # echo "this was a triumph"
+        test_link = Link(command='ZWNobyAidGhpcyB3YXMgYSB0cml1bXBoIg==',
                          paw='123456', ability=test_ability, id=111111, executor=test_executor)
         event_loop.run_until_complete(test_link.create_relationships([relationship], None))
         checkable = [(x.trait, x.value) for x in test_link.facts]
@@ -144,7 +154,8 @@ class TestLink:
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
         fact2 = Fact(trait='domain.user.name', value='Bob')
         relationship = Relationship(source=fact1, edge='has_admin', target=fact2)
-        link1 = Link(command='echo "Bob"', paw='123456', ability=test_ability, id='111111', executor=test_executor)
+        # echo "Bob"
+        link1 = Link(command='ZWNobyAiQm9iIg==', paw='123456', ability=test_ability, id='111111', executor=test_executor)
         operation = operation(name='test-op', agents=[],
                               adversary=Adversary(name='sample', adversary_id='XYZ', atomic_ordering=[],
                                                   description='test'),
@@ -152,8 +163,8 @@ class TestLink:
         event_loop.run_until_complete(data_svc.store(operation.source))
         event_loop.run_until_complete(operation._init_source())
         event_loop.run_until_complete(link1.create_relationships([relationship], operation))
-
-        link2 = Link(command='echo "Bob"', paw='789100', ability=test_ability, id='222222', executor=test_executor)
+        # echo "Bob"
+        link2 = Link(command='ZWNobyAiQm9iIg==', paw='789100', ability=test_ability, id='222222', executor=test_executor)
         event_loop.run_until_complete(link2.create_relationships([relationship], operation))
 
         fact_store_operation_source = event_loop.run_until_complete(knowledge_svc.get_facts(dict(source=operation.source.id)))
@@ -168,7 +179,8 @@ class TestLink:
         fact1 = Fact(trait='remote.host.fqdn', value='dc')
         fact2 = Fact(trait='domain.user.name', value='Bob')
         relationship = Relationship(source=fact1, edge='has_user', target=fact2)
-        link = Link(command='net user', paw='123456', ability=test_ability, id='111111', executor=test_executor)
+        # net user
+        link = Link(command='bmV0IHVzZXI=', paw='123456', ability=test_ability, id='111111', executor=test_executor)
         operation = operation(name='test-op', agents=[],
                               adversary=Adversary(name='sample', adversary_id='XYZ', atomic_ordering=[],
                                                   description='test'),
