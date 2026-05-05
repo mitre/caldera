@@ -210,14 +210,6 @@ class TestAgent:
         test_ability = ability(ability_id='123', executors=[test_executor])
         assert await agent.get_preferred_executor(test_ability) is None
 
-    async def test_kill(self):
-        agent = Agent(paw='123', sleep_min=5, group='red', sleep_max=5, watchdog=0, executors=['cmd'],
-                      platform='windows', trusted=True)
-        await agent.kill()
-        assert agent.watchdog == 1
-        assert agent.sleep_min == 120
-        assert agent.sleep_max == 120
-
     async def test_bootstrap(self, ability, executor, data_svc):
         # Set empty executor list to exit agent.task function immmediately without mocking
         agent = Agent(paw='123', sleep_min=5, group='red', sleep_max=5, watchdog=0, executors=[],

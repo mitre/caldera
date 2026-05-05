@@ -495,6 +495,7 @@ class TestDataService:
             mock_load_yaml_file.assert_any_call(Planner, 'mockplannerforplugin.yml', data_svc.Access.RED)
             mock_load_yaml_file.assert_any_call(Source, 'mocksourceforplugin.yml', data_svc.Access.RED)
             mock_add_special_payload.assert_called_once_with('mockextension', 'mockextval')
+
     @mock.patch.object(logging.Logger, 'warn')
     @mock.patch.object(BaseWorld, 'strip_yml', wraps=strip_ability_yaml)
     async def test_load_ability_file(self, mock_strip_yml, mock_warn, data_svc):

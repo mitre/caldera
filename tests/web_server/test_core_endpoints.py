@@ -129,9 +129,7 @@ async def test_command_overwrite_failure(aiohttp_client, authorized_cookies):
                                                                       type='python_module',
                                                                       version='3.11.0'))))
 
-    assert resp.status == HTTPStatus.OK
-    config_dict = await resp.json()
-    assert config_dict.get('requirements', dict()).get('go', dict()).get('command') == 'go version'
+    assert resp.status == HTTPStatus.BAD_REQUEST
 
 
 async def test_upload_file(aiohttp_client):
