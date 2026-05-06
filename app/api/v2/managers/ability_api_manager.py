@@ -57,25 +57,27 @@ class AbilityApiManager(BaseApiManager):
 
     def _validate_ability_data(self, create: bool, data: dict):
         # Normalize ability ID: prefer explicit 'ability_id' if provided, otherwise preserve any existing 'id'.
+        ability_id = None
         if 'ability_id' in data:
-            data['id'] = data.pop('ability_id')
+            ability_id = data.pop('ability_id')
+        elif 'id' in data:
+            ability_id = data.get('id')
+
+        # Sanitize supplied IDs before assigning them internally. If no ID is supplied during creation,
+        # generate one instead.
+        if ability_id in (None, '') and create:
+            data['id'] = str(uuid.uuid4())
         else:
-            data['id'] = data.get('id', '')
-        if data['id'] is not None:
-            data['id'] = str(data['id'])
+            data['id'] = BaseApiManager._sanitize_id(ability_id)
+
         # If a new ability is being created, ensure required fields present.
         if create:
-            # Set ability ID if undefined
-            if not data['id']:
-                data['id'] = str(uuid.uuid4())
             if not data.get('name'):
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing name')
             if not data.get('tactic'):
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]} due to missing tactic')
             if not (data.get('executors') or data.get('platforms')):
                 raise JsonHttpBadRequest(f'Cannot create ability {data["id"]}: at least one executor required')
-        # Sanitize ID, used for file creation
-        data['id'] = BaseApiManager._sanitize_id(data['id'])
 
         # Validate tactic, used for directory creation, lower case if present
         validator = re.compile(r'^[a-zA-Z0-9-_]+$')

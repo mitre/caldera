@@ -209,6 +209,42 @@ class TestAbilityUploadApi:
         ))[0]
         assert stored_ability.display == ability_data
 
+    async def test_create_ability_sanitizes_upload_id_before_save(
+            self, api_v2_client, api_cookies, new_executors_ability_payload
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = '../upload test/sanitized-id!'
+        expected_id = 'uploadtestsanitized-id'
+
+        try:
+            resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+            assert resp.status == HTTPStatus.OK
+            ability_data = await resp.json()
+            assert ability_data['ability_id'] == expected_id
+            assert os.path.exists(f'data/abilities/{payload["tactic"]}/{expected_id}.yml')
+        finally:
+            ability_file_cleanup(payload['tactic'], expected_id)
+
+    async def test_create_ability_without_id_generates_id(
+            self, api_v2_client, api_cookies, new_executors_ability_payload
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload.pop('id')
+        ability_id = None
+
+        try:
+            resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+            assert resp.status == HTTPStatus.OK
+            ability_data = await resp.json()
+            ability_id = ability_data['ability_id']
+            assert ability_id
+            assert os.path.exists(f'data/abilities/{payload["tactic"]}/{ability_id}.yml')
+        finally:
+            if ability_id:
+                ability_file_cleanup(payload['tactic'], ability_id)
+
     async def test_create_ability_accepts_safe_payload_and_plugin_style_executor_names(
             self, api_v2_client, api_cookies, new_executors_ability_payload
     ):
