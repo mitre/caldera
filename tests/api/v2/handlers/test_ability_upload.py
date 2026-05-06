@@ -1,3 +1,4 @@
+import copy
 import os
 import pytest
 
@@ -52,6 +53,13 @@ def basic_platform_ability(identifier_key, identifier, name, description, tactic
             }
         ]
     }
+
+
+def cleanup_payload_ability(payload):
+    ability_id = payload.get('id') or payload.get('ability_id')
+    tactic = payload.get('tactic')
+    if ability_id and tactic:
+        ability_file_cleanup(tactic, ability_id)
 
 
 @pytest.fixture
@@ -200,6 +208,182 @@ class TestAbilityUploadApi:
             'abilities', {'ability_id': new_executors_ability_payload['id']}
         ))[0]
         assert stored_ability.display == ability_data
+
+    async def test_create_ability_accepts_safe_payload_and_plugin_style_executor_names(
+            self, api_v2_client, api_cookies, new_executors_ability_payload
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = 'upload-test-plugin-executor-labels'
+        payload['executors'][0]['name'] = 'plugin.exec-1'
+        payload['executors'][0]['payloads'] = [
+            'safe-payload.ps1',
+            '766be199-7316-4b26-b3db-e272aaf7e0d4'
+        ]
+
+        try:
+            resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+            assert resp.status == HTTPStatus.OK
+            ability_data = await resp.json()
+            assert ability_data['executors'][0]['name'] == 'plugin.exec-1'
+            assert ability_data['executors'][0]['payloads'] == payload['executors'][0]['payloads']
+        finally:
+            cleanup_payload_ability(payload)
+
+    @pytest.mark.parametrize(
+        ('payload_name', 'suffix'),
+        [
+            ('../evil.ps1', 'parent'),
+            ('payloads/evil.ps1', 'nested'),
+            ('/tmp/evil.ps1', 'absolute'),
+            ('evil\x00.ps1', 'null-byte'),
+            ('evil;rm.ps1', 'unsafe'),
+        ]
+    )
+    async def test_create_ability_rejects_unsafe_payload_paths(
+            self, api_v2_client, api_cookies, new_executors_ability_payload, payload_name, suffix
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = f'upload-test-invalid-payload-{suffix}'
+        payload['executors'][0]['payloads'] = [payload_name]
+
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert not os.path.exists(f'data/abilities/{payload["tactic"]}/{payload["id"]}.yml')
+
+    @pytest.mark.parametrize(
+        ('executors', 'suffix'),
+        [
+            (['sh'], 'non-dict'),
+            ([{'platform': 'linux', 'command': 'ls'}], 'missing-name'),
+            ([{'name': 'sh', 'command': 'ls'}], 'missing-platform'),
+            ([{'name': 'sh', 'platform': 'linux', 'command': 'ls', 'payloads': 'payload.ps1'}], 'bad-payloads'),
+        ]
+    )
+    async def test_create_ability_rejects_schema_invalid_new_style_executors(
+            self, api_v2_client, api_cookies, new_executors_ability_payload, executors, suffix
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = f'upload-test-schema-invalid-executor-{suffix}'
+        payload['executors'] = executors
+
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
+        assert not os.path.exists(f'data/abilities/{payload["tactic"]}/{payload["id"]}.yml')
+
+    @pytest.mark.parametrize(
+        ('executors', 'suffix'),
+        [
+            ([{'name': 'sh/evil', 'platform': 'linux', 'command': 'ls'}], 'unsafe-name'),
+            ([{'name': 'sh', 'platform': 'lin ux', 'command': 'ls'}], 'unsafe-platform'),
+        ]
+    )
+    async def test_create_ability_rejects_policy_invalid_new_style_executors(
+            self, api_v2_client, api_cookies, new_executors_ability_payload, executors, suffix
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = f'upload-test-policy-invalid-executor-{suffix}'
+        payload['executors'] = executors
+
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert not os.path.exists(f'data/abilities/{payload["tactic"]}/{payload["id"]}.yml')
+
+    @pytest.mark.parametrize(
+        ('platforms', 'suffix'),
+        [
+            ({'linux': ['sh']}, 'platform-not-dict'),
+            ({'linux': {'sh': 'ls'}}, 'executor-not-dict'),
+        ]
+    )
+    async def test_create_ability_rejects_schema_invalid_legacy_platform_executors(
+            self, api_v2_client, api_cookies, valid_ability_payload, platforms, suffix
+    ):
+        payload = copy.deepcopy(valid_ability_payload)
+        payload['id'] = f'upload-test-schema-invalid-platform-{suffix}'
+        payload['platforms'] = platforms
+
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
+        assert not os.path.exists(f'data/abilities/{payload["tactic"]}/{payload["id"]}.yml')
+
+    @pytest.mark.parametrize(
+        ('platforms', 'suffix'),
+        [
+            ({'lin/ux': {'sh': {'command': 'ls'}}}, 'unsafe-platform'),
+            ({'linux': {'sh/evil': {'command': 'ls'}}}, 'unsafe-executor'),
+        ]
+    )
+    async def test_create_ability_rejects_policy_invalid_legacy_platform_executors(
+            self, api_v2_client, api_cookies, valid_ability_payload, platforms, suffix
+    ):
+        payload = copy.deepcopy(valid_ability_payload)
+        payload['id'] = f'upload-test-policy-invalid-platform-{suffix}'
+        payload['platforms'] = platforms
+
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert not os.path.exists(f'data/abilities/{payload["tactic"]}/{payload["id"]}.yml')
+
+    @pytest.mark.parametrize(
+        ('privilege', 'suffix'),
+        [
+            (None, 'none'),
+            ('', 'empty'),
+            ('User', 'user'),
+            ('Elevated', 'elevated'),
+        ]
+    )
+    async def test_create_ability_accepts_valid_privileges(
+            self, api_v2_client, api_cookies, new_executors_ability_payload, privilege, suffix
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = f'upload-test-valid-privilege-{suffix}'
+        payload['privilege'] = privilege
+
+        try:
+            resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+            assert resp.status == HTTPStatus.OK
+        finally:
+            cleanup_payload_ability(payload)
+
+    @pytest.mark.parametrize(
+        ('privilege', 'suffix'),
+        [
+            ('Admin', 'admin'),
+            ('root', 'root'),
+            ('elevated', 'lowercase-elevated'),
+        ]
+    )
+    async def test_create_ability_rejects_policy_invalid_privileges(
+            self, api_v2_client, api_cookies, new_executors_ability_payload, privilege, suffix
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = f'upload-test-invalid-privilege-{suffix}'
+        payload['privilege'] = privilege
+
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+        assert resp.status == HTTPStatus.BAD_REQUEST
+        assert not os.path.exists(f'data/abilities/{payload["tactic"]}/{payload["id"]}.yml')
+
+    async def test_create_ability_rejects_schema_invalid_privilege_type(
+            self, api_v2_client, api_cookies, new_executors_ability_payload
+    ):
+        payload = copy.deepcopy(new_executors_ability_payload)
+        payload['id'] = 'upload-test-schema-invalid-privilege-non-string'
+        payload['privilege'] = 7
+
+        resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies, json=payload)
+
+        assert resp.status == HTTPStatus.UNPROCESSABLE_ENTITY
+        assert not os.path.exists(f'data/abilities/{payload["tactic"]}/{payload["id"]}.yml')
 
     async def test_create_ability_from_yaml_style_payload_missing_required_fields(self, api_v2_client, api_cookies):
         resp = await api_v2_client.post('/api/v2/abilities', cookies=api_cookies,

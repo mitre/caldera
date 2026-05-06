@@ -63,14 +63,16 @@ class AbilitySchema(ma.Schema):
         """
         executors = []
         if not isinstance(platforms, dict):
-            # there are no executors listed, return empty list
-            return executors
+            raise ma.ValidationError('Platforms must be a dictionary.', 'platforms')
         for platform_names, platform_executors in platforms.items():
             if not isinstance(platform_executors, dict):
-                # there is just one executor for this platform
-                continue
+                raise ma.ValidationError('Platform executors must be a dictionary.', 'platforms')
+
             platform_list = [name.strip() for name in str(platform_names).split(',')]
+
             for executor_names, executor_data in platform_executors.items():
+                if not isinstance(executor_data, dict):
+                    raise ma.ValidationError('Executor data must be a dictionary.', 'platforms')
                 executor = dict(executor_data)  # make a dict of the data and fix up below
                 if isinstance(executor.get('cleanup'), str):
                     # cleanup actions should be in a list
@@ -80,7 +82,8 @@ class AbilitySchema(ma.Schema):
                         {'module': module, 'parserconfigs': parserconfigs}
                         for module, parserconfigs in executor['parsers'].items()
                     ]
-                executor_list = [name.strip() for name in str(executor_names.split(','))]
+
+                executor_list = [name.strip() for name in str(executor_names).split(',')]
                 executors.extend(
                     {**executor, 'platform': platform_name, 'name': executor_name}
                     for platform_name in platform_list
@@ -102,7 +105,7 @@ class AbilitySchema(ma.Schema):
         converted = []
         for requirement in requirements:
             for module, relationship_match in requirement.items():
-                converted.append(dict(module=module, relationship_match=relationship_match))
+                converted.append({'module': module, 'relationship_match': relationship_match})
         return converted
 
 
