@@ -13,8 +13,10 @@ from multidict import CIMultiDict
 from cryptography.fernet import Fernet, InvalidToken
 from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
+from app.api.v2.handlers.payload_api import USER_PAYLOAD_ENCRYPTION_FLAG
 from app.service.interfaces.i_file_svc import FileServiceInterface
 from app.utility.base_service import BaseService
 from app.utility.payload_encoder import xor_file, xor_bytes
@@ -279,7 +281,16 @@ class FileSvc(FileServiceInterface, BaseService):
     def _read(self, filename):
         with open(filename, 'rb') as f:
             buf = f.read()
-        if self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
+        if buf.startswith(USER_PAYLOAD_ENCRYPTION_FLAG):
+            # Handle encrypted user-uploaded payloads
+            buf = buf[len(USER_PAYLOAD_ENCRYPTION_FLAG):]
+            key = buf[0:32]
+            iv = buf[32:48]
+            ciphertext = buf[48:]
+            cipher = Cipher(algorithms.AES(key), modes.CTR(iv))
+            decryptor = cipher.decryptor()
+            buf = decryptor.update(ciphertext) + decryptor.finalize()
+        elif self.encryptor and buf.startswith(bytes(FILE_ENCRYPTION_FLAG, encoding='utf-8')):
             try:
                 buf = self.encryptor.decrypt(buf[len(FILE_ENCRYPTION_FLAG):])
             except InvalidToken:
