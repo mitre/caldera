@@ -29,7 +29,9 @@ class RestApi(BaseWorld):
         asyncio.get_event_loop().create_task(AdvancedPack(services).enable())
 
     async def enable(self):
-        self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
+        # check if plugin path is present
+        if os.path.exists("plugins/magma/dist/assets") and (len(os.listdir("plugins/magma/dist/assets")) > 0):
+            self.app_svc.application.router.add_static('/assets', 'plugins/magma/dist/assets/', append_version=True)
         # TODO: only serve static files in legacy plugin mode
         self.app_svc.application.router.add_static('/gui', 'static/', append_version=True)
         # unauthorized GUI endpoints
@@ -87,7 +89,6 @@ class RestApi(BaseWorld):
                     operation_report=lambda d: self.rest_svc.display_operation_report(d),
                     result=lambda d: self.rest_svc.display_result(d),
                     contact=lambda d: self.rest_svc.download_contact_report(d),
-                    configuration=lambda d: self.rest_svc.update_config(d),
                     link=lambda d: self.rest_svc.get_potential_links(**d),
                     operation=lambda d: self.rest_svc.update_operation(**d),
                     task=lambda d: self.rest_svc.task_agent_with_ability(**d),
@@ -101,8 +102,14 @@ class RestApi(BaseWorld):
             return web.json_response(await options[request.method][index](data))
         except ma.ValidationError as e:
             raise web.HTTPBadRequest(content_type='application/json', text=json.dumps(e.messages))
+        except TypeError as e:
+            self.log.error(repr(e), exc_info=True)
+            error_msg = dict(error='400: Bad Request')
+            raise web.HTTPBadRequest(text=json.dumps(error_msg), content_type='application/json')
         except Exception as e:
             self.log.error(repr(e), exc_info=True)
+            error_msg = dict(error='500: Internal Server Error')
+            raise web.HTTPInternalServerError(text=json.dumps(error_msg), content_type='application/json')
 
     @check_authorization
     async def rest_core_info(self, request):
@@ -136,8 +143,10 @@ class RestApi(BaseWorld):
 
     @check_authorization
     async def download_exfil_file(self, request):
+        exfil_dir = self.get_config('exfil_dir')
+
         def is_in_exfil_dir(f):
-            return f.startswith(self.get_config('exfil_dir'))
+            return f.startswith(exfil_dir + os.sep) or f == exfil_dir
 
         if request.query.get('file'):
             try:

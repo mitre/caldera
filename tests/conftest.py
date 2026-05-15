@@ -58,7 +58,7 @@ CONFIG_DIR = os.path.join(DIR, '..', 'conf')
 @pytest.fixture(scope='session')
 def init_base_world():
     with open(os.path.join(CONFIG_DIR, 'default.yml')) as c:
-        BaseWorld.apply_config('main', yaml.load(c, Loader=yaml.FullLoader))
+        BaseWorld.apply_config('main', yaml.load(c, Loader=yaml.FullLoader), apply_hash=True)
     BaseWorld.apply_config('agents', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'agents.yml'))[0])
     BaseWorld.apply_config('payloads', BaseWorld.strip_yml(os.path.join(CONFIG_DIR, 'payloads.yml'))[0])
 
@@ -191,7 +191,7 @@ def obfuscator(event_loop, data_svc):
     event_loop.run_until_complete(data_svc.store(
         Obfuscator(name='plain-text',
                    description='Does no obfuscation to any command, instead running it in plain text',
-                   module='plugins.stockpile.app.obfuscators.plain_text')
+                   module='app.obfuscators.plain_text')
         )
     )
 
@@ -325,9 +325,11 @@ async def api_v2_client(aiohttp_client, contact_svc):
 
     async def initialize():
         with open(Path(__file__).parents[1] / 'conf' / 'default.yml', 'r') as fle:
-            BaseWorld.apply_config('main', yaml.safe_load(fle))
+            BaseWorld.apply_config('main', yaml.safe_load(fle), apply_hash=True)
         with open(Path(__file__).parents[1] / 'conf' / 'payloads.yml', 'r') as fle:
             BaseWorld.apply_config('payloads', yaml.safe_load(fle))
+        with open(Path(__file__).parents[1] / 'conf' / 'agents.yml', 'r') as fle:
+            BaseWorld.apply_config('agents', yaml.safe_load(fle))
 
         app_svc = AppService(web.Application(client_max_size=5120 ** 2))
         _ = DataService()
@@ -358,7 +360,9 @@ async def api_v2_client(aiohttp_client, contact_svc):
         app_svc.application.middlewares.append(apispec_request_validation_middleware)
         app_svc.application.middlewares.append(validation_middleware)
         templates = ['plugins/%s/templates' % p.lower() for p in app_svc.get_config('plugins')]
-        templates.append('plugins/magma/dist')
+        magma_dist = 'plugins/magma/dist'
+        if os.path.exists(magma_dist):
+            templates.append(magma_dist)
         templates.append("templates")
         aiohttp_jinja2.setup(app_svc.application, loader=jinja2.FileSystemLoader(templates))
         return app_svc

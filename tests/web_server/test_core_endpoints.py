@@ -26,9 +26,11 @@ async def aiohttp_client(aiohttp_client):
 
     async def initialize():
         with open(Path(__file__).parents[2] / 'conf' / 'default.yml', 'r') as fle:
-            BaseWorld.apply_config('main', yaml.safe_load(fle))
+            BaseWorld.apply_config('main', yaml.safe_load(fle), apply_hash=True)
         with open(Path(__file__).parents[2] / 'conf' / 'payloads.yml', 'r') as fle:
             BaseWorld.apply_config('payloads', yaml.safe_load(fle))
+        with open(Path(__file__).parents[2] / 'conf' / 'agents.yml', 'r') as fle:
+            BaseWorld.apply_config('agents', yaml.safe_load(fle))
 
         app_svc = AppService(web.Application())
         _ = DataService()
@@ -69,6 +71,8 @@ async def sample_agent(aiohttp_client):
 
 
 async def test_home(aiohttp_client):
+    if not (len(os.listdir("plugins/magma/dist/assets")) > 0):
+        pytest.xfail("Magma plugin not present, expecting failure")
     resp = await aiohttp_client.get('/')
     assert resp.status == HTTPStatus.OK
     assert resp.content_type == 'text/html'

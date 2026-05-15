@@ -338,12 +338,13 @@ class Operation(FirstClassObjectInterface, BaseObject):
                     step_report['output'] = json.loads(results.replace('\\r\\n', '').replace('\\n', ''))
                 if step.agent_reported_time:
                     step_report['agent_reported_time'] = step.agent_reported_time.strftime(self.TIME_FORMAT)
-                agents_steps[step.paw]['steps'].append(step_report)
+                agents_steps.setdefault(step.paw, {'steps': []})['steps'].append(step_report)
             report['steps'] = agents_steps
             report['skipped_abilities'] = await self.get_skipped_abilities_by_agent(data_svc)
             return report
         except Exception:
-            logging.error('Error saving operation report (%s)' % self.name, exc_info=True)
+            logging.error('Error generating operation report (%s)' % self.name, exc_info=True)
+            raise
 
     async def event_logs(self, file_svc, data_svc, output=False):
         # Ignore discarded / high visibility links that did not actually run.
@@ -415,7 +416,23 @@ class Operation(FirstClassObjectInterface, BaseObject):
                 await knowledge_svc_handle.add_fact(f)
             for r in self.source.relationships:
                 r.origin = self.source.id
+                r.source = self._resolve_fact(r.source, self.source.facts)
+                r.target = self._resolve_fact(r.target, self.source.facts)
                 await knowledge_svc_handle.add_relationship(r)
+
+    @staticmethod
+    def _resolve_fact(fact, fact_list):
+        """Resolve a relationship fact stub (trait-only) against the source's full fact list.
+
+        When relationships in a fact source are defined with only a trait reference (no value),
+        the matching fact from the source's fact list is returned so the relationship carries real
+        values.  If the fact already has a value, or no match is found, the original is returned.
+        """
+        if fact.value is None:
+            for candidate in fact_list:
+                if candidate.trait == fact.trait:
+                    return candidate
+        return fact
 
     async def _cleanup_operation(self, services):
         cleanup_count = 0
@@ -446,8 +463,10 @@ class Operation(FirstClassObjectInterface, BaseObject):
         def fact_to_dict(f):
             if f:
                 return dict(trait=f.trait, value=f.value, score=f.score)
+        existing = await services.get('data_svc').locate('sources', match=dict(name=self.name))
+        source_id = existing[0].id if existing else str(uuid.uuid4())
         data = dict(
-            id=str(uuid.uuid4()),
+            id=source_id,
             name=self.name,
             facts=[fact_to_dict(f) for link in self.chain for f in link.facts],
             relationships=[dict(source=fact_to_dict(r.source), edge=r.edge,
@@ -469,7 +488,9 @@ class Operation(FirstClassObjectInterface, BaseObject):
         for link in self.chain:
             if link.ability.ability_id not in self.adversary.atomic_ordering:
                 matching_abilities = await data_svc.locate('abilities', match=dict(ability_id=link.ability.ability_id))
-                abilities_by_agent[link.paw]['all_abilities'].extend(matching_abilities)
+                entry = abilities_by_agent.get(link.paw)
+                if entry:
+                    entry['all_abilities'].extend(matching_abilities)
         return abilities_by_agent
 
     def _check_reason_skipped(self, agent, ability, op_facts, state, agent_executors, agent_ran):

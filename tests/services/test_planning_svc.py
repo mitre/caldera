@@ -91,7 +91,7 @@ async def setup_planning_test(executor, ability, agent, operation, data_svc, eve
     await data_svc.store(
         Obfuscator(name='plain-text',
                    description='Does no obfuscation to any command, instead running it in plain text',
-                   module='plugins.stockpile.app.obfuscators.plain_text')
+                   module='app.obfuscators.plain_text')
     )
 
     yield tability, tagent, toperation, cability

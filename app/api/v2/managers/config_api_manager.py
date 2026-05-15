@@ -85,7 +85,8 @@ class ConfigApiManager(BaseApiManager):
             )
 
     async def update_global_agent_config(self, sleep_min: int = None, sleep_max: int = None, watchdog: int = None,
-                                         untrusted_timer: int = None, implant_name: str = None, bootstrap_abilities: List[str] = None, deadman_abilities=None):
+                                         untrusted_timer: int = None, implant_name: str = None, architecture: str = None,
+                                         bootstrap_abilities: List[str] = None, deadman_abilities=None):
         set_config = self._config_interface.set_config
 
         if sleep_min is not None:
@@ -103,6 +104,9 @@ class ConfigApiManager(BaseApiManager):
         if implant_name is not None:
             validation.check_not_empty_string(implant_name, name='implant_name')
             set_config(name='agents', prop='implant_name', value=implant_name)
+        if architecture is not None:
+            validation.check_not_empty_string(architecture, name='architecture')
+            set_config(name='agents', prop='architecture', value=architecture)
         if bootstrap_abilities is not None:
             await self._update_agent_ability_list_property(bootstrap_abilities, 'bootstrap_abilities')
         if deadman_abilities is not None:

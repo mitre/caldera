@@ -1,11 +1,18 @@
 from aiohttp import web
 
 
-def make_app(services):
+def make_app(services, upload_max_size_mb=100):
     from .responses import json_request_validation_middleware
     from .security import authentication_required_middleware_factory, pass_option_middleware
 
+    try:
+        max_size = int(upload_max_size_mb)
+        max_size = max_size if max_size > 0 else 100
+    except (TypeError, ValueError):
+        max_size = 100
+
     app = web.Application(
+        client_max_size=max_size * 1024 * 1024,
         middlewares=[
             pass_option_middleware,
             authentication_required_middleware_factory(services['auth_svc']),

@@ -6,10 +6,11 @@ import pytest
 import subprocess
 import yaml
 
+from aiohttp import web
 from base64 import b64encode
 from asyncio import Future
 from unittest import mock
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, MagicMock
 
 from app.data_encoders.base64_basic import Base64Encoder
 from app.data_encoders.plain_text import PlainTextEncoder
@@ -178,6 +179,29 @@ class TestFileService:
         assert written_data == upload_content
         os.remove(uploaded_file_path)
         os.rmdir(upload_dir)
+
+    def test_multipart_upload_rejects_invalid_filename(self, event_loop, file_svc, tmp_path):
+        """Regression test for #3267: save_multipart_file_upload must raise HTTPBadRequest
+        when a field filename fails _validate_filename (e.g. path traversal attempt '../evil.txt').
+        """
+        # Build a fake multipart field with a path-traversal filename
+        fake_field = MagicMock()
+        fake_field.filename = '../evil.txt'
+        fake_field.read = AsyncMock(return_value=b'evil content')
+
+        # Build a fake multipart reader whose next() returns the bad field then None
+        fake_reader = MagicMock()
+        fake_reader.next = AsyncMock(side_effect=[fake_field, None])
+
+        # Build a fake request whose multipart() returns the reader
+        fake_request = MagicMock()
+        fake_request.multipart = AsyncMock(return_value=fake_reader)
+        fake_request.headers = {}
+
+        with pytest.raises(web.HTTPBadRequest):
+            event_loop.run_until_complete(
+                file_svc.save_multipart_file_upload(fake_request, str(tmp_path))
+            )
 
     def test_encrypt_upload(self, event_loop, file_svc):
         upload_dir = event_loop.run_until_complete(file_svc.create_exfil_sub_directory('test-encrypted-upload'))
