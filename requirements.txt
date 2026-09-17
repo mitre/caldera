@@ -24,6 +24,6 @@ Markdown==3.8.1  # training
 dnspython==2.6.1
 asyncssh==2.23.1
 aioftp==0.27.2
-packaging==23.2
+packaging==26.3
 croniter~=3.0.3
 setuptools==83.0.0
